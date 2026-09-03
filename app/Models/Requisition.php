@@ -31,4 +31,9 @@ class Requisition extends Model
     {
         return $this->hasMany(RequisitionDetail::class);
     }
+
+    public function budget(): BelongsTo
+    {
+        return $this->belongsTo(Budget::class);
+    }
 }
