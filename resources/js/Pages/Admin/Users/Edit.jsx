@@ -19,7 +19,7 @@ export default function Edit({ user, divisions = [] }) {
 
     return (
         <AdminLayout>
-            <Head title={`Edit Pengguna ${user.name} - E-Req RSJ Tampan`} />
+            <Head title={`Edit Pengguna ${user.name} - E-BLUD RSJ Tampan`} />
 
             <div className="mx-auto max-w-2xl space-y-6">
                 {/* Back Link & Header */}
@@ -122,7 +122,7 @@ export default function Edit({ user, divisions = [] }) {
                                 onChange={(e) => setData('role', e.target.value)}
                                 className="block w-full rounded-xl border-2 border-slate-300 bg-white px-3.5 py-2.5 text-sm font-bold text-slate-900 shadow-2xs transition focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
                             >
-                                <option value="divisi">Divisi (Pemohon E-Requisition)</option>
+                                <option value="divisi">Divisi (Pemohon Belanja E-BLUD)</option>
                                 <option value="perencanaan">Perencanaan (Verifikator Barang & Spesifikasi)</option>
                                 <option value="keuangan">Keuangan (Validator Pagu & Pemotong Anggaran)</option>
                                 <option value="admin">Administrator (Master Data & Pengguna)</option>

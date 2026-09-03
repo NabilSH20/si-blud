@@ -19,26 +19,28 @@ export default function Create({ divisions = [] }) {
 
     return (
         <AdminLayout>
-            <Head title="Tambah Pengguna Baru - E-Req RSJ Tampan" />
+            <Head title="Tambah Pengguna Baru - E-BLUD RSJ Tampan" />
 
-            <div className="mx-auto max-w-2xl space-y-6">
+            <div className="mx-auto max-w-3xl space-y-6">
                 {/* Back Link & Header */}
-                <div>
-                    <Link
-                        href={route('users.index')}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 transition mb-2"
-                    >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                        </svg>
-                        Kembali ke Kelola Pengguna
-                    </Link>
-                    <h2 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
-                        Tambah Pengguna Baru
-                    </h2>
-                    <p className="mt-1 text-xs sm:text-sm text-slate-600 font-medium">
-                        Buat akun staf baru untuk mengakses sistem E-Req RSJ Tampan sesuai hak akses perannya.
-                    </p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <Link
+                            href={route('users.index')}
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 transition mb-2"
+                        >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                            </svg>
+                            Kembali ke Daftar Pengguna
+                        </Link>
+                        <h2 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
+                            Tambah Akun Pengguna Baru
+                        </h2>
+                        <p className="mt-1 text-xs text-slate-500 font-medium">
+                            Buat akun staf baru untuk mengakses sistem E-BLUD RSJ Tampan sesuai hak akses perannya.
+                        </p>
+                    </div>
                 </div>
 
                 {/* Form Card */}
@@ -120,7 +122,7 @@ export default function Create({ divisions = [] }) {
                                 onChange={(e) => setData('role', e.target.value)}
                                 className="block w-full rounded-xl border-2 border-slate-300 bg-white px-3.5 py-2.5 text-sm font-bold text-slate-900 shadow-2xs transition focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
                             >
-                                <option value="divisi">Divisi (Pemohon E-Requisition)</option>
+                                <option value="divisi">Divisi (Pemohon Belanja E-BLUD)</option>
                                 <option value="perencanaan">Perencanaan (Verifikator Barang & Spesifikasi)</option>
                                 <option value="keuangan">Keuangan (Validator Pagu & Pemotong Anggaran)</option>
                                 <option value="admin">Administrator (Master Data & Pengguna)</option>

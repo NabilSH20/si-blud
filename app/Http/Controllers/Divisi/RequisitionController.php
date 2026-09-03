@@ -133,5 +133,17 @@ class RequisitionController extends Controller
             'requisition' => $requisition,
         ]);
     }
+
+    /**
+     * Print the specified requisition.
+     */
+    public function print($id): Response
+    {
+        $requisition = Requisition::with(['division', 'user', 'requisitionDetails.item'])->findOrFail($id);
+
+        return Inertia::render('Shared/PrintRequisition', [
+            'requisition' => $requisition,
+        ]);
+    }
 }
 

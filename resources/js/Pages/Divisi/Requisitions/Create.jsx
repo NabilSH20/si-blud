@@ -90,7 +90,7 @@ export default function Create({ items = [] }) {
 
     return (
         <DivisiLayout>
-            <Head title="Buat Pengajuan Barang (E-Req) - RSJ Tampan" />
+            <Head title="Buat Pengajuan Belanja (E-BLUD) - RSJ Tampan" />
 
             <div className="mx-auto max-w-5xl space-y-6">
                 {/* Header Back & Info */}
@@ -106,7 +106,7 @@ export default function Create({ items = [] }) {
                             Kembali ke Daftar Pengajuan
                         </Link>
                         <h2 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
-                            Formulir E-Requisition Baru
+                            Formulir Pengajuan Belanja (E-BLUD)
                         </h2>
                         <p className="mt-1 text-xs sm:text-sm text-slate-600 font-medium">
                             Ajukan kebutuhan barang unit kerja dengan memilih dari katalog acuan standar rumah sakit.
@@ -137,7 +137,7 @@ export default function Create({ items = [] }) {
                                 </h3>
                             </div>
                             <span className="text-xs font-bold text-slate-500">
-                                Nomor E-Req digenerate otomatis
+                                Nomor registrasi digenerate otomatis
                             </span>
                         </div>
 
@@ -411,7 +411,7 @@ export default function Create({ items = [] }) {
                                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
                                             </svg>
-                                            Kirim Pengajuan (E-Req)
+                                            Kirim Pengajuan Belanja (E-BLUD)
                                         </>
                                     )}
                                 </button>

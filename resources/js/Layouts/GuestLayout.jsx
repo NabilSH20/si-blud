@@ -11,18 +11,18 @@ export default function GuestLayout({ children }) {
 
             {/* Brand Header */}
             <div className="mb-6 flex flex-col items-center text-center">
-                <Link href="/" className="group flex flex-col items-center gap-2.5">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 text-white shadow-lg shadow-emerald-500/25 ring-4 ring-white transition group-hover:scale-105">
-                        <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                        </svg>
-                    </div>
+                <Link href="/" className="group flex flex-col items-center gap-3">
+                    <img
+                        src="/image/logo-vertikal-rsj.png"
+                        alt="Logo RSJ Tampan"
+                        className="h-20 sm:h-24 w-auto object-contain drop-shadow-md transition group-hover:scale-105"
+                    />
                     <div>
-                        <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
-                            E-Req <span className="text-emerald-600">RSJ Tampan</span>
+                        <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                            E-BLUD <span className="text-emerald-700">RSJ Tampan</span>
                         </h1>
-                        <p className="text-xs font-medium text-slate-500">
-                            Sistem Pengajuan & Verifikasi Requisition Terpadu
+                        <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                            Sistem Informasi Perencanaan & Keuangan E-BLUD
                         </p>
                     </div>
                 </Link>

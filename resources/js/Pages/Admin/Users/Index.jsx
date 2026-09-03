@@ -257,7 +257,7 @@ export default function Index({ users = [], success, error }) {
                                         <p className="mt-1 text-xs text-slate-500 font-medium">
                                             {search || roleFilter !== 'ALL'
                                                 ? 'Coba ubah kata kunci atau ganti filter peran.'
-                                                : 'Mulai daftarkan akun staf baru untuk sistem E-Req RSJ Tampan.'}
+                                                : 'Mulai daftarkan akun staf baru untuk sistem E-BLUD RSJ Tampan.'}
                                         </p>
                                         {!search && roleFilter === 'ALL' && (
                                             <Link

@@ -15,7 +15,7 @@ export default function Create() {
 
     return (
         <AdminLayout>
-            <Head title="Tambah Divisi - E-Req RSJ Tampan" />
+            <Head title="Tambah Divisi - E-BLUD RSJ Tampan" />
 
             <div className="mx-auto max-w-3xl space-y-6">
                 {/* Back Link & Header */}

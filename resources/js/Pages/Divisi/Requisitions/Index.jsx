@@ -74,14 +74,14 @@ export default function Index({ requisitions = [], division, success, error }) {
 
     return (
         <DivisiLayout>
-            <Head title="Riwayat Pengajuan Barang - RSJ Tampan" />
+            <Head title="Daftar Pengajuan Belanja - E-BLUD RSJ Tampan" />
 
             {/* Header Section */}
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <div className="flex items-center gap-2.5">
                         <h2 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
-                            Daftar E-Requisition
+                            Daftar Pengajuan Belanja E-BLUD
                         </h2>
                         <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-900 border border-emerald-300">
                             {division?.name || 'Unit Divisi'}

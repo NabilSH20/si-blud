@@ -20,7 +20,7 @@ export default function Edit({ item }) {
 
     return (
         <PerencanaanLayout>
-            <Head title={`Edit Barang ${item.name} - E-Req RSJ Tampan`} />
+            <Head title={`Edit Barang ${item.name} - E-BLUD RSJ Tampan`} />
 
             <div className="mx-auto max-w-3xl space-y-6">
                 {/* Back Link & Header */}

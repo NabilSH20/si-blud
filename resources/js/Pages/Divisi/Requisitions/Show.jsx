@@ -1,3 +1,4 @@
+import AuditTrailTimeline from '@/Components/AuditTrailTimeline';
 import DivisiLayout from '@/Layouts/DivisiLayout';
 import { Head, Link } from '@inertiajs/react';
 
@@ -76,7 +77,7 @@ export default function Show({ requisition }) {
 
     return (
         <DivisiLayout>
-            <Head title={`Rincian ${requisition.requisition_number} - E-Req RSJ Tampan`} />
+            <Head title={`Rincian ${requisition.requisition_number} - E-BLUD RSJ Tampan`} />
 
             <div className="mx-auto max-w-5xl space-y-6">
                 {/* Header Back & Info */}
@@ -102,15 +103,28 @@ export default function Show({ requisition }) {
                         </div>
                     </div>
 
-                    <Link
-                        href={route('requisitions.create')}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all duration-200"
-                    >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                        Buat Pengajuan Baru
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        <a
+                            href={route('requisitions.print', requisition.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-4 py-2.5 text-sm font-bold text-slate-700 shadow-xs hover:shadow-md transition-all duration-200"
+                        >
+                            <svg className="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24-1.077-.32-2.14-.32-3.193 0-5.18 4.02-9.386 8.974-9.386 4.954 0 8.973 4.207 8.973 9.386 0 1.053-.08 2.116-.32 3.193M12 18v-4.5m0 0l-2.25 2.25M12 13.5l2.25 2.25M3.75 19.5h16.5" />
+                            </svg>
+                            Cetak Nota
+                        </a>
+                        <Link
+                            href={route('requisitions.create')}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all duration-200"
+                        >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Buat Pengajuan Baru
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Status Notice Card */}
@@ -275,6 +289,9 @@ export default function Show({ requisition }) {
                         </table>
                     </div>
                 </div>
+
+                {/* Jejak Audit Timeline */}
+                <AuditTrailTimeline requisition={requisition} />
 
                 {/* Bottom Back Button */}
                 <div className="flex items-center justify-between">

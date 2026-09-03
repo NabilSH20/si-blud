@@ -1,3 +1,4 @@
+import AuditTrailTimeline from '@/Components/AuditTrailTimeline';
 import KeuanganLayout from '@/Layouts/KeuanganLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
@@ -121,7 +122,7 @@ export default function Show({ requisition, budgets = [] }) {
 
     return (
         <KeuanganLayout>
-            <Head title={`Validasi ${requisition.requisition_number} - E-Req RSJ Tampan`} />
+            <Head title={`Validasi ${requisition.requisition_number} - E-BLUD RSJ Tampan`} />
 
             <div className="mx-auto max-w-5xl space-y-6">
                 {/* Header Back & Info */}
@@ -147,13 +148,26 @@ export default function Show({ requisition, budgets = [] }) {
                         </div>
                     </div>
 
-                    <div className="text-right">
-                        <span className="block text-[11px] font-black uppercase tracking-wider text-slate-500">
-                            Status Alur
-                        </span>
-                        <span className="text-sm font-bold text-slate-800">
-                            {isActionable ? 'Tahap 2: Validasi & Pembebanan Anggaran' : 'Tahap Telah Selesai'}
-                        </span>
+                    <div className="flex items-center gap-3">
+                        <a
+                            href={route('requisitions.print', requisition.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-4 py-2 text-xs font-bold text-slate-700 shadow-xs hover:shadow-md transition-all duration-200"
+                        >
+                            <svg className="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24-1.077-.32-2.14-.32-3.193 0-5.18 4.02-9.386 8.974-9.386 4.954 0 8.973 4.207 8.973 9.386 0 1.053-.08 2.116-.32 3.193M12 18v-4.5m0 0l-2.25 2.25M12 13.5l2.25 2.25M3.75 19.5h16.5" />
+                            </svg>
+                            Cetak Nota
+                        </a>
+                        <div className="text-right hidden sm:block">
+                            <span className="block text-[11px] font-black uppercase tracking-wider text-slate-500">
+                                Status Alur
+                            </span>
+                            <span className="text-sm font-bold text-slate-800">
+                                {isActionable ? 'Tahap 2: Validasi & Pembebanan Anggaran' : 'Tahap Telah Selesai'}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
@@ -518,6 +532,9 @@ export default function Show({ requisition, budgets = [] }) {
                         </div>
                     </div>
                 )}
+
+                {/* Jejak Audit Timeline */}
+                <AuditTrailTimeline requisition={requisition} />
             </div>
 
             {/* Rejection Confirmation Modal */}

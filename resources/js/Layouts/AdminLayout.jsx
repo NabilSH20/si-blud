@@ -1,3 +1,4 @@
+import ToastListener from '@/Components/ToastListener';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -52,6 +53,8 @@ export default function AdminLayout({ children }) {
 
     return (
         <div className="min-h-screen bg-slate-100 font-sans text-slate-800 antialiased">
+            <ToastListener />
+
             {/* Mobile backdrop */}
             {sidebarOpen && (
                 <div
@@ -104,7 +107,7 @@ export default function AdminLayout({ children }) {
                         {/* App Name & Role Badge Below */}
                         <div className="mt-3 flex flex-col items-center justify-center">
                             <div className="flex items-center gap-2">
-                                <span className="text-base font-black tracking-tight text-slate-900">E-Requisition</span>
+                                <span className="text-base font-black tracking-tight text-slate-900">E-BLUD</span>
                                 <span className="inline-flex items-center rounded-md bg-emerald-600 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-2xs">
                                     ADMIN
                                 </span>
@@ -156,7 +159,7 @@ export default function AdminLayout({ children }) {
 
                 {/* 3. Sidebar Footer */}
                 <div className="border-t-2 border-slate-200/90 bg-slate-50 px-4 py-3 flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-slate-500">E-BLUD RSJ Tampan</span>
+                    <span className="text-[11px] font-bold text-slate-500">Sistem E-BLUD RSJ Tampan</span>
                     <span className="text-[10px] font-black rounded-md bg-emerald-100 text-emerald-800 px-1.5 py-0.5 border border-emerald-300">
                         v1.0
                     </span>
@@ -239,7 +242,7 @@ export default function AdminLayout({ children }) {
                                     </div>
                                     <div className="mt-3 space-y-2">
                                         <div className="rounded-xl bg-slate-50 p-2.5 text-xs text-slate-700 border border-slate-200">
-                                            <p className="font-bold text-slate-900">Sistem E-Req Berjalan Optimal</p>
+                                            <p className="font-bold text-slate-900">Sistem E-BLUD Berjalan Optimal</p>
                                             <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
                                                 Database dan modul terhubung dengan lancar.
                                             </p>
@@ -258,9 +261,17 @@ export default function AdminLayout({ children }) {
                                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                                 className="flex items-center gap-2.5 rounded-2xl border-2 border-slate-200 bg-white p-1.5 pr-3 hover:bg-slate-50 active:scale-95 transition-all duration-200 shadow-2xs"
                             >
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 font-black text-sm text-white shadow-xs">
-                                    {user.name.charAt(0).toUpperCase()}
-                                </div>
+                                {user.avatar ? (
+                                    <img
+                                        src={user.avatar_url || `/storage/${user.avatar}`}
+                                        alt={user.name}
+                                        className="h-9 w-9 shrink-0 rounded-xl object-cover ring-1 ring-slate-200 shadow-xs"
+                                    />
+                                ) : (
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 font-black text-sm text-white shadow-xs">
+                                        {user.name.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
                                 <div className="hidden text-left sm:block">
                                     <span className="block text-xs font-black text-slate-900 leading-tight truncate max-w-[120px]">
                                         {user.name}
@@ -286,12 +297,25 @@ export default function AdminLayout({ children }) {
                             {profileDropdownOpen && (
                                 <div className="absolute right-0 mt-2 w-64 rounded-2xl border-2 border-slate-300 bg-white p-2 shadow-xl z-50">
                                     {/* User header */}
-                                    <div className="border-b border-slate-100 px-3 py-2.5">
-                                        <p className="text-xs font-black text-slate-900 truncate">{user.name}</p>
-                                        <p className="text-[11px] font-medium text-slate-500 truncate">{user.email}</p>
-                                        <span className="mt-1.5 inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-black text-purple-900 border border-purple-300 capitalize">
-                                            Peran: {user.role}
-                                        </span>
+                                    <div className="flex items-center gap-3 border-b border-slate-100 px-3 py-2.5">
+                                        {user.avatar ? (
+                                            <img
+                                                src={user.avatar_url || `/storage/${user.avatar}`}
+                                                alt={user.name}
+                                                className="h-10 w-10 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
+                                            />
+                                        ) : (
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 font-black text-base text-white shadow-xs">
+                                                {user.name.charAt(0).toUpperCase()}
+                                            </div>
+                                        )}
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-black text-slate-900 truncate">{user.name}</p>
+                                            <p className="text-[11px] font-medium text-slate-500 truncate">{user.email}</p>
+                                            <span className="mt-1 inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-black text-purple-900 border border-purple-300 capitalize">
+                                                Peran: {user.role}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     {/* Action Links */}
@@ -327,7 +351,11 @@ export default function AdminLayout({ children }) {
                     </div>
                 </header>
 
-                <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+                <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                    <div className="animate-fade-in-up transition-all duration-300">
+                        {children}
+                    </div>
+                </main>
             </div>
         </div>
     );

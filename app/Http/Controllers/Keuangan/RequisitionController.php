@@ -120,5 +120,17 @@ class RequisitionController extends Controller
                 ->with('success', "Pengajuan {$requisition->requisition_number} telah ditolak oleh Bagian Keuangan.");
         }
     }
+
+    /**
+     * Print the specified requisition.
+     */
+    public function print($id): Response
+    {
+        $requisition = Requisition::with(['division', 'user', 'requisitionDetails.item'])->findOrFail($id);
+
+        return Inertia::render('Shared/PrintRequisition', [
+            'requisition' => $requisition,
+        ]);
+    }
 }
 

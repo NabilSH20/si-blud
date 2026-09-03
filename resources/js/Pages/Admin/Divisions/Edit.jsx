@@ -15,7 +15,7 @@ export default function Edit({ division }) {
 
     return (
         <AdminLayout>
-            <Head title={`Edit Divisi ${division.name} - E-Req RSJ Tampan`} />
+            <Head title={`Edit Divisi ${division.name} - E-BLUD RSJ Tampan`} />
 
             <div className="mx-auto max-w-3xl space-y-6">
                 {/* Back Link & Header */}

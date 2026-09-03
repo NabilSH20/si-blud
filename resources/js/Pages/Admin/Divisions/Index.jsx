@@ -44,8 +44,8 @@ export default function Index({ divisions = [], success, error }) {
                             {divisions.length} Unit Kerja
                         </span>
                     </div>
-                    <p className="mt-1 text-xs sm:text-sm text-slate-600 font-medium">
-                        Kelola data unit kerja, instalasi, dan bagian yang berhak mengajukan E-Requisition di RSJ Tampan.
+                    <p className="mt-1 text-xs font-semibold text-slate-500 sm:text-sm">
+                        Kelola data unit kerja, instalasi, dan bagian yang berhak mengajukan belanja di sistem E-BLUD RSJ Tampan.
                     </p>
                 </div>
 

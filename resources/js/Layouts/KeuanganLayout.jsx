@@ -1,3 +1,4 @@
+import ToastListener from '@/Components/ToastListener';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -18,10 +19,20 @@ const menuGroups = [
         ],
     },
     {
-        title: 'Anggaran & Belanja',
+        title: 'Anggaran & Kas BLUD',
         items: [
             {
-                name: 'Pagu Anggaran',
+                name: 'Pendapatan BLUD',
+                href: route('revenues.index'),
+                routeName: 'revenues.*',
+                icon: (
+                    <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                ),
+            },
+            {
+                name: 'Pagu Anggaran DPA',
                 href: route('budgets.index'),
                 routeName: 'budgets.*',
                 icon: (
@@ -41,7 +52,32 @@ const menuGroups = [
                 routeName: 'keuangan.requisitions.*',
                 icon: (
                     <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                ),
+            },
+        ],
+    },
+    {
+        title: 'Laporan & Akuntabilitas',
+        items: [
+            {
+                name: 'Laporan Realisasi',
+                href: route('reports.index'),
+                routeName: 'reports.index',
+                icon: (
+                    <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                ),
+            },
+            {
+                name: 'Surplus / Defisit',
+                href: route('reports.surplus-deficit'),
+                routeName: 'reports.surplus-deficit*',
+                icon: (
+                    <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                     </svg>
                 ),
             },
@@ -57,6 +93,8 @@ export default function KeuanganLayout({ children }) {
 
     return (
         <div className="min-h-screen bg-slate-100 font-sans text-slate-800 antialiased">
+            <ToastListener />
+
             {/* Mobile backdrop */}
             {sidebarOpen && (
                 <div
@@ -109,7 +147,7 @@ export default function KeuanganLayout({ children }) {
                         {/* App Name & Role Badge Below */}
                         <div className="mt-3 flex flex-col items-center justify-center">
                             <div className="flex items-center gap-2">
-                                <span className="text-base font-black tracking-tight text-slate-900">E-Requisition</span>
+                                <span className="text-base font-black tracking-tight text-slate-900">E-BLUD</span>
                                 <span className="inline-flex items-center rounded-md bg-emerald-600 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-2xs">
                                     KEUANGAN
                                 </span>
@@ -161,7 +199,7 @@ export default function KeuanganLayout({ children }) {
 
                 {/* 3. Sidebar Footer */}
                 <div className="border-t-2 border-slate-200/90 bg-slate-50 px-4 py-3 flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-slate-500">E-BLUD RSJ Tampan</span>
+                    <span className="text-[11px] font-bold text-slate-500">Sistem E-BLUD RSJ Tampan</span>
                     <span className="text-[10px] font-black rounded-md bg-emerald-100 text-emerald-800 px-1.5 py-0.5 border border-emerald-300">
                         v1.0
                     </span>
@@ -263,9 +301,17 @@ export default function KeuanganLayout({ children }) {
                                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                                 className="flex items-center gap-2.5 rounded-2xl border-2 border-slate-200 bg-white p-1.5 pr-3 hover:bg-slate-50 active:scale-95 transition-all duration-200 shadow-2xs"
                             >
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 font-black text-sm text-white shadow-xs">
-                                    {user.name.charAt(0).toUpperCase()}
-                                </div>
+                                {user.avatar ? (
+                                    <img
+                                        src={user.avatar_url || `/storage/${user.avatar}`}
+                                        alt={user.name}
+                                        className="h-9 w-9 shrink-0 rounded-xl object-cover ring-1 ring-slate-200 shadow-xs"
+                                    />
+                                ) : (
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 font-black text-sm text-white shadow-xs">
+                                        {user.name.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
                                 <div className="hidden text-left sm:block">
                                     <span className="block text-xs font-black text-slate-900 leading-tight truncate max-w-[120px]">
                                         {user.name}
@@ -291,12 +337,25 @@ export default function KeuanganLayout({ children }) {
                             {profileDropdownOpen && (
                                 <div className="absolute right-0 mt-2 w-64 rounded-2xl border-2 border-slate-300 bg-white p-2 shadow-xl z-50">
                                     {/* User header */}
-                                    <div className="border-b border-slate-100 px-3 py-2.5">
-                                        <p className="text-xs font-black text-slate-900 truncate">{user.name}</p>
-                                        <p className="text-[11px] font-medium text-slate-500 truncate">{user.email}</p>
-                                        <span className="mt-1.5 inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-black text-emerald-900 border border-emerald-300 capitalize">
-                                            Peran: Keuangan
-                                        </span>
+                                    <div className="flex items-center gap-3 border-b border-slate-100 px-3 py-2.5">
+                                        {user.avatar ? (
+                                            <img
+                                                src={user.avatar_url || `/storage/${user.avatar}`}
+                                                alt={user.name}
+                                                className="h-10 w-10 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
+                                            />
+                                        ) : (
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 font-black text-base text-white shadow-xs">
+                                                {user.name.charAt(0).toUpperCase()}
+                                            </div>
+                                        )}
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-black text-slate-900 truncate">{user.name}</p>
+                                            <p className="text-[11px] font-medium text-slate-500 truncate">{user.email}</p>
+                                            <span className="mt-1 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-900 border border-emerald-300 capitalize">
+                                                Peran: Keuangan
+                                            </span>
+                                        </div>
                                     </div>
 
                                     {/* Action Links */}
@@ -332,7 +391,11 @@ export default function KeuanganLayout({ children }) {
                     </div>
                 </header>
 
-                <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+                <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                    <div className="animate-fade-in-up transition-all duration-300">
+                        {children}
+                    </div>
+                </main>
             </div>
         </div>
     );

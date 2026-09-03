@@ -20,14 +20,17 @@ export default function Login({ status, canResetPassword }) {
 
     return (
         <GuestLayout>
-            <Head title="Masuk - E-Req RSJ Tampan" />
+            <Head title="Masuk - E-BLUD RSJ Tampan" />
 
-            <div className="mb-6">
-                <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                    Masuk ke Akun
+            <div className="mb-6 text-center">
+                <h2 className="text-lg sm:text-xl font-black tracking-tight text-slate-900">
+                    Sistem Informasi Perencanaan & Keuangan E-BLUD
                 </h2>
-                <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-                    Silakan masukkan email dan kata sandi untuk mengakses portal RSJ Tampan.
+                <p className="mt-1 text-xs font-semibold text-emerald-800">
+                    Rumah Sakit Jiwa Tampan Provinsi Riau
+                </p>
+                <p className="mt-2 text-[11px] text-slate-500 font-medium">
+                    Masukkan email dan kata sandi Anda untuk mengakses portal kerja.
                 </p>
             </div>
 

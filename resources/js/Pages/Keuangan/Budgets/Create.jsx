@@ -17,7 +17,7 @@ export default function Create() {
 
     return (
         <KeuanganLayout>
-            <Head title="Tambah Pagu Anggaran - E-Req RSJ Tampan" />
+            <Head title="Tambah Pagu Anggaran - E-BLUD RSJ Tampan" />
 
             <div className="mx-auto max-w-3xl space-y-6">
                 {/* Back Link & Header */}

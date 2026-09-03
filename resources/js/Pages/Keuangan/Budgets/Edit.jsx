@@ -18,7 +18,7 @@ export default function Edit({ budget }) {
 
     return (
         <KeuanganLayout>
-            <Head title={`Edit Pagu ${budget.account_name} - E-Req RSJ Tampan`} />
+            <Head title={`Edit Pagu ${budget.account_name} - E-BLUD RSJ Tampan`} />
 
             <div className="mx-auto max-w-3xl space-y-6">
                 {/* Back Link & Header */}

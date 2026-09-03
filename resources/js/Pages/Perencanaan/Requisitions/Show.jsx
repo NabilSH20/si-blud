@@ -1,3 +1,4 @@
+import AuditTrailTimeline from '@/Components/AuditTrailTimeline';
 import PerencanaanLayout from '@/Layouts/PerencanaanLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
@@ -130,7 +131,7 @@ export default function Show({ requisition }) {
 
     return (
         <PerencanaanLayout>
-            <Head title={`Verifikasi ${requisition.requisition_number} - E-Req RSJ Tampan`} />
+            <Head title={`Verifikasi ${requisition.requisition_number} - E-BLUD RSJ Tampan`} />
 
             <div className="mx-auto max-w-5xl space-y-6">
                 {/* Header Back & Info */}
@@ -449,6 +450,9 @@ export default function Show({ requisition }) {
                         </div>
                     )}
                 </form>
+
+                {/* Jejak Audit Timeline */}
+                <AuditTrailTimeline requisition={requisition} />
             </div>
 
             {/* Rejection Confirmation Modal */}
