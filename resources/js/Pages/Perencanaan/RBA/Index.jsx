@@ -60,10 +60,10 @@ export default function Index({ rbas = [], current_year = 2026 }) {
             </div>
 
             {/* Main Table */}
-            <div className="overflow-hidden rounded-2xl border-2 border-slate-300 bg-white shadow-md">
-                <div className="border-b-2 border-slate-200 bg-slate-100 px-6 py-4 flex items-center justify-between">
+            <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-shadow">
+                <div className="border-b border-emerald-100 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-slate-50/50 px-6 py-4 flex items-center justify-between">
                     <div>
-                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
                             Daftar Dokumen RBA Tahunan
                         </h3>
                         <p className="text-xs text-slate-500 font-medium">
@@ -73,19 +73,19 @@ export default function Index({ rbas = [], current_year = 2026 }) {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-slate-700">
-                        <thead className="border-b-2 border-slate-300 bg-emerald-50/80 text-xs font-bold uppercase tracking-wider text-slate-800">
+                    <table className="w-full text-left text-sm text-slate-700 divide-y divide-emerald-100 border-collapse">
+                        <thead className="bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90 border-b border-emerald-100 text-xs font-bold uppercase tracking-wider text-emerald-950">
                             <tr>
-                                <th className="px-4 py-3.5 text-center w-14 border-r-2 border-slate-200">Tahun</th>
-                                <th className="px-5 py-3.5 border-r-2 border-slate-200">Target Pendapatan (IDR)</th>
-                                <th className="px-5 py-3.5 border-r-2 border-slate-200">Rencana Belanja (IDR)</th>
-                                <th className="px-5 py-3.5 border-r-2 border-slate-200">Proyeksi Surplus / Defisit</th>
-                                <th className="px-4 py-3.5 text-center border-r-2 border-slate-200">Status Dokumen</th>
-                                <th className="px-5 py-3.5 border-r-2 border-slate-200">Catatan Perencanaan</th>
-                                <th className="px-4 py-3.5 text-center w-28">Aksi</th>
+                                <th className="px-4 py-3.5 text-center w-14 text-emerald-950">Tahun</th>
+                                <th className="px-5 py-3.5 text-emerald-950">Target Pendapatan (IDR)</th>
+                                <th className="px-5 py-3.5 text-emerald-950">Rencana Belanja (IDR)</th>
+                                <th className="px-5 py-3.5 text-emerald-950">Proyeksi Surplus / Defisit</th>
+                                <th className="px-4 py-3.5 text-center text-emerald-950">Status Dokumen</th>
+                                <th className="px-5 py-3.5 text-emerald-950">Catatan Perencanaan</th>
+                                <th className="px-4 py-3.5 text-center w-28 text-emerald-950">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y-2 divide-slate-200">
+                        <tbody className="divide-y divide-slate-100 bg-white">
                             {rbas.length > 0 ? (
                                 rbas.map((rba) => {
                                     const projection = Number(rba.target_revenue) - Number(rba.planned_expense);
@@ -93,17 +93,17 @@ export default function Index({ rbas = [], current_year = 2026 }) {
                                     const isDisahkan = rba.status === 'Disahkan';
 
                                     return (
-                                        <tr key={rba.id} className="transition-colors duration-200 hover:bg-emerald-50/60">
-                                            <td className="px-4 py-4 text-center font-black text-slate-900 border-r-2 border-slate-200 text-base">
+                                        <tr key={rba.id} className="hover:bg-emerald-50/40 transition-colors duration-150">
+                                            <td className="px-4 py-4 text-center font-black text-slate-900 text-base">
                                                 {rba.year}
                                             </td>
-                                            <td className="px-5 py-4 font-black text-emerald-700 border-r-2 border-slate-200 whitespace-nowrap">
+                                            <td className="px-5 py-4 font-black text-emerald-700 whitespace-nowrap">
                                                 {formatRupiah(rba.target_revenue)}
                                             </td>
-                                            <td className="px-5 py-4 font-black text-amber-700 border-r-2 border-slate-200 whitespace-nowrap">
+                                            <td className="px-5 py-4 font-black text-amber-700 whitespace-nowrap">
                                                 {formatRupiah(rba.planned_expense)}
                                             </td>
-                                            <td className="px-5 py-4 border-r-2 border-slate-200 whitespace-nowrap">
+                                            <td className="px-5 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-2">
                                                     <span className={`text-sm font-black ${isSurplus ? 'text-emerald-700' : 'text-rose-700'}`}>
                                                         {formatRupiah(projection)}
@@ -115,7 +115,7 @@ export default function Index({ rbas = [], current_year = 2026 }) {
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-4 text-center border-r-2 border-slate-200 whitespace-nowrap">
+                                            <td className="px-4 py-4 text-center whitespace-nowrap">
                                                 {isDisahkan ? (
                                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 border border-emerald-300">
                                                         <svg className="h-3.5 w-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
@@ -130,7 +130,7 @@ export default function Index({ rbas = [], current_year = 2026 }) {
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-5 py-4 text-xs text-slate-600 border-r-2 border-slate-200">
+                                            <td className="px-5 py-4 text-xs text-slate-600">
                                                 {rba.notes || '-'}
                                             </td>
                                             <td className="px-4 py-4 text-center whitespace-nowrap">
@@ -169,7 +169,7 @@ export default function Index({ rbas = [], current_year = 2026 }) {
             {/* Sahkan Confirmation Modal */}
             {showSahkanModal && selectedRba && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-                    <div className="w-full max-w-md rounded-2xl border-2 border-slate-300 bg-white p-6 shadow-2xl space-y-4">
+                    <div className="w-full max-w-md rounded-2xl border border-emerald-100/90 bg-white p-6 shadow-2xl space-y-4">
                         <div className="flex items-center gap-3 text-emerald-600">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
                                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">

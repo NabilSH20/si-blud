@@ -43,15 +43,15 @@ export default function Index({ budgets = [], summary = {} }) {
             {/* Summary KPI Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
                 {/* Total Pagu Awal */}
-                <div className="bg-white rounded-2xl shadow-sm border-2 border-slate-200/80 p-5 flex items-center justify-between">
-                    <div>
+                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
+                    <div className="min-w-0 flex-1 mr-2">
                         <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Pagu DPA</p>
                         <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1.5 truncate">
                             {formatRupiah(summary.total_initial)}
                         </h3>
                         <p className="mt-1 text-[11px] font-bold text-slate-500">Alokasi Awal Rekening</p>
                     </div>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-500/20">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-500/20">
                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
                         </svg>
@@ -59,15 +59,15 @@ export default function Index({ budgets = [], summary = {} }) {
                 </div>
 
                 {/* Total Terpakai (Realisasi) */}
-                <div className="bg-white rounded-2xl shadow-sm border-2 border-slate-200/80 p-5 flex items-center justify-between">
-                    <div>
+                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
+                    <div className="min-w-0 flex-1 mr-2">
                         <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Terpakai</p>
                         <h3 className="text-xl sm:text-2xl font-black text-amber-600 mt-1.5 truncate">
                             {formatRupiah(summary.total_spent)}
                         </h3>
                         <p className="mt-1 text-[11px] font-bold text-amber-700">Realisasi Belanja Pengadaan</p>
                     </div>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-500/20">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 ring-1 ring-amber-500/20">
                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -75,15 +75,15 @@ export default function Index({ budgets = [], summary = {} }) {
                 </div>
 
                 {/* Sisa Anggaran */}
-                <div className="bg-white rounded-2xl shadow-sm border-2 border-slate-200/80 p-5 flex items-center justify-between">
-                    <div>
+                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
+                    <div className="min-w-0 flex-1 mr-2">
                         <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Sisa Anggaran</p>
                         <h3 className="text-xl sm:text-2xl font-black text-emerald-700 mt-1.5 truncate">
                             {formatRupiah(summary.total_remaining)}
                         </h3>
                         <p className="mt-1 text-[11px] font-bold text-emerald-600">Saldo Rekening Tersedia</p>
                     </div>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-500/20">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-500/20">
                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -91,8 +91,8 @@ export default function Index({ budgets = [], summary = {} }) {
                 </div>
 
                 {/* Persentase Realisasi */}
-                <div className="bg-white rounded-2xl shadow-sm border-2 border-slate-200/80 p-5 flex items-center justify-between">
-                    <div>
+                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
+                    <div className="min-w-0 flex-1 mr-2">
                         <p className="text-xs font-bold uppercase tracking-wider text-slate-500">% Realisasi Fisik</p>
                         <h3 className="text-xl sm:text-2xl font-black text-teal-700 mt-1.5">
                             {summary.overall_percentage}%
@@ -104,54 +104,54 @@ export default function Index({ budgets = [], summary = {} }) {
                             />
                         </div>
                     </div>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600 ring-1 ring-teal-500/20 font-black text-sm">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 ring-1 ring-teal-500/20 font-black text-sm">
                         %
                     </div>
                 </div>
             </div>
 
-            {/* Main Table: Standardized High-Contrast Container */}
-            <div className="overflow-hidden rounded-2xl border-2 border-slate-300 bg-white shadow-md">
+            {/* Main Table: Standardized Unified Container */}
+            <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-shadow">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-slate-700">
-                        <thead className="border-b-2 border-slate-300 bg-emerald-50/80 text-xs font-bold uppercase tracking-wider text-slate-800">
+                    <table className="w-full text-left text-sm text-slate-700 divide-y divide-emerald-100 border-collapse">
+                        <thead className="bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90 border-b border-emerald-100 text-xs font-bold uppercase tracking-wider text-emerald-950">
                             <tr>
-                                <th className="px-4 py-3.5 text-center w-12 border-r-2 border-slate-200">No</th>
-                                <th className="px-5 py-3.5 border-r-2 border-slate-200">Kode Rekening</th>
-                                <th className="px-5 py-3.5 border-r-2 border-slate-200">Nama Rekening Belanja</th>
-                                <th className="px-4 py-3.5 text-center border-r-2 border-slate-200">Tahun</th>
-                                <th className="px-5 py-3.5 text-right border-r-2 border-slate-200">Total Pagu (Initial)</th>
-                                <th className="px-5 py-3.5 text-right border-r-2 border-slate-200">Total Terpakai (Spent)</th>
-                                <th className="px-5 py-3.5 text-right border-r-2 border-slate-200">Sisa Anggaran</th>
-                                <th className="px-4 py-3.5 text-center">% Realisasi</th>
+                                <th className="px-4 py-3.5 text-center w-12 text-emerald-950">No</th>
+                                <th className="px-5 py-3.5 text-emerald-950">Kode Rekening</th>
+                                <th className="px-5 py-3.5 text-emerald-950">Nama Rekening Belanja</th>
+                                <th className="px-4 py-3.5 text-center text-emerald-950">Tahun</th>
+                                <th className="px-5 py-3.5 text-right text-emerald-950">Total Pagu (Initial)</th>
+                                <th className="px-5 py-3.5 text-right text-emerald-950">Total Terpakai (Spent)</th>
+                                <th className="px-5 py-3.5 text-right text-emerald-950">Sisa Anggaran</th>
+                                <th className="px-4 py-3.5 text-center text-emerald-950">% Realisasi</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y-2 divide-slate-200">
+                        <tbody className="divide-y divide-slate-100 bg-white">
                             {budgets.length > 0 ? (
                                 budgets.map((budget, index) => (
                                     <tr
                                         key={budget.id}
-                                        className="transition-colors duration-200 hover:bg-emerald-50/60"
+                                        className="hover:bg-emerald-50/40 transition-colors duration-150"
                                     >
-                                        <td className="px-4 py-3.5 text-center font-bold text-slate-500 border-r-2 border-slate-200">
-                                            {index + 1}
+                                        <td className="px-4 py-3.5 text-center font-mono text-xs font-semibold text-slate-400">
+                                            #{index + 1}
                                         </td>
-                                        <td className="px-5 py-3.5 font-mono text-xs font-bold text-slate-900 border-r-2 border-slate-200 whitespace-nowrap">
+                                        <td className="px-5 py-3.5 font-mono text-xs font-bold text-slate-900 whitespace-nowrap">
                                             {budget.account_code}
                                         </td>
-                                        <td className="px-5 py-3.5 font-semibold text-slate-800 border-r-2 border-slate-200">
+                                        <td className="px-5 py-3.5 font-semibold text-slate-800">
                                             {budget.account_name}
                                         </td>
-                                        <td className="px-4 py-3.5 text-center font-bold text-slate-700 border-r-2 border-slate-200">
+                                        <td className="px-4 py-3.5 text-center font-bold text-slate-700">
                                             {budget.period_year}
                                         </td>
-                                        <td className="px-5 py-3.5 text-right font-bold text-slate-900 border-r-2 border-slate-200 whitespace-nowrap">
+                                        <td className="px-5 py-3.5 text-right font-bold text-slate-900 whitespace-nowrap">
                                             {formatRupiah(budget.total_budget)}
                                         </td>
-                                        <td className="px-5 py-3.5 text-right font-bold text-amber-600 border-r-2 border-slate-200 whitespace-nowrap">
+                                        <td className="px-5 py-3.5 text-right font-bold text-amber-600 whitespace-nowrap">
                                             {formatRupiah(budget.total_spent)}
                                         </td>
-                                        <td className="px-5 py-3.5 text-right font-bold text-emerald-700 border-r-2 border-slate-200 whitespace-nowrap">
+                                        <td className="px-5 py-3.5 text-right font-bold text-emerald-700 whitespace-nowrap">
                                             {formatRupiah(budget.remaining_budget)}
                                         </td>
                                         <td className="px-4 py-3.5 text-center whitespace-nowrap">
@@ -178,21 +178,21 @@ export default function Index({ budgets = [], summary = {} }) {
                             )}
                         </tbody>
                         {budgets.length > 0 && (
-                            <tfoot className="border-t-2 border-slate-300 bg-slate-100/90 font-black text-slate-900">
+                            <tfoot className="border-t-2 border-emerald-200 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90 font-bold text-slate-900">
                                 <tr>
-                                    <td colSpan={4} className="px-5 py-4 text-right border-r-2 border-slate-200 uppercase tracking-wider text-xs">
+                                    <td colSpan={4} className="px-5 py-4 text-right uppercase tracking-wider text-xs text-emerald-950 font-bold">
                                         TOTAL REKAPITULASI ANGGARAN:
                                     </td>
-                                    <td className="px-5 py-4 text-right border-r-2 border-slate-200 text-slate-900 whitespace-nowrap">
+                                    <td className="px-5 py-4 text-right text-slate-900 whitespace-nowrap font-black">
                                         {formatRupiah(summary.total_initial)}
                                     </td>
-                                    <td className="px-5 py-4 text-right border-r-2 border-slate-200 text-amber-700 whitespace-nowrap">
+                                    <td className="px-5 py-4 text-right text-amber-700 whitespace-nowrap font-black">
                                         {formatRupiah(summary.total_spent)}
                                     </td>
-                                    <td className="px-5 py-4 text-right border-r-2 border-slate-200 text-emerald-800 whitespace-nowrap">
+                                    <td className="px-5 py-4 text-right text-emerald-800 whitespace-nowrap font-black">
                                         {formatRupiah(summary.total_remaining)}
                                     </td>
-                                    <td className="px-4 py-4 text-center text-teal-800 whitespace-nowrap">
+                                    <td className="px-4 py-4 text-center text-teal-800 whitespace-nowrap font-black">
                                         {summary.overall_percentage}%
                                     </td>
                                 </tr>

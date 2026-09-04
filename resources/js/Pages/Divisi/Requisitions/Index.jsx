@@ -1,6 +1,7 @@
 import DivisiLayout from '@/Layouts/DivisiLayout';
+import Pagination from '@/Components/Pagination';
 import { Head, Link } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -58,6 +59,8 @@ const getStatusBadge = (status) => {
 export default function Index({ requisitions = [], division, success, error }) {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     const filteredRequisitions = useMemo(() => {
         return requisitions.filter((req) => {
@@ -71,6 +74,16 @@ export default function Index({ requisitions = [], division, success, error }) {
             return matchesStatus && matchesSearch;
         });
     }, [requisitions, search, statusFilter]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, statusFilter]);
+
+    const totalPages = Math.ceil(filteredRequisitions.length / itemsPerPage) || 1;
+    const paginatedRequisitions = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredRequisitions.slice(start, start + itemsPerPage);
+    }, [filteredRequisitions, currentPage, itemsPerPage]);
 
     return (
         <DivisiLayout>
@@ -125,13 +138,13 @@ export default function Index({ requisitions = [], division, success, error }) {
                 </div>
             )}
 
-            {/* Table Container Card (Batas Jelas & Kontras) */}
-            <div className="overflow-hidden rounded-2xl border-2 border-slate-300 bg-white shadow-md">
+            {/* Table Container Card (Clean & Modern) */}
+            <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-all duration-200">
                 {/* Search & Filter Toolbar */}
-                <div className="flex flex-col gap-3 border-b-2 border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 border-b border-emerald-100 bg-gradient-to-r from-emerald-50/70 via-teal-50/30 to-slate-50/50 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-1 flex-col gap-2.5 sm:flex-row sm:items-center">
                         <div className="relative flex-1 sm:max-w-xs">
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                 </svg>
@@ -141,7 +154,7 @@ export default function Index({ requisitions = [], division, success, error }) {
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Cari nomor pengajuan..."
-                                className="block w-full rounded-xl border-2 border-slate-300 bg-white pl-9 pr-8 text-sm text-slate-900 placeholder-slate-400 font-medium transition-all duration-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/30"
+                                className="block w-full rounded-xl border border-slate-300 bg-white pl-9 pr-8 py-2 text-sm text-slate-900 placeholder-slate-400 font-medium transition focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500"
                             />
                             {search && (
                                 <button
@@ -162,9 +175,9 @@ export default function Index({ requisitions = [], division, success, error }) {
                                 onClick={() => setStatusFilter('ALL')}
                                 className={`rounded-lg px-3 py-1.5 font-bold transition border ${
                                     statusFilter === 'ALL'
-                                        ? 'bg-emerald-600 text-white border-emerald-700 shadow-2xs'
-                                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                                }`}
+                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                                  }`}
                             >
                                 Semua ({requisitions.length})
                             </button>
@@ -173,9 +186,9 @@ export default function Index({ requisitions = [], division, success, error }) {
                                 onClick={() => setStatusFilter('Pending_Perencanaan')}
                                 className={`rounded-lg px-3 py-1.5 font-bold transition border ${
                                     statusFilter === 'Pending_Perencanaan'
-                                        ? 'bg-amber-600 text-white border-amber-700 shadow-2xs'
-                                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                                }`}
+                                        ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                                  }`}
                             >
                                 Perencanaan
                             </button>
@@ -184,9 +197,9 @@ export default function Index({ requisitions = [], division, success, error }) {
                                 onClick={() => setStatusFilter('Diproses_Keuangan')}
                                 className={`rounded-lg px-3 py-1.5 font-bold transition border ${
                                     statusFilter === 'Diproses_Keuangan'
-                                        ? 'bg-blue-600 text-white border-blue-700 shadow-2xs'
-                                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                                }`}
+                                        ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                                  }`}
                             >
                                 Keuangan
                             </button>
@@ -195,54 +208,54 @@ export default function Index({ requisitions = [], division, success, error }) {
                                 onClick={() => setStatusFilter('Disetujui_Selesai')}
                                 className={`rounded-lg px-3 py-1.5 font-bold transition border ${
                                     statusFilter === 'Disetujui_Selesai'
-                                        ? 'bg-emerald-600 text-white border-emerald-700 shadow-2xs'
-                                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                                }`}
+                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                                  }`}
                             >
                                 Selesai
                             </button>
                         </div>
                     </div>
 
-                    <div className="text-sm text-slate-600 font-medium">
+                    <div className="text-xs sm:text-sm text-slate-500 font-medium">
                         Menampilkan <span className="font-bold text-slate-900">{filteredRequisitions.length}</span> dari {requisitions.length} data
                     </div>
                 </div>
 
-                {/* Table Hidup dengan Garis Batas Kolom & Baris Jelas */}
+                {/* Modern Soft Table */}
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y-2 divide-slate-200 border-collapse">
-                        <thead className="bg-emerald-50/80 font-bold border-b-2 border-emerald-200">
-                            <tr className="divide-x-2 divide-slate-200">
-                                <th className="w-16 px-4 py-4 text-center text-sm font-black uppercase tracking-wider text-slate-800">
+                    <table className="min-w-full divide-y divide-emerald-100">
+                        <thead className="bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90 font-bold border-b border-emerald-100 text-emerald-950 uppercase tracking-wider text-xs">
+                            <tr>
+                                <th className="w-16 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
                                     No
                                 </th>
-                                <th className="w-40 px-6 py-4 text-left text-sm font-black uppercase tracking-wider text-slate-800">
+                                <th className="w-36 px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-emerald-950">
                                     Tanggal
                                 </th>
-                                <th className="px-6 py-4 text-left text-sm font-black uppercase tracking-wider text-slate-800">
-                                    Nomor Requisition
+                                <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                    Nomor & Klasifikasi Belanja
                                 </th>
-                                <th className="w-40 px-6 py-4 text-center text-sm font-black uppercase tracking-wider text-slate-800">
-                                    Jumlah Barang
+                                <th className="w-32 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                    Item
                                 </th>
-                                <th className="w-48 px-6 py-4 text-right text-sm font-black uppercase tracking-wider text-slate-800">
+                                <th className="w-44 px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-emerald-950">
                                     Estimasi Nilai
                                 </th>
-                                <th className="w-52 px-6 py-4 text-center text-sm font-black uppercase tracking-wider text-slate-800">
+                                <th className="w-48 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
                                     Status
                                 </th>
-                                <th className="w-36 px-6 py-4 text-center text-sm font-black uppercase tracking-wider text-slate-800">
+                                <th className="w-28 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
                                     Aksi
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y-2 divide-slate-200 bg-white">
+                        <tbody className="divide-y divide-slate-100 bg-white">
                             {filteredRequisitions.length === 0 ? (
                                 <tr>
                                     <td colSpan="7" className="px-6 py-16 text-center bg-white">
-                                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 border border-slate-200">
-                                            <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                                             </svg>
                                         </div>
@@ -267,52 +280,66 @@ export default function Index({ requisitions = [], division, success, error }) {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredRequisitions.map((req, idx) => {
+                                paginatedRequisitions.map((req, idx) => {
                                     const badge = getStatusBadge(req.status);
-                                    const totalCost = req.requisition_details?.reduce(
-                                        (sum, d) => sum + (Number(d.quantity_requested || 0) * Number(d.unit_price || 0)),
-                                        0
-                                    ) || 0;
+                                    const totalCost = Number(req.total_estimated || 0) > 0
+                                        ? Number(req.total_estimated)
+                                        : req.requisition_details?.reduce(
+                                            (sum, d) => sum + (Number(d.quantity_requested || 0) * Number(d.unit_price || 0)),
+                                            0
+                                        ) || 0;
                                     const itemCount = req.requisition_details?.length || 0;
 
                                     return (
                                         <tr
                                             key={req.id}
-                                            className="divide-x-2 divide-slate-200 hover:bg-emerald-50/60 transition-colors duration-200 cursor-default"
+                                            className="hover:bg-emerald-50/40 transition-colors duration-150"
                                         >
-                                            <td className="whitespace-nowrap px-4 py-4 text-center text-sm font-bold text-slate-600 bg-slate-50/50">
-                                                #{idx + 1}
+                                            <td className="whitespace-nowrap px-4 py-4 text-center text-xs font-semibold text-slate-500">
+                                                #{(currentPage - 1) * itemsPerPage + idx + 1}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm font-bold text-slate-700">
+                                            <td className="whitespace-nowrap px-4 py-4 text-xs font-semibold text-slate-700">
                                                 {formatTanggal(req.submission_date)}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4">
-                                                <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-900 border border-emerald-300">
-                                                    {req.requisition_number}
-                                                </span>
+                                            <td className="px-5 py-4">
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-sm text-slate-900">
+                                                             {req.requisition_number}
+                                                        </span>
+                                                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                                                            req.jenis_belanja === 'Modal'
+                                                                ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                                                                : 'bg-blue-100 text-blue-800 border border-blue-200'
+                                                        }`}>
+                                                            {req.jenis_belanja || 'Operasi'}
+                                                        </span>
+                                                    </div>
+                                                    {req.rba_account && (
+                                                        <p className="text-xs text-slate-500 line-clamp-1">
+                                                            <span className="font-mono text-[11px] font-semibold text-slate-600">[{req.rba_account.account_code}]</span> {req.rba_account.account_name}
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-center text-sm font-bold text-slate-800">
+                                            <td className="whitespace-nowrap px-4 py-4 text-center text-xs font-semibold text-slate-700">
                                                 {itemCount} macam
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-black text-emerald-700">
+                                            <td className="whitespace-nowrap px-5 py-4 text-right text-sm font-bold text-emerald-700">
                                                 {formatRupiah(totalCost)}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-center">
+                                            <td className="whitespace-nowrap px-4 py-4 text-center">
                                                 <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border ${badge.bg}`}>
                                                     <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
                                                     {badge.label}
                                                 </span>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-center">
+                                            <td className="whitespace-nowrap px-4 py-4 text-center">
                                                 <Link
                                                     href={route('requisitions.show', req.id)}
-                                                    className="inline-flex items-center gap-1.5 rounded-xl border-2 border-slate-300 bg-white hover:bg-emerald-50 hover:border-emerald-500 hover:text-emerald-700 active:scale-95 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition-all duration-200"
+                                                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition"
                                                 >
-                                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    </svg>
-                                                    Rincian
+                                                    Rincian &rarr;
                                                 </Link>
                                             </td>
                                         </tr>
@@ -322,6 +349,15 @@ export default function Index({ requisitions = [], division, success, error }) {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination Component */}
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={filteredRequisitions.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={(p) => setCurrentPage(p)}
+                />
             </div>
         </DivisiLayout>
     );

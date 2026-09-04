@@ -14,68 +14,89 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $igd = Division::where('division_code', 'IGD')->first();
-        $far = Division::where('division_code', 'FAR')->first();
-        $poli = Division::where('division_code', 'POLI')->first();
-        $gizi = Division::where('division_code', 'GIZI')->first();
+        $yan = Division::where('division_code', 'YAN')->first();
+        $rawat = Division::where('division_code', 'RAWAT')->first();
+        $penunjang = Division::where('division_code', 'PENUNJANG')->first();
+        $ren = Division::where('division_code', 'REN')->first();
+        $keu = Division::where('division_code', 'KEU')->first();
+        $tu = Division::where('division_code', 'TU')->first();
 
         $users = [
+            // The Requesters (Peminta)
             [
-                'name' => 'Administrator E-BLUD',
-                'email' => 'admin@rsj.com',
-                'role' => 'admin',
-                'division_id' => null,
+                'name' => 'Admin Bidang Pelayanan',
+                'email' => 'pelayanan@rsj.com',
+                'password' => Hash::make('password'),
+                'role' => 'divisi',
+                'division_id' => $yan?->id,
             ],
             [
-                'name' => 'Tim Perencanaan & Pengadaan',
+                'name' => 'Admin Bidang Keperawatan',
+                'email' => 'keperawatan@rsj.com',
+                'password' => Hash::make('password'),
+                'role' => 'divisi',
+                'division_id' => $rawat?->id,
+            ],
+            [
+                'name' => 'Admin Bidang Penunjang',
+                'email' => 'penunjang@rsj.com',
+                'password' => Hash::make('password'),
+                'role' => 'divisi',
+                'division_id' => $penunjang?->id,
+            ],
+
+            // The Managers (Perencanaan, Keuangan, Admin)
+            [
+                'name' => 'Staf Bagian Perencanaan',
                 'email' => 'perencanaan@rsj.com',
+                'password' => Hash::make('password'),
                 'role' => 'perencanaan',
-                'division_id' => null,
+                'division_id' => $ren?->id,
             ],
             [
                 'name' => 'Bendahara & Pejabat Keuangan',
                 'email' => 'keuangan@rsj.com',
+                'password' => Hash::make('password'),
                 'role' => 'keuangan',
-                'division_id' => null,
+                'division_id' => $keu?->id,
             ],
             [
-                'name' => 'dr. Hendra Pratama (Kepala IGD)',
-                'email' => 'igd@rsj.com',
-                'role' => 'divisi',
-                'division_id' => $igd?->id,
+                'name' => 'Administrator E-BLUD',
+                'email' => 'admin@rsj.com',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+                'division_id' => $tu?->id,
+            ],
+
+            // Secondary / Legacy accounts for testing compatibility
+            [
+                'name' => 'Admin RSJ Tampan',
+                'email' => 'admin@rsjtampan.riau.go.id',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+                'division_id' => $tu?->id,
             ],
             [
-                'name' => 'apt. Siti Rahmawati, S.Farm (Farmasi)',
-                'email' => 'farmasi@rsj.com',
-                'role' => 'divisi',
-                'division_id' => $far?->id,
+                'name' => 'Tim Perencanaan RSJ',
+                'email' => 'perencanaan@rsjtampan.riau.go.id',
+                'password' => Hash::make('password'),
+                'role' => 'perencanaan',
+                'division_id' => $ren?->id,
             ],
             [
-                'name' => 'dr. Maya Sartika, Sp.KJ (Poliklinik Jiwa)',
-                'email' => 'poli@rsj.com',
-                'role' => 'divisi',
-                'division_id' => $poli?->id,
-            ],
-            [
-                'name' => 'Dewi Lestari, S.Gz (Instalasi Gizi)',
-                'email' => 'gizi@rsj.com',
-                'role' => 'divisi',
-                'division_id' => $gizi?->id,
+                'name' => 'Bendahara Keuangan RSJ',
+                'email' => 'keuangan@rsjtampan.riau.go.id',
+                'password' => Hash::make('password'),
+                'role' => 'keuangan',
+                'division_id' => $keu?->id,
             ],
         ];
 
         foreach ($users as $userData) {
             User::updateOrCreate(
                 ['email' => $userData['email']],
-                [
-                    'name' => $userData['name'],
-                    'password' => Hash::make('password'),
-                    'role' => $userData['role'],
-                    'division_id' => $userData['division_id'],
-                    'email_verified_at' => now(),
-                ]
+                $userData
             );
         }
     }
 }
-

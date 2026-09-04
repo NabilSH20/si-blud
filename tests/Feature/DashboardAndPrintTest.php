@@ -122,7 +122,6 @@ class DashboardAndPrintTest extends TestCase
         RequisitionDetail::create([
             'requisition_id' => $requisition->id,
             'item_id' => $item->id,
-            'is_manual' => false,
             'quantity_requested' => 2,
             'quantity_approved' => 2,
             'unit_price' => 45000,

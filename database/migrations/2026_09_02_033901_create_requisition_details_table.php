@@ -15,13 +15,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('requisition_id')->constrained('requisitions')->cascadeOnDelete();
             $table->foreignId('item_id')->nullable()->constrained('items')->nullOnDelete();
-            $table->boolean('is_manual')->default(false);
-            $table->string('manual_item_name')->nullable();
-            $table->text('manual_specification')->nullable();
+            $table->string('item_name')->nullable();
+            $table->string('unit_type')->nullable();
+            $table->text('specification')->nullable();
             $table->integer('quantity_requested');
             $table->integer('quantity_approved')->nullable();
-            $table->decimal('unit_price', 15, 2);
-            $table->decimal('subtotal', 15, 2);
+            $table->decimal('unit_price', 18, 2)->default(0);
+            $table->decimal('subtotal', 18, 2)->default(0);
             $table->timestamps();
         });
     }

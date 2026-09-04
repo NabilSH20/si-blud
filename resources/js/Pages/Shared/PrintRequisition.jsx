@@ -104,6 +104,10 @@ export default function PrintRequisition({ requisition }) {
                                 <td className="font-bold py-1">Nama Pemohon</td>
                                 <td className="py-1">: {requisition.user?.name || '-'}</td>
                             </tr>
+                            <tr>
+                                <td className="font-bold py-1">Klasifikasi Belanja</td>
+                                <td className="py-1">: Belanja {requisition.jenis_belanja || 'Operasi'}</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -115,12 +119,16 @@ export default function PrintRequisition({ requisition }) {
                                 <td className="py-1">: {formatTanggal(requisition.submission_date)}</td>
                             </tr>
                             <tr>
-                                <td className="font-bold py-1">Status Dokumen</td>
-                                <td className="py-1">: <span className="font-bold uppercase">{requisition.status?.replace('_', ' ')}</span></td>
+                                <td className="font-bold py-1">Rekening RBA</td>
+                                <td className="py-1">: {requisition.rba_account ? `[${requisition.rba_account.account_code}] ${requisition.rba_account.account_name}` : '-'}</td>
                             </tr>
                             <tr>
-                                <td className="font-bold py-1">Tanggal Cetak</td>
-                                <td className="py-1">: {formatTanggal(new Date())}</td>
+                                <td className="font-bold py-1">Sumber Dana</td>
+                                <td className="py-1">: {requisition.sumber_dana || requisition.rba_account?.sumber_dana || 'BLUD RSJ Tampan'}</td>
+                            </tr>
+                            <tr>
+                                <td className="font-bold py-1">Status Dokumen</td>
+                                <td className="py-1">: <span className="font-bold uppercase">{requisition.status?.replace('_', ' ')}</span></td>
                             </tr>
                         </tbody>
                     </table>

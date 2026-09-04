@@ -13,38 +13,49 @@ class DivisionSeeder extends Seeder
     public function run(): void
     {
         $divisions = [
+            // The Requesters (Pelayanan, Perawatan, Penunjang)
             [
-                'name' => 'Instalasi Gawat Darurat (IGD)',
-                'division_code' => 'IGD',
+                'name' => 'Bidang Pelayanan',
+                'division_code' => 'YAN',
+                'group' => 'Pelayanan_Keperawatan',
             ],
             [
-                'name' => 'Poliklinik Jiwa Terpadu',
-                'division_code' => 'POLI',
+                'name' => 'Bidang Perawatan',
+                'division_code' => 'RAWAT',
+                'group' => 'Pelayanan_Keperawatan',
             ],
             [
-                'name' => 'Instalasi Farmasi',
-                'division_code' => 'FAR',
+                'name' => 'Bidang Penunjang',
+                'division_code' => 'PENUNJANG',
+                'group' => 'Pelayanan_Keperawatan',
+            ],
+
+            // The Managers (Perencanaan, Keuangan, Tata Usaha)
+            [
+                'name' => 'Bagian Perencanaan',
+                'division_code' => 'REN',
+                'group' => 'Umum_Kepegawaian',
             ],
             [
-                'name' => 'Instalasi Gizi & Tata Boga',
-                'division_code' => 'GIZI',
+                'name' => 'Bagian Keuangan',
+                'division_code' => 'KEU',
+                'group' => 'Umum_Kepegawaian',
             ],
             [
-                'name' => 'Subag Tata Usaha & Kepegawaian',
+                'name' => 'Subag Tata Usaha',
                 'division_code' => 'TU',
-            ],
-            [
-                'name' => 'Instalasi Rawat Inap Jiwa',
-                'division_code' => 'RANAP',
+                'group' => 'Umum_Kepegawaian',
             ],
         ];
 
         foreach ($divisions as $division) {
             Division::updateOrCreate(
                 ['division_code' => $division['division_code']],
-                ['name' => $division['name']]
+                [
+                    'name' => $division['name'],
+                    'group' => $division['group'],
+                ]
             );
         }
     }
 }
-

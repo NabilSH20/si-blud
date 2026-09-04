@@ -2,18 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class Budget extends Model
+class Budget extends RbaAccount
 {
-    protected $guarded = [];
-
-    protected function casts(): array
-    {
-        return [
-            'period_year' => 'integer',
-            'total_budget' => 'decimal:2',
-            'remaining_budget' => 'decimal:2',
-        ];
-    }
+    // Extends RbaAccount so all existing calls to Budget::query(), Budget::all(), etc. operate on rba_accounts table
 }

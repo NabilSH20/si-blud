@@ -191,27 +191,7 @@ export default function AdminLayout({ children }) {
                         </div>
                     </div>
 
-                    {/* Center Column: Dummy Search Bar */}
-                    <div className="hidden md:flex items-center w-full max-w-xs lg:max-w-md mx-4">
-                        <div className="relative w-full">
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                                </svg>
-                            </div>
-                            <input
-                                type="text"
-                                disabled
-                                placeholder="Cari data master, pengguna, atau divisi..."
-                                className="block w-full rounded-xl border-2 border-slate-200 bg-slate-100/70 pl-10 pr-12 py-2 text-xs font-medium text-slate-600 placeholder:text-slate-400 cursor-pointer hover:bg-slate-100 transition focus:outline-none"
-                            />
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                                <kbd className="inline-flex items-center rounded-md border border-slate-300 bg-white px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-400 shadow-2xs">
-                                    ⌘K
-                                </kbd>
-                            </div>
-                        </div>
-                    </div>
+
 
                     {/* Right Column: Actions & Profile Dropdown */}
                     <div className="flex items-center gap-2.5 sm:gap-3.5">

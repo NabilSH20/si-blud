@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Keuangan;
 
 use App\Http\Controllers\Controller;
-use App\Models\Budget;
+use App\Models\RbaAccount;
 use App\Models\Requisition;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +20,7 @@ class RequisitionController extends Controller
      */
     public function index(): Response
     {
-        $requisitions = Requisition::with(['division', 'user', 'requisitionDetails.item', 'budget'])
+        $requisitions = Requisition::with(['division', 'user', 'requisitionDetails.item', 'rbaAccount'])
             ->orderByRaw("
                 CASE
                     WHEN status = 'Diproses_Keuangan' THEN 0
@@ -45,10 +45,10 @@ class RequisitionController extends Controller
      */
     public function show(string $id): Response
     {
-        $requisition = Requisition::with(['division', 'user', 'requisitionDetails.item', 'budget'])
+        $requisition = Requisition::with(['division', 'user', 'requisitionDetails.item', 'rbaAccount'])
             ->findOrFail($id);
 
-        $budgets = Budget::orderBy('account_code')->get();
+        $budgets = RbaAccount::orderBy('account_code')->get();
 
         return Inertia::render('Keuangan/Requisitions/Show', [
             'requisition' => $requisition,
@@ -61,21 +61,23 @@ class RequisitionController extends Controller
      */
     public function update(Request $request, string $id): RedirectResponse
     {
-        $requisition = Requisition::with(['requisitionDetails.item'])->findOrFail($id);
+        $requisition = Requisition::with(['requisitionDetails.item', 'rbaAccount'])->findOrFail($id);
 
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:Disetujui_Selesai,Ditolak'],
-            'budget_id' => ['nullable', 'required_if:status,Disetujui_Selesai', 'exists:budgets,id'],
+            'budget_id' => ['nullable', 'exists:rba_accounts,id'],
+            'sp2d_number' => ['nullable', 'string', 'max:255'],
+            'receipt_number' => ['nullable', 'string', 'max:255'],
+            'notes_keuangan' => ['nullable', 'string', 'max:500'],
         ], [
             'status.required' => 'Status persetujuan wajib dipilih.',
             'status.in' => 'Status tidak valid.',
-            'budget_id.required_if' => 'Pilih rekening sumber pagu anggaran untuk memproses alokasi dana.',
             'budget_id.exists' => 'Rekening pagu anggaran yang dipilih tidak ditemukan.',
         ]);
 
         if ($validated['status'] === 'Disetujui_Selesai') {
             DB::transaction(function () use ($requisition, $validated) {
-                // Calculate grand total from approved quantities and standard price
+                // Calculate grand total from approved quantities and price
                 $grandTotal = 0;
                 foreach ($requisition->requisitionDetails as $detail) {
                     $qty = $detail->quantity_approved !== null
@@ -85,8 +87,17 @@ class RequisitionController extends Controller
                     $grandTotal += ($qty * $price);
                 }
 
+                // Determine budget ID (either passed from form or original requisition RBA account)
+                $budgetId = $validated['budget_id'] ?? $requisition->rba_account_id;
+
+                if (!$budgetId) {
+                    throw ValidationException::withMessages([
+                        'budget_id' => 'Rekening pagu anggaran belum ditentukan untuk pengajuan ini.',
+                    ]);
+                }
+
                 // Lock the budget record for update
-                $budget = Budget::lockForUpdate()->findOrFail($validated['budget_id']);
+                $budget = RbaAccount::lockForUpdate()->findOrFail($budgetId);
 
                 if ((float) $budget->remaining_budget < (float) $grandTotal) {
                     $formattedRemaining = 'Rp ' . number_format($budget->remaining_budget, 0, ',', '.');
@@ -97,23 +108,30 @@ class RequisitionController extends Controller
                     ]);
                 }
 
-                // Deduct from remaining_budget
+                // Deduct from remaining_budget, add to spent_budget
                 $budget->remaining_budget = (float) $budget->remaining_budget - (float) $grandTotal;
+                $budget->spent_budget = (float) $budget->spent_budget + (float) $grandTotal;
                 $budget->save();
 
                 // Finalize requisition
                 $requisition->update([
                     'status' => 'Disetujui_Selesai',
+                    'rba_account_id' => $budget->id,
                     'budget_id' => $budget->id,
+                    'total_approved' => $grandTotal,
+                    'sp2d_number' => $validated['sp2d_number'] ?? null,
+                    'receipt_number' => $validated['receipt_number'] ?? null,
+                    'notes_keuangan' => $validated['notes_keuangan'] ?? null,
                 ]);
             });
 
             return redirect()->route('keuangan.requisitions.index')
-                ->with('success', "Pengajuan {$requisition->requisition_number} telah disetujui, dan saldo pagu anggaran berhasil dipotong.");
+                ->with('success', "Pengajuan {$requisition->requisition_number} telah disetujui, dan saldo pagu anggaran berhasil dicairkan.");
         } else {
             // Status Ditolak
             $requisition->update([
                 'status' => 'Ditolak',
+                'notes_keuangan' => $validated['notes_keuangan'] ?? null,
             ]);
 
             return redirect()->route('keuangan.requisitions.index')
@@ -126,11 +144,10 @@ class RequisitionController extends Controller
      */
     public function print($id): Response
     {
-        $requisition = Requisition::with(['division', 'user', 'requisitionDetails.item'])->findOrFail($id);
+        $requisition = Requisition::with(['division', 'user', 'requisitionDetails.item', 'rbaAccount'])->findOrFail($id);
 
         return Inertia::render('Shared/PrintRequisition', [
             'requisition' => $requisition,
         ]);
     }
 }
-

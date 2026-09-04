@@ -1,6 +1,7 @@
 import KeuanganLayout from '@/Layouts/KeuanganLayout';
+import Pagination from '@/Components/Pagination';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -23,7 +24,15 @@ const formatTanggal = (dateString) => {
 export default function Index({ revenues = [], stats = {} }) {
     const [selectedRevenue, setSelectedRevenue] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
     const { delete: destroy, processing } = useForm();
+
+    const totalPages = Math.ceil(revenues.length / itemsPerPage) || 1;
+    const paginatedRevenues = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return revenues.slice(start, start + itemsPerPage);
+    }, [revenues, currentPage, itemsPerPage]);
 
     const handleDeleteClick = (revenue) => {
         setSelectedRevenue(revenue);
@@ -72,7 +81,7 @@ export default function Index({ revenues = [], stats = {} }) {
             {/* KPI Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
                 {/* Total Pendapatan Akumulasi */}
-                <div className="bg-white rounded-2xl shadow-sm border-2 border-slate-200/80 p-5 flex items-center justify-between">
+                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
                     <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Pendapatan</p>
                         <h3 className="text-xl sm:text-2xl font-black text-emerald-700 mt-1.5 truncate">
@@ -88,7 +97,7 @@ export default function Index({ revenues = [], stats = {} }) {
                 </div>
 
                 {/* Pendapatan Bulan Ini */}
-                <div className="bg-white rounded-2xl shadow-sm border-2 border-slate-200/80 p-5 flex items-center justify-between">
+                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
                     <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Bulan Ini</p>
                         <h3 className="text-xl sm:text-2xl font-black text-teal-700 mt-1.5 truncate">
@@ -104,7 +113,7 @@ export default function Index({ revenues = [], stats = {} }) {
                 </div>
 
                 {/* Pendapatan Hari Ini */}
-                <div className="bg-white rounded-2xl shadow-sm border-2 border-slate-200/80 p-5 flex items-center justify-between">
+                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
                     <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Hari Ini</p>
                         <h3 className="text-xl sm:text-2xl font-black text-blue-700 mt-1.5 truncate">
@@ -120,7 +129,7 @@ export default function Index({ revenues = [], stats = {} }) {
                 </div>
 
                 {/* Total Transaksi */}
-                <div className="bg-white rounded-2xl shadow-sm border-2 border-slate-200/80 p-5 flex items-center justify-between">
+                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
                     <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Transaksi</p>
                         <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1.5">
@@ -137,49 +146,49 @@ export default function Index({ revenues = [], stats = {} }) {
             </div>
 
             {/* Main Table Container */}
-            <div className="overflow-hidden rounded-2xl border-2 border-slate-300 bg-white shadow-md">
+            <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-shadow">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-slate-700">
-                        <thead className="border-b-2 border-slate-300 bg-emerald-50/80 text-xs font-bold uppercase tracking-wider text-slate-800">
+                    <table className="w-full text-left text-sm text-slate-700 divide-y divide-emerald-100 border-collapse">
+                        <thead className="bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90 font-bold border-b border-emerald-100 text-emerald-950 uppercase tracking-wider text-xs">
                             <tr>
-                                <th className="px-4 py-3.5 text-center w-12 border-r-2 border-slate-200">No</th>
-                                <th className="px-5 py-3.5 border-r-2 border-slate-200">Nomor Bukti</th>
-                                <th className="px-4 py-3.5 text-center border-r-2 border-slate-200">Tanggal</th>
-                                <th className="px-5 py-3.5 border-r-2 border-slate-200">Sumber Layanan</th>
-                                <th className="px-5 py-3.5 border-r-2 border-slate-200">Uraian / Keterangan</th>
-                                <th className="px-5 py-3.5 text-right border-r-2 border-slate-200">Nominal (IDR)</th>
-                                <th className="px-4 py-3.5 text-center w-24">Aksi</th>
+                                <th className="px-4 py-3.5 text-center w-14 text-emerald-950">No</th>
+                                <th className="px-5 py-3.5 text-emerald-950">Nomor Bukti</th>
+                                <th className="px-4 py-3.5 text-center text-emerald-950">Tanggal</th>
+                                <th className="px-5 py-3.5 text-emerald-950">Sumber Layanan</th>
+                                <th className="px-5 py-3.5 text-emerald-950">Uraian / Keterangan</th>
+                                <th className="px-5 py-3.5 text-right text-emerald-950">Nominal (IDR)</th>
+                                <th className="px-4 py-3.5 text-center w-24 text-emerald-950">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y-2 divide-slate-200">
+                        <tbody className="divide-y divide-slate-100 bg-white">
                             {revenues.length > 0 ? (
-                                revenues.map((item, index) => (
-                                    <tr key={item.id} className="transition-colors duration-200 hover:bg-emerald-50/60">
-                                        <td className="px-4 py-3.5 text-center font-bold text-slate-500 border-r-2 border-slate-200">
-                                            {index + 1}
+                                paginatedRevenues.map((item, index) => (
+                                    <tr key={item.id} className="transition-colors duration-150 hover:bg-emerald-50/40">
+                                        <td className="px-4 py-3.5 text-center text-xs font-semibold text-slate-500">
+                                            {(currentPage - 1) * itemsPerPage + index + 1}
                                         </td>
-                                        <td className="px-5 py-3.5 font-mono text-xs font-bold text-slate-900 border-r-2 border-slate-200 whitespace-nowrap">
+                                        <td className="px-5 py-3.5 font-mono text-xs font-bold text-slate-900 whitespace-nowrap">
                                             {item.revenue_number}
                                         </td>
-                                        <td className="px-4 py-3.5 text-center text-xs font-bold text-slate-600 border-r-2 border-slate-200 whitespace-nowrap">
+                                        <td className="px-4 py-3.5 text-center text-xs font-semibold text-slate-600 whitespace-nowrap">
                                             {formatTanggal(item.date)}
                                         </td>
-                                        <td className="px-5 py-3.5 font-bold text-slate-800 border-r-2 border-slate-200">
+                                        <td className="px-5 py-3.5 font-bold text-slate-800">
                                             <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800 border border-emerald-200">
                                                 {item.source}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-3.5 text-xs text-slate-600 border-r-2 border-slate-200">
+                                        <td className="px-5 py-3.5 text-xs text-slate-600">
                                             {item.description || '-'}
                                         </td>
-                                        <td className="px-5 py-3.5 text-right font-black text-emerald-700 border-r-2 border-slate-200 whitespace-nowrap">
+                                        <td className="px-5 py-3.5 text-right font-black text-emerald-700 whitespace-nowrap">
                                             {formatRupiah(item.amount)}
                                         </td>
                                         <td className="px-4 py-3.5 text-center whitespace-nowrap">
                                             <button
                                                 type="button"
                                                 onClick={() => handleDeleteClick(item)}
-                                                className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 transition"
+                                                className="inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition"
                                                 title="Hapus Catatan"
                                             >
                                                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -200,6 +209,15 @@ export default function Index({ revenues = [], stats = {} }) {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination Component */}
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={revenues.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={(p) => setCurrentPage(p)}
+                />
             </div>
 
             {/* Delete Confirmation Modal */}

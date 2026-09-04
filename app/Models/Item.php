@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Item extends Model
@@ -14,6 +15,11 @@ class Item extends Model
         return [
             'standard_price' => 'decimal:2',
         ];
+    }
+
+    public function rbaAccount(): BelongsTo
+    {
+        return $this->belongsTo(RbaAccount::class, 'rba_account_id');
     }
 
     public function requisitionDetails(): HasMany

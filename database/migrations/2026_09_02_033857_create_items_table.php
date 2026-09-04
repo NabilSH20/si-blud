@@ -13,11 +13,12 @@ return new class extends Migration
     {
         Schema::create('items', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('rba_account_id')->nullable()->constrained('rba_accounts')->nullOnDelete();
             $table->string('item_code')->unique();
             $table->string('name');
             $table->text('specification')->nullable();
-            $table->string('unit_type');
-            $table->decimal('standard_price', 15, 2);
+            $table->string('unit_type'); // e.g. 'Pcs', 'Box', 'Botol', 'Tablet', 'Ampul', 'Unit', 'Rim'
+            $table->decimal('standard_price', 18, 2)->default(0);
             $table->timestamps();
         });
     }

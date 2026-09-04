@@ -40,9 +40,20 @@ export default function Dashboard({
             <Head title="Dashboard Keuangan - E-BLUD RSJ Tampan" />
 
             {/* Hero Welcome Banner */}
-            <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-700 p-6 text-white shadow-lg sm:p-8">
-                <div className="absolute -right-10 -top-10 h-64 w-64 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none" />
-                <div className="absolute -bottom-8 right-32 h-48 w-48 rounded-full bg-teal-400/20 blur-2xl pointer-events-none" />
+            <div className="relative mb-8 overflow-hidden rounded-3xl bg-emerald-950 p-6 text-white shadow-xl shadow-emerald-950/20 sm:p-8">
+                {/* Hospital Background Image with Blur Effect */}
+                <img
+                    src="/images/bg.jpeg"
+                    alt="Gedung RSJ Tampan"
+                    className="pointer-events-none absolute inset-0 h-full w-full scale-105 object-cover object-center filter blur-[2px] brightness-75 transition-transform duration-700"
+                />
+
+                {/* Emerald & Teal Gradient Overlay to Preserve Brand Colors & High Contrast */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-emerald-900/90 via-emerald-800/85 to-teal-900/80 mix-blend-multiply" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-emerald-950/70 via-transparent to-black/20" />
+
+                <div className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 rounded-full bg-emerald-500/20 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-8 right-32 h-48 w-48 rounded-full bg-teal-400/20 blur-2xl" />
 
                 <div className="relative z-10 flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
                     <div className="max-w-xl">
@@ -78,7 +89,7 @@ export default function Dashboard({
             {/* Standardized 4-Column Metrics Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
                 {/* Metric Card 1: Total Pendapatan BLUD */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
                     <div className="min-w-0 flex-1 mr-2">
                         <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Total Pendapatan</p>
                         <h3 className="text-xl sm:text-2xl font-black text-emerald-700 mt-1 truncate">
@@ -94,7 +105,7 @@ export default function Dashboard({
                 </div>
 
                 {/* Metric Card 2: Total Sisa Anggaran */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
                     <div className="min-w-0 flex-1 mr-2">
                         <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Sisa Pagu Belanja</p>
                         <h3 className="text-xl sm:text-2xl font-black text-teal-700 mt-1 truncate">
@@ -110,7 +121,7 @@ export default function Dashboard({
                 </div>
 
                 {/* Metric Card 3: Total Pengajuan Disetujui */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
                     <div>
                         <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Pengajuan Tuntas</p>
                         <h3 className="text-2xl font-black text-slate-800 mt-1">{total_processed}</h3>
@@ -124,7 +135,7 @@ export default function Dashboard({
                 </div>
 
                 {/* Metric Card 4: Total Rekening Pagu */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
                     <div>
                         <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Rekening Pagu</p>
                         <h3 className="text-2xl font-black text-slate-800 mt-1">{total_budgets}</h3>
@@ -141,7 +152,7 @@ export default function Dashboard({
             {/* Visualisasi Serapan Anggaran BLUD (Recharts) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
                 {/* Donut Chart Serapan */}
-                <div className="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 flex flex-col justify-between">
+                <div className="lg:col-span-5 bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-6 flex flex-col justify-between hover:shadow-lg hover:shadow-emerald-900/10 transition-all">
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <h4 className="text-base font-bold text-slate-900">
@@ -193,7 +204,7 @@ export default function Dashboard({
                 </div>
 
                 {/* Top 5 Pagu Anggaran Breakdown */}
-                <div className="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 flex flex-col justify-between">
+                <div className="lg:col-span-7 bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-6 flex flex-col justify-between hover:shadow-lg hover:shadow-emerald-900/10 transition-all">
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <h4 className="text-base font-bold text-slate-900">
@@ -249,7 +260,7 @@ export default function Dashboard({
             <div className="grid gap-6 md:grid-cols-2">
                 <Link
                     href={route('keuangan.requisitions.index')}
-                    className="group relative flex items-start gap-4 rounded-2xl border-2 border-slate-200/80 bg-white p-6 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                    className="group relative flex items-start gap-4 rounded-2xl border border-emerald-100/90 bg-white p-6 shadow-md shadow-emerald-950/5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10"
                 >
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-500/20">
                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
@@ -268,7 +279,7 @@ export default function Dashboard({
 
                 <Link
                     href={route('reports.index')}
-                    className="group relative flex items-start gap-4 rounded-2xl border-2 border-slate-200/80 bg-white p-6 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                    className="group relative flex items-start gap-4 rounded-2xl border border-emerald-100/90 bg-white p-6 shadow-md shadow-emerald-950/5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10"
                 >
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-500/20">
                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">

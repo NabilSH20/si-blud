@@ -19,7 +19,7 @@ class RequisitionController extends Controller
      */
     public function index(): Response
     {
-        $requisitions = Requisition::with(['division', 'user', 'requisitionDetails.item'])
+        $requisitions = Requisition::with(['division', 'user', 'requisitionDetails.item', 'rbaAccount'])
             ->orderByRaw("CASE WHEN status = 'Pending_Perencanaan' THEN 0 ELSE 1 END")
             ->latest('submission_date')
             ->latest('id')
@@ -37,7 +37,7 @@ class RequisitionController extends Controller
      */
     public function show(string $id): Response
     {
-        $requisition = Requisition::with(['division', 'user', 'requisitionDetails.item'])
+        $requisition = Requisition::with(['division', 'user', 'requisitionDetails.item', 'rbaAccount'])
             ->findOrFail($id);
 
         return Inertia::render('Perencanaan/Requisitions/Show', [
@@ -50,10 +50,11 @@ class RequisitionController extends Controller
      */
     public function update(Request $request, string $id): RedirectResponse
     {
-        $requisition = Requisition::findOrFail($id);
+        $requisition = Requisition::with(['requisitionDetails'])->findOrFail($id);
 
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:Diproses_Keuangan,Ditolak'],
+            'notes_perencanaan' => ['nullable', 'string', 'max:500'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.id' => ['required', 'exists:requisition_details,id'],
             'items.*.quantity_approved' => ['required', 'integer', 'min:0'],
@@ -66,19 +67,33 @@ class RequisitionController extends Controller
         ]);
 
         DB::transaction(function () use ($requisition, $validated) {
-            // Update requisition status
-            $requisition->update([
-                'status' => $validated['status'],
-            ]);
+            $totalApproved = 0;
 
             // Update quantity_approved for each requisition detail
             foreach ($validated['items'] as $itemData) {
-                RequisitionDetail::where('id', $itemData['id'])
+                $detail = RequisitionDetail::where('id', $itemData['id'])
                     ->where('requisition_id', $requisition->id)
-                    ->update([
-                        'quantity_approved' => (int) $itemData['quantity_approved'],
+                    ->first();
+
+                if ($detail) {
+                    $qtyApproved = (int) $itemData['quantity_approved'];
+                    $subtotal = $qtyApproved * (float) $detail->unit_price;
+
+                    $detail->update([
+                        'quantity_approved' => $qtyApproved,
+                        'subtotal' => $subtotal,
                     ]);
+
+                    $totalApproved += $subtotal;
+                }
             }
+
+            // Update requisition status and total approved
+            $requisition->update([
+                'status' => $validated['status'],
+                'total_approved' => $validated['status'] === 'Diproses_Keuangan' ? $totalApproved : 0,
+                'notes_perencanaan' => $validated['notes_perencanaan'] ?? null,
+            ]);
         });
 
         $message = $validated['status'] === 'Diproses_Keuangan'
@@ -89,4 +104,3 @@ class RequisitionController extends Controller
             ->with('success', $message);
     }
 }
-

@@ -1,6 +1,7 @@
 import DivisiLayout from '@/Layouts/DivisiLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import Swal from 'sweetalert2';
 
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -10,12 +11,21 @@ const formatRupiah = (value) =>
         maximumFractionDigits: 0,
     }).format(Number(value || 0));
 
-export default function Create({ items = [] }) {
+export default function Create({ rbaAccounts = [], items = [], userDivision }) {
     const authUser = usePage().props.auth.user;
-    const userDivision = authUser?.division;
+    const division = userDivision || authUser?.division;
 
-    // Inertia useForm with dynamic items array
+    // Filter accounts by default jenis_belanja ('Operasi')
+    const initialOperasiAccounts = useMemo(
+        () => rbaAccounts.filter((acc) => acc.kategori_belanja === 'Operasi'),
+        [rbaAccounts]
+    );
+
+    const defaultAccountId = initialOperasiAccounts[0]?.id || rbaAccounts[0]?.id || '';
+
     const { data, setData, post, processing, errors } = useForm({
+        jenis_belanja: 'Operasi',
+        rba_account_id: defaultAccountId,
         items: [
             {
                 item_id: '',
@@ -24,7 +34,18 @@ export default function Create({ items = [] }) {
         ],
     });
 
-    // Hash map for fast item lookups
+    // Accounts filtered by selected jenis_belanja
+    const accountsForJenis = useMemo(() => {
+        return rbaAccounts.filter((acc) => acc.kategori_belanja === data.jenis_belanja);
+    }, [rbaAccounts, data.jenis_belanja]);
+
+    // Items filtered by selected rba_account_id
+    const availableItems = useMemo(() => {
+        if (!data.rba_account_id) return [];
+        return items.filter((item) => String(item.rba_account_id) === String(data.rba_account_id));
+    }, [items, data.rba_account_id]);
+
+    // Fast lookup map for all items
     const itemMap = useMemo(() => {
         const map = {};
         items.forEach((item) => {
@@ -32,6 +53,33 @@ export default function Create({ items = [] }) {
         });
         return map;
     }, [items]);
+
+    // Active selected RBA Account info
+    const selectedAccount = useMemo(() => {
+        return rbaAccounts.find((acc) => String(acc.id) === String(data.rba_account_id));
+    }, [rbaAccounts, data.rba_account_id]);
+
+    // When jenis_belanja changes, update rba_account_id to the first account in that category
+    const handleJenisChange = (newJenis) => {
+        const matchingAccounts = rbaAccounts.filter((acc) => acc.kategori_belanja === newJenis);
+        const newAccountId = matchingAccounts[0]?.id || '';
+
+        setData({
+            ...data,
+            jenis_belanja: newJenis,
+            rba_account_id: newAccountId,
+            items: [{ item_id: '', quantity: 1 }],
+        });
+    };
+
+    // When rba_account_id changes, reset items row
+    const handleAccountChange = (newAccountId) => {
+        setData({
+            ...data,
+            rba_account_id: newAccountId,
+            items: [{ item_id: '', quantity: 1 }],
+        });
+    };
 
     // Handle updating a specific item row
     const updateItemRow = (index, field, value) => {
@@ -76,9 +124,44 @@ export default function Create({ items = [] }) {
         return { grandTotal: sum, totalQuantity: totalQty };
     }, [data.items, itemMap]);
 
-    const submit = (e) => {
+    // Handle Form Submit with SweetAlert2 Confirmation
+    const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('requisitions.store'));
+
+        // Validation check for empty items
+        const hasEmptyItem = data.items.some((row) => !row.item_id || !row.quantity);
+        if (hasEmptyItem) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Data Belum Lengkap',
+                text: 'Pastikan seluruh baris barang telah dipilih dari katalog dan jumlah kuantitas terisi.',
+                confirmButtonColor: '#059669',
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Kirim Pengajuan Belanja?',
+            html: `
+                <div class="text-left text-xs sm:text-sm space-y-2 mt-2">
+                    <p><strong>Rekening RBA:</strong> [${selectedAccount?.account_code}] ${selectedAccount?.account_name}</p>
+                    <p><strong>Jumlah Barang:</strong> ${data.items.length} item (${totalQuantity} unit)</p>
+                    <p><strong>Total Estimasi Biaya:</strong> <span class="text-emerald-700 font-bold">${formatRupiah(grandTotal)}</span></p>
+                    <p class="text-slate-500 text-xs mt-2">Pengajuan akan langsung diteruskan ke Tim Perencanaan untuk telaah teknis dan persetujuan kuantitas.</p>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#059669',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Ya, Kirim Pengajuan',
+            cancelButtonText: 'Batal',
+            reverseButtons: true,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                post(route('requisitions.store'));
+            }
+        });
     };
 
     const currentDate = new Intl.DateTimeFormat('id-ID', {
@@ -98,322 +181,279 @@ export default function Create({ items = [] }) {
                     <div>
                         <Link
                             href={route('requisitions.index')}
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 transition mb-2"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition mb-2"
                         >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                             </svg>
                             Kembali ke Daftar Pengajuan
                         </Link>
-                        <h2 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
-                            Formulir Pengajuan Belanja (E-BLUD)
-                        </h2>
-                        <p className="mt-1 text-xs sm:text-sm text-slate-600 font-medium">
-                            Ajukan kebutuhan barang unit kerja dengan memilih dari katalog acuan standar rumah sakit.
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                            Formulir Usulan Belanja E-BLUD
+                        </h1>
+                        <p className="mt-1 text-sm text-slate-500">
+                            Pilih klasifikasi belanja, pos rekening RBA, serta rincian barang yang dibutuhkan unit Anda.
                         </p>
                     </div>
 
-                    <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50 px-5 py-3 text-right shadow-xs">
-                        <span className="block text-[11px] font-black uppercase tracking-wider text-emerald-800">
-                            Unit Kerja Pemohon
+                    <div className="flex items-center gap-2">
+                        <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                            {division ? division.name : 'Unit Kerja RSJ'}
                         </span>
-                        <span className="text-sm font-black text-emerald-950">
-                            {userDivision?.name || 'Unit Divisi RSJ'}
+                        <span className="text-xs text-slate-400">
+                            {currentDate}
                         </span>
                     </div>
                 </div>
 
-                {/* Form Requisition */}
-                <form onSubmit={submit} className="space-y-6">
-                    {/* SECTION 1: INFORMASI UMUM (HEADER) */}
-                    <div className="overflow-hidden rounded-2xl border-2 border-slate-300 bg-white shadow-md">
-                        <div className="border-b-2 border-slate-200 bg-slate-100 px-6 py-4 flex items-center justify-between">
+                {errors.division && (
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                        {errors.division}
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Card 1: Klasifikasi & Rekening RBA (Cascading Level 1 & 2) */}
+                    <div className="rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-shadow overflow-hidden">
+                        <div className="border-b border-emerald-100 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-slate-50/50 px-6 py-4 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
-                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-black text-white shadow-xs">
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold text-xs shadow-2xs">
                                     1
                                 </span>
-                                <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                                    Informasi Header Pengajuan
-                                </h3>
+                                <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                    Langkah 1 & 2: Klasifikasi & Rekening RBA
+                                </h2>
                             </div>
-                            <span className="text-xs font-bold text-slate-500">
-                                Nomor registrasi digenerate otomatis
-                            </span>
+                            <span className="text-xs font-semibold text-emerald-700 bg-emerald-100/60 px-2.5 py-0.5 rounded-full border border-emerald-200">Sumber Dana: BLUD RSJ</span>
                         </div>
 
-                        <div className="grid gap-0 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x-2 divide-slate-200">
-                            {/* Kolom 1: Unit Kerja */}
-                            <div className="p-5 bg-white flex flex-col justify-center">
-                                <span className="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1.5">
-                                    Unit Kerja / Divisi
-                                </span>
-                                <div className="flex items-center gap-2">
-                                    <span className="inline-flex items-center rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-300">
-                                        {userDivision?.division_code || 'DIV-NONE'}
-                                    </span>
-                                    <p className="text-sm font-bold text-slate-900 truncate">
-                                        {userDivision?.name || 'Belum Terhubung'}
-                                    </p>
+                        <div className="p-6 space-y-5">
+                            {/* Step 1: Belanja Operasi vs Belanja Modal */}
+                            <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                                    Klasifikasi Belanja
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleJenisChange('Operasi')}
+                                        className={`flex items-center justify-between p-4 rounded-xl border text-left transition ${
+                                            data.jenis_belanja === 'Operasi'
+                                                ? 'border-emerald-500 bg-emerald-50/60 ring-1 ring-emerald-500 text-slate-900'
+                                                : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-600'
+                                        }`}
+                                    >
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`h-2.5 w-2.5 rounded-full ${data.jenis_belanja === 'Operasi' ? 'bg-emerald-600' : 'bg-slate-300'}`} />
+                                                <span className="text-sm font-bold">1.1 Belanja Operasi</span>
+                                            </div>
+                                            <p className="mt-1 text-xs text-slate-500 pl-4.5">
+                                                Obat-obatan, BHP Medis, BHP Laboratorium, SIMRS, Cetak, Pemeliharaan, dll.
+                                            </p>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleJenisChange('Modal')}
+                                        className={`flex items-center justify-between p-4 rounded-xl border text-left transition ${
+                                            data.jenis_belanja === 'Modal'
+                                                ? 'border-emerald-500 bg-emerald-50/60 ring-1 ring-emerald-500 text-slate-900'
+                                                : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-600'
+                                        }`}
+                                    >
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`h-2.5 w-2.5 rounded-full ${data.jenis_belanja === 'Modal' ? 'bg-emerald-600' : 'bg-slate-300'}`} />
+                                                <span className="text-sm font-bold">1.2 Belanja Modal</span>
+                                            </div>
+                                            <p className="mt-1 text-xs text-slate-500 pl-4.5">
+                                                Peralatan Medis & Keperawatan, Komputer & Jaringan, Sarana Mesin, dll.
+                                            </p>
+                                        </div>
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* Kolom 2: Tanggal */}
-                            <div className="p-5 bg-white flex flex-col justify-center">
-                                <span className="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1.5">
-                                    Tanggal Pengajuan
-                                </span>
-                                <p className="text-sm font-bold text-slate-900">
-                                    {currentDate}
+                            {/* Step 2: Rekening RBA Dropdown */}
+                            <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                                    Pos Rekening Belanja RBA <span className="text-rose-500">*</span>
+                                </label>
+                                <select
+                                    value={data.rba_account_id}
+                                    onChange={(e) => handleAccountChange(e.target.value)}
+                                    className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                >
+                                    {accountsForJenis.map((acc) => (
+                                        <option key={acc.id} value={acc.id}>
+                                            [{acc.account_code}] {acc.account_name} &bull; (Sisa Pagu: {formatRupiah(acc.remaining_budget)})
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="mt-1.5 text-xs text-slate-400">
+                                    Katalog barang pada langkah selanjutnya otomatis menampilkan item yang sesuai dengan pos rekening ini.
                                 </p>
-                                <span className="text-[11px] font-medium text-slate-500">
-                                    Tercatat otomatis hari ini
-                                </span>
-                            </div>
-
-                            {/* Kolom 3: Pemohon */}
-                            <div className="p-5 bg-white flex flex-col justify-center">
-                                <span className="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1.5">
-                                    Nama Pemohon (PIC)
-                                </span>
-                                <p className="text-sm font-bold text-slate-900 truncate">
-                                    {authUser?.name}
-                                </p>
-                                <span className="text-xs font-medium text-slate-600 truncate block">
-                                    {authUser?.email}
-                                </span>
                             </div>
                         </div>
                     </div>
 
-                    {/* SECTION 2: DAFTAR BARANG (Tabel dengan Batas Kolom Jelas) */}
-                    <div className="overflow-hidden rounded-2xl border-2 border-slate-300 bg-white shadow-md">
-                        <div className="border-b-2 border-slate-200 bg-slate-100 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    {/* Card 2: Rincian Barang (Cascading Level 3 - Filtered Item Picker) */}
+                    <div className="rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-shadow overflow-hidden">
+                        <div className="border-b border-emerald-100 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-slate-50/50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                             <div className="flex items-center gap-2.5">
-                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-black text-white shadow-xs">
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold text-xs shadow-2xs">
                                     2
                                 </span>
                                 <div>
-                                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                                        Daftar Barang yang Diajukan
-                                    </h3>
-                                    <p className="text-xs text-slate-500 font-medium">
-                                        Pilih barang dari katalog acuan standar dan tentukan jumlah kuantitas
+                                    <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                        Langkah 3: Rincian Barang yang Diajukan
+                                    </h2>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Katalog menampilkan {availableItems.length} jenis barang terstandarisasi untuk rekening ini.
                                     </p>
                                 </div>
                             </div>
-
                             <button
                                 type="button"
                                 onClick={addItemRow}
-                                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-5 py-2.5 text-xs font-bold transition shadow-sm self-start sm:self-auto"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white hover:bg-emerald-50 px-3.5 py-1.5 text-xs font-bold text-emerald-800 shadow-2xs transition"
                             >
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                 </svg>
-                                + Tambah Barang
+                                Tambah Baris Barang
                             </button>
                         </div>
 
-                        {/* Tabel dengan Border Garis Vertikal & Horizontal Tegas */}
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y-2 divide-slate-200 border-collapse">
-                                <thead className="bg-emerald-50/80 font-bold border-b-2 border-emerald-200">
-                                    <tr className="divide-x-2 divide-slate-200">
-                                        <th className="w-16 px-4 py-4 text-center text-sm font-black uppercase tracking-wider text-slate-800">
-                                            No
-                                        </th>
-                                        <th className="px-6 py-4 text-left text-sm font-black uppercase tracking-wider text-slate-800 min-w-[280px]">
-                                            Pilih Barang dari Katalog <span className="text-rose-600">*</span>
-                                        </th>
-                                        <th className="w-28 px-4 py-4 text-center text-sm font-black uppercase tracking-wider text-slate-800">
-                                            Satuan
-                                        </th>
-                                        <th className="w-40 px-5 py-4 text-right text-sm font-black uppercase tracking-wider text-slate-800">
-                                            Harga Acuan
-                                        </th>
-                                        <th className="w-36 px-4 py-4 text-center text-sm font-black uppercase tracking-wider text-slate-800">
-                                            Kuantitas <span className="text-rose-600">*</span>
-                                        </th>
-                                        <th className="w-44 px-5 py-4 text-right text-sm font-black uppercase tracking-wider text-slate-800">
-                                            Subtotal
-                                        </th>
-                                        <th className="w-20 px-3 py-4 text-center text-sm font-black uppercase tracking-wider text-slate-800">
-                                            Aksi
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y-2 divide-slate-200 bg-white">
-                                    {data.items.map((row, index) => {
-                                        const selectedItem = itemMap[row.item_id];
-                                        const quantity = parseInt(row.quantity, 10) || 0;
-                                        const subtotal = selectedItem
-                                            ? Number(selectedItem.standard_price || 0) * quantity
-                                            : 0;
-
-                                        return (
-                                            <tr
-                                                key={index}
-                                                className="divide-x-2 divide-slate-200 hover:bg-emerald-50/60 transition-colors duration-200 cursor-default"
-                                            >
-                                                {/* Kolom No */}
-                                                <td className="px-4 py-4 text-center text-sm font-bold text-slate-700 bg-slate-50/70">
-                                                    #{index + 1}
-                                                </td>
-
-                                                {/* Kolom Barang */}
-                                                <td className="p-4">
-                                                    <select
-                                                        value={row.item_id}
-                                                        onChange={(e) =>
-                                                            updateItemRow(index, 'item_id', e.target.value)
-                                                        }
-                                                        className="block w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-2xs focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/30 transition-all duration-200"
-                                                    >
-                                                        <option value="">-- Pilih Barang Standar --</option>
-                                                        {items.map((item) => (
-                                                            <option key={item.id} value={item.id}>
-                                                                {item.item_code} - {item.name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-
-                                                    {selectedItem?.specification && (
-                                                        <p className="mt-1 text-xs text-slate-500 font-medium italic">
-                                                            Spesifikasi: {selectedItem.specification}
-                                                        </p>
-                                                    )}
-
-                                                    {errors[`items.${index}.item_id`] && (
-                                                        <p className="mt-1 text-xs font-bold text-rose-600">
-                                                            {errors[`items.${index}.item_id`]}
-                                                        </p>
-                                                    )}
-                                                </td>
-
-                                                {/* Kolom Satuan */}
-                                                <td className="px-4 py-4 text-center">
-                                                    <span className="inline-flex rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-800 border border-slate-300">
-                                                        {selectedItem?.unit_type || '-'}
-                                                    </span>
-                                                </td>
-
-                                                {/* Kolom Harga Acuan */}
-                                                <td className="px-5 py-4 text-right text-sm font-bold text-slate-800">
-                                                    {selectedItem ? formatRupiah(selectedItem.standard_price) : '-'}
-                                                </td>
-
-                                                {/* Kolom Kuantitas */}
-                                                <td className="p-4 text-center">
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        value={row.quantity}
-                                                        onChange={(e) =>
-                                                            updateItemRow(index, 'quantity', e.target.value)
-                                                        }
-                                                        className="block w-full rounded-xl border-2 border-slate-300 bg-white px-2 py-2 text-center text-sm font-black text-slate-900 shadow-2xs focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/30 transition-all duration-200"
-                                                    />
-                                                    {errors[`items.${index}.quantity`] && (
-                                                        <p className="mt-1 text-xs font-bold text-rose-600">
-                                                            {errors[`items.${index}.quantity`]}
-                                                        </p>
-                                                    )}
-                                                </td>
-
-                                                {/* Kolom Subtotal */}
-                                                <td className="px-5 py-4 text-right text-sm font-black text-emerald-700 bg-emerald-50/40">
-                                                    {formatRupiah(subtotal)}
-                                                </td>
-
-                                                {/* Kolom Aksi Hapus */}
-                                                <td className="p-3 text-center">
-                                                    <button
-                                                        type="button"
-                                                        disabled={data.items.length <= 1}
-                                                        onClick={() => removeItemRow(index)}
-                                                        className="inline-flex items-center justify-center p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-300 transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
-                                                        title="Hapus baris barang ini"
-                                                    >
-                                                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                                        </svg>
-                                                    </button>
-                                                </td>
+                        <div className="p-6">
+                            {availableItems.length === 0 ? (
+                                <div className="rounded-xl bg-slate-50 border border-slate-200 p-8 text-center text-slate-500 text-xs sm:text-sm">
+                                    Belum ada katalog barang yang terdaftar di pos rekening ini. Silakan hubungi Tim Perencanaan untuk mendaftarkan barang baru.
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-emerald-100 border-collapse">
+                                        <thead className="bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90 font-bold border-b border-emerald-100 text-emerald-950 uppercase tracking-wider text-xs">
+                                            <tr>
+                                                <th className="px-3 py-3 text-left">Pilih Barang dari Katalog</th>
+                                                <th className="w-24 px-3 py-3 text-center">Satuan</th>
+                                                <th className="w-32 px-3 py-3 text-right">Harga Standar</th>
+                                                <th className="w-28 px-3 py-3 text-center">Jumlah (Qty)</th>
+                                                <th className="w-36 px-3 py-3 text-right">Subtotal</th>
+                                                <th className="w-12 px-2 py-3 text-center"></th>
                                             </tr>
-                                        );
-                                    })}
-                                </tbody>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 bg-white">
+                                            {data.items.map((row, idx) => {
+                                                const selectedItem = itemMap[row.item_id];
+                                                const unitPrice = Number(selectedItem?.standard_price || 0);
+                                                const qty = parseInt(row.quantity, 10) || 0;
+                                                const subtotal = unitPrice * qty;
 
-                                {/* Footer Tabel Kalkulasi */}
-                                <tfoot className="border-t-2 border-slate-300 bg-slate-100 divide-x-2 divide-slate-200">
-                                    <tr>
-                                        <td colSpan="4" className="px-6 py-4 text-right text-sm font-black uppercase tracking-wider text-slate-700">
-                                            Total Kuantitas Diajukan:
-                                        </td>
-                                        <td className="px-4 py-4 text-center text-sm font-black text-slate-900 bg-slate-200/60">
-                                            {totalQuantity} Unit
-                                        </td>
-                                        <td className="whitespace-nowrap px-5 py-4 text-right text-base font-black text-emerald-700 bg-emerald-100/60">
-                                            {formatRupiah(grandTotal)}
-                                        </td>
-                                        <td className="bg-slate-100" />
-                                    </tr>
-                                </tfoot>
-                            </table>
+                                                return (
+                                                    <tr key={idx} className="hover:bg-emerald-50/40 transition-colors">
+                                                        {/* Select Item */}
+                                                        <td className="px-3 py-3">
+                                                            <select
+                                                                value={row.item_id}
+                                                                onChange={(e) => updateItemRow(idx, 'item_id', e.target.value)}
+                                                                className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                            >
+                                                                <option value="">-- Pilih Barang --</option>
+                                                                {availableItems.map((item) => (
+                                                                    <option key={item.id} value={item.id}>
+                                                                        {item.name}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                            {selectedItem?.specification && (
+                                                                <p className="mt-1 text-[11px] text-slate-400 italic truncate max-w-md">
+                                                                    Spek: {selectedItem.specification}
+                                                                </p>
+                                                            )}
+                                                        </td>
+
+                                                        {/* Satuan */}
+                                                        <td className="px-3 py-3 text-center text-xs font-medium text-slate-500">
+                                                            {selectedItem?.unit_type || '-'}
+                                                        </td>
+
+                                                        {/* Harga Satuan */}
+                                                        <td className="px-3 py-3 text-right text-xs font-semibold text-slate-700">
+                                                            {selectedItem ? formatRupiah(unitPrice) : '-'}
+                                                        </td>
+
+                                                        {/* Quantity Input */}
+                                                        <td className="px-3 py-3">
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                value={row.quantity}
+                                                                onChange={(e) => updateItemRow(idx, 'quantity', e.target.value)}
+                                                                className="block w-full rounded-xl border border-slate-300 bg-white px-2 py-2 text-center text-xs sm:text-sm font-bold text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                            />
+                                                        </td>
+
+                                                        {/* Subtotal */}
+                                                        <td className="px-3 py-3 text-right text-xs sm:text-sm font-bold text-emerald-700">
+                                                            {formatRupiah(subtotal)}
+                                                        </td>
+
+                                                        {/* Delete Row */}
+                                                        <td className="px-2 py-3 text-center">
+                                                            {data.items.length > 1 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => removeItemRow(idx)}
+                                                                    className="rounded-lg p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                                                                    title="Hapus Baris"
+                                                                >
+                                                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                                    </svg>
+                                                                </button>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Error General Items */}
-                        {errors.items && typeof errors.items === 'string' && (
-                            <div className="border-t-2 border-rose-200 bg-rose-50 p-4 text-xs font-bold text-rose-700">
-                                {errors.items}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* SECTION 3: ESTIMASI TOTAL & TOMBOL SUBMIT */}
-                    <div className="overflow-hidden rounded-2xl border-2 border-slate-300 bg-white p-6 shadow-md">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        {/* Grand Total & Action Buttons */}
+                        <div className="border-t border-emerald-100 bg-gradient-to-r from-emerald-50/60 via-teal-50/30 to-slate-50/50 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div>
-                                <span className="block text-xs font-black uppercase tracking-wider text-slate-500">
-                                    Estimasi Nilai Pengadaan Total
+                                <span className="text-xs text-slate-500 uppercase tracking-wider font-bold block">
+                                    Total Estimasi Usulan Anggaran
                                 </span>
-                                <p className="text-2xl sm:text-3xl font-black text-emerald-700 tracking-tight">
-                                    {formatRupiah(grandTotal)}
-                                </p>
-                                <span className="text-xs text-slate-500 font-medium">
-                                    * Total {data.items.length} macam barang &bull; {totalQuantity} unit
-                                </span>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-2xl sm:text-3xl font-black text-emerald-800">
+                                        {formatRupiah(grandTotal)}
+                                    </span>
+                                    <span className="text-xs text-slate-600 font-semibold">
+                                        ({totalQuantity} unit barang)
+                                    </span>
+                                </div>
                             </div>
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2.5">
                                 <Link
                                     href={route('requisitions.index')}
-                                    className="rounded-xl border-2 border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100 active:scale-95"
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                                 >
                                     Batal
                                 </Link>
-
                                 <button
                                     type="submit"
-                                    disabled={processing}
-                                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-6 py-2.5 text-sm font-black shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50"
+                                    disabled={processing || availableItems.length === 0}
+                                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-emerald-950/10 transition disabled:opacity-50"
                                 >
-                                    {processing ? (
-                                        <>
-                                            <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                            </svg>
-                                            Mengirim Pengajuan...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-                                            </svg>
-                                            Kirim Pengajuan Belanja (E-BLUD)
-                                        </>
-                                    )}
+                                    {processing ? 'Mengirimkan...' : 'Kirim Usulan Belanja'}
                                 </button>
                             </div>
                         </div>

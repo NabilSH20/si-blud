@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('division_code')->unique();
             $table->string('name');
+            $table->string('group')->default('Pelayanan_Keperawatan'); // Pelayanan_Keperawatan or Umum_Kepegawaian
             $table->timestamps();
         });
     }

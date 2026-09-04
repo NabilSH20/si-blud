@@ -14,6 +14,8 @@ class Requisition extends Model
     {
         return [
             'submission_date' => 'date',
+            'total_estimated' => 'decimal:2',
+            'total_approved' => 'decimal:2',
         ];
     }
 
@@ -32,8 +34,13 @@ class Requisition extends Model
         return $this->hasMany(RequisitionDetail::class);
     }
 
+    public function rbaAccount(): BelongsTo
+    {
+        return $this->belongsTo(RbaAccount::class, 'rba_account_id');
+    }
+
     public function budget(): BelongsTo
     {
-        return $this->belongsTo(Budget::class);
+        return $this->belongsTo(Budget::class, 'budget_id');
     }
 }

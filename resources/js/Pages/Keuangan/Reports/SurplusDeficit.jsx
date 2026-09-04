@@ -88,7 +88,7 @@ export default function SurplusDeficit({
             {/* Top 3 Strategic Metric Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 {/* Total Realisasi Pendapatan */}
-                <div className="bg-white rounded-2xl shadow-sm border-2 border-slate-200/80 p-6 flex items-center justify-between">
+                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-6 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
                     <div className="min-w-0 flex-1 mr-2">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
                             Realisasi Pendapatan
@@ -108,7 +108,7 @@ export default function SurplusDeficit({
                 </div>
 
                 {/* Total Realisasi Belanja */}
-                <div className="bg-white rounded-2xl shadow-sm border-2 border-slate-200/80 p-6 flex items-center justify-between">
+                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-6 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
                     <div className="min-w-0 flex-1 mr-2">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
                             Realisasi Belanja Operasional
@@ -128,8 +128,8 @@ export default function SurplusDeficit({
                 </div>
 
                 {/* Saldo Bersih: Surplus / Defisit */}
-                <div className={`rounded-2xl shadow-sm border-2 p-6 flex items-center justify-between ${
-                    isSurplus ? 'bg-emerald-50/70 border-emerald-300' : 'bg-rose-50/70 border-rose-300'
+                <div className={`rounded-2xl shadow-md shadow-emerald-950/5 border p-6 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10 ${
+                    isSurplus ? 'bg-emerald-50/70 border-emerald-200' : 'bg-rose-50/70 border-rose-200'
                 }`}>
                     <div className="min-w-0 flex-1 mr-2">
                         <div className="flex items-center gap-2">
@@ -170,7 +170,7 @@ export default function SurplusDeficit({
             {/* Executive Visualizations (Recharts) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
                 {/* BarChart: Target RBA vs Realisasi */}
-                <div className="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 flex flex-col justify-between">
+                <div className="lg:col-span-7 bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-6 flex flex-col justify-between hover:shadow-lg hover:shadow-emerald-900/10 transition-all">
                     <div>
                         <div className="flex items-center justify-between mb-1">
                             <h4 className="text-base font-bold text-slate-900">
@@ -212,14 +212,14 @@ export default function SurplusDeficit({
 
                     <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-xs text-slate-500">
                         <span>Plafon belanja dan target penerimaan dari penetapan DPA.</span>
-                        <Link href={route('reports.index')} className="font-bold text-emerald-700 hover:underline">
+                        <Link href={route('reports.index')} className="font-bold text-emerald-700 hover:text-emerald-800 transition hover:underline">
                             Lihat DPA &rarr;
                         </Link>
                     </div>
                 </div>
 
                 {/* Donut Chart: Komposisi Sumber Pendapatan */}
-                <div className="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 flex flex-col justify-between">
+                <div className="lg:col-span-5 bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-6 flex flex-col justify-between hover:shadow-lg hover:shadow-emerald-900/10 transition-all">
                     <div>
                         <div className="flex items-center justify-between mb-1">
                             <h4 className="text-base font-bold text-slate-900">
@@ -264,13 +264,13 @@ export default function SurplusDeficit({
                                 </PieChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div className="text-center text-xs text-slate-400">Belum ada data penerimaan</div>
+                            <div className="text-center text-xs text-slate-400 font-medium">Belum ada data penerimaan</div>
                         )}
                     </div>
 
                     <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-xs text-slate-500">
                         <span>Total sumber penerimaan: <strong>{revenue_sources.length} Unit</strong></span>
-                        <Link href={route('revenues.index')} className="font-bold text-emerald-700 hover:underline">
+                        <Link href={route('revenues.index')} className="font-bold text-emerald-700 hover:text-emerald-800 transition hover:underline">
                             Kelola Pendapatan
                         </Link>
                     </div>
@@ -280,28 +280,28 @@ export default function SurplusDeficit({
             {/* Detailed Tables Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Table: Penerimaan per Unit Layanan */}
-                <div className="overflow-hidden rounded-2xl border-2 border-slate-300 bg-white shadow-md">
-                    <div className="border-b-2 border-slate-200 bg-slate-100 px-6 py-3.5 flex items-center justify-between">
-                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-shadow">
+                    <div className="border-b border-emerald-100 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-slate-50/50 px-6 py-3.5 flex items-center justify-between">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
                             1. Rincian Penerimaan Kas per Sumber
                         </h4>
-                        <Link href={route('revenues.create')} className="text-xs font-bold text-emerald-700 hover:underline">
+                        <Link href={route('revenues.create')} className="text-xs font-bold text-emerald-700 hover:text-emerald-800 transition hover:underline">
                             + Catat Kas
                         </Link>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs text-slate-700">
-                            <thead className="bg-emerald-50/70 border-b border-slate-200 font-bold uppercase tracking-wider text-slate-800">
+                        <table className="w-full text-left text-xs text-slate-700 divide-y divide-emerald-100 border-collapse">
+                            <thead className="bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90 border-b border-emerald-100 text-emerald-950 font-bold uppercase tracking-wider">
                                 <tr>
-                                    <th className="px-4 py-3">Sumber Layanan</th>
-                                    <th className="px-3 py-3 text-center w-20">Transaksi</th>
-                                    <th className="px-4 py-3 text-right">Realisasi (IDR)</th>
+                                    <th className="px-4 py-3 text-emerald-950">Sumber Layanan</th>
+                                    <th className="px-3 py-3 text-center w-20 text-emerald-950">Transaksi</th>
+                                    <th className="px-4 py-3 text-right text-emerald-950">Realisasi (IDR)</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-200">
+                            <tbody className="divide-y divide-slate-100 bg-white">
                                 {revenue_sources.length > 0 ? (
                                     revenue_sources.map((item, idx) => (
-                                        <tr key={idx} className="hover:bg-slate-50">
+                                        <tr key={idx} className="hover:bg-emerald-50/40 transition-colors duration-150">
                                             <td className="px-4 py-3 font-bold text-slate-800">
                                                 {item.source}
                                             </td>
@@ -315,7 +315,7 @@ export default function SurplusDeficit({
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={3} className="px-4 py-6 text-center text-slate-400">
+                                        <td colSpan={3} className="px-4 py-6 text-center text-slate-400 font-medium">
                                             Belum ada catatan pendapatan
                                         </td>
                                     </tr>
@@ -326,30 +326,30 @@ export default function SurplusDeficit({
                 </div>
 
                 {/* Table: Realisasi Belanja per Rekening Pagu */}
-                <div className="overflow-hidden rounded-2xl border-2 border-slate-300 bg-white shadow-md">
-                    <div className="border-b-2 border-slate-200 bg-slate-100 px-6 py-3.5 flex items-center justify-between">
-                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-shadow">
+                    <div className="border-b border-emerald-100 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-slate-50/50 px-6 py-3.5 flex items-center justify-between">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
                             2. Rincian Beban Belanja Pengadaan per Rekening
                         </h4>
-                        <Link href={route('reports.index')} className="text-xs font-bold text-emerald-700 hover:underline">
+                        <Link href={route('reports.index')} className="text-xs font-bold text-emerald-700 hover:text-emerald-800 transition hover:underline">
                             Laporan DPA
                         </Link>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs text-slate-700">
-                            <thead className="bg-amber-50/70 border-b border-slate-200 font-bold uppercase tracking-wider text-slate-800">
+                        <table className="w-full text-left text-xs text-slate-700 divide-y divide-emerald-100 border-collapse">
+                            <thead className="bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90 border-b border-emerald-100 text-emerald-950 font-bold uppercase tracking-wider">
                                 <tr>
-                                    <th className="px-4 py-3">Kode & Nama Rekening</th>
-                                    <th className="px-4 py-3 text-right">Beban Terpakai (IDR)</th>
+                                    <th className="px-4 py-3 text-emerald-950">Kode & Nama Rekening</th>
+                                    <th className="px-4 py-3 text-right text-emerald-950">Beban Terpakai (IDR)</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-200">
+                            <tbody className="divide-y divide-slate-100 bg-white">
                                 {expense_categories.length > 0 ? (
                                     expense_categories.map((cat, idx) => (
-                                        <tr key={idx} className="hover:bg-slate-50">
+                                        <tr key={idx} className="hover:bg-emerald-50/40 transition-colors duration-150">
                                             <td className="px-4 py-3">
                                                 <p className="font-bold text-slate-800">{cat.account_name}</p>
-                                                <p className="font-mono text-[11px] text-slate-500">{cat.account_code}</p>
+                                                <p className="font-mono text-[11px] text-slate-500 font-semibold">{cat.account_code}</p>
                                             </td>
                                             <td className="px-4 py-3 text-right font-black text-amber-700">
                                                 {formatRupiah(cat.spent)}
@@ -358,7 +358,7 @@ export default function SurplusDeficit({
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={2} className="px-4 py-6 text-center text-slate-400">
+                                        <td colSpan={2} className="px-4 py-6 text-center text-slate-400 font-medium">
                                             Belum ada realisasi belanja
                                         </td>
                                     </tr>

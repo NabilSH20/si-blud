@@ -14,8 +14,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             DivisionSeeder::class,
             UserSeeder::class,
+            RbaAccountSeeder::class,
             ItemSeeder::class,
-            BudgetSeeder::class,
             RbaSeeder::class,
             RevenueSeeder::class,
             RequisitionSeeder::class,

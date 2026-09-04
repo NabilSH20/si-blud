@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Budget;
 use App\Models\Item;
+use App\Models\RbaAccount;
 use App\Models\Requisition;
 use App\Models\RequisitionDetail;
 use App\Models\User;
@@ -18,8 +19,8 @@ class RequisitionSeeder extends Seeder
     public function run(): void
     {
         $divisiUsers = User::where('role', 'divisi')->whereNotNull('division_id')->get();
-        $items = Item::all();
-        $budgets = Budget::all();
+        $items = Item::with('rbaAccount')->get();
+        $budgets = RbaAccount::all();
 
         if ($divisiUsers->isEmpty() || $items->isEmpty() || $budgets->isEmpty()) {
             return;
@@ -51,9 +52,10 @@ class RequisitionSeeder extends Seeder
             ['status' => 'Disetujui_Selesai', 'days_ago' => 28],
         ];
 
-        // Reset budgets remaining to initial before seeding transactions to ensure reproducibility
+        // Reset budgets remaining to initial before seeding transactions
         foreach ($budgets as $budget) {
             $budget->remaining_budget = $budget->total_budget;
+            $budget->spent_budget = 0;
             $budget->save();
         }
 
@@ -62,11 +64,25 @@ class RequisitionSeeder extends Seeder
             $date = Carbon::now()->subDays($plan['days_ago'])->setTime(rand(8, 15), rand(10, 50));
             $reqNumber = sprintf('REQ-%s-%04d', $date->format('Ymd'), $index + 1);
 
+            // Group items under one RBA account
+            $account = $budgets->random();
+            $accountItems = $items->where('rba_account_id', $account->id);
+
+            if ($accountItems->isEmpty()) {
+                $accountItems = $items->take(5);
+            }
+
+            $itemCount = min($accountItems->count(), rand(2, 4));
+            $selectedItems = $accountItems->random($itemCount);
+
             $requisition = Requisition::updateOrCreate(
                 ['requisition_number' => $reqNumber],
                 [
                     'division_id' => $user->division_id,
                     'user_id' => $user->id,
+                    'rba_account_id' => $account->id,
+                    'budget_id' => $account->id,
+                    'jenis_belanja' => $account->kategori_belanja ?? 'Operasi',
                     'status' => $plan['status'],
                     'submission_date' => $date->toDateString(),
                     'created_at' => $date,
@@ -74,13 +90,10 @@ class RequisitionSeeder extends Seeder
                 ]
             );
 
-            // Clear any previous details if re-seeding
             RequisitionDetail::where('requisition_id', $requisition->id)->delete();
 
-            // Pick 2-4 distinct random items
-            $itemCount = rand(2, 4);
-            $selectedItems = $items->random($itemCount);
-            $grandTotal = 0;
+            $grandTotalEstimated = 0;
+            $grandTotalApproved = 0;
 
             foreach ($selectedItems as $item) {
                 $qtyRequested = rand(2, 8);
@@ -88,24 +101,26 @@ class RequisitionSeeder extends Seeder
 
                 if ($plan['status'] === 'Pending_Perencanaan') {
                     $qtyApproved = null;
-                    $effectiveQty = $qtyRequested;
                 } elseif ($plan['status'] === 'Ditolak') {
                     $qtyApproved = 0;
-                    $effectiveQty = 0;
                 } else {
-                    // Diproses_Keuangan or Disetujui_Selesai
                     $qtyApproved = rand(max(1, $qtyRequested - 2), $qtyRequested);
-                    $effectiveQty = $qtyApproved;
                 }
 
                 $unitPrice = (float) $item->standard_price;
+                $effectiveQty = $qtyApproved !== null ? $qtyApproved : $qtyRequested;
                 $subtotal = $effectiveQty * $unitPrice;
-                $grandTotal += $subtotal;
+
+                $grandTotalEstimated += ($qtyRequested * $unitPrice);
+                if ($qtyApproved !== null) {
+                    $grandTotalApproved += ($qtyApproved * $unitPrice);
+                }
 
                 RequisitionDetail::create([
                     'requisition_id' => $requisition->id,
                     'item_id' => $item->id,
-                    'is_manual' => false,
+                    'item_name' => $item->name,
+                    'unit_type' => $item->unit_type,
                     'quantity_requested' => $qtyRequested,
                     'quantity_approved' => $qtyApproved,
                     'unit_price' => $unitPrice,
@@ -113,18 +128,16 @@ class RequisitionSeeder extends Seeder
                 ]);
             }
 
-            // CRITICAL: For Disetujui_Selesai, assign budget and deduct mathematically
+            $requisition->total_estimated = $grandTotalEstimated;
+            $requisition->total_approved = $grandTotalApproved;
+            $requisition->save();
+
+            // Deduct budget if finalized
             if ($plan['status'] === 'Disetujui_Selesai') {
-                $budget = $budgets->random();
-
-                $requisition->budget_id = $budget->id;
-                $requisition->save();
-
-                // Deduct from budget
-                $budget->remaining_budget = max(0, (float) $budget->remaining_budget - (float) $grandTotal);
-                $budget->save();
+                $account->remaining_budget = max(0, (float) $account->remaining_budget - (float) $grandTotalApproved);
+                $account->spent_budget = (float) $account->spent_budget + (float) $grandTotalApproved;
+                $account->save();
             }
         }
     }
 }
-

@@ -128,7 +128,7 @@ export default function Show({ requisition }) {
                 </div>
 
                 {/* Status Notice Card */}
-                <div className={`rounded-2xl border-2 p-5 ${statusInfo.bg}`}>
+                <div className={`rounded-2xl border-2 p-5 shadow-md shadow-emerald-950/5 ${statusInfo.bg}`}>
                     <div className="flex items-start gap-3">
                         <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${statusInfo.dot} text-white text-xs font-black`}>
                             ✓
@@ -142,105 +142,178 @@ export default function Show({ requisition }) {
                     </div>
                 </div>
 
-                {/* Requisition Header Info Card (Batas Kolom Tegas) */}
-                <div className="overflow-hidden rounded-2xl border-2 border-slate-300 bg-white shadow-md">
-                    <div className="border-b-2 border-slate-200 bg-slate-100 px-6 py-3.5">
-                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                            Informasi Dokumen Pengajuan
-                        </h3>
+                {/* Requisition Header Info Card */}
+                <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-all duration-200">
+                    <div className="border-b border-emerald-100 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-slate-50/50 px-6 py-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-2xs">
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                </svg>
+                            </span>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                Informasi Dokumen Pengajuan
+                            </h3>
+                        </div>
+                        <span className="inline-flex items-center rounded-full bg-emerald-100/70 px-3 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200">
+                            E-BLUD Dokumen
+                        </span>
                     </div>
 
-                    <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x-2 divide-slate-200">
-                        <div className="p-5 bg-white">
-                            <span className="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                    <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="space-y-1">
+                            <span className="block text-xs font-medium text-slate-500">
                                 Nomor Dokumen
                             </span>
-                            <p className="text-sm font-black text-slate-900">
+                            <p className="text-sm font-bold text-slate-900">
                                 {requisition.requisition_number}
                             </p>
                         </div>
 
-                        <div className="p-5 bg-white">
-                            <span className="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                        <div className="space-y-1">
+                            <span className="block text-xs font-medium text-slate-500">
                                 Tanggal Diajukan
                             </span>
-                            <p className="text-sm font-black text-slate-900">
+                            <p className="text-sm font-bold text-slate-900">
                                 {formatTanggal(requisition.submission_date)}
                             </p>
                         </div>
 
-                        <div className="p-5 bg-white">
-                            <span className="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                        <div className="space-y-1">
+                            <span className="block text-xs font-medium text-slate-500">
                                 Unit Kerja / Divisi
                             </span>
-                            <p className="text-sm font-black text-slate-900">
+                            <p className="text-sm font-bold text-slate-900">
                                 {requisition.division?.name || '-'}
                             </p>
-                            <span className="text-xs font-bold text-slate-500">
+                            <span className="text-xs text-slate-500">
                                 Kode: {requisition.division?.division_code}
                             </span>
                         </div>
 
-                        <div className="p-5 bg-white">
-                            <span className="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                        <div className="space-y-1">
+                            <span className="block text-xs font-medium text-slate-500">
                                 Petugas Pengaju (PIC)
                             </span>
-                            <p className="text-sm font-black text-slate-900">
+                            <p className="text-sm font-bold text-slate-900">
                                 {requisition.user?.name || '-'}
                             </p>
-                            <span className="text-xs font-medium text-slate-500">
+                            <span className="text-xs text-slate-500">
                                 {requisition.user?.email}
                             </span>
                         </div>
-                    </div>
-                </div>
 
-                {/* Requested Items Table Card (Tabel dengan Batas Kolom Tegas) */}
-                <div className="overflow-hidden rounded-2xl border-2 border-slate-300 bg-white shadow-md">
-                    <div className="border-b-2 border-slate-200 bg-slate-100 px-6 py-4 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                                Rincian Barang yang Diajukan
-                            </h3>
-                            <span className="inline-flex items-center rounded-lg bg-slate-200 px-2.5 py-0.5 text-xs font-black text-slate-800 border border-slate-300">
-                                {details.length} Macam Barang
+                        <div className="space-y-1">
+                            <span className="block text-xs font-medium text-slate-500">
+                                Klasifikasi & Rekening RBA
                             </span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold ${
+                                    requisition.jenis_belanja === 'Modal'
+                                        ? 'bg-purple-100 text-purple-800'
+                                        : 'bg-blue-100 text-blue-800'
+                                }`}>
+                                    Belanja {requisition.jenis_belanja || 'Operasi'}
+                                </span>
+                            </div>
+                            {requisition.rba_account ? (
+                                <p className="text-xs font-medium text-slate-700 mt-1">
+                                    <span className="font-mono font-semibold">[{requisition.rba_account.account_code}]</span> {requisition.rba_account.account_name}
+                                </p>
+                            ) : (
+                                <span className="text-xs text-slate-400">-</span>
+                            )}
+                        </div>
+
+                        <div className="space-y-1">
+                            <span className="block text-xs font-medium text-slate-500">
+                                Sumber Dana
+                            </span>
+                            <p className="text-sm font-bold text-slate-900">
+                                {requisition.sumber_dana || requisition.rba_account?.sumber_dana || 'BLUD RSJ Tampan'}
+                            </p>
                         </div>
                     </div>
 
+                    {/* Notes from Perencanaan / Keuangan if available */}
+                    {(requisition.notes_perencanaan || requisition.notes_keuangan) && (
+                        <div className="border-t border-slate-100 bg-slate-50/50 p-6 space-y-3">
+                            {requisition.notes_perencanaan && (
+                                <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3.5 text-xs">
+                                    <span className="font-bold text-amber-900">Catatan Bagian Perencanaan:</span>
+                                    <p className="mt-1 text-amber-800 font-medium">{requisition.notes_perencanaan}</p>
+                                </div>
+                            )}
+                            {requisition.notes_keuangan && (
+                                <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3.5 text-xs">
+                                    <span className="font-bold text-blue-900">Catatan Bagian Keuangan:</span>
+                                    <p className="mt-1 text-blue-800 font-medium">{requisition.notes_keuangan}</p>
+                                    {(requisition.sp2d_number || requisition.receipt_number) && (
+                                        <div className="mt-2 flex items-center gap-4 text-[11px] font-semibold text-blue-950">
+                                            {requisition.sp2d_number && <span>No. SP2D: {requisition.sp2d_number}</span>}
+                                            {requisition.receipt_number && <span>No. Bukti / SPJ: {requisition.receipt_number}</span>}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Requested Items Table Card */}
+                <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-all duration-200">
+                    <div className="border-b border-emerald-100 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-slate-50/50 px-6 py-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-2xs">
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 17.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                </svg>
+                            </span>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                Rincian Barang yang Diajukan
+                            </h3>
+                        </div>
+                        <span className="inline-flex items-center rounded-lg bg-emerald-100/70 px-2.5 py-0.5 text-xs font-bold text-emerald-800 border border-emerald-200">
+                            {details.length} Macam Barang
+                        </span>
+                    </div>
+
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y-2 divide-slate-200 border-collapse">
-                            <thead className="bg-emerald-50/80 font-bold border-b-2 border-emerald-200">
-                                <tr className="divide-x-2 divide-slate-200">
-                                    <th className="w-16 px-4 py-4 text-center text-sm font-black uppercase tracking-wider text-slate-800">
+                        <table className="min-w-full divide-y divide-emerald-100">
+                            <thead className="bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90 font-bold border-b border-emerald-100">
+                                <tr>
+                                    <th className="w-14 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
                                         No
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-black uppercase tracking-wider text-slate-800">
+                                    <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-emerald-950">
                                         Barang & Spesifikasi
                                     </th>
-                                    <th className="w-36 px-6 py-4 text-center text-sm font-black uppercase tracking-wider text-slate-800">
-                                        Kuantitas
+                                    <th className="w-32 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                        Diminta
                                     </th>
-                                    <th className="w-48 px-6 py-4 text-right text-sm font-black uppercase tracking-wider text-slate-800">
-                                        Harga Satuan Acuan
+                                    <th className="w-32 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                        Disetujui
                                     </th>
-                                    <th className="w-48 px-6 py-4 text-right text-sm font-black uppercase tracking-wider text-slate-800">
+                                    <th className="w-40 px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                        Harga Satuan
+                                    </th>
+                                    <th className="w-44 px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-emerald-950">
                                         Subtotal
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y-2 divide-slate-200 bg-white">
+                            <tbody className="divide-y divide-slate-100 bg-white">
                                 {details.map((detail, idx) => (
                                     <tr
                                         key={detail.id || idx}
-                                        className="divide-x-2 divide-slate-200 hover:bg-emerald-50/60 transition-colors duration-200 cursor-default"
+                                        className="hover:bg-emerald-50/40 transition-colors"
                                     >
-                                        <td className="whitespace-nowrap px-4 py-4 text-center text-sm font-bold text-slate-600 bg-slate-50/50">
+                                        <td className="whitespace-nowrap px-4 py-3.5 text-center text-xs font-semibold text-slate-500">
                                             #{idx + 1}
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-5 py-3.5">
                                             <div className="flex items-center gap-2">
-                                                <span className="inline-flex rounded-md bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 border border-emerald-300">
+                                                <span className="inline-flex rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
                                                     {detail.item?.item_code || 'BRG'}
                                                 </span>
                                                 <span className="text-sm font-bold text-slate-900">
@@ -253,36 +326,49 @@ export default function Show({ requisition }) {
                                                 </p>
                                             )}
                                         </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-center">
-                                            <span className="text-sm font-black text-slate-900">
-                                                {detail.quantity_requested}
-                                            </span>{' '}
-                                            <span className="text-xs font-bold text-slate-600">
+                                        <td className="whitespace-nowrap px-4 py-3.5 text-center text-sm font-semibold text-slate-700">
+                                            {detail.quantity_requested}{' '}
+                                            <span className="text-xs text-slate-500 font-normal">
                                                 {detail.item?.unit_type || 'Unit'}
                                             </span>
                                         </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-semibold text-slate-800">
+                                        <td className="whitespace-nowrap px-4 py-3.5 text-center text-sm font-bold">
+                                            {detail.quantity_approved !== null && detail.quantity_approved !== undefined ? (
+                                                <span className="text-emerald-700">
+                                                    {detail.quantity_approved}{' '}
+                                                    <span className="text-xs font-normal text-slate-500">
+                                                        {detail.item?.unit_type || 'Unit'}
+                                                    </span>
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-400 text-xs italic">Menunggu</span>
+                                            )}
+                                        </td>
+                                        <td className="whitespace-nowrap px-5 py-3.5 text-right text-xs font-semibold text-slate-700">
                                             {formatRupiah(detail.unit_price)}
                                         </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-black text-emerald-700 bg-emerald-50/40">
+                                        <td className="whitespace-nowrap px-5 py-3.5 text-right text-sm font-bold text-emerald-700">
                                             {formatRupiah(detail.subtotal)}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
-                            <tfoot className="border-t-2 border-slate-300 bg-slate-100 divide-x-2 divide-slate-200">
+                            <tfoot className="border-t-2 border-emerald-200 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90">
                                 <tr>
-                                    <td colSpan="2" className="px-6 py-4 text-right text-sm font-black uppercase tracking-wider text-slate-700">
+                                    <td colSpan="2" className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wider text-emerald-950">
                                         Total Akumulasi:
                                     </td>
-                                    <td className="px-6 py-4 text-center text-sm font-black text-slate-900 bg-slate-200/60">
-                                        {totalQty} Unit
+                                    <td className="px-4 py-4 text-center text-xs font-bold text-slate-800">
+                                        {totalQty} Diminta
                                     </td>
-                                    <td className="px-6 py-4 text-right text-xs font-black uppercase tracking-wider text-slate-500">
-                                        Perkiraan Total:
+                                    <td className="px-4 py-4 text-center text-xs font-black text-emerald-900 bg-emerald-100/70 border-x border-emerald-200/60">
+                                        {details.reduce((sum, d) => sum + Number(d.quantity_approved ?? d.quantity_requested ?? 0), 0)} Unit
                                     </td>
-                                    <td className="whitespace-nowrap px-6 py-4 text-right text-base font-black text-emerald-700 bg-emerald-100/60">
-                                        {formatRupiah(totalCost)}
+                                    <td className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                        Total Estimasi:
+                                    </td>
+                                    <td className="whitespace-nowrap px-5 py-4 text-right text-base font-black text-emerald-700">
+                                        {formatRupiah(requisition.total_approved && requisition.total_approved > 0 ? requisition.total_approved : totalCost)}
                                     </td>
                                 </tr>
                             </tfoot>
@@ -297,7 +383,7 @@ export default function Show({ requisition }) {
                 <div className="flex items-center justify-between">
                     <Link
                         href={route('requisitions.index')}
-                        className="rounded-xl border-2 border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100 active:scale-95"
+                        className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50"
                     >
                         &larr; Kembali ke Daftar Pengajuan
                     </Link>

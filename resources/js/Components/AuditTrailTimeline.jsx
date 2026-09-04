@@ -19,25 +19,27 @@ export default function AuditTrailTimeline({ requisition }) {
     const isRejected = requisition.status === 'Ditolak';
 
     return (
-        <div className="overflow-hidden rounded-2xl border-2 border-slate-300 bg-white shadow-md">
+        <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-all duration-200">
             {/* Card Header */}
-            <div className="border-b-2 border-slate-200 bg-slate-100 px-6 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div className="flex items-center gap-2">
-                    <svg className="h-4 w-4 text-emerald-700" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
+            <div className="border-b border-emerald-100 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-slate-50/50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-2xs">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </span>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
                         Jejak Audit & Riwayat Persetujuan (Audit Trail)
                     </h3>
                 </div>
-                <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200">
+                <span className="inline-flex items-center rounded-full bg-emerald-100/70 px-3 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200">
                     Transparansi E-BLUD RSJ
                 </span>
             </div>
 
             {/* Timeline Body */}
             <div className="p-6">
-                <div className="relative pl-6 border-l-2 border-slate-200 space-y-8 ml-3">
+                <div className="relative pl-6 border-l-2 border-emerald-200/80 space-y-8 ml-3">
                     {/* Stage 1: Pengajuan oleh Divisi */}
                     <div className="relative">
                         {/* Dot */}
