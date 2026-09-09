@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DivisionController;
+use App\Http\Controllers\Admin\UnitController as AdminUnitController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Divisi\DashboardController as DivisiDashboardController;
 use App\Http\Controllers\Divisi\RequisitionController as DivisiRequisitionController;
@@ -48,6 +49,24 @@ Route::prefix('perencanaan')->middleware('auth')->group(function () {
         ->names('perencanaan.rba');
     Route::patch('/rba/{id}/sahkan', [PerencanaanRbaController::class, 'sahkan'])
         ->name('perencanaan.rba.sahkan');
+    Route::patch('/rba/shifts/{id}/activate', [PerencanaanRbaController::class, 'activate'])
+        ->name('perencanaan.rba.activate');
+    Route::post('/rba/shifts', [PerencanaanRbaController::class, 'storeShift'])
+        ->name('perencanaan.rba.shifts.store');
+    Route::patch('/rba/items/{id}', [PerencanaanRbaController::class, 'updateItem'])
+        ->name('perencanaan.rba.items.update');
+    Route::patch('/rba/revenue-items/{id}', [PerencanaanRbaController::class, 'updateRevenueItem'])
+        ->name('perencanaan.rba.revenue-items.update');
+    Route::patch('/rba/shifts/{id}/pembiayaan', [PerencanaanRbaController::class, 'updatePembiayaan'])
+        ->name('perencanaan.rba.pembiayaan.update');
+    Route::patch('/rba/shifts/{id}/batch-revenue', [PerencanaanRbaController::class, 'batchUpdateRevenue'])
+        ->name('perencanaan.rba.batch-revenue.update');
+    Route::get('/rba/print-ringkasan', [PerencanaanRbaController::class, 'printRingkasan'])
+        ->name('perencanaan.rba.print-ringkasan');
+    Route::get('/rba/print-belanja', [PerencanaanRbaController::class, 'printBelanja'])
+        ->name('perencanaan.rba.print-belanja');
+    Route::get('/rba/print-pendapatan', [PerencanaanRbaController::class, 'printPendapatan'])
+        ->name('perencanaan.rba.print-pendapatan');
 });
 
 Route::prefix('keuangan')->middleware('auth')->group(function () {
@@ -71,6 +90,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         ->name('admin.dashboard');
 
     Route::resource('divisions', DivisionController::class)->except(['show']);
+    Route::resource('units', AdminUnitController::class)->only(['store', 'update', 'destroy']);
+    Route::patch('users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])
+        ->name('users.toggle-status');
     Route::resource('users', AdminUserController::class)->except(['show']);
 });
 

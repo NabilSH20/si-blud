@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -27,9 +28,29 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'email' => ['required', 'string', 'email'],
+        $rules = [
+            'email' => ['required', 'string'],
             'password' => ['required', 'string'],
+        ];
+
+        if (!app()->environment('testing') || $this->has('captcha') || session()->has('login_captcha')) {
+            $rules['captcha'] = ['required', 'string'];
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Get custom error messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'email.required' => 'Email kedinasan atau NIP wajib diisi.',
+            'password.required' => 'Kata sandi wajib diisi.',
+            'captcha.required' => 'Kode captcha wajib diisi sebelum klik login.',
         ];
     }
 
@@ -42,13 +63,69 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+        if (!app()->environment('testing') || $this->filled('captcha')) {
+            $expected = session('login_captcha');
+            $inputCaptcha = $this->input('captcha');
 
+            if (!$expected || strtoupper(trim((string) $inputCaptcha)) !== strtoupper($expected)) {
+                session(['login_captcha' => AuthenticatedSessionController::generateCaptchaCode()]);
+
+                throw ValidationException::withMessages([
+                    'captcha' => 'Kode captcha tidak sesuai. Silakan masukkan kode yang tertera.',
+                ]);
+            }
+        }
+
+        $loginInput = trim((string) $this->input('email'));
+        $isEmail = filter_var($loginInput, FILTER_VALIDATE_EMAIL);
+
+        // Pre-check for inactive user
+        $user = \App\Models\User::where($isEmail ? 'email' : 'nip', $loginInput)->first();
+        if ($user && ! $user->is_active) {
+            RateLimiter::hit($this->throttleKey());
+            session(['login_captcha' => AuthenticatedSessionController::generateCaptchaCode()]);
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'email' => 'Akun Anda sedang dinonaktifkan. Silakan hubungi Administrator SIM-RS / Bagian Tata Usaha.',
             ]);
         }
+
+        $credentials = [
+            'password' => $this->input('password'),
+        ];
+        if ($isEmail) {
+            $credentials['email'] = $loginInput;
+        } else {
+            $credentials['nip'] = $loginInput;
+        }
+
+        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
+            // Fallback attempt: in case an email was formatted abnormally or nip was attempted with email field
+            $fallbackCredentials = [
+                $isEmail ? 'nip' : 'email' => $loginInput,
+                'password' => $this->input('password'),
+            ];
+
+            if (! Auth::attempt($fallbackCredentials, $this->boolean('remember'))) {
+                RateLimiter::hit($this->throttleKey());
+
+                session(['login_captcha' => AuthenticatedSessionController::generateCaptchaCode()]);
+
+                throw ValidationException::withMessages([
+                    'email' => trans('auth.failed'),
+                ]);
+            }
+        }
+
+        if (! Auth::user()->is_active) {
+            Auth::logout();
+            $this->session()->invalidate();
+            $this->session()->regenerateToken();
+            throw ValidationException::withMessages([
+                'email' => 'Akun Anda sedang dinonaktifkan. Silakan hubungi Administrator SIM-RS / Bagian Tata Usaha.',
+            ]);
+        }
+
+        session()->forget('login_captcha');
 
         RateLimiter::clear($this->throttleKey());
     }

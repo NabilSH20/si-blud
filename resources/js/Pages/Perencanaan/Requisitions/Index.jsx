@@ -313,29 +313,39 @@ export default function Index({ requisitions = [], success, error }) {
                                                 #{(currentPage - 1) * itemsPerPage + idx + 1}
                                             </td>
 
-                                            {/* Tanggal */}
-                                            <td className="whitespace-nowrap px-4 py-4 text-xs font-semibold text-slate-700">
-                                                {formatTanggal(req.submission_date)}
+                                            {/* Tanggal & TA */}
+                                            <td className="whitespace-nowrap px-4 py-4 text-xs">
+                                                <div className="font-semibold text-slate-800">
+                                                    {formatTanggal(req.submission_date)}
+                                                </div>
+                                                <div className="mt-0.5">
+                                                    <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-black text-amber-800 border border-amber-200">
+                                                        TA {req.fiscal_year || '2027'}
+                                                    </span>
+                                                </div>
                                             </td>
 
                                             {/* Nomor & RBA */}
                                             <td className="px-5 py-4">
-                                                <div className="flex flex-col gap-1">
+                                                <div className="flex flex-col gap-0.5">
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-bold text-sm text-slate-900">
                                                             {req.requisition_number}
                                                         </span>
-                                                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                                                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
                                                             req.jenis_belanja === 'Modal'
                                                                 ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                                                                : 'bg-blue-100 text-blue-800 border border-blue-200'
+                                                                : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                                         }`}>
-                                                            {req.jenis_belanja || 'Operasi'}
+                                                            {req.jenis_belanja || 'Operasi'} BLUD
                                                         </span>
                                                     </div>
+                                                    <p className="text-xs text-slate-600 font-medium line-clamp-1">
+                                                        {req.sub_kegiatan || 'Pelayanan dan Penunjang Pelayanan BLUD'}
+                                                    </p>
                                                     {req.rba_account && (
-                                                        <p className="text-xs text-slate-500 line-clamp-1">
-                                                            <span className="font-mono text-[11px] font-semibold text-slate-600">[{req.rba_account.account_code}]</span> {req.rba_account.account_name}
+                                                        <p className="text-[11px] text-slate-500 line-clamp-1">
+                                                            <span className="font-mono font-semibold text-slate-600">[{req.rba_account.account_code}]</span> {req.rba_account.account_name}
                                                         </p>
                                                     )}
                                                 </div>
@@ -346,7 +356,12 @@ export default function Index({ requisitions = [], success, error }) {
                                                 <span className="text-sm font-semibold text-slate-900 block">
                                                     {req.division?.name || 'Divisi Tidak Diketahui'}
                                                 </span>
-                                                <span className="text-xs text-slate-500">
+                                                {req.unit && (
+                                                    <span className="inline-block text-xs font-bold text-emerald-700">
+                                                        Unit: {req.unit.name}
+                                                    </span>
+                                                )}
+                                                <span className="text-xs text-slate-500 block">
                                                     PIC: {req.user?.name || '-'}
                                                 </span>
                                             </td>

@@ -19,17 +19,31 @@ const menuGroups = [
         ],
     },
     {
-        title: 'Transaksi & Pengadaan',
+        title: 'Pengadaan Belanja E-BLUD',
         items: [
             {
-                name: 'Pengajuan Belanja (E-BLUD)',
+                name: 'Daftar Usulan Belanja',
                 href: route('requisitions.index'),
-                routeName: 'requisitions.*',
+                routeName: 'requisitions.index',
                 icon: (
                     <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
                 ),
+                subItems: [
+                    {
+                        name: 'Belanja Operasi BLUD',
+                        hint: 'BHP Medis, Obat, Lab, Pelatihan',
+                        href: route('requisitions.create', { jenis: 'Operasi' }),
+                        iconEmoji: '⚡',
+                    },
+                    {
+                        name: 'Belanja Modal BLUD',
+                        hint: 'Alat Kesehatan, Mesin, Gedung',
+                        href: route('requisitions.create', { jenis: 'Modal' }),
+                        iconEmoji: '🏢',
+                    },
+                ],
             },
         ],
     },
@@ -42,7 +56,7 @@ export default function DivisiLayout({ children }) {
     const [showNotification, setShowNotification] = useState(false);
 
     return (
-        <div className="min-h-screen bg-slate-100 font-sans text-slate-800 antialiased">
+        <div className="min-h-screen bg-gradient-to-br from-slate-100/90 via-slate-50 to-emerald-50/50 bg-fixed font-sans text-slate-800 antialiased">
             <ToastListener />
 
             {/* Mobile backdrop */}
@@ -118,28 +132,54 @@ export default function DivisiLayout({ children }) {
                                 {group.items.map((item) => {
                                     const active = route().current(item.routeName);
                                     return (
-                                        <Link
-                                            key={item.name}
-                                            href={item.href}
-                                            onClick={() => setSidebarOpen(false)}
-                                            className={`group flex items-center gap-3 rounded-xl py-2.5 pr-3 text-sm transition-all duration-150 ${
-                                                active
-                                                    ? 'bg-emerald-50/90 text-emerald-900 font-black border-l-4 border-emerald-600 pl-3 shadow-2xs'
-                                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-semibold pl-4'
-                                            }`}
-                                        >
-                                            <span
-                                                className={`transition-colors ${
-                                                    active ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-600'
+                                        <div key={item.name} className="space-y-1">
+                                            <Link
+                                                href={item.href}
+                                                onClick={() => setSidebarOpen(false)}
+                                                className={`group flex items-center gap-3 rounded-xl py-2.5 pr-3 text-sm transition-all duration-150 ${
+                                                    active
+                                                        ? 'bg-emerald-50/90 text-emerald-900 font-black border-l-4 border-emerald-600 pl-3 shadow-2xs'
+                                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-semibold pl-4'
                                                 }`}
                                             >
-                                                {item.icon}
-                                            </span>
-                                            <span className="truncate">{item.name}</span>
-                                            {active && (
-                                                <span className="ml-auto h-2 w-2 rounded-full bg-emerald-600 shadow-xs shadow-emerald-500/50" />
+                                                <span
+                                                    className={`transition-colors ${
+                                                        active ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-600'
+                                                    }`}
+                                                >
+                                                    {item.icon}
+                                                </span>
+                                                <span className="truncate">{item.name}</span>
+                                                {active && (
+                                                    <span className="ml-auto h-2 w-2 rounded-full bg-emerald-600 shadow-xs shadow-emerald-500/50" />
+                                                )}
+                                            </Link>
+
+                                            {/* Sub-menu Belanja Operasi & Belanja Modal BLUD */}
+                                            {item.subItems && (
+                                                <div className="ml-5 pl-3 border-l-2 border-slate-200/90 space-y-1 pt-0.5 pb-1">
+                                                    <p className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                                        + Buat Usulan Baru:
+                                                    </p>
+                                                    {item.subItems.map((sub) => (
+                                                        <Link
+                                                            key={sub.name}
+                                                            href={sub.href}
+                                                            onClick={() => setSidebarOpen(false)}
+                                                            className="group flex flex-col rounded-xl px-2.5 py-1.5 hover:bg-emerald-50 text-xs transition border border-transparent hover:border-emerald-200 cursor-pointer"
+                                                        >
+                                                            <div className="flex items-center gap-1.5 font-bold text-slate-800 group-hover:text-emerald-800">
+                                                                <span>{sub.iconEmoji}</span>
+                                                                <span className="truncate">{sub.name}</span>
+                                                            </div>
+                                                            <span className="text-[10px] text-slate-500 group-hover:text-emerald-600 pl-5">
+                                                                {sub.hint}
+                                                            </span>
+                                                        </Link>
+                                                    ))}
+                                                </div>
                                             )}
-                                        </Link>
+                                        </div>
                                     );
                                 })}
                             </nav>

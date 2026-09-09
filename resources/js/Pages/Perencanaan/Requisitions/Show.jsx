@@ -246,32 +246,46 @@ export default function Show({ requisition }) {
                     <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
                         <div className="space-y-1">
                             <span className="block text-xs font-medium text-slate-500">
-                                Nomor Requisition
+                                Nomor Dokumen Pengajuan
                             </span>
                             <p className="text-sm font-bold text-slate-900">
                                 {requisition.requisition_number}
                             </p>
+                            {requisition.nomor_surat_unit && (
+                                <p className="text-xs text-slate-600 font-medium">
+                                    No. Nota: <span className="font-semibold">{requisition.nomor_surat_unit}</span>
+                                </p>
+                            )}
                         </div>
 
                         <div className="space-y-1">
                             <span className="block text-xs font-medium text-slate-500">
-                                Tanggal Diajukan
+                                Tanggal Diajukan & TA
                             </span>
                             <p className="text-sm font-bold text-slate-900">
                                 {formatTanggal(requisition.submission_date)}
                             </p>
+                            <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-black text-amber-800 border border-amber-200">
+                                Perencanaan TA {requisition.fiscal_year || '2027'}
+                            </span>
                         </div>
 
                         <div className="space-y-1">
                             <span className="block text-xs font-medium text-slate-500">
-                                Unit Kerja / Divisi
+                                Bidang & Unit Pemohon
                             </span>
                             <p className="text-sm font-bold text-slate-900">
                                 {requisition.division?.name || '-'}
                             </p>
-                            <span className="text-xs text-slate-500">
-                                Kode: {requisition.division?.division_code}
-                            </span>
+                            {requisition.unit ? (
+                                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-800 border border-emerald-200">
+                                    Unit: {requisition.unit.name} ({requisition.unit.unit_code})
+                                </span>
+                            ) : (
+                                <span className="text-xs text-slate-500">
+                                    Kode: {requisition.division?.division_code}
+                                </span>
+                            )}
                         </div>
 
                         <div className="space-y-1">
@@ -281,9 +295,9 @@ export default function Show({ requisition }) {
                             <p className="text-sm font-bold text-slate-900">
                                 {requisition.user?.name || '-'}
                             </p>
-                            <span className="text-xs text-slate-500">
-                                {requisition.user?.email}
-                            </span>
+                            <p className="text-xs text-slate-500">
+                                NIP: {requisition.user?.nip || '-'} {requisition.user?.position ? `• ${requisition.user.position}` : ''}
+                            </p>
                         </div>
 
                         <div className="space-y-1">
@@ -294,9 +308,9 @@ export default function Show({ requisition }) {
                                 <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold ${
                                     requisition.jenis_belanja === 'Modal'
                                         ? 'bg-purple-100 text-purple-800'
-                                        : 'bg-blue-100 text-blue-800'
+                                        : 'bg-emerald-100 text-emerald-800'
                                 }`}>
-                                    Belanja {requisition.jenis_belanja || 'Operasi'}
+                                    Belanja {requisition.jenis_belanja || 'Operasi'} BLUD
                                 </span>
                             </div>
                             {requisition.rba_account ? (
@@ -310,13 +324,33 @@ export default function Show({ requisition }) {
 
                         <div className="space-y-1">
                             <span className="block text-xs font-medium text-slate-500">
-                                Sumber Dana
+                                Sub Kegiatan Rumah Sakit
                             </span>
-                            <p className="text-sm font-bold text-slate-900">
-                                {requisition.sumber_dana || requisition.rba_account?.sumber_dana || 'BLUD RSJ Tampan'}
+                            <p className="text-xs font-bold text-slate-800 leading-snug">
+                                {requisition.sub_kegiatan || 'Pelayanan dan Penunjang Pelayanan BLUD RS Jiwa Tampan'}
                             </p>
+                            <span className="text-[11px] text-emerald-700 font-semibold">
+                                Sumber: Jasa Layanan BLUD
+                            </span>
                         </div>
                     </div>
+
+                    {/* Urgensi Kebutuhan / Telaahan Staf Pemohon */}
+                    {requisition.urgency_reason && (
+                        <div className="border-t border-slate-100 bg-amber-50/50 p-6">
+                            <div className="flex items-start gap-3">
+                                <span className="mt-0.5 text-amber-600 text-base">📌</span>
+                                <div>
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900">
+                                        Telaahan Staf / Justifikasi Urgensi Kebutuhan Pemohon
+                                    </h4>
+                                    <p className="mt-1 text-xs sm:text-sm text-slate-800 font-medium whitespace-pre-line leading-relaxed">
+                                        {requisition.urgency_reason}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Middle Section: Items Verification Table */}

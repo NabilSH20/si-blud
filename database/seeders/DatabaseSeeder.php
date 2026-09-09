@@ -13,12 +13,14 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             DivisionSeeder::class,
+            UnitSeeder::class,
             UserSeeder::class,
             RbaAccountSeeder::class,
             ItemSeeder::class,
             RbaSeeder::class,
             RevenueSeeder::class,
             RequisitionSeeder::class,
+            RbaPergeseran3Seeder::class,
         ]);
     }
 }

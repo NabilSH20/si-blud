@@ -1,5 +1,6 @@
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useMemo } from 'react';
 
 export default function Create({ divisions = [] }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -8,9 +9,18 @@ export default function Create({ divisions = [] }) {
         password: '',
         role: 'divisi',
         division_id: '',
+        unit_id: '',
     });
 
     const isDivisiRole = data.role === 'divisi';
+
+    const selectedDivision = useMemo(() => {
+        return divisions.find((d) => String(d.id) === String(data.division_id));
+    }, [divisions, data.division_id]);
+
+    const availableUnits = useMemo(() => {
+        return selectedDivision?.units || [];
+    }, [selectedDivision]);
 
     const submit = (e) => {
         e.preventDefault();
@@ -134,47 +144,96 @@ export default function Create({ divisions = [] }) {
                             )}
                         </div>
 
-                        {/* Division Dropdown (Bonus Logic for Divisi Role) */}
-                        <div className={`rounded-xl p-4 border-2 transition ${
+                        {/* Bidang & Unit Kerja Section */}
+                        <div className={`rounded-xl p-4 border-2 transition space-y-4 ${
                             isDivisiRole
                                 ? 'border-blue-300 bg-blue-50/60'
                                 : 'border-slate-200 bg-slate-50/50'
                         }`}>
-                            <div className="flex items-center justify-between mb-1.5">
-                                <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
-                                    Unit Kerja / Divisi {isDivisiRole && <span className="text-rose-600">*</span>}
-                                </label>
-                                {isDivisiRole && (
-                                    <span className="text-[11px] font-bold text-blue-700">
-                                        Wajib untuk Peran Divisi
-                                    </span>
+                            <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                                        Bidang / Bagian {isDivisiRole && <span className="text-rose-600">*</span>}
+                                    </label>
+                                    {isDivisiRole && (
+                                        <span className="text-[11px] font-bold text-blue-700">
+                                            Wajib untuk Peran Divisi
+                                        </span>
+                                    )}
+                                </div>
+
+                                <select
+                                    value={data.division_id}
+                                    onChange={(e) => {
+                                        const newDivId = e.target.value;
+                                        setData((prev) => ({
+                                            ...prev,
+                                            division_id: newDivId,
+                                            unit_id: '',
+                                        }));
+                                    }}
+                                    className="block w-full rounded-xl border-2 border-slate-300 bg-white px-3.5 py-2.5 text-sm font-bold text-slate-900 shadow-2xs transition focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
+                                >
+                                    <option value="">-- Pilih Bidang / Bagian --</option>
+                                    {divisions.map((d) => (
+                                        <option key={d.id} value={d.id}>
+                                            [{d.division_code}] {d.name}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {errors.division_id && (
+                                    <p className="mt-1.5 text-xs font-bold text-rose-600">
+                                        {errors.division_id}
+                                    </p>
                                 )}
                             </div>
 
-                            <select
-                                value={data.division_id}
-                                onChange={(e) => setData('division_id', e.target.value)}
-                                className="block w-full rounded-xl border-2 border-slate-300 bg-white px-3.5 py-2.5 text-sm font-bold text-slate-900 shadow-2xs transition focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
-                            >
-                                <option value="">-- Pilih Unit Kerja / Divisi --</option>
-                                {divisions.map((d) => (
-                                    <option key={d.id} value={d.id}>
-                                        [{d.division_code}] {d.name}
-                                    </option>
-                                ))}
-                            </select>
+                            {/* Dependent Dropdown: Unit Kerja */}
+                            <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                                        Unit Kerja / Instalasi {isDivisiRole && <span className="text-rose-600">*</span>}
+                                    </label>
+                                    {isDivisiRole && data.division_id && (
+                                        <span className="text-[11px] font-semibold text-emerald-700">
+                                            {availableUnits.length} Unit Tersedia
+                                        </span>
+                                    )}
+                                </div>
 
-                            <p className="mt-1.5 text-[11px] font-medium text-slate-500 leading-relaxed">
+                                <select
+                                    value={data.unit_id}
+                                    onChange={(e) => setData('unit_id', e.target.value)}
+                                    disabled={!data.division_id}
+                                    className="block w-full rounded-xl border-2 border-slate-300 bg-white px-3.5 py-2.5 text-sm font-bold text-slate-900 shadow-2xs transition focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 disabled:bg-slate-100 disabled:text-slate-400"
+                                >
+                                    <option value="">
+                                        {!data.division_id
+                                            ? '-- Pilih Bidang Terlebih Dahulu --'
+                                            : availableUnits.length === 0
+                                            ? '-- Tidak ada unit kerja pada bidang ini --'
+                                            : '-- Pilih Unit Kerja / Instalasi --'}
+                                    </option>
+                                    {availableUnits.map((u) => (
+                                        <option key={u.id} value={u.id}>
+                                            [{u.unit_code}] {u.name}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {errors.unit_id && (
+                                    <p className="mt-1.5 text-xs font-bold text-rose-600">
+                                        {errors.unit_id}
+                                    </p>
+                                )}
+                            </div>
+
+                            <p className="text-[11px] font-medium text-slate-500 leading-relaxed">
                                 {isDivisiRole
-                                    ? 'Pengguna dengan peran Divisi harus dikaitkan ke unit kerja agar otomatis tercatat saat membuat pengajuan barang.'
+                                    ? 'Pilih Bidang terlebih dahulu, kemudian tentukan Unit Kerja tempat staf bertugas agar pengajuan belanja otomatis teridentifikasi dengan tepat.'
                                     : 'Opsional. Peran Admin, Perencanaan, dan Keuangan beroperasi di tingkat rumah sakit.'}
                             </p>
-
-                            {errors.division_id && (
-                                <p className="mt-1.5 text-xs font-bold text-rose-600">
-                                    {errors.division_id}
-                                </p>
-                            )}
                         </div>
 
                         {/* Action Buttons */}

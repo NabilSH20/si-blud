@@ -78,4 +78,51 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
         $response->assertRedirect('/');
     }
+
+    public function test_login_screen_sets_captcha_in_session(): void
+    {
+        $response = $this->get('/login');
+
+        $response->assertStatus(200);
+        $this->assertTrue(session()->has('login_captcha'));
+        $this->assertSame(5, strlen(session('login_captcha')));
+    }
+
+    public function test_captcha_can_be_refreshed(): void
+    {
+        $response = $this->getJson(route('captcha.refresh'));
+
+        $response->assertOk();
+        $response->assertJsonStructure(['captchaSvg']);
+        $this->assertTrue(session()->has('login_captcha'));
+    }
+
+    public function test_users_can_not_authenticate_with_invalid_captcha(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->withSession(['login_captcha' => 'ABC12'])->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+            'captcha' => 'WRONG',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors('captcha');
+    }
+
+    public function test_users_can_authenticate_with_valid_captcha(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->withSession(['login_captcha' => 'ABC12'])->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+            'captcha' => 'abc12',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect('/divisi/dashboard');
+    }
 }
+

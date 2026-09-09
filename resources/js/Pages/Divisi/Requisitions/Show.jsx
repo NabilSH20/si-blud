@@ -26,28 +26,28 @@ const getStatusBadge = (status) => {
         case 'Pending_Perencanaan':
             return {
                 label: 'Menunggu Verifikasi Perencanaan',
-                desc: 'Pengajuan Anda telah berhasil dikirim ke Bagian Perencanaan. Tim perencanaan sedang memeriksa spesifikasi dan kuantitas barang.',
+                desc: 'Pengajuan usulan belanja Anda telah masuk ke Bagian Perencanaan. Tim Perencanaan sedang menelaah kewajaran volume dan kesesuaian pagu RBA BLUD.',
                 bg: 'bg-amber-100 text-amber-900 border-amber-300',
                 dot: 'bg-amber-500',
             };
         case 'Diproses_Keuangan':
             return {
                 label: 'Sedang Diproses Keuangan',
-                desc: 'Spesifikasi barang telah diverifikasi oleh tim Perencanaan. Saat ini dokumen diteruskan ke Bagian Keuangan untuk pengecekan pagu anggaran belanja.',
+                desc: 'Usulan telah diverifikasi oleh Tim Perencanaan. Saat ini dokumen diteruskan ke Bagian Keuangan untuk pengecekan ketersediaan kas BLUD dan kesiapan SP2D/SPJ.',
                 bg: 'bg-blue-100 text-blue-900 border-blue-300',
                 dot: 'bg-blue-500',
             };
         case 'Disetujui_Selesai':
             return {
                 label: 'Disetujui / Selesai',
-                desc: 'Pengajuan telah disetujui penuh oleh Keuangan dan alokasi dana telah dipotong dari anggaran. Pengadaan siap direalisasikan.',
+                desc: 'Usulan belanja telah disetujui penuh oleh Bagian Keuangan dan dialokasikan ke dalam RBA pergeseran/kas BLUD. Pengadaan siap direalisasikan.',
                 bg: 'bg-emerald-100 text-emerald-900 border-emerald-300',
                 dot: 'bg-emerald-500',
             };
         case 'Ditolak':
             return {
                 label: 'Pengajuan Ditolak',
-                desc: 'Pengajuan ini tidak dapat diproses lebih lanjut. Silakan hubungi bagian Perencanaan atau Keuangan untuk informasi lebih lanjut.',
+                desc: 'Usulan belanja ini tidak dapat diproses lebih lanjut. Periksa catatan penolakan dari Tim Perencanaan atau Bagian Keuangan.',
                 bg: 'bg-rose-100 text-rose-900 border-rose-300',
                 dot: 'bg-rose-500',
             };
@@ -63,7 +63,7 @@ const getStatusBadge = (status) => {
 
 export default function Show({ requisition }) {
     const statusInfo = getStatusBadge(requisition.status);
-    const details = requisition.requisition_details || [];
+    const details = requisition.requisition_details || requisition.requisitionDetails || [];
 
     const totalCost = details.reduce(
         (sum, d) => sum + (Number(d.quantity_requested || 0) * Number(d.unit_price || 0)),
@@ -92,13 +92,16 @@ export default function Show({ requisition }) {
                             </svg>
                             Kembali ke Daftar Pengajuan
                         </Link>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
                             <h2 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
                                 {requisition.requisition_number}
                             </h2>
                             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border ${statusInfo.bg}`}>
                                 <span className={`h-2 w-2 rounded-full ${statusInfo.dot}`} />
                                 {statusInfo.label}
+                            </span>
+                            <span className="inline-flex items-center rounded-md bg-amber-50 px-2.5 py-1 text-xs font-black text-amber-800 border border-amber-200">
+                                TA {requisition.fiscal_year || '2027'}
                             </span>
                         </div>
                     </div>
@@ -108,21 +111,21 @@ export default function Show({ requisition }) {
                             href={route('requisitions.print', requisition.id)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-4 py-2.5 text-sm font-bold text-slate-700 shadow-xs hover:shadow-md transition-all duration-200"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-4 py-2.5 text-xs font-bold text-slate-700 shadow-xs hover:shadow-md transition-all duration-200"
                         >
                             <svg className="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24-1.077-.32-2.14-.32-3.193 0-5.18 4.02-9.386 8.974-9.386 4.954 0 8.973 4.207 8.973 9.386 0 1.053-.08 2.116-.32 3.193M12 18v-4.5m0 0l-2.25 2.25M12 13.5l2.25 2.25M3.75 19.5h16.5" />
                             </svg>
-                            Cetak Nota
+                            Cetak Nota Dinas
                         </a>
                         <Link
-                            href={route('requisitions.create')}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all duration-200"
+                            href={route('requisitions.create', { jenis: requisition.jenis_belanja || 'Operasi' })}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:shadow-lg transition-all duration-200"
                         >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
-                            Buat Pengajuan Baru
+                            Buat Usulan Baru
                         </Link>
                     </div>
                 </div>
@@ -152,42 +155,50 @@ export default function Show({ requisition }) {
                                 </svg>
                             </span>
                             <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
-                                Informasi Dokumen Pengajuan
+                                Identitas Dokumen Pengajuan E-BLUD
                             </h3>
                         </div>
-                        <span className="inline-flex items-center rounded-full bg-emerald-100/70 px-3 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200">
-                            E-BLUD Dokumen
+                        <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200">
+                            Dana BLUD RSJ Tampan
                         </span>
                     </div>
 
                     <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
                         <div className="space-y-1">
                             <span className="block text-xs font-medium text-slate-500">
-                                Nomor Dokumen
+                                Nomor Dokumen Pengajuan
                             </span>
                             <p className="text-sm font-bold text-slate-900">
                                 {requisition.requisition_number}
                             </p>
+                            {requisition.nomor_surat_unit && (
+                                <p className="text-xs text-slate-600 font-medium">
+                                    No. Pengantar Unit: <span className="font-semibold">{requisition.nomor_surat_unit}</span>
+                                </p>
+                            )}
                         </div>
 
                         <div className="space-y-1">
                             <span className="block text-xs font-medium text-slate-500">
-                                Tanggal Diajukan
+                                Tanggal & Tahun Anggaran
                             </span>
                             <p className="text-sm font-bold text-slate-900">
                                 {formatTanggal(requisition.submission_date)}
                             </p>
+                            <p className="text-xs text-amber-700 font-bold">
+                                Target Realisasi: TA {requisition.fiscal_year || '2027'}
+                            </p>
                         </div>
 
                         <div className="space-y-1">
                             <span className="block text-xs font-medium text-slate-500">
-                                Unit Kerja / Divisi
+                                Unit Kerja & Bidang Pengusul
                             </span>
                             <p className="text-sm font-bold text-slate-900">
-                                {requisition.division?.name || '-'}
+                                {requisition.unit?.name || requisition.division?.name || '-'}
                             </p>
-                            <span className="text-xs text-slate-500">
-                                Kode: {requisition.division?.division_code}
+                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
+                                {requisition.division?.name}
                             </span>
                         </div>
 
@@ -198,27 +209,27 @@ export default function Show({ requisition }) {
                             <p className="text-sm font-bold text-slate-900">
                                 {requisition.user?.name || '-'}
                             </p>
-                            <span className="text-xs text-slate-500">
-                                {requisition.user?.email}
-                            </span>
+                            <p className="text-xs text-slate-500">
+                                NIP: {requisition.user?.nip || '-'} {requisition.user?.position ? `• ${requisition.user.position}` : ''}
+                            </p>
                         </div>
 
                         <div className="space-y-1">
                             <span className="block text-xs font-medium text-slate-500">
-                                Klasifikasi & Rekening RBA
+                                Klasifikasi Belanja & Rekening RBA
                             </span>
                             <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold ${
                                     requisition.jenis_belanja === 'Modal'
                                         ? 'bg-purple-100 text-purple-800'
-                                        : 'bg-blue-100 text-blue-800'
+                                        : 'bg-emerald-100 text-emerald-800'
                                 }`}>
-                                    Belanja {requisition.jenis_belanja || 'Operasi'}
+                                    Belanja {requisition.jenis_belanja || 'Operasi'} BLUD
                                 </span>
                             </div>
                             {requisition.rba_account ? (
                                 <p className="text-xs font-medium text-slate-700 mt-1">
-                                    <span className="font-mono font-semibold">[{requisition.rba_account.account_code}]</span> {requisition.rba_account.account_name}
+                                    <span className="font-mono font-bold">[{requisition.rba_account.account_code}]</span> {requisition.rba_account.account_name}
                                 </p>
                             ) : (
                                 <span className="text-xs text-slate-400">-</span>
@@ -227,13 +238,33 @@ export default function Show({ requisition }) {
 
                         <div className="space-y-1">
                             <span className="block text-xs font-medium text-slate-500">
-                                Sumber Dana
+                                Sub Kegiatan Rumah Sakit
                             </span>
-                            <p className="text-sm font-bold text-slate-900">
-                                {requisition.sumber_dana || requisition.rba_account?.sumber_dana || 'BLUD RSJ Tampan'}
+                            <p className="text-xs font-bold text-slate-800 leading-snug">
+                                {requisition.sub_kegiatan || 'Pelayanan dan Penunjang Pelayanan BLUD RS Jiwa Tampan'}
                             </p>
+                            <span className="text-[11px] text-emerald-700 font-semibold">
+                                Sumber: Jasa Layanan BLUD
+                            </span>
                         </div>
                     </div>
+
+                    {/* Urgensi Kebutuhan / Telaahan Staf */}
+                    {requisition.urgency_reason && (
+                        <div className="border-t border-slate-100 bg-amber-50/50 p-6">
+                            <div className="flex items-start gap-3">
+                                <span className="mt-0.5 text-amber-600 text-base">📌</span>
+                                <div>
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900">
+                                        Telaahan Staf / Justifikasi Urgensi Kebutuhan
+                                    </h4>
+                                    <p className="mt-1 text-xs sm:text-sm text-slate-800 font-medium whitespace-pre-line leading-relaxed">
+                                        {requisition.urgency_reason}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Notes from Perencanaan / Keuangan if available */}
                     {(requisition.notes_perencanaan || requisition.notes_keuangan) && (
@@ -270,7 +301,7 @@ export default function Show({ requisition }) {
                                 </svg>
                             </span>
                             <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
-                                Rincian Barang yang Diajukan
+                                Rincian Barang yang Diusulkan
                             </h3>
                         </div>
                         <span className="inline-flex items-center rounded-lg bg-emerald-100/70 px-2.5 py-0.5 text-xs font-bold text-emerald-800 border border-emerald-200">
@@ -289,10 +320,10 @@ export default function Show({ requisition }) {
                                         Barang & Spesifikasi
                                     </th>
                                     <th className="w-32 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
-                                        Diminta
+                                        Volume Usulan
                                     </th>
                                     <th className="w-32 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
-                                        Disetujui
+                                        Volume Disetujui
                                     </th>
                                     <th className="w-40 px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-emerald-950">
                                         Harga Satuan
@@ -332,7 +363,7 @@ export default function Show({ requisition }) {
                                                 {detail.item?.unit_type || 'Unit'}
                                             </span>
                                         </td>
-                                        <td className="whitespace-nowrap px-4 py-3.5 text-center text-sm font-bold">
+                                        <td className="whitespace-nowrap px-4 py-4 text-center text-sm font-bold">
                                             {detail.quantity_approved !== null && detail.quantity_approved !== undefined ? (
                                                 <span className="text-emerald-700">
                                                     {detail.quantity_approved}{' '}
@@ -341,7 +372,7 @@ export default function Show({ requisition }) {
                                                     </span>
                                                 </span>
                                             ) : (
-                                                <span className="text-slate-400 text-xs italic">Menunggu</span>
+                                                <span className="text-slate-400 text-xs italic">Menunggu Verifikasi</span>
                                             )}
                                         </td>
                                         <td className="whitespace-nowrap px-5 py-3.5 text-right text-xs font-semibold text-slate-700">

@@ -46,6 +46,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -66,6 +67,11 @@ class User extends Authenticatable
     public function division(): BelongsTo
     {
         return $this->belongsTo(Division::class);
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function requisitions(): HasMany

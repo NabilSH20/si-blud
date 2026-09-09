@@ -14,6 +14,7 @@ class Requisition extends Model
     {
         return [
             'submission_date' => 'date',
+            'fiscal_year' => 'integer',
             'total_estimated' => 'decimal:2',
             'total_approved' => 'decimal:2',
         ];
@@ -22,6 +23,11 @@ class Requisition extends Model
     public function division(): BelongsTo
     {
         return $this->belongsTo(Division::class);
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function user(): BelongsTo

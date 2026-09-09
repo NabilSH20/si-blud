@@ -92,7 +92,7 @@ export default function KeuanganLayout({ children }) {
     const [showNotification, setShowNotification] = useState(false);
 
     return (
-        <div className="min-h-screen bg-slate-100 font-sans text-slate-800 antialiased">
+        <div className="min-h-screen bg-gradient-to-br from-slate-100/90 via-slate-50 to-emerald-50/50 bg-fixed font-sans text-slate-800 antialiased">
             <ToastListener />
 
             {/* Mobile backdrop */}

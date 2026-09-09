@@ -21,18 +21,32 @@ const formatTanggal = (dateString) => {
     }).format(date);
 };
 
-export default function Index({ revenues = [], stats = {} }) {
+export default function Index({ revenues = [], stats = {}, categories = ['Semua', 'Jasa Layanan', 'Hasil Kerja Sama', 'APBD', 'Lain-lain BLUD Sah'] }) {
     const [selectedRevenue, setSelectedRevenue] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState('Semua');
+    const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const { delete: destroy, processing } = useForm();
 
-    const totalPages = Math.ceil(revenues.length / itemsPerPage) || 1;
+    const filteredRevenues = useMemo(() => {
+        return revenues.filter((item) => {
+            const matchesCategory = selectedCategory === 'Semua' || (item.category === selectedCategory);
+            const query = searchQuery.toLowerCase();
+            const matchesSearch = !searchQuery ||
+                item.revenue_number?.toLowerCase().includes(query) ||
+                item.source?.toLowerCase().includes(query) ||
+                item.description?.toLowerCase().includes(query);
+            return matchesCategory && matchesSearch;
+        });
+    }, [revenues, selectedCategory, searchQuery]);
+
+    const totalPages = Math.ceil(filteredRevenues.length / itemsPerPage) || 1;
     const paginatedRevenues = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;
-        return revenues.slice(start, start + itemsPerPage);
-    }, [revenues, currentPage, itemsPerPage]);
+        return filteredRevenues.slice(start, start + itemsPerPage);
+    }, [filteredRevenues, currentPage, itemsPerPage]);
 
     const handleDeleteClick = (revenue) => {
         setSelectedRevenue(revenue);
@@ -145,6 +159,42 @@ export default function Index({ revenues = [], stats = {} }) {
                 </div>
             </div>
 
+            {/* Filter & Search Bar */}
+            <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-emerald-100/90 bg-white p-3.5 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-1.5">
+                    {categories.map((cat) => (
+                        <button
+                            key={cat}
+                            type="button"
+                            onClick={() => {
+                                setSelectedCategory(cat);
+                                setCurrentPage(1);
+                            }}
+                            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                                selectedCategory === cat
+                                    ? 'bg-emerald-700 text-white shadow-xs'
+                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            }`}
+                        >
+                            {cat}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="w-full sm:w-72">
+                    <input
+                        type="text"
+                        placeholder="Cari nomor bukti, pos rekening, atau keterangan..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                        className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-emerald-500"
+                    />
+                </div>
+            </div>
+
             {/* Main Table Container */}
             <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-shadow">
                 <div className="overflow-x-auto">
@@ -154,14 +204,14 @@ export default function Index({ revenues = [], stats = {} }) {
                                 <th className="px-4 py-3.5 text-center w-14 text-emerald-950">No</th>
                                 <th className="px-5 py-3.5 text-emerald-950">Nomor Bukti</th>
                                 <th className="px-4 py-3.5 text-center text-emerald-950">Tanggal</th>
-                                <th className="px-5 py-3.5 text-emerald-950">Sumber Layanan</th>
+                                <th className="px-5 py-3.5 text-emerald-950">Pos Rekening / Unit Layanan</th>
                                 <th className="px-5 py-3.5 text-emerald-950">Uraian / Keterangan</th>
                                 <th className="px-5 py-3.5 text-right text-emerald-950">Nominal (IDR)</th>
                                 <th className="px-4 py-3.5 text-center w-24 text-emerald-950">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
-                            {revenues.length > 0 ? (
+                            {filteredRevenues.length > 0 ? (
                                 paginatedRevenues.map((item, index) => (
                                     <tr key={item.id} className="transition-colors duration-150 hover:bg-emerald-50/40">
                                         <td className="px-4 py-3.5 text-center text-xs font-semibold text-slate-500">
@@ -174,9 +224,14 @@ export default function Index({ revenues = [], stats = {} }) {
                                             {formatTanggal(item.date)}
                                         </td>
                                         <td className="px-5 py-3.5 font-bold text-slate-800">
-                                            <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800 border border-emerald-200">
-                                                {item.source}
-                                            </span>
+                                            <div className="flex flex-col gap-1 items-start">
+                                                <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-800 border border-emerald-200 uppercase tracking-wider">
+                                                    {item.category || 'Jasa Layanan'}
+                                                </span>
+                                                <span className="text-xs font-bold text-slate-900">
+                                                    {item.source}
+                                                </span>
+                                            </div>
                                         </td>
                                         <td className="px-5 py-3.5 text-xs text-slate-600">
                                             {item.description || '-'}
@@ -202,7 +257,7 @@ export default function Index({ revenues = [], stats = {} }) {
                             ) : (
                                 <tr>
                                     <td colSpan={7} className="px-6 py-10 text-center text-slate-400 font-medium">
-                                        Belum ada penerimaan pendapatan yang dicatat.
+                                        Tidak ada penerimaan pendapatan yang sesuai dengan filter.
                                     </td>
                                 </tr>
                             )}

@@ -18,4 +18,9 @@ class Division extends Model
     {
         return $this->hasMany(Requisition::class);
     }
+
+    public function units(): HasMany
+    {
+        return $this->hasMany(Unit::class);
+    }
 }

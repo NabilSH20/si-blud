@@ -1,41 +1,59 @@
 import { Link } from '@inertiajs/react';
 
-export default function GuestLayout({ children }) {
+export default function GuestLayout({ children, wide = false }) {
     return (
-        <div className="relative flex min-h-screen flex-col items-center justify-center bg-slate-100/80 px-4 py-8 antialiased sm:px-6">
-            {/* Ambient emerald background gradient effects */}
-            <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-                <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[450px] w-[600px] rounded-full bg-emerald-100/60 blur-3xl" />
-                <div className="absolute -bottom-40 right-10 h-[350px] w-[400px] rounded-full bg-teal-100/50 blur-3xl" />
+        <div className="relative flex min-h-screen flex-col items-center justify-center overflow-x-hidden bg-slate-100 p-4 antialiased sm:p-6 lg:p-8">
+            {/* Soft Hospital Background Watermark */}
+            <div className="fixed inset-0 -z-20 overflow-hidden">
+                <img
+                    src="/images/bg.jpeg"
+                    alt="Gedung RSJ Tampan"
+                    className="h-full w-full object-cover object-center filter blur-[1px] opacity-10"
+                />
             </div>
 
-            {/* Brand Header */}
-            <div className="mb-6 flex flex-col items-center text-center">
-                <Link href="/" className="group flex flex-col items-center gap-3">
-                    <img
-                        src="/image/logo-vertikal-rsj.png"
-                        alt="Logo RSJ Tampan"
-                        className="h-20 sm:h-24 w-auto object-contain drop-shadow-md transition group-hover:scale-105"
-                    />
-                    <div>
-                        <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-                            E-BLUD <span className="text-emerald-700">RSJ Tampan</span>
-                        </h1>
-                        <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                            Sistem Informasi Perencanaan & Keuangan E-BLUD
-                        </p>
-                    </div>
-                </Link>
+            {/* Light Clean Backdrop Overlay */}
+            <div className="fixed inset-0 -z-10 bg-slate-100/90" />
+
+            {/* Main Content Area */}
+            <div className={`w-full transition-all duration-200 ${wide ? 'max-w-4xl' : 'max-w-md'}`}>
+                {wide ? (
+                    children
+                ) : (
+                    <>
+                        {/* Brand Header for standard cards */}
+                        <div className="mb-6 flex flex-col items-center text-center">
+                            <Link href="/" className="group flex flex-col items-center gap-2">
+                                <div className="rounded-2xl bg-white p-2.5 shadow-sm border border-slate-200 transition group-hover:border-emerald-300">
+                                    <img
+                                        src="/images/logo-vertikal-rsj.png"
+                                        alt="Logo RSJ Tampan"
+                                        className="h-14 w-auto object-contain"
+                                    />
+                                </div>
+                                <div>
+                                    <h1 className="text-xl font-bold tracking-tight text-slate-800">
+                                        E-BLUD <span className="text-emerald-700">RSJ Tampan</span>
+                                    </h1>
+                                    <p className="text-xs text-slate-500">
+                                        Sistem Informasi Perencanaan & Penganggaran BLUD
+                                    </p>
+                                </div>
+                            </Link>
+                        </div>
+
+                        {/* Standard Content Card */}
+                        <div className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-md shadow-slate-900/5 sm:p-8">
+                            {children}
+                        </div>
+                    </>
+                )}
             </div>
 
-            {/* Content Card */}
-            <div className="w-full overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xl shadow-slate-200/50 sm:max-w-md sm:p-8">
-                {children}
-            </div>
-
-            <p className="mt-8 text-center text-xs font-medium text-slate-400">
-                &copy; {new Date().getFullYear()} RSJ Tampan Provinsi Riau. Hak Cipta Dilindungi.
-            </p>
+            {/* Clean, Simple Footer */}
+            <footer className="mt-8 text-center text-xs text-slate-500">
+                <p>&copy; {new Date().getFullYear()} RSJ Tampan Provinsi Riau &bull; Sistem E-BLUD</p>
+            </footer>
         </div>
     );
 }

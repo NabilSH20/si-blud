@@ -20,7 +20,7 @@ class RequisitionController extends Controller
      */
     public function index(): Response
     {
-        $requisitions = Requisition::with(['division', 'user', 'requisitionDetails.item', 'rbaAccount'])
+        $requisitions = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount'])
             ->orderByRaw("
                 CASE
                     WHEN status = 'Diproses_Keuangan' THEN 0
@@ -45,7 +45,7 @@ class RequisitionController extends Controller
      */
     public function show(string $id): Response
     {
-        $requisition = Requisition::with(['division', 'user', 'requisitionDetails.item', 'rbaAccount'])
+        $requisition = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount'])
             ->findOrFail($id);
 
         $budgets = RbaAccount::orderBy('account_code')->get();

@@ -292,14 +292,20 @@ export default function Show({ requisition, budgets = [] }) {
 
                         <div className="space-y-1">
                             <span className="block text-xs font-medium text-slate-500">
-                                Unit Kerja / Divisi
+                                Bidang & Unit Pemohon
                             </span>
                             <p className="text-sm font-bold text-slate-900">
                                 {requisition.division?.name || '-'}
                             </p>
-                            <span className="text-xs text-slate-500">
-                                Kode: {requisition.division?.division_code}
-                            </span>
+                            {requisition.unit ? (
+                                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-800 border border-emerald-200">
+                                    Unit: {requisition.unit.name} ({requisition.unit.unit_code})
+                                </span>
+                            ) : (
+                                <span className="text-xs text-slate-500">
+                                    Kode: {requisition.division?.division_code}
+                                </span>
+                            )}
                         </div>
 
                         <div className="space-y-1">

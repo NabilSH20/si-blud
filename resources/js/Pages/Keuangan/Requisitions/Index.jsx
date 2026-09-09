@@ -336,7 +336,12 @@ export default function Index({ requisitions = [], success, error }) {
                                                 <span className="text-sm font-semibold text-slate-900 block">
                                                     {req.division?.name || 'Divisi Tidak Diketahui'}
                                                 </span>
-                                                <span className="text-xs text-slate-500">
+                                                {req.unit && (
+                                                    <span className="inline-block text-xs font-bold text-emerald-700">
+                                                        Unit: {req.unit.name}
+                                                    </span>
+                                                )}
+                                                <span className="text-xs text-slate-500 block">
                                                     PIC: {req.user?.name || '-'}
                                                 </span>
                                             </td>

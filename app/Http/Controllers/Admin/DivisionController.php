@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Division;
+use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,12 +14,25 @@ use Inertia\Response;
 class DivisionController extends Controller
 {
     /**
-     * Display a listing of the divisions.
+     * Display a listing of the divisions and units.
      */
     public function index(): Response
     {
+        $divisions = Division::with(['units' => function ($q) {
+                $q->orderBy('name');
+            }])
+            ->withCount(['units', 'users', 'requisitions'])
+            ->orderBy('division_code')
+            ->get();
+
+        $units = Unit::with('division')
+            ->withCount(['users', 'requisitions'])
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('Admin/Divisions/Index', [
-            'divisions' => Division::orderBy('division_code')->get(['id', 'division_code', 'name']),
+            'divisions' => $divisions,
+            'units' => $units,
             'success' => session('success'),
             'error' => session('error'),
         ]);
@@ -40,7 +54,14 @@ class DivisionController extends Controller
         $validated = $request->validate([
             'division_code' => ['required', 'string', 'max:255', Rule::unique('divisions', 'division_code')],
             'name' => ['required', 'string', 'max:255'],
+            'group' => ['nullable', 'string', 'in:Pelayanan_Keperawatan,Umum_Kepegawaian'],
+        ], [
+            'division_code.required' => 'Kode Divisi wajib diisi.',
+            'division_code.unique' => 'Kode Divisi sudah digunakan.',
+            'name.required' => 'Nama Divisi / Bagian wajib diisi.',
         ]);
+
+        $validated['division_code'] = strtoupper(trim($validated['division_code']));
 
         Division::create($validated);
 
@@ -55,7 +76,7 @@ class DivisionController extends Controller
     public function edit(Division $division): Response
     {
         return Inertia::render('Admin/Divisions/Edit', [
-            'division' => $division->only(['id', 'division_code', 'name']),
+            'division' => $division->only(['id', 'division_code', 'name', 'group']),
         ]);
     }
 
@@ -72,13 +93,20 @@ class DivisionController extends Controller
                 Rule::unique('divisions', 'division_code')->ignore($division->id),
             ],
             'name' => ['required', 'string', 'max:255'],
+            'group' => ['nullable', 'string', 'in:Pelayanan_Keperawatan,Umum_Kepegawaian'],
+        ], [
+            'division_code.required' => 'Kode Divisi wajib diisi.',
+            'division_code.unique' => 'Kode Divisi sudah digunakan.',
+            'name.required' => 'Nama Divisi / Bagian wajib diisi.',
         ]);
+
+        $validated['division_code'] = strtoupper(trim($validated['division_code']));
 
         $division->update($validated);
 
         return redirect()
             ->route('divisions.index')
-            ->with('success', 'Divisi berhasil diperbarui.');
+            ->with('success', 'Divisi "'.$division->name.'" berhasil diperbarui.');
     }
 
     /**
@@ -86,14 +114,23 @@ class DivisionController extends Controller
      */
     public function destroy(Division $division): RedirectResponse
     {
+        if ($division->units()->exists()) {
+            return back()->with('error', 'Divisi "'.$division->name.'" tidak dapat dihapus karena masih memiliki data Unit Kerja terkait. Hapus atau pindahkan unit kerja terlebih dahulu.');
+        }
+
+        if ($division->users()->exists()) {
+            return back()->with('error', 'Divisi "'.$division->name.'" tidak dapat dihapus karena masih memiliki pengguna/staf terdaftar.');
+        }
+
         if ($division->requisitions()->exists()) {
             return back()->with('error', 'Divisi "'.$division->name.'" tidak dapat dihapus karena masih memiliki data requisition terkait.');
         }
 
+        $name = $division->name;
         $division->delete();
 
         return redirect()
             ->route('divisions.index')
-            ->with('success', 'Divisi berhasil dihapus.');
+            ->with('success', 'Divisi "'.$name.'" berhasil dihapus.');
     }
 }

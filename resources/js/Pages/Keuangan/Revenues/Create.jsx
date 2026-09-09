@@ -5,9 +5,10 @@ import TextInput from '@/Components/TextInput';
 import KeuanganLayout from '@/Layouts/KeuanganLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-export default function Create({ sources = [], default_date = '' }) {
+export default function Create({ sources = [], grouped_sources = null, default_date = '' }) {
+    const initialSource = sources[0] || (grouped_sources ? Object.values(grouped_sources)[0]?.[0] : '') || '';
     const { data, setData, post, processing, errors } = useForm({
-        source: sources[0] || '',
+        source: initialSource,
         amount: '',
         date: default_date || new Date().toISOString().split('T')[0],
         description: '',
@@ -39,7 +40,7 @@ export default function Create({ sources = [], default_date = '' }) {
                             Pencatatan Pendapatan BLUD Baru
                         </h2>
                         <p className="mt-1 text-xs text-slate-500 font-medium">
-                            Masukkan rincian kas masuk yang diterima dari unit layanan atau instalasi penunjang
+                            Penerimaan kas masuk dari 23 unit layanan resmi berstandar RBA RSJ Tampan
                         </p>
                     </div>
                 </div>
@@ -55,7 +56,7 @@ export default function Create({ sources = [], default_date = '' }) {
                     <form onSubmit={handleSubmit} className="p-6 space-y-5">
                         {/* Sumber Layanan */}
                         <div>
-                            <InputLabel htmlFor="source" value="Unit / Sumber Pendapatan *" />
+                            <InputLabel htmlFor="source" value="Pos Rekening / Sumber Pendapatan *" />
                             <select
                                 id="source"
                                 value={data.source}
@@ -63,12 +64,30 @@ export default function Create({ sources = [], default_date = '' }) {
                                 className="mt-1 block w-full rounded-xl border-2 border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 shadow-xs focus:border-emerald-600 focus:ring-emerald-600"
                                 required
                             >
-                                {sources.map((src) => (
-                                    <option key={src} value={src}>
-                                        {src}
-                                    </option>
-                                ))}
+                                {grouped_sources ? (
+                                    Object.entries(grouped_sources).map(([group, items]) => (
+                                        <optgroup key={group} label={group} className="font-black text-emerald-950 bg-emerald-50/60">
+                                            {items.map((src) => (
+                                                <option key={src} value={src} className="font-medium text-slate-900 bg-white py-1">
+                                                    {src}
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                    ))
+                                ) : (
+                                    sources.map((src) => (
+                                        <option key={src} value={src}>
+                                            {src}
+                                        </option>
+                                    ))
+                                )}
                             </select>
+                            <p className="mt-1.5 text-[11px] text-slate-500 font-medium flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                </svg>
+                                Pilihan pos penerimaan mengacu pada 23 rekening resmi Dokumen 2 RBA Pendapatan RSJ Tampan.
+                            </p>
                             <InputError message={errors.source} className="mt-2" />
                         </div>
 
