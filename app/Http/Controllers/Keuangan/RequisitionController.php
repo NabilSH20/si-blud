@@ -20,21 +20,23 @@ class RequisitionController extends Controller
      */
     public function index(Request $request): Response
     {
-        $activeYear = (int) session('active_year', date('Y'));
+        $activeYear = (int) session('active_year', function () {
+            return class_exists(\App\Models\FiscalYear::class)
+                ? \App\Models\FiscalYear::getDefaultYear()
+                : (int) date('Y');
+        });
+
         $selectedYear = $request->filled('fiscal_year')
             ? $request->fiscal_year
             : ($request->filled('budget_year') ? $request->budget_year : $activeYear);
 
-        $query = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan']);
-
-        if ($selectedYear !== 'ALL') {
-            $query->where(function ($q) use ($selectedYear) {
+        $query = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])
+            ->where(function ($q) use ($selectedYear) {
                 $q->where('budget_year', $selectedYear)
                   ->orWhere(function ($sq) use ($selectedYear) {
                       $sq->whereNull('budget_year')->where('fiscal_year', $selectedYear);
                   });
             });
-        }
 
         $requisitions = $query
             ->orderByRaw("

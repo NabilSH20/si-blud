@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\FiscalYear;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,10 +23,15 @@ class AuthenticatedSessionController extends Controller
         $code = self::generateCaptchaCode();
         session(['login_captcha' => $code]);
 
+        $fiscalYears = FiscalYear::getActiveYears();
+        $defaultYear = FiscalYear::getDefaultYear();
+
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
             'captchaSvg' => self::renderCaptchaSvg($code),
+            'fiscalYears' => $fiscalYears,
+            'defaultYear' => $defaultYear,
         ]);
     }
 

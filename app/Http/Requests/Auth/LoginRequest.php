@@ -31,6 +31,7 @@ class LoginRequest extends FormRequest
         $rules = [
             'email' => ['required', 'string'],
             'password' => ['required', 'string'],
+            'fiscal_year' => ['nullable', 'integer'],
         ];
 
         if (!app()->environment('testing') || $this->has('captcha') || session()->has('login_captcha')) {
@@ -126,6 +127,9 @@ class LoginRequest extends FormRequest
         }
 
         session()->forget('login_captcha');
+
+        $selectedYear = (int) ($this->input('fiscal_year') ?: (\App\Models\FiscalYear::getDefaultYear() ?? date('Y')));
+        session(['active_year' => $selectedYear]);
 
         RateLimiter::clear($this->throttleKey());
     }

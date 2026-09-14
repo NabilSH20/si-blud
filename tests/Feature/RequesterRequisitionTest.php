@@ -634,5 +634,62 @@ class RequesterRequisitionTest extends TestCase
             'origin_unit_id' => $this->farmasiUnit->id,
         ]);
     }
+
+    public function test_requester_can_delete_pending_requisition(): void
+    {
+        $requisition = Requisition::create([
+            'requisition_number' => 'REQ-FAR-DELETE-001',
+            'submission_date' => now(),
+            'division_id' => $this->medikDivision->id,
+            'unit_id' => $this->farmasiUnit->id,
+            'user_id' => $this->farmasiUser->id,
+            'rba_account_id' => $this->rbaOperasiBlud->id,
+            'jenis_belanja' => 'Operasi',
+            'sumber_dana' => 'BLUD',
+            'sub_kegiatan' => 'Pelayanan Farmasi',
+            'fiscal_year' => 2027,
+            'budget_year' => 2027,
+            'status' => 'Pending_Perencanaan',
+            'total_estimated' => 50000,
+        ]);
+
+        RequisitionDetail::create([
+            'requisition_id' => $requisition->id,
+            'item_id' => $this->itemObat->id,
+            'quantity_requested' => 1,
+            'unit_price' => 50000,
+            'subtotal' => 50000,
+        ]);
+
+        $response = $this->actingAs($this->farmasiUser)->delete(route('requisitions.destroy', $requisition->id));
+
+        $response->assertRedirect(route('requisitions.index'));
+        $this->assertDatabaseMissing('requisitions', ['id' => $requisition->id]);
+        $this->assertDatabaseMissing('requisition_details', ['requisition_id' => $requisition->id]);
+    }
+
+    public function test_requester_cannot_delete_approved_requisition(): void
+    {
+        $requisition = Requisition::create([
+            'requisition_number' => 'REQ-FAR-LOCKED-001',
+            'submission_date' => now(),
+            'division_id' => $this->medikDivision->id,
+            'unit_id' => $this->farmasiUnit->id,
+            'user_id' => $this->farmasiUser->id,
+            'rba_account_id' => $this->rbaOperasiBlud->id,
+            'jenis_belanja' => 'Operasi',
+            'sumber_dana' => 'BLUD',
+            'sub_kegiatan' => 'Pelayanan Farmasi',
+            'fiscal_year' => 2027,
+            'budget_year' => 2027,
+            'status' => 'Disetujui_Selesai',
+            'total_estimated' => 50000,
+        ]);
+
+        $response = $this->actingAs($this->farmasiUser)->delete(route('requisitions.destroy', $requisition->id));
+
+        $this->assertDatabaseHas('requisitions', ['id' => $requisition->id]);
+    }
 }
+
 

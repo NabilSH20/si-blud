@@ -1,7 +1,18 @@
 import ToastListener from '@/Components/ToastListener';
 import ProfileSettingsModal from '@/Components/ProfileSettingsModal';
 import { Link, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+const getUrlParams = (urlStr) => {
+    try {
+        if (!urlStr) return new URLSearchParams();
+        const qIdx = urlStr.indexOf('?');
+        if (qIdx === -1) return new URLSearchParams();
+        return new URLSearchParams(urlStr.substring(qIdx));
+    } catch {
+        return new URLSearchParams();
+    }
+};
 
 const menuGroups = [
     {
@@ -24,21 +35,112 @@ const menuGroups = [
         items: [
             {
                 name: 'Master Divisi',
-                href: route('divisions.index'),
                 routeName: 'divisions.*',
                 icon: (
                     <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
                     </svg>
                 ),
+                children: [
+                    {
+                        name: 'Bagian & Bidang',
+                        href: route('divisions.index', { tab: 'divisions' }),
+                        isActive: (url, isParentActive) => isParentActive && !url.includes('tab=units'),
+                    },
+                    {
+                        name: 'Unit Kerja',
+                        href: route('divisions.index', { tab: 'units' }),
+                        isActive: (url, isParentActive) => isParentActive && url.includes('tab=units'),
+                    },
+                ],
             },
             {
                 name: 'Kelola Pengguna',
-                href: route('users.index'),
                 routeName: 'users.*',
                 icon: (
                     <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                    </svg>
+                ),
+                children: [
+                    {
+                        name: 'Unit Pemohon',
+                        isNested: true,
+                        isActive: (url, isParentActive) => {
+                            if (!isParentActive) return false;
+                            const params = getUrlParams(url);
+                            return (
+                                params.get('role') === 'divisi' ||
+                                params.has('division') ||
+                                params.has('division_id')
+                            );
+                        },
+                        children: [
+                            {
+                                name: 'Pelayanan Medik',
+                                href: route('users.index', { role: 'divisi', division: 'MEDIK' }),
+                                isActive: (url, isParentActive) => {
+                                    if (!isParentActive) return false;
+                                    const params = getUrlParams(url);
+                                    return params.get('division') === 'MEDIK' || params.get('division') === '1' || params.get('division_id') === '1';
+                                },
+                            },
+                            {
+                                name: 'Keperawatan',
+                                href: route('users.index', { role: 'divisi', division: 'RAWAT' }),
+                                isActive: (url, isParentActive) => {
+                                    if (!isParentActive) return false;
+                                    const params = getUrlParams(url);
+                                    return params.get('division') === 'RAWAT' || params.get('division') === '2' || params.get('division_id') === '2';
+                                },
+                            },
+                            {
+                                name: 'Penunjang & Diklit',
+                                href: route('users.index', { role: 'divisi', division: 'PENUNJANG_DIKLIT' }),
+                                isActive: (url, isParentActive) => {
+                                    if (!isParentActive) return false;
+                                    const params = getUrlParams(url);
+                                    return params.get('division') === 'PENUNJANG_DIKLIT' || params.get('division') === '3' || params.get('division_id') === '3';
+                                },
+                            },
+                        ],
+                    },
+                    {
+                        name: 'Perencanaan',
+                        href: route('users.index', { role: 'perencanaan' }),
+                        isActive: (url, isParentActive) => {
+                            if (!isParentActive) return false;
+                            const params = getUrlParams(url);
+                            return params.get('role') === 'perencanaan';
+                        },
+                    },
+                    {
+                        name: 'Keuangan',
+                        href: route('users.index', { role: 'keuangan' }),
+                        isActive: (url, isParentActive) => {
+                            if (!isParentActive) return false;
+                            const params = getUrlParams(url);
+                            return params.get('role') === 'keuangan';
+                        },
+                    },
+                    {
+                        name: 'Administrator',
+                        href: route('users.index', { role: 'admin' }),
+                        isActive: (url, isParentActive) => {
+                            if (!isParentActive) return false;
+                            const params = getUrlParams(url);
+                            return params.get('role') === 'admin';
+                        },
+                    },
+                ],
+            },
+            {
+                name: 'Tahun Anggaran',
+                href: route('fiscal-years.index'),
+                routeName: 'fiscal-years.*',
+                icon: (
+                    <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
                     </svg>
                 ),
             },
@@ -47,12 +149,44 @@ const menuGroups = [
 ];
 
 export default function AdminLayout({ children }) {
-    const { auth, active_year } = usePage().props;
+    const { auth, active_year, available_fiscal_years } = usePage().props;
+    const { url } = usePage();
     const user = auth?.user || {};
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
     const [showNotification, setShowNotification] = useState(false);
     const [profileModalOpen, setProfileModalOpen] = useState(false);
+
+    // Track active sections
+    const isDivisionsActive = route().current('divisions.*');
+    const isUsersActive = route().current('users.*');
+    const currentParams = getUrlParams(url);
+    const isPemohonActive =
+        isUsersActive &&
+        (currentParams.get('role') === 'divisi' ||
+            currentParams.has('division') ||
+            currentParams.has('division_id'));
+
+    // Track collapsible dropdown in sidebar
+    const [openDropdowns, setOpenDropdowns] = useState({
+        'Master Divisi': isDivisionsActive,
+        'Kelola Pengguna': isUsersActive,
+        'Unit Pemohon': isPemohonActive,
+    });
+
+    // Keep active accordions open when navigating
+    useEffect(() => {
+        if (isDivisionsActive) {
+            setOpenDropdowns((prev) => ({ ...prev, 'Master Divisi': true }));
+        }
+        if (isUsersActive) {
+            setOpenDropdowns((prev) => ({
+                ...prev,
+                'Kelola Pengguna': true,
+                ...(isPemohonActive ? { 'Unit Pemohon': true } : {}),
+            }));
+        }
+    }, [url, isDivisionsActive, isUsersActive, isPemohonActive]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-100/90 via-slate-50 to-emerald-50/50 bg-fixed font-sans text-slate-800 antialiased">
@@ -129,6 +263,154 @@ export default function AdminLayout({ children }) {
                             </div>
                             <nav className="space-y-1.5">
                                 {group.items.map((item) => {
+                                    if (item.children) {
+                                        const isParentActive = route().current(item.routeName);
+                                        const isOpen = openDropdowns[item.name] ?? isParentActive;
+                                        const currentTab = url.includes('tab=units') ? 'units' : 'divisions';
+
+                                        return (
+                                            <div key={item.name} className="space-y-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setOpenDropdowns((prev) => ({
+                                                            ...prev,
+                                                            [item.name]: !isOpen,
+                                                        }));
+                                                    }}
+                                                    className={`w-full group flex items-center justify-between rounded-xl py-2.5 pr-3 text-sm transition-all duration-150 cursor-pointer ${
+                                                        isParentActive
+                                                            ? 'bg-emerald-50/70 text-emerald-900 font-bold border-l-4 border-emerald-600 pl-3'
+                                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-semibold pl-4'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <span
+                                                            className={`transition-colors ${
+                                                                isParentActive ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-600'
+                                                            }`}
+                                                        >
+                                                            {item.icon}
+                                                        </span>
+                                                        <span className="truncate">{item.name}</span>
+                                                    </div>
+                                                    <svg
+                                                        className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${
+                                                            isOpen ? 'rotate-180 text-emerald-600' : ''
+                                                        }`}
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        strokeWidth={2}
+                                                        stroke="currentColor"
+                                                    >
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                                    </svg>
+                                                </button>
+
+                                                {isOpen && (
+                                                    <div className="ml-4 pl-3 border-l-2 border-emerald-100/80 space-y-1 py-1">
+                                                        {item.children.map((child) => {
+                                                            if (child.isNested) {
+                                                                const isSubActive = child.isActive ? child.isActive(url, isParentActive) : false;
+                                                                const isSubOpen = openDropdowns[child.name] ?? isSubActive;
+
+                                                                return (
+                                                                    <div key={child.name} className="space-y-1">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setOpenDropdowns((prev) => ({
+                                                                                    ...prev,
+                                                                                    [child.name]: !isSubOpen,
+                                                                                }));
+                                                                            }}
+                                                                            className={`w-full group flex items-center justify-between rounded-lg py-1.5 px-3 text-xs transition cursor-pointer ${
+                                                                                isSubActive
+                                                                                    ? 'bg-blue-50/80 text-blue-900 font-bold'
+                                                                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
+                                                                            }`}
+                                                                        >
+                                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                                <span
+                                                                                    className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                                                                                        isSubActive ? 'bg-blue-600 ring-2 ring-blue-200' : 'bg-slate-300 group-hover:bg-blue-400'
+                                                                                    }`}
+                                                                                />
+                                                                                <span className="truncate">{child.name}</span>
+                                                                            </div>
+                                                                            <svg
+                                                                                className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${
+                                                                                    isSubOpen ? 'rotate-180 text-blue-600' : ''
+                                                                                }`}
+                                                                                fill="none"
+                                                                                viewBox="0 0 24 24"
+                                                                                strokeWidth={2}
+                                                                                stroke="currentColor"
+                                                                            >
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                                                            </svg>
+                                                                        </button>
+
+                                                                        {isSubOpen && (
+                                                                            <div className="ml-3 pl-2.5 border-l-2 border-blue-200/70 space-y-1 py-0.5">
+                                                                                {child.children.map((sub) => {
+                                                                                    const isSubItemActive = sub.isActive ? sub.isActive(url, isParentActive) : false;
+                                                                                    return (
+                                                                                        <Link
+                                                                                            key={sub.name}
+                                                                                            href={sub.href}
+                                                                                            onClick={() => setSidebarOpen(false)}
+                                                                                            className={`group flex items-center gap-2 rounded-lg py-1.5 px-2.5 text-[11px] transition-all duration-150 ${
+                                                                                                isSubItemActive
+                                                                                                    ? 'bg-blue-100/90 text-blue-950 font-bold shadow-2xs'
+                                                                                                    : 'text-slate-600 hover:bg-blue-50/50 hover:text-blue-900 font-medium'
+                                                                                            }`}
+                                                                                        >
+                                                                                            <span
+                                                                                                className={`h-1 w-1 rounded-full transition-colors ${
+                                                                                                    isSubItemActive ? 'bg-blue-600 scale-125' : 'bg-slate-300 group-hover:bg-blue-400'
+                                                                                                }`}
+                                                                                            />
+                                                                                            <span className="truncate">{sub.name}</span>
+                                                                                        </Link>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            }
+
+                                                            const isChildActive = child.isActive
+                                                                ? child.isActive(url, isParentActive)
+                                                                : (isParentActive && child.tab === currentTab);
+
+                                                            return (
+                                                                <Link
+                                                                    key={child.name}
+                                                                    href={child.href}
+                                                                    onClick={() => setSidebarOpen(false)}
+                                                                    className={`group flex items-center gap-2.5 rounded-lg py-2 px-3 text-xs transition-all duration-150 ${
+                                                                        isChildActive
+                                                                            ? 'bg-emerald-100/80 text-emerald-950 font-bold shadow-2xs'
+                                                                            : 'text-slate-600 hover:bg-emerald-50/40 hover:text-emerald-900 font-medium'
+                                                                    }`}
+                                                                >
+                                                                    <span
+                                                                        className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                                                                            isChildActive ? 'bg-emerald-600 scale-125' : 'bg-slate-300 group-hover:bg-emerald-400'
+                                                                        }`}
+                                                                    />
+                                                                    <span className="truncate">{child.name}</span>
+                                                                </Link>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    }
+
                                     const active = route().current(item.routeName);
                                     return (
                                         <Link
@@ -198,6 +480,32 @@ export default function AdminLayout({ children }) {
 
                     {/* Right Column: Actions & Profile Dropdown */}
                     <div className="flex items-center gap-2.5 sm:gap-3.5">
+                        {/* Global Year Selector */}
+                        <div className="flex items-center gap-1.5 rounded-2xl border-2 border-slate-200 bg-slate-50 px-2.5 py-1 text-xs shadow-2xs">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider hidden sm:inline">TA</span>
+                            <select
+                                value={active_year || 2026}
+                                onChange={(e) => router.post(route('set-year'), { year: e.target.value })}
+                                className="bg-transparent border-none text-xs font-black text-slate-800 focus:ring-0 cursor-pointer p-0 pr-6"
+                                aria-label="Tahun Anggaran"
+                            >
+                                {available_fiscal_years && available_fiscal_years.length > 0 ? (
+                                    available_fiscal_years.map((y) => (
+                                        <option key={y.year} value={y.year}>
+                                            {y.year} {y.is_default ? '★' : ''}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <>
+                                        <option value="2025">2025</option>
+                                        <option value="2026">2026</option>
+                                        <option value="2027">2027</option>
+                                        <option value="2028">2028</option>
+                                    </>
+                                )}
+                            </select>
+                        </div>
+
                         {/* Notification Bell */}
                         <div className="relative">
                             <button
@@ -234,22 +542,6 @@ export default function AdminLayout({ children }) {
                                 </div>
                             )}
                         </div>
-
-                        {/* Global Year Selector next to User Avatar */}
-                        <div className="flex items-center gap-1.5 rounded-2xl border-2 border-slate-200 bg-slate-50 px-2.5 py-1 text-xs shadow-2xs">
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider hidden sm:inline">TA</span>
-                            <select
-                                value={active_year || 2026}
-                                onChange={(e) => router.post(route('set-year'), { year: e.target.value })}
-                                className="bg-transparent border-none text-xs font-black text-slate-800 focus:ring-0 cursor-pointer p-0 pr-6"
-                                aria-label="Tahun Anggaran"
-                            >
-                                <option value="2026">2026</option>
-                                <option value="2027">2027</option>
-                                <option value="2028">2028</option>
-                            </select>
-                        </div>
-
                         {/* User Avatar & Dropdown */}
                         <div className="relative">
                             <button

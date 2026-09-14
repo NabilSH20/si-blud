@@ -38,7 +38,14 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
-            'active_year' => (int) session('active_year', date('Y')),
+            'active_year' => (int) session('active_year', function () {
+                return class_exists(\App\Models\FiscalYear::class)
+                    ? \App\Models\FiscalYear::getDefaultYear()
+                    : (int) date('Y');
+            }),
+            'available_fiscal_years' => fn () => class_exists(\App\Models\FiscalYear::class)
+                ? \App\Models\FiscalYear::getActiveYears()
+                : [],
         ];
     }
 }

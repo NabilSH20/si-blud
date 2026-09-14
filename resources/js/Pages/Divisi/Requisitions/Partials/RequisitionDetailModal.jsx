@@ -23,38 +23,38 @@ const getStatusBadge = (status) => {
     switch (status) {
         case 'Pending_Perencanaan':
             return {
-                label: 'Verifikasi Perencanaan',
+                label: 'Menunggu Telaah Perencanaan',
                 desc: 'Pengajuan usulan belanja Anda sedang ditelaah oleh Tim Perencanaan untuk kesesuaian pagu dan kewajaran volume RBA BLUD.',
-                bg: 'bg-amber-100 text-amber-900 border-amber-300',
-                dot: 'bg-amber-500',
+                badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+                dotClass: 'bg-amber-500',
             };
         case 'Diproses_Keuangan':
             return {
-                label: 'Diproses Keuangan',
-                desc: 'Usulan telah diverifikasi Tim Perencanaan dan saat ini sedang diteliti oleh Bagian Keuangan terkait kas BLUD.',
-                bg: 'bg-blue-100 text-blue-900 border-blue-300',
-                dot: 'bg-blue-500',
+                label: 'Sedang Diproses Keuangan',
+                desc: 'Usulan telah diverifikasi Tim Perencanaan dan saat ini sedang diteliti oleh Bagian Keuangan terkait ketersediaan kas BLUD.',
+                badgeClass: 'bg-blue-50 text-blue-800 border-blue-200',
+                dotClass: 'bg-blue-500',
             };
         case 'Disetujui_Selesai':
             return {
                 label: 'Disetujui / Selesai',
                 desc: 'Usulan belanja telah disetujui penuh oleh Bagian Keuangan dan siap direalisasikan belanja/pengadaannya.',
-                bg: 'bg-emerald-100 text-emerald-900 border-emerald-300',
-                dot: 'bg-emerald-500',
+                badgeClass: 'bg-teal-50 text-teal-800 border-teal-200',
+                dotClass: 'bg-teal-500',
             };
         case 'Ditolak':
             return {
-                label: 'Ditolak',
-                desc: 'Pengajuan usulan ini tidak disetujui. Periksa catatan evaluasi dari verifikator terkait.',
-                bg: 'bg-rose-100 text-rose-900 border-rose-300',
-                dot: 'bg-rose-500',
+                label: 'Perlu Perbaikan / Ditolak',
+                desc: 'Pengajuan usulan ini memerlukan perbaikan atau tidak disetujui. Periksa catatan evaluasi dari verifikator.',
+                badgeClass: 'bg-rose-50 text-rose-800 border-rose-200',
+                dotClass: 'bg-rose-500',
             };
         default:
             return {
                 label: status || 'Pending',
-                desc: 'Pengajuan sedang dalam proses telaah.',
-                bg: 'bg-slate-100 text-slate-800 border-slate-300',
-                dot: 'bg-slate-400',
+                desc: 'Pengajuan sedang dalam proses penelaahan.',
+                badgeClass: 'bg-slate-50 text-slate-700 border-slate-200',
+                dotClass: 'bg-slate-400',
             };
     }
 };
@@ -81,292 +81,244 @@ export default function RequisitionDetailModal({
     );
 
     return (
-        <Modal show={show} onClose={onClose} maxWidth="5xl">
-            <div className="flex flex-col max-h-[92vh]">
-                {/* Header Modal */}
-                <div className="shrink-0 border-b border-emerald-100 bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 px-6 py-4 text-white">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl font-bold backdrop-blur-xs border border-white/20">
-                                📋
-                            </div>
-                            <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <h2 className="text-base sm:text-lg font-black tracking-tight">
-                                        Rincian Usulan Belanja ({requisition.requisition_number})
-                                    </h2>
-                                    <span className="inline-flex items-center rounded-full bg-emerald-900/60 px-2.5 py-0.5 text-[11px] font-black border border-emerald-400/40 text-emerald-100">
-                                        TA {requisition.fiscal_year || '2027'}
-                                    </span>
-                                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${statusInfo.bg}`}>
-                                        <span className={`h-1.5 w-1.5 rounded-full ${statusInfo.dot}`} />
-                                        {statusInfo.label}
-                                    </span>
-                                </div>
-                                <p className="text-xs text-emerald-100/90 font-medium mt-0.5">
-                                    {requisition.unit?.name || 'Unit Kerja'} ({requisition.division?.name || 'Bidang'}) &bull; Sumber Dana 100% BLUD
-                                </p>
-                            </div>
+        <Modal show={show} onClose={onClose} maxWidth="4xl">
+            <div className="flex flex-col max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-xl">
+                {/* 1. Modal Header Minimalis */}
+                <div className="shrink-0 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 font-bold border border-teal-100">
+                            📋
                         </div>
-
-                        {/* Close button */}
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="rounded-xl bg-white/10 p-2 text-white/80 hover:bg-white/20 hover:text-white transition cursor-pointer"
-                            aria-label="Tutup Dialog"
-                        >
-                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-base font-bold text-slate-900">
+                                    Rincian Usulan Belanja
+                                </h2>
+                                <span className="font-mono text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
+                                    {requisition.requisition_number}
+                                </span>
+                                <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-700">
+                                    TA {requisition.fiscal_year || '2026'}
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-500">
+                                {requisition.unit?.name || 'Unit Pemohon'} &bull; {requisition.division?.name || 'Bidang'} &bull; Dana 100% BLUD
+                            </p>
+                        </div>
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
+                        title="Tutup dialog"
+                    >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
 
-                {/* Body Modal (Scrollable) */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50">
-                    {/* Status Notice Card */}
-                    <div className={`rounded-xl border p-4 shadow-2xs ${statusInfo.bg}`}>
+                {/* 2. Modal Body (Scrollable) */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50/40">
+                    {/* Status Banner */}
+                    <div className={`rounded-xl border p-4 shadow-2xs ${statusInfo.badgeClass}`}>
                         <div className="flex items-start gap-3">
-                            <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${statusInfo.dot} text-white text-xs font-black`}>
-                                ✓
-                            </div>
+                            <span className={`mt-0.5 h-2.5 w-2.5 rounded-full shrink-0 ${statusInfo.dotClass}`} />
                             <div>
-                                <h4 className="text-xs font-bold uppercase tracking-wider">Status: {statusInfo.label}</h4>
-                                <p className="mt-0.5 text-xs font-medium opacity-95 leading-relaxed">
+                                <h4 className="text-xs font-bold uppercase tracking-wider">{statusInfo.label}</h4>
+                                <p className="mt-0.5 text-xs opacity-90 leading-relaxed font-medium">
                                     {statusInfo.desc}
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    {/* SECTION 1: Identitas Dokumen Pengajuan */}
-                    <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-                        <div className="border-b border-slate-100 bg-slate-50/80 px-5 py-3 flex items-center justify-between">
+                    {/* SECTION 1: Identitas Usulan & Sub Kegiatan */}
+                    <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-2xs">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                             <div className="flex items-center gap-2">
-                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white font-black text-xs">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-100 text-teal-800 text-xs font-bold">
                                     1
                                 </span>
-                                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                                    Identitas Dokumen Pengajuan & Sub Kegiatan RS
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                                    Informasi Usulan Belanja
                                 </h3>
                             </div>
-                            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-200">
+                            <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
                                 Belanja {requisition.jenis_belanja || 'Operasi'} BLUD
                             </span>
                         </div>
 
-                        <div className="p-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-xs">
                             <div className="space-y-1">
-                                <span className="block text-xs font-semibold text-slate-500">
-                                    Nomor Dokumen Pengajuan
-                                </span>
-                                <p className="text-sm font-bold text-slate-900 font-mono">
+                                <span className="text-slate-500 font-medium">Nomor Dokumen</span>
+                                <p className="font-bold text-slate-900 font-mono text-sm">
                                     {requisition.requisition_number}
                                 </p>
                                 {requisition.nomor_surat_unit && (
-                                    <p className="text-xs text-slate-600">
-                                        No. Nota Unit: <span className="font-semibold">{requisition.nomor_surat_unit}</span>
+                                    <p className="text-[11px] text-slate-500">
+                                        No. Nota: <span className="font-semibold text-slate-700">{requisition.nomor_surat_unit}</span>
                                     </p>
                                 )}
                             </div>
 
                             <div className="space-y-1">
-                                <span className="block text-xs font-semibold text-slate-500">
-                                    Tanggal & Tahun Anggaran
-                                </span>
-                                <p className="text-sm font-bold text-slate-900">
-                                    {formatTanggal(requisition.submission_date)}
+                                <span className="text-slate-500 font-medium">Tanggal Pengajuan</span>
+                                <p className="font-bold text-slate-900">
+                                    {formatTanggal(requisition.submission_date || requisition.created_at)}
                                 </p>
-                                <p className="text-xs text-amber-700 font-bold">
-                                    Target: TA {requisition.fiscal_year || '2027'}
+                                <p className="text-[11px] text-slate-500">
+                                    Tahun Anggaran: <span className="font-semibold text-teal-800">TA {requisition.fiscal_year || '2026'}</span>
                                 </p>
                             </div>
 
                             <div className="space-y-1">
-                                <span className="block text-xs font-semibold text-slate-500">
-                                    Unit & Bidang Pengusul
-                                </span>
-                                <p className="text-sm font-bold text-slate-900">
+                                <span className="text-slate-500 font-medium">Unit Kerja & Pemohon</span>
+                                <p className="font-bold text-slate-900">
                                     {requisition.unit?.name || requisition.division?.name || '-'}
                                 </p>
-                                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
-                                    {requisition.division?.name}
-                                </span>
-                            </div>
-
-                            <div className="space-y-1">
-                                <span className="block text-xs font-semibold text-slate-500">
-                                    Petugas Pengaju (PIC)
-                                </span>
-                                <p className="text-sm font-bold text-slate-900">
-                                    {requisition.user?.name || '-'}
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                    {requisition.user?.nip ? `NIP: ${requisition.user.nip}` : ''} {requisition.user?.position ? `• ${requisition.user.position}` : ''}
+                                <p className="text-[11px] text-slate-500">
+                                    PIC: {requisition.user?.name || '-'}
                                 </p>
                             </div>
 
-                            <div className="space-y-1">
-                                <span className="block text-xs font-semibold text-slate-500">
-                                    Kode Rekening RBA
-                                </span>
+                            <div className="space-y-1 sm:col-span-2">
+                                <span className="text-slate-500 font-medium">Pos Rekening Belanja RBA</span>
                                 {requisition.rba_account ? (
-                                    <p className="text-xs font-medium text-slate-800">
-                                        <span className="font-mono font-bold block text-slate-900">[{requisition.rba_account.account_code}]</span>
+                                    <p className="font-semibold text-slate-900">
+                                        <span className="font-mono font-bold text-teal-800">[{requisition.rba_account.account_code}]</span>{' '}
                                         {requisition.rba_account.account_name}
                                     </p>
                                 ) : (
-                                    <span className="text-xs text-slate-400">-</span>
+                                    <span className="text-slate-400">-</span>
                                 )}
                             </div>
 
-                            <div className="space-y-1">
-                                <span className="block text-xs font-semibold text-slate-500">
-                                    Sub Kegiatan Rumah Sakit
-                                </span>
-                                <p className="text-xs font-bold text-slate-800 leading-snug">
+                            <div className="space-y-1 sm:col-span-1">
+                                <span className="text-slate-500 font-medium">Sub Kegiatan Rumah Sakit</span>
+                                <p className="font-semibold text-slate-800 leading-snug">
                                     {requisition.sub_kegiatan || 'Pelayanan dan Penunjang Pelayanan BLUD RS Jiwa Tampan'}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Telaahan Staf / Latar Belakang */}
+                        {/* Urgensi / Catatan Pengusul */}
                         {requisition.urgency_reason && (
-                            <div className="border-t border-slate-100 bg-amber-50/40 p-5">
-                                <div className="flex items-start gap-2.5">
-                                    <span className="text-amber-600 text-sm mt-0.5">📌</span>
-                                    <div>
-                                        <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900">
-                                            Telaahan Staf / Justifikasi Urgensi Kebutuhan
-                                        </h4>
-                                        <p className="mt-1 text-xs sm:text-sm text-slate-800 font-medium whitespace-pre-line leading-relaxed">
-                                            {requisition.urgency_reason}
-                                        </p>
-                                    </div>
-                                </div>
+                            <div className="mt-4 pt-3 border-t border-slate-100 text-xs">
+                                <span className="font-bold text-slate-700">Latar Belakang / Urgensi:</span>
+                                <p className="mt-1 text-slate-600 whitespace-pre-line leading-relaxed">
+                                    {requisition.urgency_reason}
+                                </p>
                             </div>
                         )}
                     </div>
 
-                    {/* SECTION 2: Catatan Evaluasi Verifikator (Jika ada) */}
+                    {/* SECTION 2: Catatan Evaluasi Verifikator (Jika Ada) */}
                     {(requisition.notes_perencanaan || requisition.notes_keuangan) && (
-                        <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 shadow-xs">
-                            <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                        <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-2xs space-y-3">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
                                 Catatan Evaluasi Verifikator
                             </h4>
                             {requisition.notes_perencanaan && (
-                                <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3.5 text-xs">
-                                    <span className="font-bold text-amber-900">Catatan Bagian Perencanaan:</span>
-                                    <p className="mt-1 text-amber-800 font-medium">{requisition.notes_perencanaan}</p>
+                                <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 text-xs">
+                                    <span className="font-bold text-amber-900">Catatan Perencanaan:</span>
+                                    <p className="mt-0.5 text-amber-800">{requisition.notes_perencanaan}</p>
                                 </div>
                             )}
                             {requisition.notes_keuangan && (
-                                <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3.5 text-xs">
-                                    <span className="font-bold text-blue-900">Catatan Bagian Keuangan:</span>
-                                    <p className="mt-1 text-blue-800 font-medium">{requisition.notes_keuangan}</p>
-                                    {(requisition.sp2d_number || requisition.receipt_number) && (
-                                        <div className="mt-2 flex items-center gap-4 text-[11px] font-semibold text-blue-950">
-                                            {requisition.sp2d_number && <span>No. SP2D: {requisition.sp2d_number}</span>}
-                                            {requisition.receipt_number && <span>No. Bukti / SPJ: {requisition.receipt_number}</span>}
-                                        </div>
-                                    )}
+                                <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-3 text-xs">
+                                    <span className="font-bold text-blue-900">Catatan Keuangan:</span>
+                                    <p className="mt-0.5 text-blue-800">{requisition.notes_keuangan}</p>
                                 </div>
                             )}
                         </div>
                     )}
 
-                    {/* SECTION 3: Rincian Barang yang Diusulkan */}
-                    <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-                        <div className="border-b border-slate-100 bg-slate-50/80 px-5 py-3 flex items-center justify-between">
+                    {/* SECTION 3: Daftar Barang yang Diusulkan */}
+                    <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
+                        <div className="border-b border-slate-100 bg-slate-50/60 px-5 py-3 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white font-black text-xs">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-100 text-teal-800 text-xs font-bold">
                                     2
                                 </span>
-                                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
                                     Rincian Barang yang Diusulkan
                                 </h3>
                             </div>
-                            <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-700">
-                                {details.length} Macam Barang
+                            <span className="text-xs font-semibold text-slate-600">
+                                {details.length} macam barang &bull; {totalQty} unit
                             </span>
                         </div>
 
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-slate-100">
-                                <thead className="bg-slate-50 text-slate-700 uppercase tracking-wider text-xs font-bold">
+                                <thead className="bg-slate-50/80 text-slate-600 uppercase tracking-wider text-[11px] font-bold">
                                     <tr>
-                                        <th className="w-12 px-4 py-3 text-center">No</th>
-                                        <th className="px-4 py-3 text-left">Barang & Spesifikasi</th>
-                                        <th className="w-28 px-4 py-3 text-center">Volume Usulan</th>
-                                        <th className="w-32 px-4 py-3 text-center">Volume Disetujui</th>
-                                        <th className="w-36 px-4 py-3 text-right">Harga Satuan</th>
-                                        <th className="w-40 px-4 py-3 text-right">Subtotal</th>
+                                        <th className="w-10 px-4 py-2.5 text-center">No</th>
+                                        <th className="px-4 py-2.5 text-left">Nama Barang / Jasa</th>
+                                        <th className="w-24 px-4 py-2.5 text-center">Volume</th>
+                                        <th className="w-28 px-4 py-2.5 text-center">Disetujui</th>
+                                        <th className="w-32 px-4 py-2.5 text-right">Harga Satuan</th>
+                                        <th className="w-36 px-4 py-2.5 text-right">Subtotal</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 bg-white text-xs">
                                     {details.map((detail, idx) => (
-                                        <tr key={detail.id || idx} className="hover:bg-slate-50/80 transition-colors">
-                                            <td className="whitespace-nowrap px-4 py-3 text-center text-slate-500 font-semibold">
-                                                #{idx + 1}
+                                        <tr key={detail.id || idx} className="hover:bg-slate-50/50 transition">
+                                            <td className="whitespace-nowrap px-4 py-3 text-center text-slate-400 font-semibold">
+                                                {idx + 1}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-700">
-                                                        {detail.item?.item_code || 'BRG'}
-                                                    </span>
-                                                    <span className="font-bold text-slate-900">
-                                                        {detail.item?.name || detail.item_name || detail.manual_item_name}
-                                                    </span>
-                                                </div>
-                                                {(detail.item?.specification || detail.specification || detail.manual_specification) && (
-                                                    <p className="mt-0.5 text-[11px] text-slate-500">
-                                                        Spesifikasi: {detail.item?.specification || detail.specification || detail.manual_specification}
+                                                <p className="font-semibold text-slate-900">
+                                                    {detail.item?.name || detail.item_name || detail.manual_item_name}
+                                                </p>
+                                                {(detail.item?.specification || detail.specification) && (
+                                                    <p className="text-[11px] text-slate-400 mt-0.5">
+                                                        {detail.item?.specification || detail.specification}
                                                     </p>
                                                 )}
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-center font-semibold text-slate-800">
+                                            <td className="whitespace-nowrap px-4 py-3 text-center text-slate-700 font-semibold">
                                                 {detail.quantity_requested}{' '}
-                                                <span className="text-slate-500 font-normal">
+                                                <span className="text-slate-400 font-normal text-[11px]">
                                                     {detail.item?.unit_type || detail.unit_type || 'Unit'}
                                                 </span>
                                             </td>
                                             <td className="whitespace-nowrap px-4 py-3 text-center font-bold">
                                                 {detail.quantity_approved !== null && detail.quantity_approved !== undefined ? (
-                                                    <span className="text-emerald-700">
+                                                    <span className="text-teal-700">
                                                         {detail.quantity_approved}{' '}
-                                                        <span className="text-xs font-normal text-slate-500">
+                                                        <span className="text-slate-400 font-normal text-[11px]">
                                                             {detail.item?.unit_type || detail.unit_type || 'Unit'}
                                                         </span>
                                                     </span>
                                                 ) : (
-                                                    <span className="text-slate-400 italic text-[11px]">Menunggu Verifikasi</span>
+                                                    <span className="text-slate-400 italic text-[11px]">-</span>
                                                 )}
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-slate-700">
+                                            <td className="whitespace-nowrap px-4 py-3 text-right text-slate-700">
                                                 {formatRupiah(detail.unit_price)}
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-emerald-800">
+                                            <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-teal-800">
                                                 {formatRupiah(detail.subtotal)}
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
-                                <tfoot className="border-t-2 border-slate-200 bg-slate-50/80 font-bold text-xs">
+                                <tfoot className="border-t border-slate-200 bg-slate-50/70 font-bold text-xs">
                                     <tr>
-                                        <td colSpan="2" className="px-4 py-3 text-right uppercase tracking-wider text-slate-700">
-                                            Total Akumulasi:
+                                        <td colSpan="2" className="px-4 py-3 text-right uppercase tracking-wider text-slate-600">
+                                            Total Estimasi Belanja:
                                         </td>
                                         <td className="px-4 py-3 text-center text-slate-800">
-                                            {totalQty} Diminta
+                                            {totalQty} unit
                                         </td>
-                                        <td className="px-4 py-3 text-center text-emerald-800">
-                                            {details.reduce((sum, d) => sum + Number(d.quantity_approved ?? d.quantity_requested ?? 0), 0)} Unit
+                                        <td className="px-4 py-3 text-center text-teal-800">
+                                            {details.reduce((sum, d) => sum + Number(d.quantity_approved ?? d.quantity_requested ?? 0), 0)} unit
                                         </td>
-                                        <td className="px-4 py-3 text-right uppercase tracking-wider text-slate-700">
-                                            Total Estimasi:
-                                        </td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-black text-emerald-700">
+                                        <td></td>
+                                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-bold text-teal-700">
                                             {formatRupiah(requisition.total_approved && requisition.total_approved > 0 ? requisition.total_approved : totalCost)}
                                         </td>
                                     </tr>
@@ -375,21 +327,26 @@ export default function RequisitionDetailModal({
                         </div>
                     </div>
 
-                    {/* SECTION 4: Jejak Audit & Riwayat Persetujuan */}
-                    <AuditTrailTimeline requisition={requisition} />
+                    {/* SECTION 4: Jejak Audit & Riwayat */}
+                    <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-2xs">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 mb-3">
+                            Riwayat & Jejak Audit Pengajuan
+                        </h4>
+                        <AuditTrailTimeline requisition={requisition} />
+                    </div>
                 </div>
 
-                {/* Footer Modal */}
-                <div className="shrink-0 border-t border-slate-200 bg-white px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+                {/* 3. Modal Footer */}
+                <div className="shrink-0 border-t border-slate-100 bg-white px-6 py-4 flex items-center justify-between gap-3">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                     >
                         Tutup
                     </button>
 
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2">
                         {requisition.status === 'Pending_Perencanaan' && onEdit && (
                             <button
                                 type="button"
@@ -397,12 +354,9 @@ export default function RequisitionDetailModal({
                                     onClose();
                                     onEdit(requisition);
                                 }}
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 px-4 py-2 text-xs font-bold text-amber-900 shadow-2xs transition cursor-pointer active:scale-95"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 px-4 py-2 text-xs font-bold text-amber-900 transition cursor-pointer"
                             >
-                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
-                                </svg>
-                                Ubah Usulan (Edit)
+                                <span>✎ Ubah Usulan</span>
                             </button>
                         )}
 
@@ -410,7 +364,7 @@ export default function RequisitionDetailModal({
                             href={route('requisitions.print', requisition.id)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-bold text-white shadow-xs transition cursor-pointer active:scale-95"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer"
                         >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24-1.077-.32-2.14-.32-3.193 0-5.18 4.02-9.386 8.974-9.386 4.954 0 8.973 4.207 8.973 9.386 0 1.053-.08 2.116-.32 3.193M12 18v-4.5m0 0l-2.25 2.25M12 13.5l2.25 2.25M3.75 19.5h16.5" />

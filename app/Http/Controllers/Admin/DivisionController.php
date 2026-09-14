@@ -16,7 +16,7 @@ class DivisionController extends Controller
     /**
      * Display a listing of the divisions and units.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $divisions = Division::with(['units' => function ($q) {
                 $q->orderBy('name');
@@ -33,6 +33,7 @@ class DivisionController extends Controller
         return Inertia::render('Admin/Divisions/Index', [
             'divisions' => $divisions,
             'units' => $units,
+            'initial_tab' => $request->query('tab', 'divisions'),
             'success' => session('success'),
             'error' => session('error'),
         ]);

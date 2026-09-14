@@ -100,20 +100,40 @@ class RevenueController extends Controller
      */
     public function index(): Response
     {
-        $now = Carbon::now();
-        $revenues = Revenue::orderBy('date', 'desc')->orderBy('id', 'desc')->get()->map(function ($rev) {
-            $rev->category = self::resolveCategory($rev->source);
-            return $rev;
+        $activeYear = (int) session('active_year', function () {
+            return class_exists(\App\Models\FiscalYear::class)
+                ? \App\Models\FiscalYear::getDefaultYear()
+                : (int) date('Y');
         });
 
+        $now = Carbon::now();
+        $isCurrentYear = ((int) $now->year === $activeYear);
+
+        $revenues = Revenue::whereYear('date', $activeYear)
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(function ($rev) {
+                $rev->category = self::resolveCategory($rev->source);
+                return $rev;
+            });
+
         $totalRevenue = (float) $revenues->sum('amount');
-        $monthlyRevenue = (float) $revenues->whereBetween('date', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->sum('amount');
-        $todayRevenue = (float) $revenues->where('date', $now->toDateString())->sum('amount');
+        $monthlyRevenue = (float) $revenues->filter(function ($r) use ($now, $isCurrentYear) {
+            $d = Carbon::parse($r->date);
+            return $isCurrentYear ? ($d->month === $now->month) : ($d->month === 12);
+        })->sum('amount');
+
+        $todayRevenue = (float) $revenues->filter(function ($r) use ($now, $isCurrentYear) {
+            return $isCurrentYear && ($r->date === $now->toDateString());
+        })->sum('amount');
 
         $jasaLayanan = (float) $revenues->where('category', 'Jasa Layanan')->sum('amount');
         $hasilKerjasama = (float) $revenues->where('category', 'Hasil Kerja Sama')->sum('amount');
         $apbd = (float) $revenues->where('category', 'APBD')->sum('amount');
         $lainLainSah = (float) $revenues->where('category', 'Lain-lain BLUD Sah')->sum('amount');
+
+        $defaultDate = $isCurrentYear ? $now->toDateString() : sprintf('%d-12-31', $activeYear);
 
         return Inertia::render('Keuangan/Revenues/Index', [
             'revenues' => $revenues,
@@ -130,7 +150,8 @@ class RevenueController extends Controller
             'categories' => ['Semua', 'Jasa Layanan', 'Hasil Kerja Sama', 'APBD', 'Lain-lain BLUD Sah'],
             'grouped_sources' => $this->groupedSources,
             'sources' => $this->getFlatSources(),
-            'default_date' => Carbon::now()->toDateString(),
+            'default_date' => $defaultDate,
+            'active_year' => $activeYear,
         ]);
     }
 
@@ -139,12 +160,20 @@ class RevenueController extends Controller
      */
     public function create(): Response
     {
+        $activeYear = (int) session('active_year', function () {
+            return class_exists(\App\Models\FiscalYear::class)
+                ? \App\Models\FiscalYear::getDefaultYear()
+                : (int) date('Y');
+        });
+        $now = Carbon::now();
+        $defaultDate = ((int) $now->year === $activeYear) ? $now->toDateString() : sprintf('%d-01-01', $activeYear);
         $flat = $this->getFlatSources();
 
         return Inertia::render('Keuangan/Revenues/Create', [
             'grouped_sources' => $this->groupedSources,
             'sources' => $flat,
-            'default_date' => Carbon::now()->toDateString(),
+            'default_date' => $defaultDate,
+            'active_year' => $activeYear,
         ]);
     }
 

@@ -6,11 +6,37 @@ import UnitFormModal from './Partials/UnitFormModal';
 import { Head, useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
-export default function Index({ divisions = [], units = [], success, error }) {
-    const [activeTab, setActiveTab] = useState('divisions'); // 'divisions' | 'units'
+export default function Index({ divisions = [], units = [], initial_tab = 'divisions', success, error }) {
+    const getInitialTab = () => {
+        if (typeof window !== 'undefined') {
+            const param = new URLSearchParams(window.location.search).get('tab');
+            if (param === 'units' || param === 'divisions') return param;
+        }
+        return initial_tab || 'divisions';
+    };
+
+    const [activeTab, setActiveTab] = useState(getInitialTab); // 'divisions' | 'units'
     const [search, setSearch] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+
+    // Synchronize tab state with URL and prop
+    useEffect(() => {
+        if (initial_tab && (initial_tab === 'units' || initial_tab === 'divisions')) {
+            setActiveTab(initial_tab);
+        }
+    }, [initial_tab]);
+
+    const switchTab = (tab) => {
+        setActiveTab(tab);
+        setSearch('');
+        setDivisionFilter('ALL');
+        if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', tab);
+            window.history.replaceState({}, '', url.toString());
+        }
+    };
 
     // Division Modal State
     const [isDivisionModalOpen, setIsDivisionModalOpen] = useState(false);
@@ -119,49 +145,23 @@ export default function Index({ divisions = [], units = [], success, error }) {
         <AdminLayout>
             <Head title="Master Divisi & Unit Kerja - RSJ Tampan" />
 
-            {/* Header Section */}
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Minimalist Clean Header */}
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <div className="flex flex-wrap items-center gap-2.5">
-                        <h2 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
-                            Master Divisi & Unit Kerja
-                        </h2>
-                        <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-black text-emerald-900 border border-emerald-300">
-                            {divisions.length} Bagian / Bidang
-                        </span>
-                        <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-0.5 text-xs font-black text-blue-900 border border-blue-300">
-                            {units.length} Unit Kerja
-                        </span>
-                    </div>
-                    <p className="mt-1 text-xs font-semibold text-slate-500 sm:text-sm">
-                        Kelola struktur hierarki Bagian/Bidang dan Unit Kerja/Instalasi yang berhak mengajukan belanja di sistem E-BLUD RSJ Tampan.
+                    <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                        Master Divisi & Unit Kerja
+                    </h1>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                        Kelola struktur hierarki Bagian/Bidang dan Unit Kerja/Instalasi di lingkungan RS Jiwa Tampan.
                     </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2.5">
-                    <button
-                        type="button"
-                        onClick={handleOpenCreateDivision}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:shadow-lg transition-all cursor-pointer"
-                    >
-                        <span>🏛️</span>
-                        + Tambah Divisi
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => handleOpenCreateUnit()}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:shadow-lg transition-all cursor-pointer"
-                    >
-                        <span>🏥</span>
-                        + Tambah Unit Kerja
-                    </button>
-                </div>
             </div>
 
             {/* Notification Alerts */}
             {success && (
-                <div className="mb-5 flex items-center gap-3 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-4 text-sm font-bold text-emerald-900 shadow-xs">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-200 text-emerald-900">
+                <div className="mb-4 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5 text-xs font-semibold text-emerald-900 shadow-2xs">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-200 text-emerald-900">
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                         </svg>
@@ -170,8 +170,8 @@ export default function Index({ divisions = [], units = [], success, error }) {
                 </div>
             )}
             {error && (
-                <div className="mb-5 flex items-center gap-3 rounded-2xl border-2 border-rose-300 bg-rose-50 p-4 text-sm font-bold text-rose-900 shadow-xs">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-200 text-rose-900">
+                <div className="mb-4 flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50/80 p-3.5 text-xs font-semibold text-rose-900 shadow-2xs">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-rose-200 text-rose-900">
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                         </svg>
@@ -180,13 +180,14 @@ export default function Index({ divisions = [], units = [], success, error }) {
                 </div>
             )}
 
+
             {/* Table Container Card */}
-            <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-shadow">
-                {/* Search & Filter Toolbar */}
-                <div className="flex flex-col gap-3 border-b border-emerald-100 bg-gradient-to-r from-emerald-50/70 via-teal-50/30 to-slate-50/50 p-4 space-y-2">
-                    {/* Row 1: Search, Filter Dropdown & Counter */}
-                    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="relative flex-1 sm:max-w-xs">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+                {/* Search & Action Toolbar specifically for active tab */}
+                <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-1 flex-wrap items-center gap-3">
+                        {/* Search Input */}
+                        <div className="relative w-full sm:w-72">
                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -201,7 +202,7 @@ export default function Index({ divisions = [], units = [], success, error }) {
                                         ? 'Cari nama, kode divisi, kelompok...'
                                         : 'Cari nama unit, kode, instalasi...'
                                 }
-                                className="block w-full rounded-xl border border-slate-300 bg-white pl-9 pr-8 py-2 text-sm text-slate-900 placeholder-slate-400 font-medium transition focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500"
+                                className="block w-full rounded-xl border border-slate-300 bg-white pl-9 pr-8 py-2 text-xs text-slate-800 placeholder-slate-400 font-medium transition focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                             />
                             {search && (
                                 <button
@@ -216,85 +217,77 @@ export default function Index({ divisions = [], units = [], success, error }) {
                             )}
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2 text-xs">
-                            {/* Filter Bidang jika tab Unit Kerja aktif */}
-                            {activeTab === 'units' && (
-                                <select
-                                    value={divisionFilter}
-                                    onChange={(e) => setDivisionFilter(e.target.value)}
-                                    className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
-                                >
-                                    <option value="ALL">-- Semua Bidang / Bagian --</option>
-                                    {divisions.map((d) => (
-                                        <option key={d.id} value={d.id}>
-                                            {d.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            )}
+                        {/* Filter Bidang jika tab Unit Kerja aktif */}
+                        {activeTab === 'units' && (
+                            <select
+                                value={divisionFilter}
+                                onChange={(e) => setDivisionFilter(e.target.value)}
+                                className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition"
+                            >
+                                <option value="ALL">Semua Bagian / Bidang</option>
+                                {divisions.map((d) => (
+                                    <option key={d.id} value={d.id}>
+                                        {d.name}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
 
-                            <div className="text-xs text-slate-500 font-medium pl-2">
-                                <span className="font-bold text-slate-900">{activeData.length}</span> dari {activeTab === 'divisions' ? divisions.length : units.length} data
-                            </div>
+                        <div className="text-xs text-slate-500 font-medium">
+                            <span className="font-bold text-slate-900">{activeData.length}</span> dari {activeTab === 'divisions' ? divisions.length : units.length} data
                         </div>
                     </div>
 
-                    {/* Row 2: Tab Buttons (Identik dengan Gambar/Desain Admin Users) */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActiveTab('divisions');
-                                setSearch('');
-                                setDivisionFilter('ALL');
-                            }}
-                            className={`rounded-lg px-3 py-1.5 font-bold transition border cursor-pointer inline-flex items-center gap-1.5 ${
-                                activeTab === 'divisions'
-                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                            }`}
-                        >
-                            Bagian & Bidang (Divisi) ({divisions.length})
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActiveTab('units');
-                                setSearch('');
-                            }}
-                            className={`rounded-lg px-3 py-1.5 font-bold transition border cursor-pointer inline-flex items-center gap-1.5 ${
-                                activeTab === 'units'
-                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                            }`}
-                        >
-                            Unit Kerja & Instalasi ({units.length})
-                        </button>
+                    {/* Dedicated "+ Tambah" button on each respective tab */}
+                    <div>
+                        {activeTab === 'divisions' ? (
+                            <button
+                                type="button"
+                                onClick={handleOpenCreateDivision}
+                                className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer"
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                                 Tambah Bagian / Bidang
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => handleOpenCreateUnit()}
+                                className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer"
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                                 Tambah Unit Kerja
+                            </button>
+                        )}
                     </div>
                 </div>
 
                 {/* TAB 1: DIVISIONS TABLE */}
                 {activeTab === 'divisions' && (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-emerald-100">
-                            <thead className="bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90 font-bold border-b border-emerald-100 text-emerald-950 uppercase tracking-wider text-xs">
+                        <table className="min-w-full divide-y divide-slate-100">
+                            <thead className="bg-slate-50 font-bold border-b border-slate-200 text-slate-700 uppercase tracking-wider text-xs">
                                 <tr>
-                                    <th className="w-16 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                    <th className="w-16 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-700">
                                         No
                                     </th>
-                                    <th className="w-44 px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                    <th className="w-44 px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700">
                                         Kode Divisi
                                     </th>
-                                    <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                    <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700">
                                         Nama Bagian / Bidang
                                     </th>
-                                    <th className="w-56 px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                    <th className="w-56 px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700">
                                         Kelompok Struktur
                                     </th>
-                                    <th className="w-40 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                    <th className="w-40 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-700">
                                         Unit Kerja Terkait
                                     </th>
-                                    <th className="w-40 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                    <th className="w-40 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-700">
                                         Aksi
                                     </th>
                                 </tr>
@@ -412,25 +405,25 @@ export default function Index({ divisions = [], units = [], success, error }) {
                 {/* TAB 2: UNITS TABLE */}
                 {activeTab === 'units' && (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-emerald-100">
-                            <thead className="bg-gradient-to-r from-blue-50/90 via-teal-50/40 to-blue-50/90 font-bold border-b border-blue-100 text-blue-950 uppercase tracking-wider text-xs">
+                        <table className="min-w-full divide-y divide-slate-100">
+                            <thead className="bg-slate-50 font-bold border-b border-slate-200 text-slate-700 uppercase tracking-wider text-xs">
                                 <tr>
-                                    <th className="w-16 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-blue-950">
+                                    <th className="w-16 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-700">
                                         No
                                     </th>
-                                    <th className="w-40 px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-blue-950">
+                                    <th className="w-40 px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700">
                                         Kode Unit
                                     </th>
-                                    <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-blue-950">
+                                    <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700">
                                         Nama Unit Kerja / Instalasi
                                     </th>
-                                    <th className="w-64 px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-blue-950">
+                                    <th className="w-64 px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700">
                                         Bagian / Divisi Induk
                                     </th>
-                                    <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-blue-950">
+                                    <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700">
                                         Deskripsi / Tugas Pokok
                                     </th>
-                                    <th className="w-36 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-blue-950">
+                                    <th className="w-36 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-700">
                                         Aksi
                                     </th>
                                 </tr>

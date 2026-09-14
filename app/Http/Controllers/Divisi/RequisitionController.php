@@ -38,19 +38,21 @@ class RequisitionController extends Controller
             $query->where('jenis_belanja', $request->jenis);
         }
 
-        $activeYear = (int) session('active_year', date('Y'));
+        $activeYear = (int) session('active_year', function () {
+            return class_exists(\App\Models\FiscalYear::class)
+                ? \App\Models\FiscalYear::getDefaultYear()
+                : (int) date('Y');
+        });
         $selectedYear = $request->filled('fiscal_year')
             ? $request->fiscal_year
             : ($request->filled('budget_year') ? $request->budget_year : $activeYear);
 
-        if ($selectedYear !== 'ALL') {
-            $query->where(function ($q) use ($selectedYear) {
-                $q->where('budget_year', $selectedYear)
-                  ->orWhere(function ($sq) use ($selectedYear) {
-                      $sq->whereNull('budget_year')->where('fiscal_year', $selectedYear);
-                  });
-            });
-        }
+        $query->where(function ($q) use ($selectedYear) {
+            $q->where('budget_year', $selectedYear)
+              ->orWhere(function ($sq) use ($selectedYear) {
+                  $sq->whereNull('budget_year')->where('fiscal_year', $selectedYear);
+              });
+        });
 
         $requisitions = $query->get();
 
@@ -481,4 +483,24 @@ class RequisitionController extends Controller
             'requisition' => $requisition,
         ]);
     }
+
+    /**
+     * Remove the specified requisition from storage.
+     */
+    public function destroy(Requisition $requisition): RedirectResponse
+    {
+        // Hanya usulan dengan status Pending_Perencanaan atau Ditolak yang boleh dihapus oleh unit
+        if (!in_array($requisition->status, ['Pending_Perencanaan', 'Ditolak'])) {
+            return back()->with('error', 'Usulan belanja yang sedang diproses atau sudah disetujui tidak dapat dihapus.');
+        }
+
+        DB::transaction(function () use ($requisition) {
+            $requisition->requisitionDetails()->delete();
+            $requisition->delete();
+        });
+
+        return redirect()->route('requisitions.index')
+            ->with('success', 'Usulan belanja berhasil dihapus.');
+    }
 }
+

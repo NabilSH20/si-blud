@@ -5,13 +5,14 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
-export default function Login({ status, canResetPassword, captchaSvg }) {
+export default function Login({ status, canResetPassword, captchaSvg, fiscalYears = [], defaultYear = 2026 }) {
     const [showPassword, setShowPassword] = useState(false);
     const [currentCaptchaSvg, setCurrentCaptchaSvg] = useState(captchaSvg);
     const [isRefreshingCaptcha, setIsRefreshingCaptcha] = useState(false);
     const [showHelpModal, setShowHelpModal] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
+        fiscal_year: defaultYear || 2026,
         email: '',
         password: '',
         captcha: '',
@@ -76,6 +77,43 @@ export default function Login({ status, canResetPassword, captchaSvg }) {
 
                 {/* Login Form */}
                 <form onSubmit={submit} className="space-y-4">
+                    {/* Pilihan Akses Tahun Anggaran */}
+                    <div>
+                        <label htmlFor="fiscal_year" className="mb-1.5 block text-xs font-semibold text-slate-700">
+                            Tahun Anggaran Akses
+                        </label>
+                        <div className="relative">
+                            <select
+                                id="fiscal_year"
+                                name="fiscal_year"
+                                value={data.fiscal_year}
+                                onChange={(e) => setData('fiscal_year', e.target.value)}
+                                className="block w-full appearance-none rounded-xl border border-slate-200 bg-[#edf4fc] px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition cursor-pointer"
+                            >
+                                {fiscalYears && fiscalYears.length > 0 ? (
+                                    fiscalYears.map((fy) => (
+                                        <option key={fy.year} value={fy.year}>
+                                            Tahun Anggaran {fy.year} {fy.is_default ? '★ (Default)' : ''}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <>
+                                        <option value="2025">Tahun Anggaran 2025</option>
+                                        <option value="2026">Tahun Anggaran 2026 ★ (Default)</option>
+                                        <option value="2027">Tahun Anggaran 2027</option>
+                                        <option value="2028">Tahun Anggaran 2028</option>
+                                    </>
+                                )}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400">
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                </svg>
+                            </div>
+                        </div>
+                        <InputError message={errors.fiscal_year} className="mt-1.5" />
+                    </div>
+
                     {/* Input Email / NIP */}
                     <div>
                         <label htmlFor="email" className="mb-1.5 block text-xs font-semibold text-slate-700">

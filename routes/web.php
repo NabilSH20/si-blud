@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DivisionController;
+use App\Http\Controllers\Admin\FiscalYearController;
 use App\Http\Controllers\Admin\UnitController as AdminUnitController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Divisi\DashboardController as DivisiDashboardController;
@@ -102,6 +103,11 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     Route::resource('divisions', DivisionController::class)->except(['show']);
     Route::resource('units', AdminUnitController::class)->only(['store', 'update', 'destroy']);
+    Route::patch('fiscal-years/{fiscal_year}/toggle-status', [FiscalYearController::class, 'toggleStatus'])
+        ->name('fiscal-years.toggle-status');
+    Route::patch('fiscal-years/{fiscal_year}/set-default', [FiscalYearController::class, 'setDefault'])
+        ->name('fiscal-years.set-default');
+    Route::resource('fiscal-years', FiscalYearController::class)->except(['create', 'show', 'edit']);
     Route::patch('users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])
         ->name('users.toggle-status');
     Route::resource('users', AdminUserController::class)->except(['show']);

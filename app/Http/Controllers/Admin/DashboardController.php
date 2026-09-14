@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Division;
+use App\Models\Item;
+use App\Models\Requisition;
+use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -16,6 +19,9 @@ class DashboardController extends Controller
      */
     public function index(): Response
     {
+        $activeYear = (int) session('active_year', date('Y'));
+        $authUser = auth()->user()->load(['division', 'unit']);
+
         $roleMap = [
             'admin' => 'Admin Sistem',
             'divisi' => 'Unit / Divisi',
@@ -23,19 +29,77 @@ class DashboardController extends Controller
             'keuangan' => 'Keuangan',
         ];
 
+        $totalUsers = User::count();
+        $activeUsers = User::where('is_active', true)->count();
+        $inactiveUsers = $totalUsers - $activeUsers;
+
         $usersByRole = User::select('role', DB::raw('count(*) as total'))
             ->groupBy('role')
             ->get()
-            ->map(function ($item) use ($roleMap) {
+            ->map(function ($item) use ($roleMap, $totalUsers) {
+                $count = (int) $item->total;
+                $pct = $totalUsers > 0 ? round(($count / $totalUsers) * 100, 1) : 0;
                 return [
+                    'role_key' => $item->role,
                     'name' => $roleMap[$item->role] ?? ucfirst($item->role),
-                    'total' => (int) $item->total,
+                    'total' => $count,
+                    'percentage' => $pct,
                 ];
             });
 
-        $requisitionsByDivision = Division::withCount('requisitions')
+        // Requisitions in active budget year
+        $reqQuery = Requisition::where(function ($q) use ($activeYear) {
+            $q->where('budget_year', $activeYear)
+              ->orWhere('fiscal_year', $activeYear);
+        });
+
+        $totalRequisitions = (clone $reqQuery)->count();
+        $pendingPerencanaan = (clone $reqQuery)->where('status', 'Pending_Perencanaan')->count();
+        $diprosesKeuangan = (clone $reqQuery)->where('status', 'Diproses_Keuangan')->count();
+        $disetujuiSelesai = (clone $reqQuery)->where('status', 'Disetujui_Selesai')->count();
+        $ditolak = (clone $reqQuery)->where('status', 'Ditolak')->count();
+        $totalEstimatedPagu = (float) (clone $reqQuery)->sum('total_estimated');
+
+        // Recent 5 requisitions across hospital
+        $recentRequisitions = (clone $reqQuery)
+            ->with(['division:id,name', 'unit:id,name', 'user:id,name'])
+            ->latest()
+            ->limit(5)
+            ->get([
+                'id',
+                'requisition_number',
+                'division_id',
+                'unit_id',
+                'user_id',
+                'jenis_belanja',
+                'total_estimated',
+                'status',
+                'created_at',
+            ]);
+
+        // Recent 5 registered users
+        $recentUsers = User::with(['division:id,name', 'unit:id,name'])
+            ->latest()
+            ->limit(5)
+            ->get([
+                'id',
+                'name',
+                'email',
+                'nip',
+                'role',
+                'position',
+                'division_id',
+                'unit_id',
+                'is_active',
+                'created_at',
+            ]);
+
+        // Requisitions per division
+        $requisitionsByDivision = Division::withCount(['requisitions' => function ($q) use ($activeYear) {
+            $q->where('budget_year', $activeYear)->orWhere('fiscal_year', $activeYear);
+        }])
             ->orderByDesc('requisitions_count')
-            ->limit(6)
+            ->limit(5)
             ->get()
             ->map(function ($division) {
                 return [
@@ -44,11 +108,83 @@ class DashboardController extends Controller
                 ];
             });
 
+        // Divisions with units for cascading filter dropdowns
+        $divisions = Division::with(['units:id,division_id,name'])
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        // All users for real-time filtering and staff by unit breakdown
+        $allUsers = User::with(['division:id,name', 'unit:id,name'])
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'email',
+                'nip',
+                'role',
+                'position',
+                'division_id',
+                'unit_id',
+                'is_active',
+                'created_at',
+            ]);
+
+        // Users count per division for distribution chart
+        $usersByDivision = Division::withCount('users')
+            ->orderByDesc('users_count')
+            ->get()
+            ->map(function ($div) {
+                return [
+                    'id' => $div->id,
+                    'name' => $div->name,
+                    'total' => (int) $div->users_count,
+                ];
+            });
+
         return Inertia::render('Admin/Dashboard', [
-            'total_users' => User::count(),
-            'total_divisions' => Division::count(),
+            'admin_profile' => [
+                'name' => $authUser->name,
+                'nip' => $authUser->nip ?: '-',
+                'email' => $authUser->email,
+                'role' => $authUser->role,
+                'role_label' => $roleMap[$authUser->role] ?? 'Administrator',
+                'position' => $authUser->position ?: 'Pranata Komputer / IT SIM-RS',
+                'division_name' => $authUser->division?->name ?: 'Sub Bagian Tata Usaha',
+                'unit_name' => $authUser->unit?->name ?: 'Instalasi SIM-RS & IT',
+            ],
+            'system_stats' => [
+                'total_users' => $totalUsers,
+                'active_users' => $activeUsers,
+                'inactive_users' => $inactiveUsers,
+                'total_divisions' => Division::count(),
+                'total_units' => Unit::count(),
+                'total_items' => Item::count(),
+            ],
+            'requisition_stats' => [
+                'active_year' => $activeYear,
+                'total' => $totalRequisitions,
+                'pending_perencanaan' => $pendingPerencanaan,
+                'diproses_keuangan' => $diprosesKeuangan,
+                'disetujui_selesai' => $disetujuiSelesai,
+                'ditolak' => $ditolak,
+                'total_amount' => $totalEstimatedPagu,
+            ],
             'users_by_role' => $usersByRole,
+            'recent_requisitions' => $recentRequisitions,
+            'recent_users' => $recentUsers,
             'requisitions_by_division' => $requisitionsByDivision,
+            'divisions' => $divisions,
+            'all_users' => $allUsers,
+            'users_by_division' => $usersByDivision,
+            'server_status' => [
+                'php_version' => PHP_VERSION,
+                'laravel_version' => app()->version(),
+                'environment' => config('app.env'),
+                'server_time' => now()->translatedFormat('l, d F Y H:i:s'),
+            ],
+            // Backwards compatibility props
+            'total_users' => $totalUsers,
+            'total_divisions' => Division::count(),
         ]);
     }
 }

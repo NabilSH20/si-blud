@@ -16,12 +16,19 @@ class BudgetController extends Controller
      */
     public function index(): Response
     {
+        $activeYear = (int) session('active_year', function () {
+            return class_exists(\App\Models\FiscalYear::class)
+                ? \App\Models\FiscalYear::getDefaultYear()
+                : (int) date('Y');
+        });
+
         return Inertia::render('Keuangan/Budgets/Index', [
-            'budgets' => Budget::orderByDesc('period_year')
+            'budgets' => Budget::where('period_year', $activeYear)
                 ->orderBy('account_code')
                 ->get([
                     'id', 'account_code', 'account_name', 'period_year', 'total_budget', 'remaining_budget',
                 ]),
+            'active_year' => $activeYear,
             'success' => session('success'),
             'error' => session('error'),
         ]);
@@ -32,7 +39,15 @@ class BudgetController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Keuangan/Budgets/Create');
+        $activeYear = (int) session('active_year', function () {
+            return class_exists(\App\Models\FiscalYear::class)
+                ? \App\Models\FiscalYear::getDefaultYear()
+                : (int) date('Y');
+        });
+
+        return Inertia::render('Keuangan/Budgets/Create', [
+            'default_year' => $activeYear,
+        ]);
     }
 
     /**

@@ -58,11 +58,16 @@ class ReportController extends Controller
      */
     protected function getSurplusDeficitData(): array
     {
-        $currentYear = (int) Carbon::now()->format('Y');
+        $activeYear = (int) session('active_year', function () {
+            return class_exists(\App\Models\FiscalYear::class)
+                ? \App\Models\FiscalYear::getDefaultYear()
+                : (int) date('Y');
+        });
 
-        // Realisasi Pendapatan
-        $totalRevenue = (float) Revenue::sum('amount');
-        $revenueSources = Revenue::selectRaw('source, sum(amount) as total_amount, count(*) as count')
+        // Realisasi Pendapatan pada Tahun Anggaran Aktif
+        $totalRevenue = (float) Revenue::whereYear('date', $activeYear)->sum('amount');
+        $revenueSources = Revenue::whereYear('date', $activeYear)
+            ->selectRaw('source, sum(amount) as total_amount, count(*) as count')
             ->groupBy('source')
             ->orderByDesc('total_amount')
             ->get()
@@ -72,33 +77,41 @@ class ReportController extends Controller
                 'count' => (int) $r->count,
             ]);
 
-        // Realisasi Belanja
-        // Computed from approved requisitions and budget realizations
-        $requisitionExpense = (float) RequisitionDetail::whereHas('requisition', fn ($q) => $q->where('status', 'Disetujui_Selesai'))
-            ->sum('subtotal');
+        // Realisasi Belanja pada Tahun Anggaran Aktif
+        $requisitionExpense = (float) RequisitionDetail::whereHas('requisition', function ($q) use ($activeYear) {
+            $q->where('status', 'Disetujui_Selesai')
+              ->where(function ($sq) use ($activeYear) {
+                  $sq->where('budget_year', $activeYear)
+                     ->orWhere(function ($ssq) use ($activeYear) {
+                         $ssq->whereNull('budget_year')->where('fiscal_year', $activeYear);
+                     });
+              });
+        })->sum('subtotal');
 
-        $budgetExpenses = Budget::orderBy('account_code')->get()->map(function ($b) {
-            $initial = (float) $b->total_budget;
-            $remaining = (float) $b->remaining_budget;
-            $spent = max(0, $initial - $remaining);
+        $budgetExpenses = Budget::where('period_year', $activeYear)
+            ->orderBy('account_code')
+            ->get()
+            ->map(function ($b) {
+                $initial = (float) $b->total_budget;
+                $remaining = (float) $b->remaining_budget;
+                $spent = max(0, $initial - $remaining);
 
-            return [
-                'account_code' => $b->account_code,
-                'account_name' => $b->account_name,
-                'spent' => $spent,
-            ];
-        });
+                return [
+                    'account_code' => $b->account_code,
+                    'account_name' => $b->account_name,
+                    'spent' => $spent,
+                ];
+            });
 
         $totalBudgetSpent = (float) $budgetExpenses->sum('spent');
-        // Use the higher/consistent total between actual requisition sum and budget deduction
         $totalExpense = max($requisitionExpense, $totalBudgetSpent);
 
         // Surplus / Defisit
         $surplusDeficit = $totalRevenue - $totalExpense;
         $isSurplus = $surplusDeficit >= 0;
 
-        // RBA Benchmark (Active RBA for current year)
-        $rba = RbaDraft::where('year', $currentYear)
+        // RBA Benchmark (Active RBA for active year)
+        $rba = RbaDraft::where('year', $activeYear)
             ->orderByRaw("CASE WHEN status = 'Disahkan' THEN 1 ELSE 2 END")
             ->first();
 
@@ -108,7 +121,7 @@ class ReportController extends Controller
         $expenseAbsorption = $plannedExpense > 0 ? round(($totalExpense / $plannedExpense) * 100, 1) : 0;
 
         return [
-            'period_year' => $currentYear,
+            'period_year' => $activeYear,
             'summary' => [
                 'total_revenue' => $totalRevenue,
                 'total_expense' => $totalExpense,
@@ -123,6 +136,7 @@ class ReportController extends Controller
             'revenue_sources' => $revenueSources,
             'expense_categories' => $budgetExpenses,
             'printed_at' => Carbon::now()->translatedFormat('d F Y'),
+            'active_year' => $activeYear,
         ];
     }
 
@@ -131,7 +145,16 @@ class ReportController extends Controller
      */
     protected function getReportData(): array
     {
-        $budgets = Budget::orderBy('account_code')->get()->map(function ($budget) {
+        $activeYear = (int) session('active_year', function () {
+            return class_exists(\App\Models\FiscalYear::class)
+                ? \App\Models\FiscalYear::getDefaultYear()
+                : (int) date('Y');
+        });
+
+        $budgets = Budget::where('period_year', $activeYear)
+            ->orderBy('account_code')
+            ->get()
+            ->map(function ($budget) {
             $totalBudget = (float) $budget->total_budget;
             $remainingBudget = (float) $budget->remaining_budget;
             $spent = max(0, $totalBudget - $remainingBudget);
