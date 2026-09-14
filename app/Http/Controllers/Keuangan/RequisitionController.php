@@ -18,9 +18,25 @@ class RequisitionController extends Controller
      * Display a listing of requisitions for finance validation.
      * Prioritizes requests with status 'Diproses_Keuangan' and 'Disetujui_Selesai'.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $requisitions = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount'])
+        $activeYear = (int) session('active_year', date('Y'));
+        $selectedYear = $request->filled('fiscal_year')
+            ? $request->fiscal_year
+            : ($request->filled('budget_year') ? $request->budget_year : $activeYear);
+
+        $query = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan']);
+
+        if ($selectedYear !== 'ALL') {
+            $query->where(function ($q) use ($selectedYear) {
+                $q->where('budget_year', $selectedYear)
+                  ->orWhere(function ($sq) use ($selectedYear) {
+                      $sq->whereNull('budget_year')->where('fiscal_year', $selectedYear);
+                  });
+            });
+        }
+
+        $requisitions = $query
             ->orderByRaw("
                 CASE
                     WHEN status = 'Diproses_Keuangan' THEN 0
@@ -33,8 +49,13 @@ class RequisitionController extends Controller
             ->latest('id')
             ->get();
 
+        $budgets = RbaAccount::orderBy('account_code')->get();
+
         return Inertia::render('Keuangan/Requisitions/Index', [
             'requisitions' => $requisitions,
+            'budgets' => $budgets,
+            'selectedYear' => $selectedYear,
+            'active_year' => $activeYear,
             'success' => session('success'),
             'error' => session('error'),
         ]);
@@ -45,7 +66,7 @@ class RequisitionController extends Controller
      */
     public function show(string $id): Response
     {
-        $requisition = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount'])
+        $requisition = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])
             ->findOrFail($id);
 
         $budgets = RbaAccount::orderBy('account_code')->get();
@@ -122,6 +143,8 @@ class RequisitionController extends Controller
                     'sp2d_number' => $validated['sp2d_number'] ?? null,
                     'receipt_number' => $validated['receipt_number'] ?? null,
                     'notes_keuangan' => $validated['notes_keuangan'] ?? null,
+                    'approved_by_keuangan_id' => auth()->id(),
+                    'approved_keuangan_at' => now(),
                 ]);
             });
 
@@ -132,6 +155,8 @@ class RequisitionController extends Controller
             $requisition->update([
                 'status' => 'Ditolak',
                 'notes_keuangan' => $validated['notes_keuangan'] ?? null,
+                'approved_by_keuangan_id' => auth()->id(),
+                'approved_keuangan_at' => now(),
             ]);
 
             return redirect()->route('keuangan.requisitions.index')
@@ -144,7 +169,7 @@ class RequisitionController extends Controller
      */
     public function print($id): Response
     {
-        $requisition = Requisition::with(['division', 'user', 'requisitionDetails.item', 'rbaAccount'])->findOrFail($id);
+        $requisition = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])->findOrFail($id);
 
         return Inertia::render('Shared/PrintRequisition', [
             'requisition' => $requisition,

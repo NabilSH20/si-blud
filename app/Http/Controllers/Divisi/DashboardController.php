@@ -15,26 +15,36 @@ class DashboardController extends Controller
     public function index(): Response
     {
         $userId = auth()->id();
+        $activeYear = session('active_year', date('Y'));
 
-        $recentRequisitions = Requisition::with(['rbaAccount', 'division'])
-            ->where('user_id', $userId)
+        $baseQuery = Requisition::where('user_id', $userId)
+            ->where(function ($q) use ($activeYear) {
+                $q->where('budget_year', $activeYear)
+                  ->orWhere(function ($sq) use ($activeYear) {
+                      $sq->whereNull('budget_year')->where('fiscal_year', $activeYear);
+                  });
+            });
+
+        $recentRequisitions = (clone $baseQuery)
+            ->with(['rbaAccount', 'division'])
             ->latest('id')
             ->take(5)
             ->get();
 
-        $totalEstimated = (float) Requisition::where('user_id', $userId)->sum('total_estimated');
-        $totalApproved = (float) Requisition::where('user_id', $userId)
+        $totalEstimated = (float) (clone $baseQuery)->sum('total_estimated');
+        $totalApproved = (float) (clone $baseQuery)
             ->where('status', 'Disetujui_Selesai')
             ->sum('total_approved');
 
         return Inertia::render('Divisi/Dashboard', [
-            'total_requests' => Requisition::where('user_id', $userId)->count(),
-            'pending_requests' => Requisition::where('user_id', $userId)->where('status', 'Pending_Perencanaan')->count(),
-            'in_finance_requests' => Requisition::where('user_id', $userId)->where('status', 'Diproses_Keuangan')->count(),
-            'approved_requests' => Requisition::where('user_id', $userId)->where('status', 'Disetujui_Selesai')->count(),
+            'total_requests' => (clone $baseQuery)->count(),
+            'pending_requests' => (clone $baseQuery)->where('status', 'Pending_Perencanaan')->count(),
+            'in_finance_requests' => (clone $baseQuery)->where('status', 'Diproses_Keuangan')->count(),
+            'approved_requests' => (clone $baseQuery)->where('status', 'Disetujui_Selesai')->count(),
             'total_estimated' => $totalEstimated,
             'total_approved' => $totalApproved,
             'recent_requisitions' => $recentRequisitions,
+            'active_year' => $activeYear,
         ]);
     }
 }

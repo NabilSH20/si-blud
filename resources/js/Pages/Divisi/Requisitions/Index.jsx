@@ -1,6 +1,7 @@
 import DivisiLayout from '@/Layouts/DivisiLayout';
 import Pagination from '@/Components/Pagination';
 import RequisitionFormModal from './Partials/RequisitionFormModal';
+import RequisitionDetailModal from './Partials/RequisitionDetailModal';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -83,6 +84,10 @@ export default function Index({
     const [selectedRequisition, setSelectedRequisition] = useState(null);
     const [modalInitialJenis, setModalInitialJenis] = useState('Operasi');
 
+    // Detail Modal States
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [detailRequisition, setDetailRequisition] = useState(null);
+
     const handleOpenCreateModal = (jenis = 'Operasi') => {
         setSelectedRequisition(null);
         setModalMode('create');
@@ -100,6 +105,16 @@ export default function Index({
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setSelectedRequisition(null);
+    };
+
+    const handleOpenDetailModal = (req) => {
+        setDetailRequisition(req);
+        setIsDetailModalOpen(true);
+    };
+
+    const handleCloseDetailModal = () => {
+        setIsDetailModalOpen(false);
+        setDetailRequisition(null);
     };
 
     const filteredRequisitions = useMemo(() => {
@@ -172,22 +187,16 @@ export default function Index({
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center">
                     <button
                         type="button"
-                        onClick={() => handleOpenCreateModal('Operasi')}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-white hover:bg-emerald-50 px-4 py-2.5 text-xs font-bold text-emerald-800 shadow-xs hover:border-emerald-300 transition cursor-pointer active:scale-95"
+                        onClick={() => handleOpenCreateModal(jenisFilter === 'Modal' ? 'Modal' : 'Operasi')}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:shadow-lg transition cursor-pointer"
                     >
-                        <span>⚡</span>
-                        + Usulan Operasi
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => handleOpenCreateModal('Modal')}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 active:scale-95 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:shadow-lg transition cursor-pointer"
-                    >
-                        <span>🏢</span>
-                        + Usulan Modal
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        <span>Tambah Usulan</span>
                     </button>
                 </div>
             </div>
@@ -404,20 +413,16 @@ export default function Index({
                                         <p className="mt-1 text-xs text-slate-500 font-medium">
                                             Mulai input perencanaan kebutuhan belanja BLUD untuk tahun anggaran berikutnya.
                                         </p>
-                                        <div className="mt-4 flex items-center justify-center gap-2">
+                                        <div className="mt-4 flex items-center justify-center">
                                             <button
                                                 type="button"
-                                                onClick={() => handleOpenCreateModal('Operasi')}
-                                                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition cursor-pointer active:scale-95"
+                                                onClick={() => handleOpenCreateModal(jenisFilter === 'Modal' ? 'Modal' : 'Operasi')}
+                                                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-emerald-700 transition cursor-pointer active:scale-95"
                                             >
-                                                + Usulan Belanja Operasi
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleOpenCreateModal('Modal')}
-                                                className="inline-flex items-center gap-1.5 rounded-xl bg-purple-700 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-purple-800 transition cursor-pointer active:scale-95"
-                                            >
-                                                + Usulan Belanja Modal
+                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                                </svg>
+                                                <span>Tambah Usulan</span>
                                             </button>
                                         </div>
                                     </td>
@@ -505,13 +510,14 @@ export default function Index({
                                             </td>
                                             <td className="whitespace-nowrap px-4 py-4 text-center">
                                                 <div className="flex items-center justify-center gap-1.5">
-                                                    <Link
-                                                        href={route('requisitions.show', req.id)}
-                                                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-2xs transition"
-                                                        title="Lihat Rincian"
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenDetailModal(req)}
+                                                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer active:scale-95"
+                                                        title="Lihat Rincian (Modal)"
                                                     >
                                                         Detail
-                                                    </Link>
+                                                    </button>
                                                     {req.status === 'Pending_Perencanaan' && (
                                                         <button
                                                             type="button"
@@ -568,6 +574,14 @@ export default function Index({
                 userDivision={userDivision}
                 userUnit={userUnit}
                 defaultFiscalYear={defaultFiscalYear}
+            />
+
+            {/* Pop-Up Modal Card Rincian Usulan Belanja (Detail) */}
+            <RequisitionDetailModal
+                show={isDetailModalOpen}
+                onClose={handleCloseDetailModal}
+                requisition={detailRequisition}
+                onEdit={(req) => handleOpenEditModal(req)}
             />
         </DivisiLayout>
     );

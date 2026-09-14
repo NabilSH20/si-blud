@@ -1,6 +1,8 @@
 import KeuanganLayout from '@/Layouts/KeuanganLayout';
 import Pagination from '@/Components/Pagination';
-import { Head, Link } from '@inertiajs/react';
+import FinanceDisbursementModal from './Partials/FinanceDisbursementModal';
+import RequisitionDetailModal from '@/Pages/Shared/RequisitionDetailModal';
+import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 const formatRupiah = (value) =>
@@ -25,21 +27,21 @@ const getStatusBadge = (status) => {
     switch (status) {
         case 'Diproses_Keuangan':
             return {
-                label: 'Menunggu Validasi Pagu',
+                label: 'Perlu Alokasi & Validasi',
                 bg: 'bg-blue-100 text-blue-900 border-blue-300',
                 dot: 'bg-blue-500',
                 isActionable: true,
             };
         case 'Disetujui_Selesai':
             return {
-                label: 'Selesai & Teralokasi',
+                label: 'Disetujui & Selesai',
                 bg: 'bg-emerald-100 text-emerald-900 border-emerald-300',
                 dot: 'bg-emerald-500',
                 isActionable: false,
             };
         case 'Pending_Perencanaan':
             return {
-                label: 'Verifikasi Perencanaan',
+                label: 'Menunggu Perencanaan',
                 bg: 'bg-amber-100 text-amber-900 border-amber-300',
                 dot: 'bg-amber-500',
                 isActionable: false,
@@ -61,11 +63,15 @@ const getStatusBadge = (status) => {
     }
 };
 
-export default function Index({ requisitions = [], success, error }) {
+export default function Index({ requisitions = [], budgets = [], success, error, selectedYear = 'ALL' }) {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+
+    // Modal Card States
+    const [disbursingReq, setDisbursingReq] = useState(null);
+    const [detailReq, setDetailReq] = useState(null);
 
     const filteredRequisitions = useMemo(() => {
         return requisitions.filter((req) => {
@@ -174,6 +180,25 @@ export default function Index({ requisitions = [], success, error }) {
                                     </svg>
                                 </button>
                             )}
+                        </div>
+
+                        {/* Year Filter Switcher */}
+                        <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 text-xs">
+                            <span className="text-[10px] font-black uppercase text-slate-400 px-1">TA:</span>
+                            {['ALL', '2026', '2027', '2028'].map((y) => (
+                                <button
+                                    key={y}
+                                    type="button"
+                                    onClick={() => router.get(route('keuangan.requisitions.index'), { fiscal_year: y })}
+                                    className={`rounded-lg px-2.5 py-1 text-xs font-black transition cursor-pointer ${
+                                        String(selectedYear) === String(y) || (selectedYear === 'ALL' && y === 'ALL')
+                                            ? 'bg-emerald-700 text-white shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                                    }`}
+                                >
+                                    {y === 'ALL' ? 'Semua' : y}
+                                </button>
+                            ))}
                         </div>
 
                         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-xs">
@@ -366,21 +391,48 @@ export default function Index({ requisitions = [], success, error }) {
 
                                             {/* Aksi */}
                                             <td className="whitespace-nowrap px-4 py-4 text-center">
-                                                {badge.isActionable ? (
-                                                    <Link
-                                                        href={route('keuangan.requisitions.show', req.id)}
-                                                        className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-3.5 py-1.5 text-xs font-bold shadow-2xs transition"
-                                                    >
-                                                        Validasi &rarr;
-                                                    </Link>
-                                                ) : (
-                                                    <Link
-                                                        href={route('keuangan.requisitions.show', req.id)}
-                                                        className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 px-3 py-1.5 text-xs font-bold shadow-2xs transition"
-                                                    >
-                                                        Rincian
-                                                    </Link>
-                                                )}
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    {badge.isActionable ? (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setDisbursingReq(req)}
+                                                                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-3 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
+                                                            >
+                                                                <span>⚡</span>
+                                                                Validasi & Cairkan
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setDetailReq(req)}
+                                                                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 px-2.5 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
+                                                            >
+                                                                Detail
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setDetailReq(req)}
+                                                                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 px-3 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
+                                                            >
+                                                                Rincian
+                                                            </button>
+                                                            <a
+                                                                href={route('requisitions.print', req.id)}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 active:scale-95 text-slate-600 px-2 py-1.5 text-xs font-bold shadow-2xs transition"
+                                                                title="Cetak Dokumen Resmi"
+                                                            >
+                                                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24-1.077-.32-2.14-.32-3.193 0-5.18 4.02-9.386 8.974-9.386 4.954 0 8.973 4.207 8.973 9.386 0 1.053-.08 2.116-.32 3.193M12 18v-4.5m0 0l-2.25 2.25M12 13.5l2.25 2.25M3.75 19.5h16.5" />
+                                                                </svg>
+                                                            </a>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     );
@@ -399,6 +451,21 @@ export default function Index({ requisitions = [], success, error }) {
                     onPageChange={(p) => setCurrentPage(p)}
                 />
             </div>
+
+            {/* Modal Card Validasi & Pencairan SP2D */}
+            <FinanceDisbursementModal
+                show={Boolean(disbursingReq)}
+                onClose={() => setDisbursingReq(null)}
+                requisition={disbursingReq}
+                budgets={budgets}
+            />
+
+            {/* Modal Card Rincian Usulan Belanja */}
+            <RequisitionDetailModal
+                show={Boolean(detailReq)}
+                onClose={() => setDetailReq(null)}
+                requisition={detailReq}
+            />
         </KeuanganLayout>
     );
 }

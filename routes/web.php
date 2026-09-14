@@ -28,6 +28,11 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
+Route::post('/set-year', function (\Illuminate\Http\Request $request) {
+    session(['active_year' => $request->year]);
+    return back();
+})->name('set-year');
+
 Route::prefix('divisi')->middleware('auth')->group(function () {
     Route::get('/dashboard', [DivisiDashboardController::class, 'index'])
         ->name('divisi.dashboard');
@@ -40,6 +45,8 @@ Route::prefix('perencanaan')->middleware('auth')->group(function () {
         ->name('perencanaan.dashboard');
 
     Route::resource('items', ItemController::class)->except(['show']);
+    Route::patch('/items/{item}/verify-standard', [ItemController::class, 'verifyStandard'])
+        ->name('items.verify-standard');
     Route::resource('requisitions', PerencanaanRequisitionController::class)
         ->only(['index', 'show', 'update'])
         ->names('perencanaan.requisitions');
@@ -67,6 +74,8 @@ Route::prefix('perencanaan')->middleware('auth')->group(function () {
         ->name('perencanaan.rba.print-belanja');
     Route::get('/rba/print-pendapatan', [PerencanaanRbaController::class, 'printPendapatan'])
         ->name('perencanaan.rba.print-pendapatan');
+    Route::get('/rba/print-rincian-belanja', [PerencanaanRbaController::class, 'printRincianBelanja'])
+        ->name('perencanaan.rba.print-rincian-belanja');
 });
 
 Route::prefix('keuangan')->middleware('auth')->group(function () {
@@ -78,6 +87,8 @@ Route::prefix('keuangan')->middleware('auth')->group(function () {
     Route::resource('requisitions', KeuanganRequisitionController::class)
         ->only(['index', 'show', 'update'])
         ->names('keuangan.requisitions');
+    Route::get('/requisitions/{id}/print', [KeuanganRequisitionController::class, 'print'])
+        ->name('keuangan.requisitions.print');
 
     Route::get('/reports', [KeuanganReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/print', [KeuanganReportController::class, 'print'])->name('reports.print');

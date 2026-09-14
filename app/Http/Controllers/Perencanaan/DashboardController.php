@@ -15,7 +15,17 @@ class DashboardController extends Controller
      */
     public function index(): Response
     {
-        $pendingRequisitions = Requisition::with(['division', 'rbaAccount'])
+        $activeYear = session('active_year', date('Y'));
+
+        $baseQuery = Requisition::where(function ($q) use ($activeYear) {
+            $q->where('budget_year', $activeYear)
+              ->orWhere(function ($sq) use ($activeYear) {
+                  $sq->whereNull('budget_year')->where('fiscal_year', $activeYear);
+              });
+        });
+
+        $pendingRequisitions = (clone $baseQuery)
+            ->with(['division', 'rbaAccount'])
             ->where('status', 'Pending_Perencanaan')
             ->latest('submission_date')
             ->latest('id')
@@ -23,10 +33,11 @@ class DashboardController extends Controller
             ->get();
 
         return Inertia::render('Perencanaan/Dashboard', [
-            'total_to_verify' => Requisition::where('status', 'Pending_Perencanaan')->count(),
-            'total_verified' => Requisition::whereIn('status', ['Diproses_Keuangan', 'Disetujui_Selesai'])->count(),
+            'total_to_verify' => (clone $baseQuery)->where('status', 'Pending_Perencanaan')->count(),
+            'total_verified' => (clone $baseQuery)->whereIn('status', ['Diproses_Keuangan', 'Disetujui_Selesai'])->count(),
             'total_items' => Item::count(),
             'pending_requisitions' => $pendingRequisitions,
+            'active_year' => $activeYear,
         ]);
     }
 }

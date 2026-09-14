@@ -11,13 +11,29 @@ class RbaAccount extends Model
     use HasFactory;
 
     protected $table = 'rba_accounts';
-    protected $guarded = [];
+    
+    protected $fillable = [
+        'account_code',
+        'parent_code',
+        'account_name',
+        'kategori_belanja',
+        'sumber_dana',
+        'funding_source',
+        'period_year',
+        'year',
+        'total_budget',
+        'budget_after_revision',
+        'remaining_budget',
+        'spent_budget',
+    ];
 
     protected function casts(): array
     {
         return [
             'period_year' => 'integer',
+            'year' => 'integer',
             'total_budget' => 'decimal:2',
+            'budget_after_revision' => 'decimal:2',
             'remaining_budget' => 'decimal:2',
             'spent_budget' => 'decimal:2',
         ];

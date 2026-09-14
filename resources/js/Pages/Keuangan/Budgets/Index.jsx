@@ -1,6 +1,7 @@
-import Modal from '@/Components/Modal';
+import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal';
 import Pagination from '@/Components/Pagination';
 import KeuanganLayout from '@/Layouts/KeuanganLayout';
+import BudgetFormModal from './Partials/BudgetFormModal';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -18,6 +19,20 @@ export default function Index({ budgets = [], success, error }) {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [confirmingDelete, setConfirmingDelete] = useState(null);
+
+    // Modal Card Add / Edit state
+    const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+    const [editingBudget, setEditingBudget] = useState(null);
+
+    const openCreateModal = () => {
+        setEditingBudget(null);
+        setIsFormModalOpen(true);
+    };
+
+    const openEditModal = (budget) => {
+        setEditingBudget(budget);
+        setIsFormModalOpen(true);
+    };
 
     const deleteForm = useForm();
 
@@ -51,7 +66,7 @@ export default function Index({ budgets = [], success, error }) {
     }, [filteredBudgets, currentPage, itemsPerPage]);
 
     const submitDelete = (e) => {
-        e.preventDefault();
+        if (e?.preventDefault) e.preventDefault();
         if (!confirmingDelete) return;
 
         deleteForm.delete(route('budgets.destroy', confirmingDelete.id), {
@@ -80,15 +95,16 @@ export default function Index({ budgets = [], success, error }) {
                     </p>
                 </div>
 
-                <Link
-                    href={route('budgets.create')}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                <button
+                    type="button"
+                    onClick={openCreateModal}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 cursor-pointer"
                 >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
                     Tambah Pagu Anggaran
-                </Link>
+                </button>
             </div>
 
             {/* Notification Alerts */}
@@ -217,12 +233,13 @@ export default function Index({ budgets = [], success, error }) {
                                                 : 'Tambahkan data pagu rekening anggaran baru untuk mengaktifkan alokasi belanja.'}
                                         </p>
                                         {!search && selectedYear === 'ALL' && (
-                                            <Link
-                                                href={route('budgets.create')}
-                                                className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition"
+                                            <button
+                                                type="button"
+                                                onClick={openCreateModal}
+                                                className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition cursor-pointer"
                                             >
                                                 + Tambah Pagu Anggaran
-                                            </Link>
+                                            </button>
                                         )}
                                     </td>
                                 </tr>
@@ -256,15 +273,16 @@ export default function Index({ budgets = [], success, error }) {
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-4 text-center">
                                             <div className="flex items-center justify-center gap-2">
-                                                <Link
-                                                    href={route('budgets.edit', budget.id)}
-                                                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 active:scale-95 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition"
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openEditModal(budget)}
+                                                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 active:scale-95 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer"
                                                 >
                                                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                                                     </svg>
                                                     Edit
-                                                </Link>
+                                                </button>
                                                 <button
                                                     type="button"
                                                     onClick={() => setConfirmingDelete(budget)}
@@ -293,49 +311,41 @@ export default function Index({ budgets = [], success, error }) {
                 />
             </div>
 
-            {/* Modal Konfirmasi Hapus */}
-            <Modal
+            {/* Delete Confirmation Card Modal Pop-Up */}
+            <DeleteConfirmationModal
                 show={confirmingDelete !== null}
                 onClose={() => setConfirmingDelete(null)}
-                maxWidth="md"
-            >
-                <form onSubmit={submitDelete} className="p-6">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 border border-rose-200">
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                            </svg>
+                onConfirm={submitDelete}
+                processing={deleteForm.processing}
+                title="Hapus Rekening Pagu Anggaran?"
+                message="Pagu rekening anggaran belanja ini akan dihapus secara permanen dari sistem E-BLUD RS Jiwa Tampan."
+                itemName={confirmingDelete?.account_name}
+                itemCode={confirmingDelete?.account_code}
+                details={
+                    confirmingDelete ? (
+                        <div className="space-y-1">
+                            {confirmingDelete.period_year && (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-slate-500 font-semibold w-24 shrink-0">Tahun Anggaran:</span>
+                                    <span className="font-bold text-slate-900">{confirmingDelete.period_year}</span>
+                                </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                                <span className="text-slate-500 font-semibold w-24 shrink-0">Total Pagu:</span>
+                                <span className="font-bold text-emerald-700 font-mono">{formatRupiah(confirmingDelete.total_budget)}</span>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="text-base font-black text-slate-900">
-                                Hapus Rekening Pagu Anggaran?
-                            </h3>
-                            <p className="text-xs text-slate-500 font-medium">Tindakan ini tidak dapat dibatalkan.</p>
-                        </div>
-                    </div>
+                    ) : null
+                }
+                confirmText="Ya, Hapus Pagu"
+            />
 
-                    <div className="mt-4 rounded-xl bg-slate-100 p-3.5 text-xs text-slate-700 font-medium border border-slate-200">
-                        Rekening <span className="font-bold text-slate-900">{confirmingDelete?.account_name}</span> ({confirmingDelete?.account_code}) TA {confirmingDelete?.period_year} akan dihapus dari sistem.
-                    </div>
-
-                    <div className="mt-6 flex justify-end gap-2.5">
-                        <button
-                            type="button"
-                            onClick={() => setConfirmingDelete(null)}
-                            className="rounded-xl border-2 border-slate-300 bg-white px-5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100"
-                        >
-                            Batal
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={deleteForm.processing}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-5 py-2 text-xs font-black text-white shadow-sm transition hover:bg-rose-700 active:scale-95 disabled:opacity-50"
-                        >
-                            {deleteForm.processing ? 'Menghapus...' : 'Ya, Hapus Pagu'}
-                        </button>
-                    </div>
-                </form>
-            </Modal>
+            {/* Modal Card Tambah / Ubah Pagu Anggaran */}
+            <BudgetFormModal
+                show={isFormModalOpen}
+                onClose={() => setIsFormModalOpen(false)}
+                budget={editingBudget}
+            />
         </KeuanganLayout>
     );
 }

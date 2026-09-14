@@ -16,6 +16,8 @@ class DashboardController extends Controller
      */
     public function index(): Response
     {
+        $activeYear = session('active_year', date('Y'));
+
         $totalInitial = (float) Budget::sum('total_budget');
         $totalRemaining = (float) Budget::sum('remaining_budget');
         $totalSpent = max(0, $totalInitial - $totalRemaining);
@@ -51,14 +53,24 @@ class DashboardController extends Controller
                 ];
             });
 
+        $totalProcessed = Requisition::where('status', 'Disetujui_Selesai')
+            ->where(function ($q) use ($activeYear) {
+                $q->where('budget_year', $activeYear)
+                  ->orWhere(function ($sq) use ($activeYear) {
+                      $sq->whereNull('budget_year')->where('fiscal_year', $activeYear);
+                  });
+            })
+            ->count();
+
         return Inertia::render('Keuangan/Dashboard', [
             'total_budgets' => Budget::count(),
             'total_budget_remaining' => $totalRemaining,
-            'total_processed' => Requisition::where('status', 'Disetujui_Selesai')->count(),
+            'total_processed' => $totalProcessed,
             'total_revenue' => $totalRevenue,
             'budget_chart_data' => $budgetChartData,
             'top_budgets' => $topBudgets,
             'total_spent' => $totalSpent,
+            'active_year' => $activeYear,
         ]);
     }
 }

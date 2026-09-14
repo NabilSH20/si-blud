@@ -63,7 +63,7 @@ class ProfileController extends Controller
 
         $user->save();
 
-        return redirect()->route('profile.edit')->with('success', 'Profil dan foto akun berhasil diperbarui.');
+        return redirect()->back(fallback: route('profile.edit'))->with('success', 'Profil dan foto akun berhasil diperbarui.');
     }
 
     /**

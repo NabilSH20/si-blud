@@ -1,5 +1,6 @@
 import ToastListener from '@/Components/ToastListener';
-import { Link, usePage } from '@inertiajs/react';
+import ProfileSettingsModal from '@/Components/ProfileSettingsModal';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 const menuGroups = [
@@ -86,10 +87,12 @@ const menuGroups = [
 ];
 
 export default function KeuanganLayout({ children }) {
-    const user = usePage().props.auth.user;
+    const { auth, active_year } = usePage().props;
+    const user = auth?.user || {};
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
     const [showNotification, setShowNotification] = useState(false);
+    const [profileModalOpen, setProfileModalOpen] = useState(false);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-100/90 via-slate-50 to-emerald-50/50 bg-fixed font-sans text-slate-800 antialiased">
@@ -272,7 +275,20 @@ export default function KeuanganLayout({ children }) {
                             )}
                         </div>
 
-                        <div className="h-7 w-px bg-slate-200 hidden sm:block" />
+                        {/* Global Year Selector next to User Avatar */}
+                        <div className="flex items-center gap-1.5 rounded-2xl border-2 border-slate-200 bg-slate-50 px-2.5 py-1 text-xs shadow-2xs">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider hidden sm:inline">TA</span>
+                            <select
+                                value={active_year || 2026}
+                                onChange={(e) => router.post(route('set-year'), { year: e.target.value })}
+                                className="bg-transparent border-none text-xs font-black text-slate-800 focus:ring-0 cursor-pointer p-0 pr-6"
+                                aria-label="Tahun Anggaran"
+                            >
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                                <option value="2028">2028</option>
+                            </select>
+                        </div>
 
                         {/* User Avatar & Dropdown */}
                         <div className="relative">
@@ -340,16 +356,19 @@ export default function KeuanganLayout({ children }) {
 
                                     {/* Action Links */}
                                     <div className="py-1">
-                                        <Link
-                                            href={route('profile.edit')}
-                                            onClick={() => setProfileDropdownOpen(false)}
-                                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition"
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setProfileDropdownOpen(false);
+                                                setProfileModalOpen(true);
+                                            }}
+                                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition cursor-pointer text-left"
                                         >
                                             <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                                             </svg>
                                             Pengaturan Profil
-                                        </Link>
+                                        </button>
                                     </div>
 
                                     <div className="border-t border-slate-100 pt-1">
@@ -377,6 +396,12 @@ export default function KeuanganLayout({ children }) {
                     </div>
                 </main>
             </div>
+
+            {/* Modal Card Pengaturan Akun & Profil */}
+            <ProfileSettingsModal
+                show={profileModalOpen}
+                onClose={() => setProfileModalOpen(false)}
+            />
         </div>
     );
 }

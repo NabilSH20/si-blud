@@ -1,7 +1,7 @@
 import AuditTrailTimeline from '@/Components/AuditTrailTimeline';
 import PerencanaanLayout from '@/Layouts/PerencanaanLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { useMemo } from 'react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2';
 
 const formatRupiah = (value) =>
@@ -63,14 +63,20 @@ const getStatusBadge = (status) => {
     }
 };
 
-export default function Show({ requisition }) {
+export default function Show({ requisition, rbaList = [] }) {
     const statusInfo = getStatusBadge(requisition.status);
     const details = requisition.requisition_details || [];
     const isPending = requisition.status === 'Pending_Perencanaan';
 
-    // Initialize form with items array and notes
+    // State variables for 3-step cascading dropdown
+    const [level1, setLevel1] = useState('');
+    const [level2, setLevel2] = useState('');
+    const [level3, setLevel3] = useState('');
+
+    // Initialize form with items array, rba_account_id, and notes
     const { data, setData, put, processing, errors } = useForm({
         status: 'Diproses_Keuangan',
+        rba_account_id: requisition.rba_account_id || '',
         notes_perencanaan: requisition.notes_perencanaan || '',
         items: details.map((d) => ({
             id: d.id,
@@ -81,6 +87,70 @@ export default function Show({ requisition }) {
         })),
     });
 
+    // Initialize level1, level2, level3 from requisition.rba_account or rba_account_id
+    useEffect(() => {
+        const acc = requisition?.rba_account || rbaList.find((a) => String(a.id) === String(requisition?.rba_account_id));
+        if (acc) {
+            const code = acc.account_code || '';
+            const segments = code.split('.');
+            if (segments.length >= 2) {
+                setLevel1(`${segments[0]}.${segments[1]}`);
+            }
+            if (segments.length >= 3) {
+                setLevel2(`${segments[0]}.${segments[1]}.${segments[2]}`);
+            }
+            setLevel3(String(acc.id));
+            setData('rba_account_id', acc.id);
+        }
+    }, [requisition, rbaList]);
+
+    // Select 1 (Kategori Utama): account_code is exactly '1.1' or '1.2'
+    const select1Options = useMemo(() => {
+        return rbaList.filter((acc) => acc.account_code === '1.1' || acc.account_code === '1.2');
+    }, [rbaList]);
+
+    // Select 2 (Sub-Kategori): account_code.startsWith(level1) AND code has exactly 3 segments
+    const select2Options = useMemo(() => {
+        if (!level1) return [];
+        return rbaList.filter((acc) => {
+            const segments = acc.account_code.split('.');
+            return acc.account_code.startsWith(level1) && segments.length === 3;
+        });
+    }, [rbaList, level1]);
+
+    // Select 3 (Detail Belanja): account_code.startsWith(level2) AND is a leaf node
+    const select3Options = useMemo(() => {
+        if (!level2) return [];
+        return rbaList.filter((acc) => {
+            const isPrefixed = acc.account_code.startsWith(level2);
+            const hasChildren = rbaList.some(
+                (other) => other.account_code !== acc.account_code && other.account_code.startsWith(acc.account_code + '.')
+            );
+            return isPrefixed && !hasChildren && acc.account_code !== level2;
+        });
+    }, [rbaList, level2]);
+
+    const handleLevel1Change = (e) => {
+        const val = e.target.value;
+        setLevel1(val);
+        setLevel2('');
+        setLevel3('');
+        setData('rba_account_id', '');
+    };
+
+    const handleLevel2Change = (e) => {
+        const val = e.target.value;
+        setLevel2(val);
+        setLevel3('');
+        setData('rba_account_id', '');
+    };
+
+    const handleLevel3Change = (e) => {
+        const val = e.target.value;
+        setLevel3(val);
+        setData('rba_account_id', val);
+    };
+
     const updateApprovedQty = (index, value) => {
         const newItems = [...data.items];
         newItems[index] = {
@@ -88,6 +158,22 @@ export default function Show({ requisition }) {
             quantity_approved: value === '' ? 0 : Math.max(0, parseInt(value, 10) || 0),
         };
         setData('items', newItems);
+    };
+
+    // 1-Click: Setujui Semua Sesuai Usulan
+    const handleApproveAll = () => {
+        setData('items', details.map((d) => ({
+            id: d.id,
+            quantity_approved: Number(d.quantity_requested || 0),
+        })));
+    };
+
+    // 1-Click: Reset ke 0
+    const handleResetAll = () => {
+        setData('items', details.map((d) => ({
+            id: d.id,
+            quantity_approved: 0,
+        })));
     };
 
     // Calculate live totals
@@ -139,8 +225,18 @@ export default function Show({ requisition }) {
             reverseButtons: true,
         }).then((result) => {
             if (result.isConfirmed) {
-                setData('status', 'Diproses_Keuangan');
-                put(route('perencanaan.requisitions.update', requisition.id));
+                router.put(
+                    route('perencanaan.requisitions.update', requisition.id),
+                    {
+                        status: 'Diproses_Keuangan',
+                        notes_perencanaan: data.notes_perencanaan,
+                        items: data.items,
+                        rba_account_id: data.rba_account_id || (level3 ? Number(level3) : null),
+                    },
+                    {
+                        preserveScroll: true,
+                    }
+                );
             }
         });
     };
@@ -162,12 +258,18 @@ export default function Show({ requisition }) {
             reverseButtons: true,
         }).then((result) => {
             if (result.isConfirmed) {
-                setData({
-                    ...data,
-                    status: 'Ditolak',
-                    notes_perencanaan: result.value || data.notes_perencanaan,
-                });
-                put(route('perencanaan.requisitions.update', requisition.id));
+                router.put(
+                    route('perencanaan.requisitions.update', requisition.id),
+                    {
+                        status: 'Ditolak',
+                        notes_perencanaan: result.value || data.notes_perencanaan || 'Pengajuan tidak disetujui pada verifikasi Perencanaan.',
+                        items: data.items,
+                        rba_account_id: data.rba_account_id || (level3 ? Number(level3) : null),
+                    },
+                    {
+                        preserveScroll: true,
+                    }
+                );
             }
         });
     };
@@ -355,6 +457,141 @@ export default function Show({ requisition }) {
 
                 {/* Middle Section: Items Verification Table */}
                 <form onSubmit={handleApprove} className="space-y-6">
+                    {/* Cascading RBA Account Mapping Card */}
+                    <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-all duration-200">
+                        <div className="border-b border-emerald-100 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-slate-50/50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="flex items-center gap-2.5">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-2xs">
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
+                                    </svg>
+                                </span>
+                                <div>
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
+                                        Pemetaan Rekening Anggaran RBA (Cascading 3 Tingkat)
+                                    </h3>
+                                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                                        {isPending
+                                            ? 'Pilih klasifikasi rekening belanja RBA BLUD untuk pembebanan anggaran pengajuan ini.'
+                                            : 'Kode rekening belanja RBA BLUD yang dibebankan pada usulan ini.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="inline-flex items-center rounded-full bg-emerald-100/70 px-3 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200 self-start sm:self-auto">
+                                {isPending ? 'Verifikasi Rekening' : 'Rekening Terpetakan'}
+                            </span>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div className="grid gap-4 md:grid-cols-3">
+                                {/* Level 1: Kategori Utama */}
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                        1. Kategori Utama {isPending && <span className="text-rose-500">*</span>}
+                                    </label>
+                                    <select
+                                        value={level1}
+                                        onChange={handleLevel1Change}
+                                        disabled={!isPending}
+                                        className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-900 shadow-2xs focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="">-- Pilih Kategori Utama --</option>
+                                        {select1Options.map((acc) => (
+                                            <option key={acc.id} value={acc.account_code}>
+                                                [{acc.account_code}] {acc.account_name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="mt-1 text-[11px] text-slate-400">Pilih Belanja Operasi atau Modal</p>
+                                </div>
+
+                                {/* Level 2: Sub-Kategori */}
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                        2. Sub-Kategori {isPending && <span className="text-rose-500">*</span>}
+                                    </label>
+                                    <select
+                                        value={level2}
+                                        onChange={handleLevel2Change}
+                                        disabled={!isPending || !level1}
+                                        className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-900 shadow-2xs focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="">-- Pilih Sub-Kategori --</option>
+                                        {select2Options.map((acc) => (
+                                            <option key={acc.id} value={acc.account_code}>
+                                                [{acc.account_code}] {acc.account_name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="mt-1 text-[11px] text-slate-400">Pilih rincian kelompok belanja</p>
+                                </div>
+
+                                {/* Level 3: Detail Rekening Belanja */}
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                        3. Detail Rekening Belanja {isPending && <span className="text-rose-500">*</span>}
+                                    </label>
+                                    <select
+                                        value={level3}
+                                        onChange={handleLevel3Change}
+                                        disabled={!isPending || !level2}
+                                        className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-900 shadow-2xs focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="">-- Pilih Rekening Belanja (Leaf) --</option>
+                                        {select3Options.map((acc) => (
+                                            <option key={acc.id} value={String(acc.id)}>
+                                                [{acc.account_code}] {acc.account_name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="mt-1 text-[11px] text-slate-400">Rekening definitif pembebanan pagu RBA</p>
+                                </div>
+                            </div>
+
+                            {/* Selected Account Summary Alert */}
+                            {level3 && (() => {
+                                const selectedAccount = rbaList.find((a) => String(a.id) === String(level3));
+                                if (!selectedAccount) return null;
+                                return (
+                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white text-xs font-bold">
+                                                ✓
+                                            </span>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-mono text-xs font-bold text-emerald-900">
+                                                        {selectedAccount.account_code}
+                                                    </span>
+                                                    <span className="inline-flex rounded-md bg-emerald-200/80 px-2 py-0.5 text-[10px] font-bold text-emerald-900">
+                                                        Belanja {selectedAccount.kategori_belanja || 'Operasi'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs font-semibold text-slate-800 mt-0.5">
+                                                    {selectedAccount.account_name}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {selectedAccount.remaining_budget !== undefined && selectedAccount.remaining_budget !== null && (
+                                            <div className="text-left sm:text-right text-xs">
+                                                <span className="text-slate-500 block text-[11px]">Sisa Pagu Anggaran RBA:</span>
+                                                <span className="font-bold text-emerald-800">
+                                                    {formatRupiah(selectedAccount.remaining_budget)}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+
+                            {errors.rba_account_id && (
+                                <p className="text-xs font-medium text-rose-600 mt-1">
+                                    {errors.rba_account_id}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-all duration-200">
                         <div className="border-b border-emerald-100 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-slate-50/50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div className="flex items-center gap-2.5">
@@ -374,9 +611,30 @@ export default function Show({ requisition }) {
                                     </p>
                                 </div>
                             </div>
-                            <span className="inline-flex items-center rounded-lg bg-emerald-100/70 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-200 self-start sm:self-auto">
-                                {details.length} Macam Barang
-                            </span>
+                            <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+                                {isPending && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={handleApproveAll}
+                                            className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white px-3 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
+                                        >
+                                            <span>✨</span>
+                                            Setujui Penuh (100%)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleResetAll}
+                                            className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 active:scale-95 text-slate-700 px-2.5 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
+                                        >
+                                            Reset (0)
+                                        </button>
+                                    </>
+                                )}
+                                <span className="inline-flex items-center rounded-lg bg-emerald-100/70 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-200">
+                                    {details.length} Macam Barang
+                                </span>
+                            </div>
                         </div>
 
                         <div className="overflow-x-auto">
@@ -393,7 +651,7 @@ export default function Show({ requisition }) {
                                             Satuan
                                         </th>
                                         <th className="w-36 px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-emerald-950">
-                                            Harga Acuan
+                                            Harga Satuan
                                         </th>
                                         <th className="w-28 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
                                             Diminta
@@ -412,6 +670,7 @@ export default function Show({ requisition }) {
                                             ? data.items[idx]?.quantity_approved ?? detail.quantity_requested
                                             : detail.quantity_approved ?? detail.quantity_requested;
                                         const subtotal = Number(detail.unit_price || 0) * Number(currentApproved || 0);
+                                        const hasPriceDiff = detail.item && Number(detail.item.standard_price) > 0 && Number(detail.unit_price) !== Number(detail.item.standard_price);
 
                                         return (
                                             <tr key={detail.id || idx} className="hover:bg-emerald-50/40 transition-colors">
@@ -423,29 +682,34 @@ export default function Show({ requisition }) {
                                                 {/* Barang */}
                                                 <td className="px-5 py-3.5">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="inline-flex rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
-                                                            {detail.item?.item_code || 'BRG'}
+                                                        <span className="inline-flex rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-mono font-bold text-emerald-700 border border-emerald-200">
+                                                            {detail.item?.item_code || (detail.item_id ? `ITM-${String(detail.item_id).padStart(4, '0')}` : 'ITM-BARU')}
                                                         </span>
                                                         <span className="text-sm font-bold text-slate-900">
-                                                            {detail.item?.name || detail.manual_item_name}
+                                                            {detail.item?.name || detail.item_name || '-'}
                                                         </span>
                                                     </div>
-                                                    {(detail.item?.specification || detail.manual_specification) && (
+                                                    {(detail.item?.specification || detail.specification) && (
                                                         <p className="mt-1 text-xs text-slate-500 font-medium">
-                                                            Spesifikasi: {detail.item?.specification || detail.manual_specification}
+                                                            Spesifikasi: {detail.item?.specification || detail.specification}
                                                         </p>
+                                                    )}
+                                                    {hasPriceDiff && (
+                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 mt-1">
+                                                            ⚠️ Disesuaikan dari standar katalog ({formatRupiah(detail.item.standard_price)})
+                                                        </span>
                                                     )}
                                                 </td>
 
                                                 {/* Satuan */}
                                                 <td className="whitespace-nowrap px-4 py-3.5 text-center">
                                                     <span className="text-xs text-slate-600 font-medium">
-                                                        {detail.item?.unit_type || 'Unit'}
+                                                        {detail.unit_type || detail.item?.unit_type || 'Unit'}
                                                     </span>
                                                 </td>
 
                                                 {/* Harga Acuan */}
-                                                <td className="whitespace-nowrap px-5 py-3.5 text-right text-xs font-semibold text-slate-700">
+                                                <td className="whitespace-nowrap px-5 py-3.5 text-right text-xs font-bold text-slate-800">
                                                     {formatRupiah(detail.unit_price)}
                                                 </td>
 

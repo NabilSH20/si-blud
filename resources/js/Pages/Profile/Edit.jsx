@@ -4,8 +4,21 @@ import DivisiLayout from '@/Layouts/DivisiLayout';
 import KeuanganLayout from '@/Layouts/KeuanganLayout';
 import PerencanaanLayout from '@/Layouts/PerencanaanLayout';
 import InputError from '@/Components/InputError';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useRef, useState } from 'react';
+
+function getDashboardRoute(role) {
+    switch (role) {
+        case 'admin':
+            return route('admin.dashboard');
+        case 'perencanaan':
+            return route('perencanaan.dashboard');
+        case 'keuangan':
+            return route('keuangan.dashboard');
+        default:
+            return route('divisi.dashboard');
+    }
+}
 
 function getLayoutComponent(role) {
     switch (role) {
@@ -95,13 +108,24 @@ export default function Edit() {
 
             <div className="mx-auto max-w-4xl space-y-8">
                 {/* Page Title & Intro */}
-                <div>
-                    <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-                        Pengaturan Akun & Profil
-                    </h2>
-                    <p className="mt-1.5 text-xs sm:text-sm text-slate-500 font-medium">
-                        Perbarui identitas pribadi, foto profil, dan kata sandi keamanan akun Anda di sistem E-BLUD RSJ Tampan.
-                    </p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                            Pengaturan Akun & Profil
+                        </h2>
+                        <p className="mt-1.5 text-xs sm:text-sm text-slate-500 font-medium">
+                            Perbarui identitas pribadi, foto profil, dan kata sandi keamanan akun Anda di sistem E-BLUD RSJ Tampan.
+                        </p>
+                    </div>
+                    <Link
+                        href={getDashboardRoute(user?.role)}
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-700 shadow-2xs transition self-start sm:self-center"
+                    >
+                        <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                        </svg>
+                        <span>Batal / Kembali ke Dashboard</span>
+                    </Link>
                 </div>
 
                 {/* Card 1: Informasi Profil & Foto */}
@@ -239,10 +263,16 @@ export default function Edit() {
                                     ✓ Profil berhasil disimpan
                                 </span>
                             )}
+                            <Link
+                                href={getDashboardRoute(user?.role)}
+                                className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 transition"
+                            >
+                                Batal
+                            </Link>
                             <button
                                 type="submit"
                                 disabled={profileProcessing}
-                                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-emerald-700 active:scale-95 transition disabled:opacity-50"
+                                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-emerald-700 active:scale-95 transition disabled:opacity-50 cursor-pointer"
                             >
                                 {profileProcessing ? (
                                     <>
@@ -334,10 +364,16 @@ export default function Edit() {
                                     ✓ Kata sandi berhasil diubah
                                 </span>
                             )}
+                            <Link
+                                href={getDashboardRoute(user?.role)}
+                                className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 transition"
+                            >
+                                Batal
+                            </Link>
                             <button
                                 type="submit"
                                 disabled={passwordProcessing}
-                                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-slate-800 active:scale-95 transition disabled:opacity-50"
+                                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-slate-800 active:scale-95 transition disabled:opacity-50 cursor-pointer"
                             >
                                 {passwordProcessing ? (
                                     <>

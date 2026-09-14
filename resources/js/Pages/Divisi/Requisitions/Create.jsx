@@ -1,6 +1,6 @@
 import DivisiLayout from '@/Layouts/DivisiLayout';
 import RequisitionFormModal from './Partials/RequisitionFormModal';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function Create({
@@ -11,8 +11,10 @@ export default function Create({
     userUnit,
     initialJenis = 'Operasi',
     subKegiatanOptions = [],
-    defaultFiscalYear = 2027,
+    defaultFiscalYear,
 }) {
+    const pageActiveYear = usePage().props.active_year;
+    const finalYear = defaultFiscalYear || pageActiveYear || 2026;
     const [showModal, setShowModal] = useState(true);
 
     const handleClose = () => {
@@ -42,7 +44,7 @@ export default function Create({
                         subKegiatanOptions={subKegiatanOptions}
                         userDivision={userDivision}
                         userUnit={userUnit}
-                        defaultFiscalYear={defaultFiscalYear}
+                        defaultFiscalYear={finalYear}
                     />
                 </div>
             </div>

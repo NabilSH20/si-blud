@@ -278,4 +278,74 @@ class PerencanaanRbaPlanningTest extends TestCase
             'subtotal' => 750000,
         ]);
     }
+
+    public function test_perencanaan_can_filter_rba_by_multi_year_realtime(): void
+    {
+        $response = $this->actingAs($this->perencanaanUser)
+            ->get(route('perencanaan.rba.index', ['year' => 2027]));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Perencanaan/RBA/Index')
+            ->where('selected_year', 2027)
+            ->has('accounts_with_proposed')
+            ->has('available_years')
+        );
+    }
+
+    public function test_perencanaan_can_view_print_rincian_belanja(): void
+    {
+        $response = $this->actingAs($this->perencanaanUser)
+            ->get(route('perencanaan.rba.print-rincian-belanja', ['year' => 2026]));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Perencanaan/RBA/PrintRincianBelanja')
+            ->where('selected_year', 2026)
+            ->has('accounts_with_proposed')
+        );
+    }
+
+    public function test_perencanaan_can_filter_requisitions_by_fiscal_year(): void
+    {
+        $rbaAcc = RbaAccount::first();
+
+        $req2026 = Requisition::create([
+            'requisition_number' => 'REQ-2026-001',
+            'division_id' => $this->perencanaanDivision->id,
+            'user_id' => $this->perencanaanUser->id,
+            'rba_account_id' => $rbaAcc ? $rbaAcc->id : null,
+            'jenis_belanja' => 'Operasi',
+            'sumber_dana' => 'BLUD',
+            'fiscal_year' => 2026,
+            'status' => 'Pending_Perencanaan',
+            'submission_date' => today(),
+            'total_estimated' => 500000,
+        ]);
+
+        $req2027 = Requisition::create([
+            'requisition_number' => 'REQ-2027-001',
+            'division_id' => $this->perencanaanDivision->id,
+            'user_id' => $this->perencanaanUser->id,
+            'rba_account_id' => $rbaAcc ? $rbaAcc->id : null,
+            'jenis_belanja' => 'Operasi',
+            'sumber_dana' => 'BLUD',
+            'fiscal_year' => 2027,
+            'status' => 'Pending_Perencanaan',
+            'submission_date' => today(),
+            'total_estimated' => 750000,
+        ]);
+
+        $response = $this->actingAs($this->perencanaanUser)
+            ->get(route('perencanaan.requisitions.index', ['fiscal_year' => 2027]));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Perencanaan/Requisitions/Index')
+            ->where('selectedYear', '2027')
+            ->has('requisitions', 1)
+            ->where('requisitions.0.id', $req2027->id)
+        );
+    }
 }
+

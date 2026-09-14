@@ -1,4 +1,4 @@
-import Modal from '@/Components/Modal';
+import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal';
 import Pagination from '@/Components/Pagination';
 import AdminLayout from '@/Layouts/AdminLayout';
 import DivisionFormModal from './Partials/DivisionFormModal';
@@ -99,7 +99,7 @@ export default function Index({ divisions = [], units = [], success, error }) {
 
     // Submit Delete
     const submitDelete = (e) => {
-        e.preventDefault();
+        if (e?.preventDefault) e.preventDefault();
         if (!confirmingDelete) return;
 
         if (confirmingDelete.type === 'division') {
@@ -552,57 +552,36 @@ export default function Index({ divisions = [], units = [], success, error }) {
                 defaultDivisionId={defaultDivisionIdForUnit}
             />
 
-            {/* Modal Konfirmasi Hapus Data */}
-            <Modal
+            {/* Delete Confirmation Card Modal Pop-Up */}
+            <DeleteConfirmationModal
                 show={confirmingDelete !== null}
                 onClose={() => setConfirmingDelete(null)}
-                maxWidth="md"
-            >
-                <form onSubmit={submitDelete} className="p-6">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 border border-rose-200">
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                            </svg>
+                onConfirm={submitDelete}
+                processing={deleteForm.processing}
+                title={confirmingDelete?.type === 'division' ? 'Hapus Data Bagian / Bidang?' : 'Hapus Data Unit Kerja?'}
+                message={
+                    confirmingDelete?.type === 'division'
+                        ? 'Data Bagian / Bidang ini akan dihapus secara permanen dari struktur organisasi RS Jiwa Tampan.'
+                        : 'Data Unit Kerja ini akan dihapus secara permanen dari struktur organisasi RS Jiwa Tampan.'
+                }
+                itemName={confirmingDelete?.item?.name}
+                itemCode={
+                    confirmingDelete?.type === 'division'
+                        ? confirmingDelete?.item?.division_code
+                        : confirmingDelete?.item?.unit_code
+                }
+                details={
+                    confirmingDelete?.type === 'unit' && confirmingDelete?.item?.division ? (
+                        <div className="flex items-center gap-2">
+                            <span className="text-slate-500 font-semibold w-24 shrink-0">Induk Divisi:</span>
+                            <span className="text-slate-900 font-bold">
+                                {confirmingDelete.item.division.name}
+                            </span>
                         </div>
-                        <div>
-                            <h3 className="text-base font-black text-slate-900">
-                                {confirmingDelete?.type === 'division' ? 'Hapus Data Divisi?' : 'Hapus Data Unit Kerja?'}
-                            </h3>
-                            <p className="text-xs text-slate-500 font-medium">Tindakan ini tidak dapat dibatalkan.</p>
-                        </div>
-                    </div>
-
-                    <div className="mt-4 rounded-xl bg-slate-100 p-3.5 text-xs text-slate-700 font-medium border border-slate-200">
-                        {confirmingDelete?.type === 'division' ? (
-                            <>
-                                Divisi <strong className="text-slate-900">{confirmingDelete?.item?.name}</strong> ({confirmingDelete?.item?.division_code}) akan dihapus dari sistem.
-                            </>
-                        ) : (
-                            <>
-                                Unit Kerja <strong className="text-slate-900">{confirmingDelete?.item?.name}</strong> ({confirmingDelete?.item?.unit_code}) akan dihapus dari sistem.
-                            </>
-                        )}
-                    </div>
-
-                    <div className="mt-6 flex justify-end gap-2.5">
-                        <button
-                            type="button"
-                            onClick={() => setConfirmingDelete(null)}
-                            className="rounded-xl border-2 border-slate-300 bg-white px-5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100 cursor-pointer"
-                        >
-                            Batal
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={deleteForm.processing}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-5 py-2 text-xs font-black text-white shadow-sm transition hover:bg-rose-700 active:scale-95 disabled:opacity-50 cursor-pointer"
-                        >
-                            {deleteForm.processing ? 'Menghapus...' : 'Ya, Hapus'}
-                        </button>
-                    </div>
-                </form>
-            </Modal>
+                    ) : null
+                }
+                confirmText={confirmingDelete?.type === 'division' ? 'Ya, Hapus Divisi' : 'Ya, Hapus Unit'}
+            />
         </AdminLayout>
     );
 }

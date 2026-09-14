@@ -1,5 +1,6 @@
 import ToastListener from '@/Components/ToastListener';
-import { Link, usePage } from '@inertiajs/react';
+import ProfileSettingsModal from '@/Components/ProfileSettingsModal';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 const menuGroups = [
@@ -30,30 +31,18 @@ const menuGroups = [
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
                 ),
-                subItems: [
-                    {
-                        name: 'Belanja Operasi BLUD',
-                        hint: 'BHP Medis, Obat, Lab, Pelatihan',
-                        href: route('requisitions.create', { jenis: 'Operasi' }),
-                        iconEmoji: '⚡',
-                    },
-                    {
-                        name: 'Belanja Modal BLUD',
-                        hint: 'Alat Kesehatan, Mesin, Gedung',
-                        href: route('requisitions.create', { jenis: 'Modal' }),
-                        iconEmoji: '🏢',
-                    },
-                ],
             },
         ],
     },
 ];
 
 export default function DivisiLayout({ children }) {
-    const user = usePage().props.auth?.user;
+    const { auth, active_year } = usePage().props;
+    const user = auth?.user;
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
     const [showNotification, setShowNotification] = useState(false);
+    const [profileModalOpen, setProfileModalOpen] = useState(false);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-100/90 via-slate-50 to-emerald-50/50 bg-fixed font-sans text-slate-800 antialiased">
@@ -155,49 +144,12 @@ export default function DivisiLayout({ children }) {
                                                 )}
                                             </Link>
 
-                                            {/* Sub-menu Belanja Operasi & Belanja Modal BLUD */}
-                                            {item.subItems && (
-                                                <div className="ml-5 pl-3 border-l-2 border-slate-200/90 space-y-1 pt-0.5 pb-1">
-                                                    <p className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
-                                                        + Buat Usulan Baru:
-                                                    </p>
-                                                    {item.subItems.map((sub) => (
-                                                        <Link
-                                                            key={sub.name}
-                                                            href={sub.href}
-                                                            onClick={() => setSidebarOpen(false)}
-                                                            className="group flex flex-col rounded-xl px-2.5 py-1.5 hover:bg-emerald-50 text-xs transition border border-transparent hover:border-emerald-200 cursor-pointer"
-                                                        >
-                                                            <div className="flex items-center gap-1.5 font-bold text-slate-800 group-hover:text-emerald-800">
-                                                                <span>{sub.iconEmoji}</span>
-                                                                <span className="truncate">{sub.name}</span>
-                                                            </div>
-                                                            <span className="text-[10px] text-slate-500 group-hover:text-emerald-600 pl-5">
-                                                                {sub.hint}
-                                                            </span>
-                                                        </Link>
-                                                    ))}
-                                                </div>
-                                            )}
                                         </div>
                                     );
                                 })}
                             </nav>
                         </div>
                     ))}
-
-                    {/* Helpful Information Widget */}
-                    <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50/60 p-4 shadow-2xs">
-                        <div className="flex items-center gap-2 text-emerald-900">
-                            <svg className="h-4 w-4 shrink-0 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-                            </svg>
-                            <span className="text-xs font-black">Alur Pengajuan E-BLUD</span>
-                        </div>
-                        <p className="mt-1.5 text-[11px] font-medium leading-relaxed text-emerald-800">
-                            Pengajuan barang diverifikasi oleh Tim Perencanaan & Pengadaan sebelum persetujuan pembebanan pagu anggaran Keuangan.
-                        </p>
-                    </div>
                 </div>
 
                 {/* 3. Sidebar Footer */}
@@ -275,7 +227,20 @@ export default function DivisiLayout({ children }) {
                             )}
                         </div>
 
-                        <div className="h-7 w-px bg-slate-200 hidden sm:block" />
+                        {/* Global Year Selector next to User Avatar */}
+                        <div className="flex items-center gap-1.5 rounded-2xl border-2 border-slate-200 bg-slate-50 px-2.5 py-1 text-xs shadow-2xs">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider hidden sm:inline">TA</span>
+                            <select
+                                value={active_year || 2026}
+                                onChange={(e) => router.post(route('set-year'), { year: e.target.value })}
+                                className="bg-transparent border-none text-xs font-black text-slate-800 focus:ring-0 cursor-pointer p-0 pr-6"
+                                aria-label="Tahun Anggaran"
+                            >
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                                <option value="2028">2028</option>
+                            </select>
+                        </div>
 
                         {/* User Avatar & Dropdown */}
                         <div className="relative">
@@ -343,16 +308,19 @@ export default function DivisiLayout({ children }) {
 
                                     {/* Action Links */}
                                     <div className="py-1">
-                                        <Link
-                                            href={route('profile.edit')}
-                                            onClick={() => setProfileDropdownOpen(false)}
-                                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition"
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setProfileDropdownOpen(false);
+                                                setProfileModalOpen(true);
+                                            }}
+                                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition cursor-pointer text-left"
                                         >
                                             <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                                             </svg>
                                             Pengaturan Profil
-                                        </Link>
+                                        </button>
                                     </div>
 
                                     <div className="border-t border-slate-100 pt-1">
@@ -380,6 +348,12 @@ export default function DivisiLayout({ children }) {
                     </div>
                 </main>
             </div>
+
+            {/* Modal Card Pengaturan Akun & Profil */}
+            <ProfileSettingsModal
+                show={profileModalOpen}
+                onClose={() => setProfileModalOpen(false)}
+            />
         </div>
     );
 }

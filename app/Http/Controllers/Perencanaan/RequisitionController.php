@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Perencanaan;
 use App\Http\Controllers\Controller;
 use App\Models\Requisition;
 use App\Models\RequisitionDetail;
+use App\Models\RbaAccount;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,9 +18,25 @@ class RequisitionController extends Controller
      * Display a listing of requisitions for verification.
      * Prioritizes requests with status 'Pending_Perencanaan'.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $requisitions = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount'])
+        $activeYear = (int) session('active_year', date('Y'));
+        $selectedYear = $request->filled('fiscal_year')
+            ? $request->fiscal_year
+            : ($request->filled('budget_year') ? $request->budget_year : $activeYear);
+
+        $query = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan']);
+
+        if ($selectedYear !== 'ALL') {
+            $query->where(function ($q) use ($selectedYear) {
+                $q->where('budget_year', $selectedYear)
+                  ->orWhere(function ($sq) use ($selectedYear) {
+                      $sq->whereNull('budget_year')->where('fiscal_year', $selectedYear);
+                  });
+            });
+        }
+
+        $requisitions = $query
             ->orderByRaw("CASE WHEN status = 'Pending_Perencanaan' THEN 0 ELSE 1 END")
             ->latest('submission_date')
             ->latest('id')
@@ -27,6 +44,8 @@ class RequisitionController extends Controller
 
         return Inertia::render('Perencanaan/Requisitions/Index', [
             'requisitions' => $requisitions,
+            'selectedYear' => $selectedYear,
+            'active_year' => $activeYear,
             'success' => session('success'),
             'error' => session('error'),
         ]);
@@ -37,11 +56,14 @@ class RequisitionController extends Controller
      */
     public function show(string $id): Response
     {
-        $requisition = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount'])
+        $requisition = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])
             ->findOrFail($id);
+
+        $rbaList = RbaAccount::orderBy('account_code')->get();
 
         return Inertia::render('Perencanaan/Requisitions/Show', [
             'requisition' => $requisition,
+            'rbaList' => $rbaList,
         ]);
     }
 
@@ -54,6 +76,7 @@ class RequisitionController extends Controller
 
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:Diproses_Keuangan,Ditolak'],
+            'rba_account_id' => ['nullable', 'exists:rba_accounts,id'],
             'notes_perencanaan' => ['nullable', 'string', 'max:500'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.id' => ['required', 'exists:requisition_details,id'],
@@ -88,12 +111,24 @@ class RequisitionController extends Controller
                 }
             }
 
-            // Update requisition status and total approved
-            $requisition->update([
+            // Update requisition status, verifier audit, total approved, and optionally rba_account_id
+            $updateData = [
                 'status' => $validated['status'],
                 'total_approved' => $validated['status'] === 'Diproses_Keuangan' ? $totalApproved : 0,
                 'notes_perencanaan' => $validated['notes_perencanaan'] ?? null,
-            ]);
+                'verified_by_perencanaan_id' => auth()->id(),
+                'verified_perencanaan_at' => now(),
+            ];
+
+            if (!empty($validated['rba_account_id'])) {
+                $updateData['rba_account_id'] = $validated['rba_account_id'];
+                $acc = RbaAccount::find($validated['rba_account_id']);
+                if ($acc) {
+                    $updateData['jenis_belanja'] = in_array($acc->kategori_belanja, ['Modal']) ? 'Modal' : 'Operasi';
+                }
+            }
+
+            $requisition->update($updateData);
         });
 
         $message = $validated['status'] === 'Diproses_Keuangan'

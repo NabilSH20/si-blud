@@ -20,6 +20,8 @@ const formatTanggal = (dateString) => {
 
 export default function PrintRequisition({ requisition }) {
     const details = requisition.requisition_details || requisition.requisitionDetails || [];
+    const verifikatorPerencanaan = requisition.verified_by_perencanaan || requisition.verifiedByPerencanaan;
+    const verifikatorKeuangan = requisition.approved_by_keuangan || requisition.approvedByKeuangan;
 
     const grandTotal = details.reduce((acc, item) => {
         const qty = Number(item.quantity_approved ?? item.quantity_requested ?? 0);
@@ -139,6 +141,19 @@ export default function PrintRequisition({ requisition }) {
                             : {requisition.rba_account ? `[${requisition.rba_account.account_code}] ${requisition.rba_account.account_name}` : '-'}
                         </span>
                     </div>
+
+                    {requisition.sp2d_number && (
+                        <div className="flex">
+                            <span className="font-bold w-40 shrink-0">Nomor SP2D</span>
+                            <span className="font-bold font-mono text-emerald-900">: {requisition.sp2d_number}</span>
+                        </div>
+                    )}
+                    {requisition.receipt_number && (
+                        <div className="flex">
+                            <span className="font-bold w-40 shrink-0">Nomor Kuitansi / SPJ</span>
+                            <span className="font-bold font-mono text-slate-900">: {requisition.receipt_number}</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -169,16 +184,17 @@ export default function PrintRequisition({ requisition }) {
                     </thead>
                     <tbody>
                         {details.map((detail, index) => {
-                            const itemCode = detail.item?.item_code || 'BRG';
-                            const itemName = detail.item?.name || detail.manual_item_name || '-';
-                            const itemSpec = detail.item?.specification || detail.manual_specification || '-';
-                            const itemUnit = detail.item?.unit_type || detail.item?.unit || 'Unit';
+                            const itemCode = detail.item?.item_code || (detail.item_id ? `ITM-${String(detail.item_id).padStart(4, '0')}` : 'ITM-BARU');
+                            const itemName = detail.item?.name || detail.item_name || detail.manual_item_name || '-';
+                            const itemSpec = detail.item?.specification || detail.specification || detail.manual_specification || '-';
+                            const itemUnit = detail.unit_type || detail.item?.unit_type || detail.item?.unit || 'Unit';
                             const qtyRequested = Number(detail.quantity_requested || 0);
+                            const isPending = requisition.status === 'Pending_Perencanaan';
                             const qtyApproved = detail.quantity_approved !== null && detail.quantity_approved !== undefined
                                 ? Number(detail.quantity_approved)
-                                : qtyRequested;
+                                : (isPending ? null : qtyRequested);
                             const price = Number(detail.unit_price || 0);
-                            const lineSubtotal = Number(detail.subtotal || (qtyApproved * price));
+                            const lineSubtotal = Number(detail.subtotal || ((qtyApproved ?? qtyRequested) * price));
 
                             return (
                                 <tr key={detail.id || index}>
@@ -190,7 +206,13 @@ export default function PrintRequisition({ requisition }) {
                                     <td className="border border-black p-1.5 text-[11px] leading-tight">{itemSpec}</td>
                                     <td className="border border-black p-1.5 text-center">{itemUnit}</td>
                                     <td className="border border-black p-1.5 text-center font-semibold">{qtyRequested}</td>
-                                    <td className="border border-black p-1.5 text-center font-bold">{qtyApproved}</td>
+                                    <td className="border border-black p-1.5 text-center font-bold">
+                                        {qtyApproved !== null ? (
+                                            qtyApproved
+                                        ) : (
+                                            <span className="text-[10px] font-normal italic text-slate-500">(Pending)</span>
+                                        )}
+                                    </td>
                                     <td className="border border-black p-1.5 text-right">{formatRupiah(price)}</td>
                                     <td className="border border-black p-1.5 text-right font-bold">{formatRupiah(lineSubtotal)}</td>
                                 </tr>
@@ -200,7 +222,9 @@ export default function PrintRequisition({ requisition }) {
                     <tfoot>
                         <tr className="bg-gray-100 print:bg-transparent font-bold">
                             <td colSpan={7} className="border border-black p-2 text-right font-black">
-                                TOTAL ESTIMASI PAGU ANGGARAN BLUD:
+                                {requisition.total_approved && Number(requisition.total_approved) > 0
+                                    ? 'TOTAL ANGGARAN BLUD DISETUJUI:'
+                                    : 'TOTAL ESTIMASI ANGGARAN DIUSULKAN:'}
                             </td>
                             <td className="border border-black p-2 text-right font-black">
                                 {formatRupiah(requisition.total_approved && Number(requisition.total_approved) > 0 ? requisition.total_approved : grandTotal)}
@@ -236,30 +260,70 @@ export default function PrintRequisition({ requisition }) {
                 {/* 2. Bagian Perencanaan */}
                 <div className="flex flex-col justify-between h-44">
                     <div>
-                        <p className="font-medium">Diverifikasi Oleh,</p>
-                        <p className="font-bold mt-0.5">Bagian Perencanaan RSJ Tampan</p>
+                        <p className="font-medium">
+                            {requisition.verified_perencanaan_at
+                                ? `Pekanbaru, ${formatTanggal(requisition.verified_perencanaan_at)}`
+                                : 'Diverifikasi Oleh,'}
+                        </p>
+                        <p className="font-bold mt-0.5">Bagian Perencanaan RSJ Tampan,</p>
                     </div>
                     <div>
-                        <p className="font-bold underline uppercase">
-                            ( .................................... )
-                        </p>
-                        <p className="text-[11px] text-slate-700">NIP. ....................................</p>
-                        <p className="text-[10px] text-slate-600 italic">Tim Penelaah RBA BLUD</p>
+                        {verifikatorPerencanaan ? (
+                            <>
+                                <p className="font-bold underline uppercase">
+                                    {verifikatorPerencanaan.name}
+                                </p>
+                                <p className="text-[11px] text-slate-700">
+                                    NIP. {verifikatorPerencanaan.nip || '....................................'}
+                                </p>
+                                <p className="text-[10px] text-slate-600 italic">
+                                    {verifikatorPerencanaan.position || 'Tim Penelaah RBA BLUD'}
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="font-bold underline uppercase">
+                                    ( .................................... )
+                                </p>
+                                <p className="text-[11px] text-slate-700">NIP. ....................................</p>
+                                <p className="text-[10px] text-slate-600 italic">Tim Penelaah RBA BLUD</p>
+                            </>
+                        )}
                     </div>
                 </div>
 
                 {/* 3. Bagian Keuangan */}
                 <div className="flex flex-col justify-between h-44">
                     <div>
-                        <p className="font-medium">Disetujui Pagu Kas Oleh,</p>
-                        <p className="font-bold mt-0.5">Bagian Keuangan RSJ Tampan</p>
+                        <p className="font-medium">
+                            {requisition.approved_keuangan_at
+                                ? `Pekanbaru, ${formatTanggal(requisition.approved_keuangan_at)}`
+                                : 'Disetujui Pagu Kas Oleh,'}
+                        </p>
+                        <p className="font-bold mt-0.5">Bagian Keuangan RSJ Tampan,</p>
                     </div>
                     <div>
-                        <p className="font-bold underline uppercase">
-                            ( .................................... )
-                        </p>
-                        <p className="text-[11px] text-slate-700">NIP. ....................................</p>
-                        <p className="text-[10px] text-slate-600 italic">Pejabat Keuangan BLUD</p>
+                        {verifikatorKeuangan ? (
+                            <>
+                                <p className="font-bold underline uppercase">
+                                    {verifikatorKeuangan.name}
+                                </p>
+                                <p className="text-[11px] text-slate-700">
+                                    NIP. {verifikatorKeuangan.nip || '....................................'}
+                                </p>
+                                <p className="text-[10px] text-slate-600 italic">
+                                    {verifikatorKeuangan.position || 'Pejabat Keuangan BLUD'}
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="font-bold underline uppercase">
+                                    ( .................................... )
+                                </p>
+                                <p className="text-[11px] text-slate-700">NIP. ....................................</p>
+                                <p className="text-[10px] text-slate-600 italic">Pejabat Keuangan BLUD</p>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

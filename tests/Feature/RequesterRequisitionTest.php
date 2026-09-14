@@ -33,6 +33,8 @@ class RequesterRequisitionTest extends TestCase
     {
         parent::setUp();
 
+        session(['active_year' => 2027]);
+
         // 1. Setup Divisions & Units (RSJ Tampan structure)
         $this->medikDivision = Division::create([
             'name' => 'Bidang Pelayanan Medik',
@@ -477,6 +479,160 @@ class RequesterRequisitionTest extends TestCase
         $response = $this->actingAs($this->farmasiUser)->put(route('requisitions.update', $radiologiReq->id), $payload);
 
         $response->assertForbidden();
+    }
+
+    public function test_unit_can_submit_requisition_with_adjusted_item_price_and_updates_master_item(): void
+    {
+        // Initial price: 75,000
+        $this->assertEquals(75000, (float) $this->itemObat->standard_price);
+
+        $payload = [
+            'rba_account_id' => $this->rbaOperasiBlud->id,
+            'jenis_belanja' => 'Operasi',
+            'sub_kegiatan' => 'Pelayanan dan Penunjang Pelayanan BLUD RS Jiwa Tampan',
+            'fiscal_year' => 2027,
+            'nomor_surat_unit' => '088/FAR/RSJ/2026',
+            'urgency_reason' => 'Kenaikan harga pasar obat antipsikotik.',
+            'items' => [
+                [
+                    'item_id' => $this->itemObat->id,
+                    'quantity' => 10,
+                    'unit_price' => 85000, // Adjusted from 75,000 to 85,000
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->farmasiUser)->post(route('requisitions.store'), $payload);
+
+        $response->assertRedirect(route('requisitions.index'));
+
+        // Verify requisition detail saved adjusted price and correct subtotal
+        $this->assertDatabaseHas('requisition_details', [
+            'item_id' => $this->itemObat->id,
+            'quantity_requested' => 10,
+            'unit_price' => 85000,
+            'subtotal' => 850000,
+        ]);
+
+        // Verify master item's standard_price was updated in items table
+        $this->assertEquals(85000, (float) $this->itemObat->fresh()->standard_price);
+    }
+
+    public function test_unit_can_submit_requisition_with_brand_new_manual_item(): void
+    {
+        $payload = [
+            'rba_account_id' => $this->rbaOperasiBlud->id,
+            'jenis_belanja' => 'Operasi',
+            'sub_kegiatan' => 'Pelayanan dan Penunjang Pelayanan BLUD RS Jiwa Tampan',
+            'fiscal_year' => 2027,
+            'nomor_surat_unit' => '099/FAR/RSJ/2026',
+            'urgency_reason' => 'Pengadaan item baru yang belum terdaftar di katalog.',
+            'items' => [
+                [
+                    'is_new' => true,
+                    'name' => 'Kassa Steril 16x16 Onemed',
+                    'specification' => 'Steril isi 10 pouch per box',
+                    'unit_type' => 'Box',
+                    'unit_price' => 45000,
+                    'quantity' => 50,
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->farmasiUser)->post(route('requisitions.store'), $payload);
+
+        $response->assertRedirect(route('requisitions.index'));
+
+        // Verify the new item was created in items table
+        $this->assertDatabaseHas('items', [
+            'rba_account_id' => $this->rbaOperasiBlud->id,
+            'name' => 'Kassa Steril 16x16 Onemed',
+            'specification' => 'Steril isi 10 pouch per box',
+            'unit_type' => 'Box',
+            'standard_price' => 45000,
+            'source' => 'USULAN_UNIT',
+            'origin_unit_id' => $this->farmasiUnit->id,
+        ]);
+
+        $newItem = Item::where('name', 'Kassa Steril 16x16 Onemed')->first();
+        $this->assertNotNull($newItem);
+        $this->assertStringStartsWith('ITM-', $newItem->item_code);
+        $this->assertTrue($newItem->isFromUnit());
+
+        // Verify requisition detail is linked to the newly created item
+        $this->assertDatabaseHas('requisition_details', [
+            'item_id' => $newItem->id,
+            'item_name' => 'Kassa Steril 16x16 Onemed',
+            'unit_type' => 'Box',
+            'quantity_requested' => 50,
+            'unit_price' => 45000,
+            'subtotal' => 2250000,
+        ]);
+    }
+
+    public function test_unit_can_update_requisition_with_price_changes_and_manual_items(): void
+    {
+        $requisition = Requisition::create([
+            'requisition_number' => 'REQ-20261001-0050',
+            'division_id' => $this->medikDivision->id,
+            'unit_id' => $this->farmasiUnit->id,
+            'user_id' => $this->farmasiUser->id,
+            'rba_account_id' => $this->rbaOperasiBlud->id,
+            'jenis_belanja' => 'Operasi',
+            'sumber_dana' => 'BLUD',
+            'sub_kegiatan' => 'Pelayanan dan Penunjang Pelayanan BLUD RS Jiwa Tampan',
+            'fiscal_year' => 2027,
+            'status' => 'Pending_Perencanaan',
+            'submission_date' => today(),
+            'total_estimated' => 750000,
+        ]);
+
+        RequisitionDetail::create([
+            'requisition_id' => $requisition->id,
+            'item_id' => $this->itemObat->id,
+            'item_name' => $this->itemObat->name,
+            'unit_type' => $this->itemObat->unit_type,
+            'quantity_requested' => 10,
+            'unit_price' => 75000,
+            'subtotal' => 750000,
+        ]);
+
+        $updatePayload = [
+            'rba_account_id' => $this->rbaOperasiBlud->id,
+            'jenis_belanja' => 'Operasi',
+            'sub_kegiatan' => 'Pelayanan dan Penunjang Pelayanan BLUD RS Jiwa Tampan',
+            'fiscal_year' => 2027,
+            'items' => [
+                [
+                    'item_id' => $this->itemObat->id,
+                    'quantity' => 10,
+                    'unit_price' => 90000, // Updated price
+                ],
+                [
+                    'is_new' => true,
+                    'name' => 'Alkohol Swab Onemed Extra',
+                    'specification' => 'Box isi 100 pcs',
+                    'unit_type' => 'Box',
+                    'unit_price' => 25000,
+                    'quantity' => 20,
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->farmasiUser)->put(route('requisitions.update', $requisition->id), $updatePayload);
+
+        $response->assertRedirect(route('requisitions.index'));
+
+        // Total: (10 * 90,000) + (20 * 25,000) = 900,000 + 500,000 = 1,400,000
+        $this->assertEquals(1400000, (float) $requisition->fresh()->total_estimated);
+        $this->assertEquals(90000, (float) $this->itemObat->fresh()->standard_price);
+
+        $this->assertDatabaseHas('items', [
+            'name' => 'Alkohol Swab Onemed Extra',
+            'standard_price' => 25000,
+            'source' => 'USULAN_UNIT',
+            'origin_unit_id' => $this->farmasiUnit->id,
+        ]);
     }
 }
 

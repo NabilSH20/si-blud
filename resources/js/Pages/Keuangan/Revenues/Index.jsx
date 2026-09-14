@@ -1,5 +1,7 @@
 import KeuanganLayout from '@/Layouts/KeuanganLayout';
 import Pagination from '@/Components/Pagination';
+import RevenueFormModal from './Partials/RevenueFormModal';
+import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
@@ -21,9 +23,17 @@ const formatTanggal = (dateString) => {
     }).format(date);
 };
 
-export default function Index({ revenues = [], stats = {}, categories = ['Semua', 'Jasa Layanan', 'Hasil Kerja Sama', 'APBD', 'Lain-lain BLUD Sah'] }) {
+export default function Index({
+    revenues = [],
+    stats = {},
+    categories = ['Semua', 'Jasa Layanan', 'Hasil Kerja Sama', 'APBD', 'Lain-lain BLUD Sah'],
+    grouped_sources = null,
+    sources = [],
+    default_date = '',
+}) {
     const [selectedRevenue, setSelectedRevenue] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('Semua');
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -80,15 +90,16 @@ export default function Index({ revenues = [], stats = {}, categories = ['Semua'
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <Link
-                        href={route('revenues.create')}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all duration-200"
+                    <button
+                        type="button"
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
                     >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
                         Catat Pendapatan Baru
-                    </Link>
+                    </button>
                 </div>
             </div>
 
@@ -275,43 +286,30 @@ export default function Index({ revenues = [], stats = {}, categories = ['Semua'
                 />
             </div>
 
-            {/* Delete Confirmation Modal */}
-            {showDeleteModal && selectedRevenue && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-                    <div className="w-full max-w-md rounded-2xl border-2 border-slate-300 bg-white p-6 shadow-2xl space-y-4">
-                        <div className="flex items-center gap-3 text-rose-600">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100">
-                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                </svg>
-                            </div>
-                            <h3 className="text-base font-black text-slate-900">Konfirmasi Hapus Pendapatan</h3>
-                        </div>
+            {/* Delete Confirmation Card Modal Pop-Up */}
+            <DeleteConfirmationModal
+                show={Boolean(showDeleteModal && selectedRevenue)}
+                onClose={() => {
+                    setShowDeleteModal(false);
+                    setSelectedRevenue(null);
+                }}
+                onConfirm={confirmDelete}
+                processing={processing}
+                title="Hapus Bukti Penerimaan Kas?"
+                message="Transaksi penerimaan kas ini akan dihapus secara permanen dari pembukuan E-BLUD RS Jiwa Tampan."
+                itemName={selectedRevenue ? `${selectedRevenue.source} (${formatRupiah(selectedRevenue.amount)})` : ''}
+                itemCode={selectedRevenue?.revenue_number}
+                confirmText="Ya, Hapus Catatan"
+            />
 
-                        <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                            Apakah Anda yakin ingin menghapus transaksi penerimaan <strong>{selectedRevenue.revenue_number}</strong> sebesar <strong>{formatRupiah(selectedRevenue.amount)}</strong> dari sumber <strong>{selectedRevenue.source}</strong>?
-                        </p>
-
-                        <div className="flex items-center justify-end gap-3 pt-2">
-                            <button
-                                type="button"
-                                onClick={() => setShowDeleteModal(false)}
-                                className="rounded-xl border-2 border-slate-300 bg-white px-5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
-                            >
-                                Batalkan
-                            </button>
-                            <button
-                                type="button"
-                                onClick={confirmDelete}
-                                disabled={processing}
-                                className="rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-95 text-white px-5 py-2 text-xs font-black shadow-md transition disabled:opacity-50"
-                            >
-                                Ya, Hapus Catatan
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Modal Card Catat Pendapatan Baru */}
+            <RevenueFormModal
+                show={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                grouped_sources={grouped_sources}
+                sources={sources}
+                default_date={default_date}
+            />
         </KeuanganLayout>
     );
 }

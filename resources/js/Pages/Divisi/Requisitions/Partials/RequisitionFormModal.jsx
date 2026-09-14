@@ -1,7 +1,15 @@
 import Modal from '@/Components/Modal';
 import { useForm, usePage } from '@inertiajs/react';
-import { useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Swal from 'sweetalert2';
+
+const LEVEL_LABELS = [
+    '1. Kelompok Belanja BLUD',
+    '2. Sub-Kelompok Belanja',
+    '3. Objek Pos Rekening Belanja',
+    '4. Rincian / Sub-Objek Belanja',
+    '5. Detail Rekening Akhir',
+];
 
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -10,6 +18,38 @@ const formatRupiah = (value) =>
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
     }).format(Number(value || 0));
+
+const COMMON_UNITS = [
+    'Pcs',
+    'Box',
+    'Botol',
+    'Roll',
+    'Tablet',
+    'Ampul',
+    'Unit',
+    'Set',
+    'Pak',
+    'Rim',
+    'Lembar',
+    'Vial',
+    'Galon',
+    'Dus',
+    'Lusin',
+    'Pasang',
+    'Meter',
+    'Kg',
+    'Liter',
+];
+
+const createEmptyItem = (isNew = false) => ({
+    item_id: '',
+    is_new: isNew,
+    name: '',
+    unit_type: 'Pcs',
+    specification: '',
+    unit_price: '',
+    quantity: 1,
+});
 
 export default function RequisitionFormModal({
     show = false,
@@ -21,10 +61,12 @@ export default function RequisitionFormModal({
     subKegiatanOptions = [],
     userDivision,
     userUnit,
-    defaultFiscalYear = 2027,
+    defaultFiscalYear,
 }) {
     const isEdit = Boolean(requisition && requisition.id);
-    const authUser = usePage().props.auth.user;
+    const { auth, active_year } = usePage().props;
+    const authUser = auth?.user;
+    const resolvedYear = defaultFiscalYear || active_year || 2026;
     const division = userDivision || authUser?.division;
     const unit = userUnit || authUser?.unit;
 
@@ -43,17 +85,77 @@ export default function RequisitionFormModal({
     const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
         jenis_belanja: initialJenis || 'Operasi',
         rba_account_id: defaultAccountId,
-        fiscal_year: defaultFiscalYear || 2027,
+        budget_year: resolvedYear,
+        fiscal_year: resolvedYear,
         sub_kegiatan: subKegiatanOptions[0] || 'Pelayanan dan Penunjang Pelayanan BLUD RS Jiwa Tampan',
         nomor_surat_unit: '',
         urgency_reason: '',
-        items: [
-            {
-                item_id: '',
-                quantity: 1,
-            },
-        ],
+        items: [createEmptyItem(false)],
     });
+
+    // Helper to find children of a given parentCode
+    const getChildren = (parentCode) => {
+        return rbaAccounts.filter((acc) => {
+            if (acc.parent_code) {
+                return acc.parent_code === parentCode;
+            }
+            if (acc.account_code && acc.account_code.startsWith(parentCode + '.')) {
+                const rem = acc.account_code.slice(parentCode.length + 1);
+                return !rem.includes('.');
+            }
+            return false;
+        });
+    };
+
+    // Helper to find ancestor path from a leaf account_code
+    const getAncestorPath = (leafCode) => {
+        const path = [];
+        let curr = rbaAccounts.find((a) => a.account_code === leafCode);
+        while (curr) {
+            path.unshift(curr.account_code);
+            const parentCode =
+                curr.parent_code ||
+                (curr.account_code.includes('.')
+                    ? curr.account_code.substring(0, curr.account_code.lastIndexOf('.'))
+                    : null);
+            if (!parentCode || parentCode === '1.1' || parentCode === '1.2' || parentCode === '1') {
+                break;
+            }
+            curr = rbaAccounts.find((a) => a.account_code === parentCode);
+        }
+        return path;
+    };
+
+    // Helper to generate default initial path for a given jenis_belanja
+    const getDefaultPathForJenis = (jenis) => {
+        const rootCode = jenis === 'Modal' ? '1.2' : '1.1';
+        const defaultPath = [];
+        let currParent = rootCode;
+        while (currParent) {
+            const children = getChildren(currParent);
+            if (children.length > 0) {
+                let next = children[0];
+                if (currParent === '1.1') {
+                    const opt112 = children.find((c) => c.account_code === '1.1.2');
+                    if (opt112) next = opt112;
+                } else if (currParent === '1.2') {
+                    const opt121 = children.find((c) => c.account_code === '1.2.1');
+                    if (opt121) next = opt121;
+                } else if (currParent === '1.2.1') {
+                    const opt1212 = children.find((c) => c.account_code === '1.2.1.2');
+                    if (opt1212) next = opt1212;
+                }
+                defaultPath.push(next.account_code);
+                currParent = next.account_code;
+            } else {
+                break;
+            }
+        }
+        return defaultPath;
+    };
+
+    // Cascading path of selected account codes: e.g. ['1.1.2', '1.1.2.1', '1.1.2.1.2', '1.1.2.1.2.1']
+    const [selectedPath, setSelectedPath] = useState([]);
 
     // Populate or reset form whenever modal opens or active requisition changes
     useEffect(() => {
@@ -63,42 +165,150 @@ export default function RequisitionFormModal({
         }
 
         if (requisition) {
+            const yr = requisition.budget_year || requisition.fiscal_year || resolvedYear;
+            const targetAcc = rbaAccounts.find((a) => String(a.id) === String(requisition.rba_account_id));
+            if (targetAcc) {
+                setSelectedPath(getAncestorPath(targetAcc.account_code));
+            } else {
+                setSelectedPath([]);
+            }
+
             setData({
                 jenis_belanja: requisition.jenis_belanja || 'Operasi',
                 rba_account_id: requisition.rba_account_id || '',
-                fiscal_year: requisition.fiscal_year || defaultFiscalYear || 2027,
+                budget_year: yr,
+                fiscal_year: yr,
                 sub_kegiatan: requisition.sub_kegiatan || subKegiatanOptions[0] || '',
                 nomor_surat_unit: requisition.nomor_surat_unit || '',
                 urgency_reason: requisition.urgency_reason || '',
                 items: requisition.requisition_details?.length
                     ? requisition.requisition_details.map((d) => ({
                           item_id: d.item_id || '',
+                          is_new: false,
+                          name: d.item?.name || d.item_name || '',
+                          unit_type: d.item?.unit_type || d.unit_type || 'Pcs',
+                          specification: d.item?.specification || d.specification || '',
+                          unit_price:
+                              d.unit_price !== null && d.unit_price !== undefined
+                                  ? Number(d.unit_price)
+                                  : d.item?.standard_price
+                                  ? Number(d.item.standard_price)
+                                  : '',
                           quantity: d.quantity_requested || 1,
                       }))
-                    : [{ item_id: '', quantity: 1 }],
+                    : [createEmptyItem(false)],
             });
         } else {
             const currentJenis = initialJenis || 'Operasi';
-            const matched = rbaAccounts.filter((acc) => acc.kategori_belanja === currentJenis);
-            const firstId = matched[0]?.id || rbaAccounts[0]?.id || '';
+            const defaultPath = getDefaultPathForJenis(currentJenis);
+            const leafCode = defaultPath[defaultPath.length - 1];
+            const leafAcc = leafCode ? rbaAccounts.find((a) => a.account_code === leafCode) : null;
 
+            setSelectedPath(defaultPath);
             setData({
                 jenis_belanja: currentJenis,
-                rba_account_id: firstId,
-                fiscal_year: defaultFiscalYear || 2027,
+                rba_account_id: leafAcc ? leafAcc.id : '',
+                budget_year: resolvedYear,
+                fiscal_year: resolvedYear,
                 sub_kegiatan: subKegiatanOptions[0] || 'Pelayanan dan Penunjang Pelayanan BLUD RS Jiwa Tampan',
                 nomor_surat_unit: '',
                 urgency_reason: '',
-                items: [{ item_id: '', quantity: 1 }],
+                items: [createEmptyItem(false)],
             });
         }
         clearErrors();
-    }, [show, requisition, initialJenis]);
+    }, [show, requisition, initialJenis, resolvedYear, rbaAccounts]);
 
-    // Accounts filtered by selected jenis_belanja
-    const accountsForJenis = useMemo(() => {
-        return rbaAccounts.filter((acc) => acc.kategori_belanja === data.jenis_belanja);
-    }, [rbaAccounts, data.jenis_belanja]);
+    // Switch jenis_belanja (1.1 Belanja Operasi vs 1.2 Belanja Modal)
+    const handleJenisChange = (newJenis) => {
+        const defaultPath = getDefaultPathForJenis(newJenis);
+        const leafCode = defaultPath[defaultPath.length - 1];
+        const leafAcc = leafCode ? rbaAccounts.find((a) => a.account_code === leafCode) : null;
+
+        setSelectedPath(defaultPath);
+        setData((prev) => ({
+            ...prev,
+            jenis_belanja: newJenis,
+            rba_account_id: leafAcc ? leafAcc.id : '',
+            items: [createEmptyItem(false)],
+        }));
+    };
+
+    // Handle cascading change at any depth
+    const handleCascadeChange = (depth, newCode) => {
+        const newPath = [...selectedPath.slice(0, depth)];
+        if (newCode) {
+            newPath.push(newCode);
+            // Auto-advance through single-child levels
+            let curr = newCode;
+            while (curr) {
+                const nextChildren = getChildren(curr);
+                if (nextChildren.length === 1) {
+                    curr = nextChildren[0].account_code;
+                    newPath.push(curr);
+                } else {
+                    break;
+                }
+            }
+        }
+        setSelectedPath(newPath);
+
+        const leafCode = newPath[newPath.length - 1];
+        const isLeaf = leafCode && getChildren(leafCode).length === 0;
+        if (isLeaf) {
+            const acc = rbaAccounts.find((a) => a.account_code === leafCode);
+            if (acc) {
+                setData((prev) => ({
+                    ...prev,
+                    rba_account_id: acc.id,
+                    items: [createEmptyItem(false)],
+                }));
+            }
+        } else {
+            setData((prev) => ({
+                ...prev,
+                rba_account_id: '',
+                items: [createEmptyItem(false)],
+            }));
+        }
+    };
+
+    // Build dynamic cascading levels from selectedPath
+    const cascadeLevels = useMemo(() => {
+        const rootCode = data.jenis_belanja === 'Modal' ? '1.2' : '1.1';
+        const levels = [];
+        let currentParent = rootCode;
+        let depth = 0;
+
+        while (currentParent) {
+            const children = getChildren(currentParent);
+            if (children.length === 0) {
+                break;
+            }
+
+            const currentVal = selectedPath[depth] || '';
+            levels.push({
+                depth,
+                parentCode: currentParent,
+                options: children,
+                selectedValue: currentVal,
+            });
+
+            if (currentVal && children.some((c) => c.account_code === currentVal)) {
+                currentParent = currentVal;
+                depth++;
+            } else {
+                break;
+            }
+        }
+
+        return levels;
+    }, [data.jenis_belanja, selectedPath, rbaAccounts]);
+
+    // Active selected RBA Account info
+    const selectedAccount = useMemo(() => {
+        return rbaAccounts.find((acc) => String(acc.id) === String(data.rba_account_id));
+    }, [rbaAccounts, data.rba_account_id]);
 
     // Items filtered by selected rba_account_id
     const availableItems = useMemo(() => {
@@ -115,34 +325,65 @@ export default function RequisitionFormModal({
         return map;
     }, [items]);
 
-    // Active selected RBA Account info
-    const selectedAccount = useMemo(() => {
-        return rbaAccounts.find((acc) => String(acc.id) === String(data.rba_account_id));
-    }, [rbaAccounts, data.rba_account_id]);
+    // Handle selection from dropdown
+    const handleItemSelect = (index, selectedVal) => {
+        if (selectedVal === '__NEW__') {
+            const newItems = [...data.items];
+            newItems[index] = {
+                ...newItems[index],
+                is_new: true,
+                item_id: '',
+                name: '',
+                unit_type: 'Pcs',
+                specification: '',
+                unit_price: '',
+            };
+            setData('items', newItems);
+            return;
+        }
 
-    // Switch jenis_belanja
-    const handleJenisChange = (newJenis) => {
-        const matchingAccounts = rbaAccounts.filter((acc) => acc.kategori_belanja === newJenis);
-        const newAccountId = matchingAccounts[0]?.id || '';
-
-        setData((prev) => ({
-            ...prev,
-            jenis_belanja: newJenis,
-            rba_account_id: newAccountId,
-            items: [{ item_id: '', quantity: 1 }],
-        }));
+        const it = itemMap[selectedVal];
+        const newItems = [...data.items];
+        newItems[index] = {
+            ...newItems[index],
+            is_new: false,
+            item_id: selectedVal,
+            name: it?.name || '',
+            unit_type: it?.unit_type || 'Pcs',
+            specification: it?.specification || '',
+            unit_price: it ? Number(it.standard_price || 0) : '',
+        };
+        setData('items', newItems);
     };
 
-    // Switch rba_account_id
-    const handleAccountChange = (newAccountId) => {
-        setData((prev) => ({
-            ...prev,
-            rba_account_id: newAccountId,
-            items: [{ item_id: '', quantity: 1 }],
-        }));
+    // Toggle row between Catalog and Manual mode
+    const toggleRowMode = (index, isNew) => {
+        const newItems = [...data.items];
+        if (isNew) {
+            newItems[index] = {
+                ...newItems[index],
+                is_new: true,
+                item_id: '',
+                name: '',
+                unit_type: newItems[index].unit_type || 'Pcs',
+                specification: '',
+                unit_price: '',
+            };
+        } else {
+            newItems[index] = {
+                ...newItems[index],
+                is_new: false,
+                item_id: '',
+                name: '',
+                unit_type: 'Pcs',
+                specification: '',
+                unit_price: '',
+            };
+        }
+        setData('items', newItems);
     };
 
-    // Update specific row
+    // Update specific row field
     const updateItemRow = (index, field, value) => {
         const newItems = [...data.items];
         newItems[index] = {
@@ -152,14 +393,11 @@ export default function RequisitionFormModal({
         setData('items', newItems);
     };
 
-    // Add new row
-    const addItemRow = () => {
+    // Add new row (catalog or new item)
+    const addItemRow = (isNew = false) => {
         setData('items', [
             ...data.items,
-            {
-                item_id: '',
-                quantity: 1,
-            },
+            createEmptyItem(isNew),
         ]);
     };
 
@@ -170,32 +408,71 @@ export default function RequisitionFormModal({
         setData('items', newItems);
     };
 
-    // Totals
-    const { grandTotal, totalQuantity } = useMemo(() => {
+    // Totals calculation
+    const { grandTotal, totalQuantity, newItemsCount } = useMemo(() => {
         let sum = 0;
         let totalQty = 0;
+        let newCount = 0;
         data.items.forEach((row) => {
-            const item = itemMap[row.item_id];
             const qty = parseInt(row.quantity, 10) || 0;
-            if (item && qty > 0) {
-                sum += Number(item.standard_price || 0) * qty;
+            const price = parseFloat(row.unit_price) || 0;
+            if (qty > 0 && price > 0) {
+                sum += price * qty;
                 totalQty += qty;
             }
+            if (row.is_new) {
+                newCount++;
+            }
         });
-        return { grandTotal: sum, totalQuantity: totalQty };
-    }, [data.items, itemMap]);
+        return { grandTotal: sum, totalQuantity: totalQty, newItemsCount: newCount };
+    }, [data.items]);
 
     // Handle form submit
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // Validation: verify no empty items
-        const hasEmptyItem = data.items.some((row) => !row.item_id || !row.quantity);
-        if (hasEmptyItem) {
+        // Detailed validation for each row
+        let invalidMsg = null;
+        for (let i = 0; i < data.items.length; i++) {
+            const row = data.items[i];
+            const qty = parseInt(row.quantity, 10);
+            const price = parseFloat(row.unit_price);
+
+            if (row.is_new) {
+                if (!row.name || !row.name.trim()) {
+                    invalidMsg = `Baris #${i + 1}: Nama barang baru belum diisi.`;
+                    break;
+                }
+                if (!row.unit_type || !row.unit_type.trim()) {
+                    invalidMsg = `Baris #${i + 1}: Satuan barang baru belum diisi.`;
+                    break;
+                }
+                if (isNaN(price) || price <= 0) {
+                    invalidMsg = `Baris #${i + 1}: Harga satuan barang baru harus lebih dari 0.`;
+                    break;
+                }
+            } else {
+                if (!row.item_id) {
+                    invalidMsg = `Baris #${i + 1}: Silakan pilih barang dari katalog atau gunakan opsi input barang baru.`;
+                    break;
+                }
+                if (isNaN(price) || price < 0) {
+                    invalidMsg = `Baris #${i + 1}: Harga satuan tidak boleh kosong.`;
+                    break;
+                }
+            }
+
+            if (isNaN(qty) || qty < 1) {
+                invalidMsg = `Baris #${i + 1}: Volume barang minimal 1 unit.`;
+                break;
+            }
+        }
+
+        if (invalidMsg) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Data Belum Lengkap',
-                text: 'Pastikan seluruh baris barang telah dipilih dari katalog dan jumlah kuantitas terisi dengan benar.',
+                text: invalidMsg,
                 confirmButtonColor: '#059669',
             });
             return;
@@ -216,7 +493,7 @@ export default function RequisitionFormModal({
                     <p><strong>Tahun Anggaran Kebutuhan:</strong> <span class="text-emerald-700 font-bold">${data.fiscal_year} (1 Tahun ke Depan)</span></p>
                     <p><strong>Sub Kegiatan:</strong> ${data.sub_kegiatan}</p>
                     <p><strong>Rekening RBA:</strong> [${selectedAccount?.account_code || '-'}] ${selectedAccount?.account_name || '-'}</p>
-                    <p><strong>Jumlah Barang:</strong> ${data.items.length} macam (${totalQuantity} unit)</p>
+                    <p><strong>Jumlah Barang:</strong> ${data.items.length} macam (${totalQuantity} unit)${newItemsCount > 0 ? ` <span class="text-amber-700 font-bold">(${newItemsCount} barang baru akan didaftarkan ke katalog)</span>` : ''}</p>
                     <p><strong>Total Estimasi Belanja BLUD:</strong> <span class="text-emerald-700 font-bold">${formatRupiah(grandTotal)}</span></p>
                     <p class="text-slate-500 text-xs mt-2">Usulan akan langsung diteruskan ke Bagian Perencanaan untuk verifikasi dan penyusunan RBA BLUD.</p>
                 </div>
@@ -337,19 +614,22 @@ export default function RequisitionFormModal({
                             <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
                                 <div>
                                     <label className="mb-1 block text-xs font-black uppercase tracking-wider text-slate-700">
-                                        Tahun Anggaran Kebutuhan <span className="text-rose-600">*</span>
+                                        Tahun Anggaran <span className="text-rose-600">*</span>
                                     </label>
                                     <select
-                                        value={data.fiscal_year}
-                                        onChange={(e) => setData('fiscal_year', e.target.value)}
+                                        value={data.budget_year || data.fiscal_year}
+                                        onChange={(e) => {
+                                            const y = parseInt(e.target.value, 10);
+                                            setData((prev) => ({ ...prev, budget_year: y, fiscal_year: y }));
+                                        }}
                                         className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-black text-emerald-800 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
                                     >
-                                        <option value="2027">TA 2027 (Kebutuhan 1 Tahun ke Depan)</option>
-                                        <option value="2026">TA 2026 (Tahun Berjalan / Pergeseran)</option>
-                                        <option value="2028">TA 2028 (Perencanaan Jangka Menengah)</option>
+                                        <option value="2026">TA 2026</option>
+                                        <option value="2027">TA 2027</option>
+                                        <option value="2028">TA 2028</option>
                                     </select>
-                                    {errors.fiscal_year && (
-                                        <p className="mt-1 text-[11px] font-bold text-rose-600">{errors.fiscal_year}</p>
+                                    {(errors.budget_year || errors.fiscal_year) && (
+                                        <p className="mt-1 text-[11px] font-bold text-rose-600">{errors.budget_year || errors.fiscal_year}</p>
                                     )}
                                 </div>
 
@@ -486,27 +766,99 @@ export default function RequisitionFormModal({
                                 </div>
                             </div>
 
-                            {/* Dropdown Pos Kode Rekening Belanja RBA */}
-                            <div>
-                                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
-                                    Pos Kode Rekening Belanja RBA (BLUD) <span className="text-rose-600">*</span>
-                                </label>
-                                <select
-                                    value={data.rba_account_id}
-                                    onChange={(e) => handleAccountChange(e.target.value)}
-                                    className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-bold text-slate-900 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
+                            {/* Cascading Selector Pos Kode Rekening Belanja RBA */}
+                            <div className="space-y-3">
+                                <div
+                                    className={`grid grid-cols-1 ${
+                                        cascadeLevels.length === 2
+                                            ? 'md:grid-cols-2'
+                                            : cascadeLevels.length === 3
+                                            ? 'md:grid-cols-3'
+                                            : 'sm:grid-cols-2 lg:grid-cols-4'
+                                    } gap-3.5`}
                                 >
-                                    {accountsForJenis.map((acc) => (
-                                        <option key={acc.id} value={acc.id}>
-                                            [{acc.account_code}] {acc.account_name} &bull; Sisa Pagu: {formatRupiah(acc.remaining_budget)}
-                                        </option>
-                                    ))}
-                                </select>
-                                <p className="mt-1 text-[11px] text-slate-500 font-medium">
-                                    Katalog barang otomatis disaring berdasarkan Pos Rekening: <strong className="text-emerald-800">[{selectedAccount?.account_code}] {selectedAccount?.account_name}</strong>
-                                </p>
+                                    {cascadeLevels.map((lvl) => {
+                                        const labelText = LEVEL_LABELS[lvl.depth] || `${lvl.depth + 1}. Sub-Rekening Belanja`;
+                                        return (
+                                            <div key={`cascade-lvl-${lvl.depth}-${lvl.parentCode}`}>
+                                                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
+                                                    {labelText} <span className="text-rose-600">*</span>
+                                                </label>
+                                                <select
+                                                    value={lvl.selectedValue}
+                                                    onChange={(e) => handleCascadeChange(lvl.depth, e.target.value)}
+                                                    className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-bold text-slate-900 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 shadow-2xs"
+                                                >
+                                                    <option value="">-- Pilih {labelText} --</option>
+                                                    {lvl.options.map((opt) => {
+                                                        const hasChildren = getChildren(opt.account_code).length > 0;
+                                                        return (
+                                                            <option key={opt.id} value={opt.account_code}>
+                                                                [{opt.account_code}] {opt.account_name}{' '}
+                                                                {hasChildren
+                                                                    ? '➔ (Punya Sub-Akun)'
+                                                                    : opt.remaining_budget !== undefined
+                                                                    ? `• Sisa: ${formatRupiah(opt.remaining_budget)}`
+                                                                    : ''}
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </select>
+                                                <p className="mt-1 text-[11px] text-slate-500">
+                                                    {getChildren(lvl.selectedValue).length > 0
+                                                        ? 'Memiliki rincian sub-rekening lanjutan di bawah'
+                                                        : lvl.selectedValue
+                                                        ? 'Pos rekening definitif akhir'
+                                                        : 'Pilih opsi untuk menentukan alokasi beban belanja'}
+                                                </p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Incomplete Cascade Hint (if user has selected intermediate category but not leaf) */}
+                                {!data.rba_account_id && (
+                                    <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 flex items-start gap-2.5 text-xs text-amber-900">
+                                        <span className="text-base leading-none mt-0.5">ℹ️</span>
+                                        <div>
+                                            <span className="font-bold">Lanjutkan pemilihan sub-rekening definitif:</span>
+                                            <p className="text-[11px] text-amber-800 mt-0.5 font-medium">
+                                                Pos rekening yang dipilih memiliki sub-rekening turunan. Silakan pilih opsi pada dropdown tingkat berikutnya hingga mencapai akun rincian akhir untuk membebankan anggaran dan menampilkan katalog barang.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Active Leaf Account Badge & Budget Summary */}
+                                {selectedAccount && (
+                                    <div className="rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50/60 p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+                                        <div className="space-y-1">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="font-black text-emerald-950 text-sm">
+                                                    [{selectedAccount.account_code}] {selectedAccount.account_name}
+                                                </span>
+                                                <span className="rounded-md bg-emerald-200/90 px-2 py-0.5 text-[10px] font-black text-emerald-900 uppercase">
+                                                    {selectedAccount.kategori_belanja}
+                                                </span>
+                                                <span className="rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300/60 px-2 py-0.5 text-[10px] font-bold">
+                                                    Akun Definitif Terpilih ✅
+                                                </span>
+                                            </div>
+                                            <p className="text-[11px] text-emerald-700 font-medium">
+                                                Katalog barang dan pagu anggaran di bawah otomatis tersinkronisasi khusus untuk rekening ini.
+                                            </p>
+                                        </div>
+                                        <div className="text-right sm:border-l sm:border-emerald-200/80 sm:pl-4 shrink-0">
+                                            <span className="text-[10px] uppercase font-bold text-emerald-700 block">Sisa Pagu Rekening</span>
+                                            <span className="text-base font-black text-emerald-950">
+                                                {formatRupiah(selectedAccount.remaining_budget)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {errors.rba_account_id && (
-                                    <p className="mt-1 text-[11px] font-bold text-rose-600">{errors.rba_account_id}</p>
+                                    <p className="text-[11px] font-bold text-rose-600">{errors.rba_account_id}</p>
                                 )}
                             </div>
                         </div>
@@ -524,21 +876,32 @@ export default function RequisitionFormModal({
                                         Rincian Kebutuhan Barang / Jasa (1 Tahun ke Depan)
                                     </h3>
                                     <p className="text-[11px] text-slate-500 mt-0.5">
-                                        Tersedia {availableItems.length} item terstandarisasi untuk pos rekening ini.
+                                        Tersedia {availableItems.length} item terstandarisasi untuk pos rekening ini. Pengusul dapat memilih katalog atau input barang baru secara manual.
                                     </p>
                                 </div>
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={addItemRow}
-                                className="inline-flex items-center justify-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer self-start sm:self-center"
-                            >
-                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                </svg>
-                                Tambah Baris
-                            </button>
+                            <div className="flex items-center gap-2 self-start sm:self-center">
+                                <button
+                                    type="button"
+                                    onClick={() => addItemRow(false)}
+                                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 px-3 py-1.5 text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer"
+                                >
+                                    <svg className="h-3.5 w-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    + Baris Katalog
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => addItemRow(true)}
+                                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-3 py-1.5 text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer"
+                                >
+                                    <span>✨</span>
+                                    + Input Barang Baru
+                                </button>
+                            </div>
                         </div>
 
                         <div className="p-5 space-y-3">
@@ -549,22 +912,67 @@ export default function RequisitionFormModal({
                             {data.items.map((row, index) => {
                                 const currentItem = itemMap[row.item_id];
                                 const rowQty = parseInt(row.quantity, 10) || 0;
-                                const unitPrice = Number(currentItem?.standard_price || 0);
+                                const unitPrice = parseFloat(row.unit_price) || 0;
                                 const rowSubtotal = unitPrice * rowQty;
+                                const isPriceAdjusted =
+                                    !row.is_new &&
+                                    currentItem &&
+                                    Math.abs(Number(row.unit_price) - Number(currentItem.standard_price)) > 0.01;
 
                                 return (
                                     <div
                                         key={index}
-                                        className="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 transition hover:border-emerald-300"
+                                        className={`rounded-xl border p-3.5 transition ${
+                                            row.is_new
+                                                ? 'border-amber-300 bg-amber-50/30'
+                                                : 'border-slate-200 bg-slate-50/60 hover:border-emerald-300'
+                                        }`}
                                     >
-                                        <div className="flex items-center justify-between border-b border-slate-200/70 pb-2 mb-2.5">
-                                            <div className="flex items-center gap-2">
-                                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-[10px] font-black text-slate-700">
+                                        {/* Header Baris */}
+                                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-2 mb-2.5">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span
+                                                    className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
+                                                        row.is_new
+                                                            ? 'bg-amber-200 text-amber-900'
+                                                            : 'bg-slate-200 text-slate-700'
+                                                    }`}
+                                                >
                                                     {index + 1}
                                                 </span>
                                                 <span className="text-xs font-bold text-slate-700">
                                                     Item Usulan #{index + 1}
                                                 </span>
+
+                                                {row.is_new ? (
+                                                    <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 border border-amber-200">
+                                                        ✨ Barang Baru (Manual)
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center rounded-md bg-slate-200/80 text-slate-700 text-[10px] font-bold px-2 py-0.5">
+                                                        Katalog BLUD
+                                                    </span>
+                                                )}
+
+                                                <span className="text-slate-300">&bull;</span>
+
+                                                {row.is_new ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleRowMode(index, false)}
+                                                        className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 hover:underline cursor-pointer"
+                                                    >
+                                                        &larr; Pilih dari Katalog yang Ada
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleRowMode(index, true)}
+                                                        className="text-[11px] font-bold text-amber-700 hover:text-amber-900 hover:underline cursor-pointer"
+                                                    >
+                                                        ✨ Barang tidak ada di katalog? Input Manual
+                                                    </button>
+                                                )}
                                             </div>
 
                                             {data.items.length > 1 && (
@@ -581,76 +989,251 @@ export default function RequisitionFormModal({
                                             )}
                                         </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                                            {/* Pilih Barang */}
-                                            <div className="sm:col-span-6">
-                                                <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                                                    Pilih Barang dari Katalog BLUD <span className="text-rose-500">*</span>
-                                                </label>
-                                                <select
-                                                    value={row.item_id}
-                                                    onChange={(e) => updateItemRow(index, 'item_id', e.target.value)}
-                                                    className="block w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                                                >
-                                                    <option value="">-- Pilih Barang / Item --</option>
-                                                    {availableItems.map((it) => (
-                                                        <option key={it.id} value={it.id}>
-                                                            {it.name} &bull; ({it.unit_type}) &bull; {formatRupiah(it.standard_price)}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                {currentItem?.specification && (
-                                                    <p className="mt-0.5 text-[10px] text-slate-500 truncate">
-                                                        Spek: {currentItem.specification}
-                                                    </p>
-                                                )}
-                                                {errors[`items.${index}.item_id`] && (
-                                                    <p className="mt-0.5 text-[10px] font-bold text-rose-600">
-                                                        {errors[`items.${index}.item_id`]}
-                                                    </p>
-                                                )}
-                                            </div>
+                                        {/* Konten Baris */}
+                                        {row.is_new ? (
+                                            /* FORM BARANG BARU (MANUAL) */
+                                            <div className="space-y-3 pt-1">
+                                                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                                                    <div className="sm:col-span-8">
+                                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                            Nama Barang Baru <span className="text-rose-500">*</span>
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={row.name}
+                                                            onChange={(e) => updateItemRow(index, 'name', e.target.value)}
+                                                            placeholder="Contoh: Kassa Steril 16x16 Onemed"
+                                                            className="block w-full rounded-lg border border-amber-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                                                        />
+                                                        {errors[`items.${index}.name`] && (
+                                                            <p className="mt-0.5 text-[10px] font-bold text-rose-600">
+                                                                {errors[`items.${index}.name`]}
+                                                            </p>
+                                                        )}
+                                                    </div>
 
-                                            {/* Satuan */}
-                                            <div className="sm:col-span-2">
-                                                <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                                                    Satuan
-                                                </label>
-                                                <div className="flex h-8.5 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700">
-                                                    {currentItem?.unit_type || '-'}
+                                                    <div className="sm:col-span-4">
+                                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                            Satuan <span className="text-rose-500">*</span>
+                                                        </label>
+                                                        <div className="flex gap-1.5">
+                                                            <select
+                                                                value={COMMON_UNITS.includes(row.unit_type) ? row.unit_type : 'Lainnya'}
+                                                                onChange={(e) => {
+                                                                    if (e.target.value === 'Lainnya') {
+                                                                        updateItemRow(index, 'unit_type', '');
+                                                                    } else {
+                                                                        updateItemRow(index, 'unit_type', e.target.value);
+                                                                    }
+                                                                }}
+                                                                className="block w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                            >
+                                                                {COMMON_UNITS.map((u) => (
+                                                                    <option key={u} value={u}>
+                                                                        {u}
+                                                                    </option>
+                                                                ))}
+                                                                <option value="Lainnya">Lainnya...</option>
+                                                            </select>
+                                                            {!COMMON_UNITS.includes(row.unit_type) && (
+                                                                <input
+                                                                    type="text"
+                                                                    value={row.unit_type}
+                                                                    onChange={(e) => updateItemRow(index, 'unit_type', e.target.value)}
+                                                                    placeholder="Ketik Satuan"
+                                                                    className="w-28 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-bold text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                                />
+                                                            )}
+                                                        </div>
+                                                        {errors[`items.${index}.unit_type`] && (
+                                                            <p className="mt-0.5 text-[10px] font-bold text-rose-600">
+                                                                {errors[`items.${index}.unit_type`]}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                        Spesifikasi / Merk / Ukuran / Kemasan (Opsional)
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={row.specification}
+                                                        onChange={(e) => updateItemRow(index, 'specification', e.target.value)}
+                                                        placeholder="Contoh: Kassa steril isi 10 pouch per box, terdaftar Kemenkes RI..."
+                                                        className="block w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                    />
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end pt-1">
+                                                    <div className="sm:col-span-5">
+                                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                            Harga Satuan Estimasi (Rp) <span className="text-rose-500">*</span>
+                                                        </label>
+                                                        <div className="relative rounded-lg shadow-2xs">
+                                                            <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-bold text-slate-400">
+                                                                Rp
+                                                            </span>
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                step="any"
+                                                                value={row.unit_price}
+                                                                onChange={(e) => updateItemRow(index, 'unit_price', e.target.value)}
+                                                                placeholder="0"
+                                                                className="block w-full rounded-lg border border-slate-300 bg-white pl-8 pr-2 py-1.5 text-xs font-bold text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="sm:col-span-3">
+                                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                            Volume <span className="text-rose-500">*</span>
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            value={row.quantity}
+                                                            onChange={(e) => updateItemRow(index, 'quantity', e.target.value)}
+                                                            placeholder="Qty"
+                                                            className="block w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-black text-center text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                        />
+                                                    </div>
+
+                                                    <div className="sm:col-span-4">
+                                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                            Subtotal (Rp)
+                                                        </label>
+                                                        <div className="flex h-8.5 items-center justify-end pr-2.5 rounded-lg border border-emerald-200 bg-emerald-50/70 text-xs font-black text-emerald-900">
+                                                            {formatRupiah(rowSubtotal)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-1.5 text-[11px] text-emerald-800 bg-emerald-50/80 px-2.5 py-1.5 rounded-lg border border-emerald-200/60">
+                                                    <span>💡</span>
+                                                    <span>
+                                                        Barang baru ini otomatis didaftarkan ke Master Data Barang untuk Pos Rekening ini setelah usulan disimpan.
+                                                    </span>
                                                 </div>
                                             </div>
+                                        ) : (
+                                            /* FORM PILIH DARI KATALOG BLUD */
+                                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                                                {/* Pilih Barang */}
+                                                <div className="sm:col-span-5">
+                                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                        Pilih Barang dari Katalog BLUD <span className="text-rose-500">*</span>
+                                                    </label>
+                                                    <select
+                                                        value={row.item_id}
+                                                        onChange={(e) => handleItemSelect(index, e.target.value)}
+                                                        className="block w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                    >
+                                                        <option value="">-- Pilih Barang / Item --</option>
+                                                        <option value="__NEW__">✨ + Input Barang Baru Secara Manual...</option>
+                                                        {availableItems.map((it) => (
+                                                            <option key={it.id} value={it.id}>
+                                                                {it.name} &bull; ({it.unit_type}) &bull; {formatRupiah(it.standard_price)}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    {currentItem?.specification && (
+                                                        <p className="mt-0.5 text-[10px] text-slate-500 truncate" title={currentItem.specification}>
+                                                            Spek: {currentItem.specification}
+                                                        </p>
+                                                    )}
+                                                    {errors[`items.${index}.item_id`] && (
+                                                        <p className="mt-0.5 text-[10px] font-bold text-rose-600">
+                                                            {errors[`items.${index}.item_id`]}
+                                                        </p>
+                                                    )}
+                                                </div>
 
-                                            {/* Volume / Kuantitas */}
-                                            <div className="sm:col-span-2">
-                                                <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                                                    Volume <span className="text-rose-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={row.quantity}
-                                                    onChange={(e) => updateItemRow(index, 'quantity', e.target.value)}
-                                                    placeholder="Qty"
-                                                    className="block w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-black text-center text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                                                />
-                                                {errors[`items.${index}.quantity`] && (
-                                                    <p className="mt-0.5 text-[10px] font-bold text-rose-600">
-                                                        {errors[`items.${index}.quantity`]}
-                                                    </p>
-                                                )}
-                                            </div>
+                                                {/* Satuan */}
+                                                <div className="sm:col-span-2">
+                                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                        Satuan
+                                                    </label>
+                                                    <div className="flex h-8.5 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700">
+                                                        {currentItem?.unit_type || row.unit_type || '-'}
+                                                    </div>
+                                                </div>
 
-                                            {/* Subtotal */}
-                                            <div className="sm:col-span-2">
-                                                <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                                                    Subtotal (Rp)
-                                                </label>
-                                                <div className="flex h-8.5 items-center justify-end pr-2.5 rounded-lg border border-emerald-200 bg-emerald-50/50 text-xs font-black text-emerald-900">
-                                                    {formatRupiah(rowSubtotal)}
+                                                {/* Harga Satuan (DAPAT DIEDIT!) */}
+                                                <div className="sm:col-span-2">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <label className="text-[11px] font-bold text-slate-700">
+                                                            Harga (Rp) <span className="text-rose-500">*</span>
+                                                        </label>
+                                                        {isPriceAdjusted && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => updateItemRow(index, 'unit_price', currentItem.standard_price)}
+                                                                className="text-[9px] text-amber-700 hover:text-amber-900 font-bold underline cursor-pointer"
+                                                                title="Reset ke harga standar katalog"
+                                                            >
+                                                                Reset
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <div className="relative rounded-lg shadow-2xs">
+                                                        <span className="absolute inset-y-0 left-0 flex items-center pl-2 text-[11px] font-bold text-slate-400">
+                                                            Rp
+                                                        </span>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            step="any"
+                                                            value={row.unit_price}
+                                                            onChange={(e) => updateItemRow(index, 'unit_price', e.target.value)}
+                                                            placeholder="0"
+                                                            className={`block w-full rounded-lg border pl-7 pr-1.5 py-1.5 text-xs font-bold text-slate-900 focus:ring-1 ${
+                                                                isPriceAdjusted
+                                                                    ? 'border-amber-400 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'
+                                                                    : 'border-slate-300 bg-white focus:border-emerald-500 focus:ring-emerald-500'
+                                                            }`}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Volume */}
+                                                <div className="sm:col-span-1">
+                                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                        Vol <span className="text-rose-500">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={row.quantity}
+                                                        onChange={(e) => updateItemRow(index, 'quantity', e.target.value)}
+                                                        placeholder="Qty"
+                                                        className="block w-full rounded-lg border border-slate-300 bg-white px-1.5 py-1.5 text-xs font-black text-center text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                    />
+                                                </div>
+
+                                                {/* Subtotal */}
+                                                <div className="sm:col-span-2">
+                                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                        Subtotal (Rp)
+                                                    </label>
+                                                    <div className="flex h-8.5 items-center justify-end pr-2 rounded-lg border border-emerald-200 bg-emerald-50/50 text-xs font-black text-emerald-900">
+                                                        {formatRupiah(rowSubtotal)}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        )}
+
+                                        {/* Notice jika harga diedit */}
+                                        {isPriceAdjusted && (
+                                            <div className="mt-2 flex items-center justify-between text-[10px] text-amber-800 bg-amber-100/70 px-2 py-1 rounded-md border border-amber-200">
+                                                <span className="font-semibold">
+                                                    ⚠️ Harga disesuaikan dari standar katalog: <span className="line-through">{formatRupiah(currentItem.standard_price)}</span> &rarr; <strong>{formatRupiah(row.unit_price)}</strong>
+                                                </span>
+                                                <span className="text-amber-700 font-medium">Harga master katalog akan diperbarui</span>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}

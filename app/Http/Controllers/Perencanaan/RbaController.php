@@ -22,12 +22,37 @@ class RbaController extends Controller
      */
     public function index(Request $request): Response
     {
-        $shifts = RbaShift::orderBy('year', 'desc')->orderBy('id', 'desc')->get();
+        $activeSessionYear = (int) session('active_year', date('Y'));
+        $selectedYear = (int) $request->query('year', $activeSessionYear);
+        if ($request->has('year')) {
+            session(['active_year' => $selectedYear]);
+        }
 
-        // If no shift exists, trigger seeder
+        // Get all distinct years from shifts and requisitions
+        $shiftYears = RbaShift::distinct()->pluck('year')->filter()->toArray();
+        $reqYears = \App\Models\Requisition::distinct()->pluck('budget_year')->filter()->toArray();
+        $availableYears = array_values(array_unique(array_merge([2026, 2027, 2028], $shiftYears, $reqYears)));
+        sort($availableYears);
+
+        // Retrieve shifts for the selected year
+        $shifts = RbaShift::where('year', $selectedYear)->orderBy('id', 'desc')->get();
+
+        // If no shift exists, trigger seeder for 2026 or initialize default shift for other years
         if ($shifts->isEmpty()) {
-            \Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\RbaPergeseran3Seeder']);
-            $shifts = RbaShift::orderBy('year', 'desc')->orderBy('id', 'desc')->get();
+            if ($selectedYear === 2026) {
+                \Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\RbaPergeseran3Seeder']);
+                $shifts = RbaShift::where('year', $selectedYear)->orderBy('id', 'desc')->get();
+            } else {
+                $newShift = RbaShift::create([
+                    'year' => $selectedYear,
+                    'shift_name' => 'Murni',
+                    'doc_title' => "RENCANA BISNIS DAN ANGGARAN MURNI T.A. {$selectedYear}",
+                    'period_month' => "Januari {$selectedYear}",
+                    'status' => 'Aktif',
+                    'notes' => "RBA Definitif Murni Tahun Anggaran {$selectedYear} RS Jiwa Tampan.",
+                ]);
+                $shifts = collect([$newShift]);
+            }
         }
 
         $selectedShiftId = $request->query('shift_id');
@@ -270,11 +295,55 @@ class RbaController extends Controller
             ],
         ];
 
-        // 4. Catalog / Item List per Account for Tab 4 (Rincian Biaya per Item)
+        // 4. Master RBA Accounts & Requisition Items Proposed by Units for the Selected Year
         $catalogItems = \App\Models\Item::with('rbaAccount')
             ->orderBy('rba_account_id')
             ->orderBy('name')
             ->get();
+
+        $rbaAccounts = RbaAccount::where(function ($q) use ($selectedYear) {
+                $q->where('year', $selectedYear)
+                  ->orWhere('period_year', $selectedYear)
+                  ->orWhereNull('year');
+            })
+            ->orderBy('account_code')
+            ->get();
+
+        if ($rbaAccounts->isEmpty()) {
+            $rbaAccounts = RbaAccount::orderBy('account_code')->get();
+        }
+
+        $proposedDetails = \App\Models\RequisitionDetail::whereHas('requisition', function ($q) use ($selectedYear) {
+                $q->where('budget_year', $selectedYear)
+                  ->orWhere(function ($sq) use ($selectedYear) {
+                      $sq->whereNull('budget_year')->where('fiscal_year', $selectedYear);
+                  });
+            })
+            ->with([
+                'requisition:id,requisition_number,rba_account_id,unit_id,fiscal_year,budget_year,status,user_id,nomor_surat_unit',
+                'requisition.unit:id,name,unit_code',
+                'requisition.user:id,name,nip',
+                'item:id,item_code,name,specification,unit_type,standard_price',
+            ])
+            ->get()
+            ->groupBy(fn ($d) => $d->requisition->rba_account_id);
+
+        $accountsWithProposed = $rbaAccounts->map(function ($acc) use ($proposedDetails) {
+            $items = $proposedDetails->get($acc->id, collect());
+            return [
+                'id' => $acc->id,
+                'account_code' => $acc->account_code,
+                'account_name' => $acc->account_name,
+                'parent_code' => $acc->parent_code,
+                'kategori_belanja' => $acc->kategori_belanja,
+                'sumber_dana' => $acc->sumber_dana,
+                'remaining_budget' => (float) $acc->remaining_budget,
+                'total_budget' => (float) $acc->total_budget,
+                'proposed_items' => $items->values(),
+                'proposed_total' => (float) $items->sum('subtotal'),
+                'proposed_count' => $items->count(),
+            ];
+        });
 
         return Inertia::render('Perencanaan/RBA/Index', [
             'rbas' => $rbas,
@@ -283,9 +352,12 @@ class RbaController extends Controller
             'expense_items' => $expenseItems,
             'revenue_items' => $revenueItems,
             'catalog_items' => $catalogItems,
+            'accounts_with_proposed' => $accountsWithProposed,
             'summary' => $summary,
             'revenue_summary' => $revenueSummary,
             'ringkasan_rba' => $ringkasanRba,
+            'selected_year' => $selectedYear,
+            'available_years' => $availableYears,
             'current_year' => (int) Carbon::now()->format('Y'),
         ]);
     }
@@ -746,6 +818,62 @@ class RbaController extends Controller
         return Inertia::render('Perencanaan/RBA/PrintPendapatan', [
             'shift' => $shift,
             'items' => $items,
+        ]);
+    }
+
+    /**
+     * Print View for RBA Rincian Belanja Berjenjang (Memuat Usulan Barang Unit Kerja).
+     */
+    public function printRincianBelanja(Request $request): Response
+    {
+        $selectedYear = (int) $request->query('year', 2026);
+        $shiftId = $request->query('shift_id');
+
+        $shifts = RbaShift::where('year', $selectedYear)->orderBy('id', 'desc')->get();
+        $currentShift = $shiftId
+            ? $shifts->firstWhere('id', $shiftId)
+            : ($shifts->firstWhere('status', 'Aktif') ?? $shifts->first());
+
+        $expenseItems = $currentShift ? $currentShift->expenseItems()->orderBy('order_index')->get() : collect();
+
+        $rbaAccounts = RbaAccount::where('sumber_dana', 'BLUD')
+            ->orderBy('account_code')
+            ->get();
+
+        $proposedDetails = \App\Models\RequisitionDetail::whereHas('requisition', function ($q) use ($selectedYear) {
+                $q->where('fiscal_year', $selectedYear);
+            })
+            ->with([
+                'requisition:id,requisition_number,rba_account_id,unit_id,fiscal_year,status,user_id,nomor_surat_unit',
+                'requisition.unit:id,name,unit_code',
+                'requisition.user:id,name,nip',
+                'item:id,item_code,name,specification,unit_type,standard_price',
+            ])
+            ->get()
+            ->groupBy(fn ($d) => $d->requisition->rba_account_id);
+
+        $accountsWithProposed = $rbaAccounts->map(function ($acc) use ($proposedDetails) {
+            $items = $proposedDetails->get($acc->id, collect());
+            return [
+                'id' => $acc->id,
+                'account_code' => $acc->account_code,
+                'account_name' => $acc->account_name,
+                'parent_code' => $acc->parent_code,
+                'kategori_belanja' => $acc->kategori_belanja,
+                'sumber_dana' => $acc->sumber_dana,
+                'remaining_budget' => (float) $acc->remaining_budget,
+                'total_budget' => (float) $acc->total_budget,
+                'proposed_items' => $items->values(),
+                'proposed_total' => (float) $items->sum('subtotal'),
+                'proposed_count' => $items->count(),
+            ];
+        });
+
+        return Inertia::render('Perencanaan/RBA/PrintRincianBelanja', [
+            'shift' => $currentShift,
+            'expense_items' => $expenseItems,
+            'accounts_with_proposed' => $accountsWithProposed,
+            'selected_year' => $selectedYear,
         ]);
     }
 

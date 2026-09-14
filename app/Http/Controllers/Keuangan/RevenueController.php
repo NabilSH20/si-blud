@@ -128,6 +128,9 @@ class RevenueController extends Controller
                 'lain_lain_sah' => $lainLainSah,
             ],
             'categories' => ['Semua', 'Jasa Layanan', 'Hasil Kerja Sama', 'APBD', 'Lain-lain BLUD Sah'],
+            'grouped_sources' => $this->groupedSources,
+            'sources' => $this->getFlatSources(),
+            'default_date' => Carbon::now()->toDateString(),
         ]);
     }
 

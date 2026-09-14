@@ -1,6 +1,6 @@
 import AuditTrailTimeline from '@/Components/AuditTrailTimeline';
 import KeuanganLayout from '@/Layouts/KeuanganLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useMemo } from 'react';
 import Swal from 'sweetalert2';
 
@@ -154,8 +154,17 @@ export default function Show({ requisition, budgets = [] }) {
             reverseButtons: true,
         }).then((result) => {
             if (result.isConfirmed) {
-                setData('status', 'Disetujui_Selesai');
-                put(route('keuangan.requisitions.update', requisition.id));
+                router.put(
+                    route('keuangan.requisitions.update', requisition.id),
+                    {
+                        status: 'Disetujui_Selesai',
+                        budget_id: data.budget_id,
+                        sp2d_number: data.sp2d_number,
+                        receipt_number: data.receipt_number,
+                        notes_keuangan: data.notes_keuangan,
+                    },
+                    { preserveScroll: true }
+                );
             }
         });
     };
@@ -177,12 +186,14 @@ export default function Show({ requisition, budgets = [] }) {
             reverseButtons: true,
         }).then((result) => {
             if (result.isConfirmed) {
-                setData({
-                    ...data,
-                    status: 'Ditolak',
-                    notes_keuangan: result.value || data.notes_keuangan,
-                });
-                put(route('keuangan.requisitions.update', requisition.id));
+                router.put(
+                    route('keuangan.requisitions.update', requisition.id),
+                    {
+                        status: 'Ditolak',
+                        notes_keuangan: result.value || data.notes_keuangan || 'Alokasi anggaran ditolak oleh Bagian Keuangan.',
+                    },
+                    { preserveScroll: true }
+                );
             }
         });
     };
@@ -427,17 +438,17 @@ export default function Show({ requisition, budgets = [] }) {
                                                         {detail.item?.item_code || 'BRG'}
                                                     </span>
                                                     <span className="text-sm font-bold text-slate-900">
-                                                        {detail.item?.name || detail.manual_item_name}
+                                                        {detail.item?.name || detail.item_name || detail.manual_item_name}
                                                     </span>
                                                 </div>
-                                                {(detail.item?.specification || detail.manual_specification) && (
+                                                {(detail.item?.specification || detail.specification || detail.manual_specification) && (
                                                     <p className="mt-1 text-xs text-slate-500 font-medium">
-                                                        Spesifikasi: {detail.item?.specification || detail.manual_specification}
+                                                        Spesifikasi: {detail.item?.specification || detail.specification || detail.manual_specification}
                                                     </p>
                                                 )}
                                             </td>
                                             <td className="whitespace-nowrap px-4 py-3.5 text-center text-xs text-slate-600 font-medium">
-                                                {detail.item?.unit_type || 'Unit'}
+                                                {detail.item?.unit_type || detail.unit_type || 'Unit'}
                                             </td>
                                             <td className="whitespace-nowrap px-4 py-3.5 text-center text-sm font-bold text-slate-900">
                                                 {qty}
