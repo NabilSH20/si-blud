@@ -67,14 +67,29 @@ export default function RequisitionFormModal({
         return `PELAYANAN KESEHATAN ${resolvedYear}`;
     }, [unit, division, resolvedYear]);
 
+    // Smart-Default Tolok Ukur Kinerja RBA
+    const unitDisplayName = unit?.name || division?.name || 'Unit Pelayanan';
+    const smartDefaultOutput = useMemo(() => {
+        return `1. Terpenuhinya kebutuhan barang/bahan penunjang pelayanan ${unitDisplayName}\n2. Kelancaran kegiatan administrasi dan pelayanan operasional`;
+    }, [unitDisplayName]);
+
+    const smartDefaultOutcome = useMemo(() => {
+        return `1. Terlaksananya pelayanan pasien secara bermutu dan tepat waktu sesuai standar SPM\n2. Meningkatnya kepuasan pelanggan terhadap pelayanan RS Jiwa Tampan`;
+    }, []);
+
     // Form State Inertia
     const { data, setData, post, put, processing, reset } = useForm({
         jenis_belanja: 'Operasi',
         rba_account_id: '',
         budget_year: resolvedYear,
         fiscal_year: resolvedYear,
+        program: 'Program Peningkatan Pelayanan Kesehatan Pada BLUD',
         kegiatan: '1. Pelayanan Kesehatan',
         sub_kegiatan: smartDefaultSub,
+        tolok_ukur_output: smartDefaultOutput,
+        target_output: '100%',
+        tolok_ukur_outcome: smartDefaultOutcome,
+        target_outcome: '100%',
         nomor_surat_unit: '',
         urgency_reason: '',
         items: [],
@@ -377,8 +392,13 @@ export default function RequisitionFormModal({
                 rba_account_id: requisition.rba_account_id || '',
                 budget_year: requisition.budget_year || requisition.fiscal_year || resolvedYear,
                 fiscal_year: requisition.fiscal_year || requisition.budget_year || resolvedYear,
+                program: requisition.program || 'Program Peningkatan Pelayanan Kesehatan Pada BLUD',
                 kegiatan: requisition.kegiatan || '1. Pelayanan Kesehatan',
                 sub_kegiatan: requisition.sub_kegiatan || smartDefaultSub,
+                tolok_ukur_output: requisition.tolok_ukur_output || smartDefaultOutput,
+                target_output: requisition.target_output || '100%',
+                tolok_ukur_outcome: requisition.tolok_ukur_outcome || smartDefaultOutcome,
+                target_outcome: requisition.target_outcome || '100%',
                 nomor_surat_unit: requisition.nomor_surat_unit || '',
                 urgency_reason: requisition.urgency_reason || '',
                 items: loadedItems,
@@ -394,6 +414,11 @@ export default function RequisitionFormModal({
     const handleSubmit = (e) => {
         e.preventDefault();
         setSubmitError(null);
+
+        if (!data.program || !data.program.trim()) {
+            setSubmitError('Program Rumah Sakit wajib diisi.');
+            return;
+        }
 
         if (!data.kegiatan || !data.kegiatan.trim()) {
             setSubmitError('Kegiatan Rumah Sakit wajib diisi.');
@@ -421,8 +446,13 @@ export default function RequisitionFormModal({
 
         const payload = {
             ...data,
+            program: data.program.trim(),
             kegiatan: data.kegiatan.trim(),
             sub_kegiatan: data.sub_kegiatan.trim(),
+            tolok_ukur_output: data.tolok_ukur_output ? data.tolok_ukur_output.trim() : null,
+            target_output: data.target_output ? data.target_output.trim() : '100%',
+            tolok_ukur_outcome: data.tolok_ukur_outcome ? data.tolok_ukur_outcome.trim() : null,
+            target_outcome: data.target_outcome ? data.target_outcome.trim() : '100%',
             jenis_belanja: overallJenis,
             rba_account_id: primaryAccountId,
             total_operasional: totalOperasional,
@@ -526,11 +556,11 @@ export default function RequisitionFormModal({
                         </div>
                     )}
 
-                    {/* SECTION 1: Informasi Usulan Kegiatan */}
+                    {/* SECTION 1: Informasi Program & Kegiatan (Format Resmi RBA) */}
                     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
                         <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-2 gap-2">
                             <h3 className="text-sm font-bold text-slate-900 border-b-2 border-emerald-500 pb-0.5 inline-block">
-                                1. Informasi Usulan Kegiatan
+                                1. Informasi Program & Kegiatan (RBA)
                             </h3>
                             <div className="flex items-center gap-1.5 text-xs text-slate-600">
                                 <span className="text-slate-400 font-medium">Unit Pengusul:</span>
@@ -540,8 +570,21 @@ export default function RequisitionFormModal({
                             </div>
                         </div>
 
-                        {/* Baris 1: Kegiatan & Sub Kegiatan (Manual input, tanpa dropdown) */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Baris 1: Program, Kegiatan & Sub Kegiatan (Sesuai RBA Fisik) */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Program Rumah Sakit <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={data.program}
+                                    onChange={(e) => setData('program', e.target.value)}
+                                    placeholder="Program Peningkatan Pelayanan Kesehatan Pada BLUD"
+                                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-2xs"
+                                />
+                            </div>
+
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-1">
                                     Kegiatan Rumah Sakit <span className="text-rose-500">*</span>
@@ -551,7 +594,7 @@ export default function RequisitionFormModal({
                                     value={data.kegiatan}
                                     onChange={(e) => setData('kegiatan', e.target.value)}
                                     placeholder="Contoh: 1. Pelayanan Kesehatan"
-                                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-2xs"
+                                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-2xs"
                                 />
                             </div>
 
@@ -563,14 +606,14 @@ export default function RequisitionFormModal({
                                     type="text"
                                     value={data.sub_kegiatan}
                                     onChange={(e) => setData('sub_kegiatan', e.target.value)}
-                                    placeholder="Contoh: PELAYANAN GAWAT DARURAT (IGD) 2026"
-                                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-2xs"
+                                    placeholder="Contoh: PELAYANAN LABORATORIUM 2026"
+                                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-2xs"
                                 />
                             </div>
                         </div>
 
                         {/* Baris 2: No. Nota Dinas & Catatan / Alasan Urgensi (Ringkas & Bersih) */}
-                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-0.5">
                             <div className="sm:col-span-4">
                                 <label className="block text-xs font-semibold text-slate-600 mb-1">
                                     No. Nota Dinas <span className="font-normal text-slate-400">(Opsional)</span>
@@ -599,130 +642,252 @@ export default function RequisitionFormModal({
                         </div>
                     </div>
 
-                    {/* ------------------------------------------------------------- */}
-                    {/* 2. KLASIFIKASI KODE REKENING (SESUAI GAMBAR USER)             */}
-                    {/* ------------------------------------------------------------- */}
-                    <div className="pt-2">
-                        <div className="mb-3">
-                            <h3 className="text-sm font-bold text-slate-900 border-b-2 border-emerald-500 pb-1 inline-block">
-                                2. Klasifikasi Kode Rekening
+                    {/* SECTION 2: Tolok Ukur Kinerja (Format Resmi RBA Langsung di Form) */}
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
+                        <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-2 gap-2">
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-900 border-b-2 border-emerald-500 pb-0.5 inline-block">
+                                    2. Indikator & Tolok Ukur Kinerja (RBA)
+                                </h3>
+                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                    Format resmi tolok ukur capaian kegiatan. Bawaan standar telah disediakan, Anda dapat mengubahnya langsung jika diperlukan.
+                                </p>
+                            </div>
+                            <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
+                                Otomatis Tercetak di Dokumen RBA
+                            </span>
+                        </div>
+
+                        <div className="overflow-hidden rounded-lg border border-slate-200">
+                            <table className="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                        <th className="py-2 px-3 w-28 text-center border-r border-slate-200">INDIKATOR</th>
+                                        <th className="py-2 px-3 border-r border-slate-200">TOLOK UKUR KINERJA</th>
+                                        <th className="py-2 px-3 w-32 text-center">TARGET KINERJA</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200">
+                                    {/* 1. INPUT */}
+                                    <tr className="bg-slate-50/60">
+                                        <td className="py-2.5 px-3 font-bold text-slate-700 text-center border-r border-slate-200 bg-slate-100/70 align-middle">
+                                            INPUT
+                                            <span className="block text-[10px] font-normal text-slate-500">(Masukan)</span>
+                                        </td>
+                                        <td className="py-2.5 px-3 text-slate-600 border-r border-slate-200">
+                                            <span className="font-semibold text-slate-800">Anggaran Biaya Belanja</span>
+                                            <p className="text-[11px] text-slate-400">Total estimasi biaya dihitung otomatis dari rincian belanja di bawah.</p>
+                                        </td>
+                                        <td className="py-2.5 px-3 text-center align-middle">
+                                            <span className="inline-block px-2.5 py-1 rounded bg-emerald-50 text-emerald-800 font-mono font-bold text-xs border border-emerald-200">
+                                                {formatRupiah(grandTotal)}
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    {/* 2. OUTPUT */}
+                                    <tr>
+                                        <td className="py-2.5 px-3 font-bold text-slate-700 text-center border-r border-slate-200 bg-slate-100/70 align-middle">
+                                            OUTPUT
+                                            <span className="block text-[10px] font-normal text-slate-500">(Keluaran)</span>
+                                        </td>
+                                        <td className="py-2.5 px-3 border-r border-slate-200">
+                                            <textarea
+                                                rows={2}
+                                                value={data.tolok_ukur_output}
+                                                onChange={(e) => setData('tolok_ukur_output', e.target.value)}
+                                                placeholder="Contoh: Tersedianya kebutuhan bahan dan sarana operasional pelayanan..."
+                                                className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition leading-relaxed resize-none shadow-2xs"
+                                            />
+                                        </td>
+                                        <td className="py-2.5 px-3 align-middle text-center">
+                                            <div className="flex flex-col items-center justify-center gap-1">
+                                                <input
+                                                    type="text"
+                                                    value={data.target_output}
+                                                    onChange={(e) => setData('target_output', e.target.value)}
+                                                    placeholder="100%"
+                                                    className="w-20 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-center font-bold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-2xs"
+                                                />
+                                                <span className="text-[10px] text-slate-400 font-medium">Target Capaian</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    {/* 3. OUTCOME */}
+                                    <tr>
+                                        <td className="py-2.5 px-3 font-bold text-slate-700 text-center border-r border-slate-200 bg-slate-100/70 align-middle">
+                                            OUTCOME
+                                            <span className="block text-[10px] font-normal text-slate-500">(Hasil)</span>
+                                        </td>
+                                        <td className="py-2.5 px-3 border-r border-slate-200">
+                                            <textarea
+                                                rows={2}
+                                                value={data.tolok_ukur_outcome}
+                                                onChange={(e) => setData('tolok_ukur_outcome', e.target.value)}
+                                                placeholder="Contoh: Meningkatnya mutu pelayanan dan kepuasan pasien sesuai standar SPM..."
+                                                className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition leading-relaxed resize-none shadow-2xs"
+                                            />
+                                        </td>
+                                        <td className="py-2.5 px-3 align-middle text-center">
+                                            <div className="flex flex-col items-center justify-center gap-1">
+                                                <input
+                                                    type="text"
+                                                    value={data.target_outcome}
+                                                    onChange={(e) => setData('target_outcome', e.target.value)}
+                                                    placeholder="100%"
+                                                    className="w-20 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-center font-bold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-2xs"
+                                                />
+                                                <span className="text-[10px] text-slate-400 font-medium">Target Capaian</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* SECTION 3: Klasifikasi Kode Rekening BLUD */}
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
+                        <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-2 gap-2">
+                            <h3 className="text-sm font-bold text-slate-900 border-b-2 border-emerald-500 pb-0.5 inline-block">
+                                3. Klasifikasi Kode Rekening (RBA BLUD)
                             </h3>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
-                            {/* 1. Akun Utama */}
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                    Akun Utama
-                                </label>
-                                <select
-                                    value={selectedAkunUtama}
-                                    onChange={(e) => setSelectedAkunUtama(e.target.value)}
-                                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    {akunUtamaList.map((au) => (
-                                        <option key={au.code} value={au.code}>
-                                            {au.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* 2. Kelompok */}
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                    Kelompok
-                                </label>
-                                <select
-                                    value={selectedKelompok}
-                                    onChange={(e) => handleKelompokChange(e.target.value)}
-                                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer"
-                                >
-                                    {kelompokList.map((k) => (
-                                        <option key={k.code} value={k.code}>
-                                            {k.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* 3. Jenis */}
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                    Jenis
-                                </label>
-                                <select
-                                    value={selectedJenis}
-                                    onChange={(e) => handleJenisChange(e.target.value)}
-                                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer"
-                                >
-                                    {jenisList.map((j) => (
-                                        <option key={j.code} value={j.code}>
-                                            {j.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* 4. Objek */}
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                    Objek
-                                </label>
-                                <select
-                                    value={selectedObjek}
-                                    onChange={(e) => handleObjekChange(e.target.value)}
-                                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer"
-                                >
-                                    {objekList.map((o) => (
-                                        <option key={o.code} value={o.code}>
-                                            {o.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* 5. Rincian Objek */}
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                    Rincian Objek
-                                </label>
-                                <select
-                                    value={selectedRincianObjekId}
-                                    onChange={(e) => setSelectedRincianObjekId(e.target.value)}
-                                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer"
-                                >
-                                    {rincianObjekList.map((ro) => (
-                                        <option key={ro.id} value={ro.id}>
-                                            {ro.account_code}. {ro.account_name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Info Sisa Pagu Aktif */}
-                        {activeAccount && (
-                            <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 px-1">
-                                <span>
-                                    Pos Rekening Aktif: <strong className="text-slate-700 font-mono">[{activeAccount.account_code}]</strong> {activeAccount.account_name}
-                                </span>
-                                {activeAccount.remaining_budget !== null && activeAccount.remaining_budget !== undefined && (
-                                    <span className="font-semibold">
-                                        Sisa Pagu BLUD: <strong className="text-emerald-700 font-mono">{formatRupiah(activeAccount.remaining_budget)}</strong>
+                            {activeAccount && activeAccount.remaining_budget !== null && activeAccount.remaining_budget !== undefined && (
+                                <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                                    <span className="text-slate-400 font-medium">Sisa Pagu Rekening:</span>
+                                    <span className="font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200 font-mono">
+                                        {formatRupiah(activeAccount.remaining_budget)}
                                     </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Dropdown Bertingkat: 2 Baris agar Seluruh Nama Rekening Terbaca Jelas */}
+                        <div className="space-y-3">
+                            {/* Baris 1: Akun Utama, Kelompok, dan Jenis */}
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                                <div className="sm:col-span-3">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                                        1. Akun Utama
+                                    </label>
+                                    <select
+                                        value={selectedAkunUtama}
+                                        onChange={(e) => setSelectedAkunUtama(e.target.value)}
+                                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
+                                    >
+                                        {akunUtamaList.map((au) => (
+                                            <option key={au.code} value={au.code}>
+                                                {au.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="sm:col-span-4">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                                        2. Kelompok Belanja
+                                    </label>
+                                    <select
+                                        value={selectedKelompok}
+                                        onChange={(e) => handleKelompokChange(e.target.value)}
+                                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer shadow-2xs"
+                                    >
+                                        {kelompokList.map((k) => (
+                                            <option key={k.code} value={k.code}>
+                                                {k.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="sm:col-span-5">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                                        3. Jenis Belanja
+                                    </label>
+                                    <select
+                                        value={selectedJenis}
+                                        onChange={(e) => handleJenisChange(e.target.value)}
+                                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer shadow-2xs"
+                                    >
+                                        {jenisList.map((j) => (
+                                            <option key={j.code} value={j.code}>
+                                                {j.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Baris 2: Objek & Rincian Objek (Nama Panjang Lebih Lega & Tidak Terpotong) */}
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                                <div className="sm:col-span-5">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                                        4. Objek Belanja
+                                    </label>
+                                    <select
+                                        value={selectedObjek}
+                                        onChange={(e) => handleObjekChange(e.target.value)}
+                                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer shadow-2xs"
+                                    >
+                                        {objekList.map((o) => (
+                                            <option key={o.code} value={o.code}>
+                                                {o.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="sm:col-span-7">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                                        5. Rincian Objek (Rekening Belanja Aktif)
+                                    </label>
+                                    <select
+                                        value={selectedRincianObjekId}
+                                        onChange={(e) => setSelectedRincianObjekId(e.target.value)}
+                                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer shadow-2xs"
+                                    >
+                                        {rincianObjekList.map((ro) => (
+                                            <option key={ro.id} value={ro.id}>
+                                                {ro.account_code} - {ro.account_name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Bar Info Rekening Aktif */}
+                        {activeAccount && (
+                            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-xs">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-bold text-slate-500">Pos Rekening Terpilih:</span>
+                                    <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                        [{activeAccount.account_code}]
+                                    </span>
+                                    <span className="font-medium text-slate-800">
+                                        {activeAccount.account_name}
+                                    </span>
+                                </div>
+                                {activeAccount.remaining_budget !== null && activeAccount.remaining_budget !== undefined && (
+                                    <div className="text-[11px] text-slate-500">
+                                        Sisa Pagu BLUD: <strong className="text-emerald-700 font-mono font-bold">{formatRupiah(activeAccount.remaining_budget)}</strong>
+                                    </div>
                                 )}
                             </div>
                         )}
                     </div>
 
-                    {/* ------------------------------------------------------------- */}
-                    {/* 3. INPUT RINCIAN BARANG (SESUAI KOTAK DI GAMBAR USER)          */}
-                    {/* ------------------------------------------------------------- */}
-                    <div className="rounded-xl border border-dashed border-slate-300 p-4 bg-white shadow-2xs">
-                        <h4 className="text-xs font-bold text-slate-800 mb-3">
-                            3. Input Rincian Barang
-                        </h4>
+                    {/* SECTION 4: Input Rincian Barang */}
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
+                        <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-2 gap-2">
+                            <h3 className="text-sm font-bold text-slate-900 border-b-2 border-emerald-500 pb-0.5 inline-block">
+                                4. Input Rincian Barang
+                            </h3>
+                            <span className="text-[11px] text-slate-400">
+                                Pilih dari katalog atau ketik manual, lalu klik <strong>+ Tambah ke Daftar Usulan</strong>
+                            </span>
+                        </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
                             {/* Nama Barang / Uraian */}
@@ -849,10 +1014,17 @@ export default function RequisitionFormModal({
                         </div>
                     </div>
 
-                    {/* ------------------------------------------------------------- */}
-                    {/* TABEL DAFTAR BARANG YANG DIUSULKAN (SESUAI GAMBAR USER)       */}
-                    {/* ------------------------------------------------------------- */}
-                    <div className="space-y-2">
+                    {/* SECTION 5: Tabel Daftar Usulan Belanja */}
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
+                        <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-2 gap-2">
+                            <h3 className="text-sm font-bold text-slate-900 border-b-2 border-emerald-500 pb-0.5 inline-block">
+                                5. Daftar Barang yang Diusulkan
+                            </h3>
+                            <span className="text-xs font-semibold text-slate-600">
+                                Total: <strong className="text-slate-900">{data.items.length}</strong> item belanja
+                            </span>
+                        </div>
+
                         <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
                             <table className="min-w-full divide-y divide-slate-200 text-xs">
                                 <thead className="bg-slate-50 font-bold text-slate-700 uppercase tracking-wider text-[11px]">
@@ -913,8 +1085,8 @@ export default function RequisitionFormModal({
                             </table>
                         </div>
 
-                        {/* TOTAL USULAN (PERSIS TULISAN BIRU DI BAWAH TABEL PADA GAMBAR) */}
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 py-3 px-2">
+                        {/* Summary Bar di Bawah Tabel */}
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-2 border-t border-slate-100">
                             <div className="text-xs text-slate-500 font-medium">
                                 {data.items.length > 0 && (
                                     <span>
@@ -927,11 +1099,11 @@ export default function RequisitionFormModal({
                                     </span>
                                 )}
                             </div>
-                            <div className="flex items-center gap-3 self-end">
-                                <span className="text-xs font-black uppercase tracking-wider text-slate-900">
-                                    TOTAL USULAN:
+                            <div className="flex items-center gap-2.5 self-end">
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                                    TOTAL ESTIMASI USULAN:
                                 </span>
-                                <span className="text-base sm:text-lg font-black text-blue-700 font-mono">
+                                <span className="text-base sm:text-lg font-black text-emerald-700 font-mono bg-emerald-50 px-3 py-0.5 rounded-lg border border-emerald-200">
                                     {formatRupiah(grandTotal)}
                                 </span>
                             </div>

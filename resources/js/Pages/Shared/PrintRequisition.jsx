@@ -85,8 +85,13 @@ export default function PrintRequisition({ requisition }) {
     }, 0);
 
     const activeYear = requisition.budget_year || requisition.fiscal_year || 2026;
+    const programText = requisition.program || 'Program Peningkatan Pelayanan Kesehatan Pada BLUD';
     const kegiatanText = requisition.kegiatan || '1. Pelayanan Kesehatan';
     const subKegiatanText = requisition.sub_kegiatan || `PELAYANAN ${unitName.toUpperCase()} ${activeYear}`;
+    const tolokUkurOutputText = requisition.tolok_ukur_output;
+    const targetOutputText = requisition.target_output || '100%';
+    const tolokUkurOutcomeText = requisition.tolok_ukur_outcome;
+    const targetOutcomeText = requisition.target_outcome || '100%';
 
     const groupDetailsByAccount = (itemList, defaultAcc, fallbackLabel) => {
         const groups = new Map();
@@ -283,7 +288,7 @@ export default function PrintRequisition({ requisition }) {
                                     PROGRAM
                                 </td>
                                 <td className="border border-black p-1.5" colSpan={2}>
-                                    : Program Peningkatan Pelayanan Kesehatan Pada BLUD
+                                    : {programText}
                                 </td>
                             </tr>
                             <tr>
@@ -317,41 +322,65 @@ export default function PrintRequisition({ requisition }) {
                             <tr>
                                 <td className="border border-black p-1.5 font-bold align-top">OUTPUT</td>
                                 <td className="border border-black p-1.5 space-y-0.5">
-                                    <p className="font-semibold">1. Pelayanan {unitName}</p>
-                                    <p className="pl-3">1.1. Meningkatnya kualitas Pelayanan {unitName} terhadap pasien dan keluarga pasien</p>
-                                    <p className="pl-3">1.2. Persentase Kompetensi SDM dalam pelayanan {unitName}</p>
-                                    <p className="font-semibold mt-1">2. Keuangan</p>
-                                    <p className="pl-3">Tercapainya target pendapatan RS sesuai pelayanan {unitName}</p>
+                                    {tolokUkurOutputText ? (
+                                        <div className="whitespace-pre-line leading-relaxed font-normal">{tolokUkurOutputText}</div>
+                                    ) : (
+                                        <>
+                                            <p className="font-semibold">1. Pelayanan {unitName}</p>
+                                            <p className="pl-3">1.1. Meningkatnya kualitas Pelayanan {unitName} terhadap pasien dan keluarga pasien</p>
+                                            <p className="pl-3">1.2. Persentase Kompetensi SDM dalam pelayanan {unitName}</p>
+                                            <p className="font-semibold mt-1">2. Keuangan</p>
+                                            <p className="pl-3">Tercapainya target pendapatan RS sesuai pelayanan {unitName}</p>
+                                        </>
+                                    )}
                                 </td>
                                 <td className="border border-black p-1.5 text-right align-top space-y-0.5 font-semibold">
-                                    <p>&nbsp;</p>
-                                    <p>100%</p>
-                                    <p>90%</p>
-                                    <p>&nbsp;</p>
-                                    <p>100%</p>
+                                    {tolokUkurOutputText ? (
+                                        <p>{targetOutputText}</p>
+                                    ) : (
+                                        <>
+                                            <p>&nbsp;</p>
+                                            <p>100%</p>
+                                            <p>90%</p>
+                                            <p>&nbsp;</p>
+                                            <p>100%</p>
+                                        </>
+                                    )}
                                 </td>
                             </tr>
                             <tr>
                                 <td className="border border-black p-1.5 font-bold align-top">OUTCOME</td>
                                 <td className="border border-black p-1.5 space-y-0.5">
-                                    <p>1. Waktu Tunggu hasil pelayanan sesuai standar SPM</p>
-                                    <p className="pl-3">- Pelayanan rutin & emergensi tepat waktu</p>
-                                    <p>2. Pelaksana ekspertisi hasil pemeriksaan oleh Dokter Penanggung Jawab / Spesialis</p>
-                                    <p>3. Angka ketepatan waktu pelaporan nilai kritis &lt; 30 menit</p>
-                                    <p>4. Angka kesalahan memasukkan dan mencetak hasil pemeriksaan</p>
-                                    <p>5. Kepuasan Pelanggan</p>
-                                    <p>6. Kepatuhan cuci tangan & pencegahan infeksi (PPI)</p>
-                                    <p>7. Kepatuhan identifikasi pasien sesuai SOP keselamatan pasien</p>
+                                    {tolokUkurOutcomeText ? (
+                                        <div className="whitespace-pre-line leading-relaxed font-normal">{tolokUkurOutcomeText}</div>
+                                    ) : (
+                                        <>
+                                            <p>1. Waktu Tunggu hasil pelayanan sesuai standar SPM</p>
+                                            <p className="pl-3">- Pelayanan rutin & emergensi tepat waktu</p>
+                                            <p>2. Pelaksana ekspertisi hasil pemeriksaan oleh Dokter Penanggung Jawab / Spesialis</p>
+                                            <p>3. Angka ketepatan waktu pelaporan nilai kritis &lt; 30 menit</p>
+                                            <p>4. Angka kesalahan memasukkan dan mencetak hasil pemeriksaan</p>
+                                            <p>5. Kepuasan Pelanggan</p>
+                                            <p>6. Kepatuhan cuci tangan & pencegahan infeksi (PPI)</p>
+                                            <p>7. Kepatuhan identifikasi pasien sesuai SOP keselamatan pasien</p>
+                                        </>
+                                    )}
                                 </td>
                                 <td className="border border-black p-1.5 text-right align-top space-y-0.5 font-semibold">
-                                    <p>100%</p>
-                                    <p>100%</p>
-                                    <p>100%</p>
-                                    <p>100%</p>
-                                    <p>0%</p>
-                                    <p>&gt; 80%</p>
-                                    <p>100%</p>
-                                    <p>100%</p>
+                                    {tolokUkurOutcomeText ? (
+                                        <p>{targetOutcomeText}</p>
+                                    ) : (
+                                        <>
+                                            <p>100%</p>
+                                            <p>100%</p>
+                                            <p>100%</p>
+                                            <p>100%</p>
+                                            <p>0%</p>
+                                            <p>&gt; 80%</p>
+                                            <p>100%</p>
+                                            <p>100%</p>
+                                        </>
+                                    )}
                                 </td>
                             </tr>
                         </tbody>

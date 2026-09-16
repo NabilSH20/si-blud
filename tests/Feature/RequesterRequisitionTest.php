@@ -743,6 +743,52 @@ class RequesterRequisitionTest extends TestCase
         $this->assertEquals($this->rbaModalBlud->id, $modDetail->rba_account_id);
         $this->assertEquals(300000000, $modDetail->subtotal);
     }
+
+    public function test_requester_can_create_requisition_with_program_and_performance_indicators(): void
+    {
+        $payload = [
+            'program' => 'Program Peningkatan Pelayanan Kesehatan Pada BLUD RSJ',
+            'kegiatan' => '1. Pelayanan Kesehatan Jiwa',
+            'sub_kegiatan' => 'PELAYANAN FARMASI 2027',
+            'tolok_ukur_output' => 'Tersedianya obat-obatan dan perbekalan farmasi',
+            'target_output' => '100%',
+            'tolok_ukur_outcome' => 'Pelayanan resep obat tepat waktu < 15 menit',
+            'target_outcome' => '95%',
+            'nomor_surat_unit' => '101/FAR/RBA/2027',
+            'urgency_reason' => 'Kebutuhan obat rutin rawat inap',
+            'items' => [
+                [
+                    'item_id' => $this->itemObat->id,
+                    'rba_account_id' => $this->rbaOperasiBlud->id,
+                    'jenis_belanja' => 'Operasi',
+                    'quantity' => 20,
+                    'unit_price' => 75000,
+                    'is_new' => false,
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->farmasiUser)->post(route('requisitions.store'), $payload);
+        $response->assertRedirect(route('requisitions.index'));
+
+        $this->assertDatabaseHas('requisitions', [
+            'unit_id' => $this->farmasiUnit->id,
+            'program' => 'Program Peningkatan Pelayanan Kesehatan Pada BLUD RSJ',
+            'kegiatan' => '1. Pelayanan Kesehatan Jiwa',
+            'sub_kegiatan' => 'PELAYANAN FARMASI 2027',
+            'tolok_ukur_output' => 'Tersedianya obat-obatan dan perbekalan farmasi',
+            'target_output' => '100%',
+            'tolok_ukur_outcome' => 'Pelayanan resep obat tepat waktu < 15 menit',
+            'target_outcome' => '95%',
+        ]);
+
+        $requisition = Requisition::where('nomor_surat_unit', '101/FAR/RBA/2027')->first();
+        $this->assertNotNull($requisition);
+
+        // Test Print View renders program and indicators
+        $printResponse = $this->actingAs($this->farmasiUser)->get(route('requisitions.print', $requisition->id));
+        $printResponse->assertOk();
+    }
 }
 
 

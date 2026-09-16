@@ -243,6 +243,18 @@ export default function RequisitionDetailModal({
 
                             <div className="space-y-1">
                                 <span className="block text-xs font-semibold text-slate-500">
+                                    Program & Kegiatan RS
+                                </span>
+                                <p className="text-xs font-bold text-slate-800 leading-snug">
+                                    {requisition.program || 'Program Peningkatan Pelayanan Kesehatan Pada BLUD'}
+                                </p>
+                                <p className="text-xs text-slate-600">
+                                    {requisition.kegiatan || '1. Pelayanan Kesehatan'}
+                                </p>
+                            </div>
+
+                            <div className="space-y-1">
+                                <span className="block text-xs font-semibold text-slate-500">
                                     Sub Kegiatan Rumah Sakit
                                 </span>
                                 <p className="text-xs font-bold text-slate-800 leading-snug">
@@ -250,6 +262,41 @@ export default function RequisitionDetailModal({
                                 </p>
                             </div>
                         </div>
+
+                        {/* Tolok Ukur Kinerja RBA */}
+                        {(requisition.tolok_ukur_output || requisition.tolok_ukur_outcome) && (
+                            <div className="border-t border-slate-100 bg-slate-50/50 p-5 space-y-3">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                    <span>🎯</span> Tolok Ukur Kinerja (Format RBA)
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                    {requisition.tolok_ukur_output && (
+                                        <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-1">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-bold text-emerald-800 uppercase text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                                    OUTPUT (Target: {requisition.target_output || '100%'})
+                                                </span>
+                                            </div>
+                                            <p className="text-slate-700 whitespace-pre-line leading-relaxed">
+                                                {requisition.tolok_ukur_output}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {requisition.tolok_ukur_outcome && (
+                                        <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-1">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-bold text-teal-800 uppercase text-[10px] bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                                                    OUTCOME (Target: {requisition.target_outcome || '100%'})
+                                                </span>
+                                            </div>
+                                            <p className="text-slate-700 whitespace-pre-line leading-relaxed">
+                                                {requisition.tolok_ukur_outcome}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Telaahan Staf / Latar Belakang */}
                         {requisition.urgency_reason && (
