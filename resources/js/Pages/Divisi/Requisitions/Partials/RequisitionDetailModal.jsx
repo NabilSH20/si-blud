@@ -145,8 +145,16 @@ export default function RequisitionDetailModal({
                                     Informasi Usulan Belanja
                                 </h3>
                             </div>
-                            <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
-                                Belanja {requisition.jenis_belanja || 'Operasi'} BLUD
+                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${
+                                requisition.jenis_belanja === 'Campuran'
+                                    ? 'text-indigo-800 bg-indigo-50 border-indigo-200'
+                                    : requisition.jenis_belanja === 'Modal'
+                                    ? 'text-purple-800 bg-purple-50 border-purple-200'
+                                    : 'text-teal-800 bg-teal-50 border-teal-200'
+                            }`}>
+                                {requisition.jenis_belanja === 'Campuran'
+                                    ? 'Campuran (Operasi & Modal)'
+                                    : `Belanja ${requisition.jenis_belanja || 'Operasi'} BLUD`}
                             </span>
                         </div>
 
@@ -189,6 +197,10 @@ export default function RequisitionDetailModal({
                                     <p className="font-semibold text-slate-900">
                                         <span className="font-mono font-bold text-teal-800">[{requisition.rba_account.account_code}]</span>{' '}
                                         {requisition.rba_account.account_name}
+                                    </p>
+                                ) : requisition.jenis_belanja === 'Campuran' ? (
+                                    <p className="font-semibold text-slate-900">
+                                        <span className="font-mono font-bold text-indigo-800">[MULTI]</span> Multi-Rekening (Operasi & Modal)
                                     </p>
                                 ) : (
                                     <span className="text-slate-400">-</span>
@@ -270,9 +282,20 @@ export default function RequisitionDetailModal({
                                                 {idx + 1}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <p className="font-semibold text-slate-900">
-                                                    {detail.item?.name || detail.item_name || detail.manual_item_name}
-                                                </p>
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    {detail.jenis_belanja && (
+                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                                                            detail.jenis_belanja === 'Modal'
+                                                                ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                                                                : 'bg-teal-100 text-teal-800 border border-teal-200'
+                                                        }`}>
+                                                            {detail.jenis_belanja === 'Modal' ? 'Modal' : 'Operasional'}
+                                                        </span>
+                                                    )}
+                                                    <span className="font-semibold text-slate-900">
+                                                        {detail.item?.name || detail.item_name || detail.manual_item_name}
+                                                    </span>
+                                                </div>
                                                 {(detail.item?.specification || detail.specification) && (
                                                     <p className="text-[11px] text-slate-400 mt-0.5">
                                                         {detail.item?.specification || detail.specification}

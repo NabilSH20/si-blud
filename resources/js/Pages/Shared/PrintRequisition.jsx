@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 const formatNumber = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -69,8 +69,45 @@ export default function PrintRequisition({ requisition }) {
         return acc + qty * price;
     }, 0);
 
+    const opDetails = details.filter((d) => (d.jenis_belanja || requisition.jenis_belanja || 'Operasi') !== 'Modal');
+    const modDetails = details.filter((d) => d.jenis_belanja === 'Modal' || (!d.jenis_belanja && requisition.jenis_belanja === 'Modal'));
+
+    const opTotal = opDetails.reduce((acc, item) => {
+        const qty = Number(item.quantity_approved ?? item.quantity_requested ?? 0);
+        const price = Number(item.unit_price || 0);
+        return acc + qty * price;
+    }, 0);
+
+    const modTotal = modDetails.reduce((acc, item) => {
+        const qty = Number(item.quantity_approved ?? item.quantity_requested ?? 0);
+        const price = Number(item.unit_price || 0);
+        return acc + qty * price;
+    }, 0);
+
     const activeYear = requisition.budget_year || requisition.fiscal_year || 2026;
+    const kegiatanText = requisition.kegiatan || '1. Pelayanan Kesehatan';
     const subKegiatanText = requisition.sub_kegiatan || `PELAYANAN ${unitName.toUpperCase()} ${activeYear}`;
+
+    const groupDetailsByAccount = (itemList, defaultAcc, fallbackLabel) => {
+        const groups = new Map();
+        itemList.forEach((item) => {
+            const acc = item.rba_account || item.rbaAccount || defaultAcc;
+            const key = acc?.id || acc?.account_code || 'default';
+            if (!groups.has(key)) {
+                groups.set(key, {
+                    account: acc,
+                    items: [],
+                    total: 0,
+                });
+            }
+            const g = groups.get(key);
+            const qty = Number(item.quantity_approved ?? item.quantity_requested ?? 1);
+            const price = Number(item.unit_price || 0);
+            g.items.push(item);
+            g.total += qty * price;
+        });
+        return Array.from(groups.values());
+    };
 
     return (
         <div className="bg-white text-black min-h-screen p-6 sm:p-8 max-w-5xl mx-auto font-sans print:p-0 print:max-w-none">
@@ -254,7 +291,7 @@ export default function PrintRequisition({ requisition }) {
                                     KEGIATAN
                                 </td>
                                 <td className="border border-black p-1.5" colSpan={2}>
-                                    : 1. Pelayanan Kesehatan
+                                    : {kegiatanText}
                                 </td>
                             </tr>
                             <tr>
@@ -357,79 +394,159 @@ export default function PrintRequisition({ requisition }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {/* Klasifikasi Belanja Header */}
-                            <tr className="font-bold bg-gray-50 print:bg-transparent">
-                                <td className="border border-black p-1 text-center font-black">
-                                    {requisition.jenis_belanja === 'Modal' ? 'II' : 'I'}
-                                </td>
-                                <td className="border border-black p-1 uppercase" colSpan={4}>
-                                    {requisition.jenis_belanja === 'Modal' ? 'BELANJA MODAL' : 'BIAYA OPERASIONAL'}
-                                </td>
-                                <td className="border border-black p-1 text-right font-mono font-black">
-                                    {formatNumber(grandTotal)}
-                                </td>
-                            </tr>
-
-                            {/* Sub Klasifikasi */}
-                            <tr className="font-bold">
-                                <td className="border border-black p-1 text-center">A</td>
-                                <td className="border border-black p-1" colSpan={4}>
-                                    BIAYA PELAYANAN
-                                </td>
-                                <td className="border border-black p-1 text-right font-mono font-bold">
-                                    {formatNumber(grandTotal)}
-                                </td>
-                            </tr>
-
-                            {/* Pos Rekening RBA Header */}
-                            <tr className="font-bold">
-                                <td className="border border-black p-1 text-center">1</td>
-                                <td className="border border-black p-1 uppercase" colSpan={4}>
-                                    {requisition.rba_account
-                                        ? `${requisition.rba_account.account_name}`
-                                        : 'Belanja Bahan Habis Pakai'}
-                                </td>
-                                <td className="border border-black p-1 text-right font-mono font-black bg-yellow-100 print:bg-yellow-100">
-                                    {formatNumber(grandTotal)}
-                                </td>
-                            </tr>
-
-                            {/* Daftar Barang / Komponen */}
-                            {details.map((detail, idx) => {
-                                const qty = Number(detail.quantity_approved ?? detail.quantity_requested ?? 1);
-                                const price = Number(detail.unit_price || 0);
-                                const subtotal = qty * price;
-                                const itemName = detail.item?.name || detail.item_name || detail.manual_item_name || '-';
-                                const itemUnit = (detail.unit_type || detail.item?.unit_type || 'BOX').toUpperCase();
-
-                                return (
-                                    <tr key={detail.id || idx}>
-                                        <td className="border border-black p-1 text-center text-slate-600">
-                                            {idx + 1}
+                            {/* SEKSI I: BIAYA OPERASIONAL */}
+                            {opDetails.length > 0 && (
+                                <React.Fragment key="section-operasional">
+                                    <tr className="font-bold bg-gray-50 print:bg-transparent">
+                                        <td className="border border-black p-1 text-center font-black">
+                                            I
                                         </td>
-                                        <td className="border border-black p-1">
-                                            <span className="font-bold uppercase">{itemName}</span>
-                                            {detail.specification && (
-                                                <span className="text-[10px] text-slate-600 block leading-none mt-0.5">
-                                                    {detail.specification}
-                                                </span>
-                                            )}
+                                        <td className="border border-black p-1 uppercase" colSpan={4}>
+                                            BIAYA OPERASIONAL
                                         </td>
-                                        <td className="border border-black p-1 text-center font-semibold">
-                                            {qty}
-                                        </td>
-                                        <td className="border border-black p-1 text-center font-semibold uppercase">
-                                            {itemUnit}
-                                        </td>
-                                        <td className="border border-black p-1 text-right font-mono">
-                                            {formatNumber(price)}
-                                        </td>
-                                        <td className="border border-black p-1 text-right font-mono font-bold">
-                                            {formatNumber(subtotal)}
+                                        <td className="border border-black p-1 text-right font-mono font-black">
+                                            {formatNumber(opTotal)}
                                         </td>
                                     </tr>
-                                );
-                            })}
+
+                                    <tr className="font-bold">
+                                        <td className="border border-black p-1 text-center">A</td>
+                                        <td className="border border-black p-1" colSpan={4}>
+                                            BIAYA PELAYANAN
+                                        </td>
+                                        <td className="border border-black p-1 text-right font-mono font-bold">
+                                            {formatNumber(opTotal)}
+                                        </td>
+                                    </tr>
+
+                                    {groupDetailsByAccount(opDetails, requisition.rba_account, 'Belanja Bahan Habis Pakai').map((grp, grpIdx) => (
+                                        <React.Fragment key={`op-grp-${grpIdx}`}>
+                                            <tr className="font-bold">
+                                                <td className="border border-black p-1 text-center">{grpIdx + 1}</td>
+                                                <td className="border border-black p-1 uppercase" colSpan={4}>
+                                                    {grp.account ? grp.account.account_name : 'Belanja Barang dan Jasa'}
+                                                </td>
+                                                <td className="border border-black p-1 text-right font-mono font-black bg-yellow-100 print:bg-yellow-100">
+                                                    {formatNumber(grp.total)}
+                                                </td>
+                                            </tr>
+
+                                            {grp.items.map((detail, idx) => {
+                                                const qty = Number(detail.quantity_approved ?? detail.quantity_requested ?? 1);
+                                                const price = Number(detail.unit_price || 0);
+                                                const subtotal = qty * price;
+                                                const itemName = detail.item?.name || detail.item_name || detail.manual_item_name || '-';
+                                                const itemUnit = (detail.unit_type || detail.item?.unit_type || 'BOX').toUpperCase();
+
+                                                return (
+                                                    <tr key={detail.id || `op-itm-${idx}`}>
+                                                        <td className="border border-black p-1 text-center text-slate-600">
+                                                            {idx + 1}
+                                                        </td>
+                                                        <td className="border border-black p-1">
+                                                            <span className="font-bold uppercase">{itemName}</span>
+                                                            {detail.specification && (
+                                                                <span className="text-[10px] text-slate-600 block leading-none mt-0.5">
+                                                                    {detail.specification}
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="border border-black p-1 text-center font-semibold">
+                                                            {qty}
+                                                        </td>
+                                                        <td className="border border-black p-1 text-center font-semibold uppercase">
+                                                            {itemUnit}
+                                                        </td>
+                                                        <td className="border border-black p-1 text-right font-mono">
+                                                            {formatNumber(price)}
+                                                        </td>
+                                                        <td className="border border-black p-1 text-right font-mono font-bold">
+                                                            {formatNumber(subtotal)}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </React.Fragment>
+                                    ))}
+                                </React.Fragment>
+                            )}
+
+                            {/* SEKSI II: BELANJA MODAL */}
+                            {modDetails.length > 0 && (
+                                <React.Fragment key="section-modal">
+                                    <tr className="font-bold bg-gray-50 print:bg-transparent">
+                                        <td className="border border-black p-1 text-center font-black">
+                                            {opDetails.length > 0 ? 'II' : 'I'}
+                                        </td>
+                                        <td className="border border-black p-1 uppercase" colSpan={4}>
+                                            BELANJA MODAL
+                                        </td>
+                                        <td className="border border-black p-1 text-right font-mono font-black">
+                                            {formatNumber(modTotal)}
+                                        </td>
+                                    </tr>
+
+                                    <tr className="font-bold">
+                                        <td className="border border-black p-1 text-center">A</td>
+                                        <td className="border border-black p-1" colSpan={4}>
+                                            PENGADAAN PERALATAN DAN MESIN
+                                        </td>
+                                        <td className="border border-black p-1 text-right font-mono font-bold">
+                                            {formatNumber(modTotal)}
+                                        </td>
+                                    </tr>
+
+                                    {groupDetailsByAccount(modDetails, requisition.rba_account, 'Belanja Modal Peralatan').map((grp, grpIdx) => (
+                                        <React.Fragment key={`mod-grp-${grpIdx}`}>
+                                            <tr className="font-bold">
+                                                <td className="border border-black p-1 text-center">{grpIdx + 1}</td>
+                                                <td className="border border-black p-1 uppercase" colSpan={4}>
+                                                    {grp.account ? grp.account.account_name : 'Belanja Modal Peralatan'}
+                                                </td>
+                                                <td className="border border-black p-1 text-right font-mono font-black bg-yellow-100 print:bg-yellow-100">
+                                                    {formatNumber(grp.total)}
+                                                </td>
+                                            </tr>
+
+                                            {grp.items.map((detail, idx) => {
+                                                const qty = Number(detail.quantity_approved ?? detail.quantity_requested ?? 1);
+                                                const price = Number(detail.unit_price || 0);
+                                                const subtotal = qty * price;
+                                                const itemName = detail.item?.name || detail.item_name || detail.manual_item_name || '-';
+                                                const itemUnit = (detail.unit_type || detail.item?.unit_type || 'UNIT').toUpperCase();
+
+                                                return (
+                                                    <tr key={detail.id || `mod-itm-${idx}`}>
+                                                        <td className="border border-black p-1 text-center text-slate-600">
+                                                            {idx + 1}
+                                                        </td>
+                                                        <td className="border border-black p-1">
+                                                            <span className="font-bold uppercase">{itemName}</span>
+                                                            {detail.specification && (
+                                                                <span className="text-[10px] text-slate-600 block leading-none mt-0.5">
+                                                                    {detail.specification}
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="border border-black p-1 text-center font-semibold">
+                                                            {qty}
+                                                        </td>
+                                                        <td className="border border-black p-1 text-center font-semibold uppercase">
+                                                            {itemUnit}
+                                                        </td>
+                                                        <td className="border border-black p-1 text-right font-mono">
+                                                            {formatNumber(price)}
+                                                        </td>
+                                                        <td className="border border-black p-1 text-right font-mono font-bold">
+                                                            {formatNumber(subtotal)}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </React.Fragment>
+                                    ))}
+                                </React.Fragment>
+                            )}
                         </tbody>
                         <tfoot>
                             <tr className="bg-yellow-200 print:bg-yellow-200 font-bold">
@@ -562,7 +679,11 @@ export default function PrintRequisition({ requisition }) {
 
                             <div className="flex">
                                 <span className="font-bold w-40 shrink-0">Klasifikasi Belanja</span>
-                                <span className="font-bold">: Belanja {requisition.jenis_belanja || 'Operasi'} BLUD</span>
+                                <span className="font-bold">
+                                    : {requisition.jenis_belanja === 'Campuran'
+                                        ? 'Belanja Operasi & Belanja Modal (Campuran)'
+                                        : `Belanja ${requisition.jenis_belanja || 'Operasi'} BLUD`}
+                                </span>
                             </div>
                             <div className="flex">
                                 <span className="font-bold w-40 shrink-0">Status Berkas</span>
@@ -577,7 +698,11 @@ export default function PrintRequisition({ requisition }) {
                             <div className="flex col-span-2">
                                 <span className="font-bold w-40 shrink-0">Pos Rekening RBA</span>
                                 <span className="font-medium">
-                                    : {requisition.rba_account ? `[${requisition.rba_account.account_code}] ${requisition.rba_account.account_name}` : '-'}
+                                    : {requisition.rba_account
+                                        ? `[${requisition.rba_account.account_code}] ${requisition.rba_account.account_name}`
+                                        : requisition.jenis_belanja === 'Campuran'
+                                        ? 'Multi-Rekening (Operasional & Modal)'
+                                        : '-'}
                                 </span>
                             </div>
                         </div>
@@ -608,26 +733,82 @@ export default function PrintRequisition({ requisition }) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {details.map((detail, index) => {
-                                    const itemName = detail.item?.name || detail.item_name || detail.manual_item_name || '-';
-                                    const itemSpec = detail.item?.specification || detail.specification || '-';
-                                    const itemUnit = (detail.unit_type || detail.item?.unit_type || 'BOX').toUpperCase();
-                                    const qty = Number(detail.quantity_approved ?? detail.quantity_requested ?? 1);
-                                    const price = Number(detail.unit_price || 0);
-                                    const lineSubtotal = qty * price;
-
-                                    return (
-                                        <tr key={detail.id || index}>
-                                            <td className="border border-black p-1.5 text-center">{index + 1}</td>
-                                            <td className="border border-black p-1.5 font-bold">{itemName}</td>
-                                            <td className="border border-black p-1.5 text-[11px] leading-tight">{itemSpec}</td>
-                                            <td className="border border-black p-1.5 text-center">{itemUnit}</td>
-                                            <td className="border border-black p-1.5 text-center font-bold">{qty}</td>
-                                            <td className="border border-black p-1.5 text-right">{formatRupiah(price)}</td>
-                                            <td className="border border-black p-1.5 text-right font-bold">{formatRupiah(lineSubtotal)}</td>
+                                {opDetails.length > 0 && modDetails.length > 0 ? (
+                                    <>
+                                        <tr className="bg-slate-100 print:bg-slate-100 font-bold">
+                                            <td colSpan={7} className="border border-black p-1.5 uppercase">
+                                                I. BIAYA OPERASIONAL (Subtotal: {formatRupiah(opTotal)})
+                                            </td>
                                         </tr>
-                                    );
-                                })}
+                                        {opDetails.map((detail, index) => {
+                                            const itemName = detail.item?.name || detail.item_name || detail.manual_item_name || '-';
+                                            const itemSpec = detail.item?.specification || detail.specification || '-';
+                                            const itemUnit = (detail.unit_type || detail.item?.unit_type || 'BOX').toUpperCase();
+                                            const qty = Number(detail.quantity_approved ?? detail.quantity_requested ?? 1);
+                                            const price = Number(detail.unit_price || 0);
+                                            const lineSubtotal = qty * price;
+
+                                            return (
+                                                <tr key={detail.id || `op-nd-${index}`}>
+                                                    <td className="border border-black p-1.5 text-center">{index + 1}</td>
+                                                    <td className="border border-black p-1.5 font-bold">{itemName}</td>
+                                                    <td className="border border-black p-1.5 text-[11px] leading-tight">{itemSpec}</td>
+                                                    <td className="border border-black p-1.5 text-center">{itemUnit}</td>
+                                                    <td className="border border-black p-1.5 text-center font-bold">{qty}</td>
+                                                    <td className="border border-black p-1.5 text-right">{formatRupiah(price)}</td>
+                                                    <td className="border border-black p-1.5 text-right font-bold">{formatRupiah(lineSubtotal)}</td>
+                                                </tr>
+                                            );
+                                        })}
+
+                                        <tr className="bg-slate-100 print:bg-slate-100 font-bold">
+                                            <td colSpan={7} className="border border-black p-1.5 uppercase">
+                                                II. BELANJA MODAL (Subtotal: {formatRupiah(modTotal)})
+                                            </td>
+                                        </tr>
+                                        {modDetails.map((detail, index) => {
+                                            const itemName = detail.item?.name || detail.item_name || detail.manual_item_name || '-';
+                                            const itemSpec = detail.item?.specification || detail.specification || '-';
+                                            const itemUnit = (detail.unit_type || detail.item?.unit_type || 'UNIT').toUpperCase();
+                                            const qty = Number(detail.quantity_approved ?? detail.quantity_requested ?? 1);
+                                            const price = Number(detail.unit_price || 0);
+                                            const lineSubtotal = qty * price;
+
+                                            return (
+                                                <tr key={detail.id || `mod-nd-${index}`}>
+                                                    <td className="border border-black p-1.5 text-center">{index + 1}</td>
+                                                    <td className="border border-black p-1.5 font-bold">{itemName}</td>
+                                                    <td className="border border-black p-1.5 text-[11px] leading-tight">{itemSpec}</td>
+                                                    <td className="border border-black p-1.5 text-center">{itemUnit}</td>
+                                                    <td className="border border-black p-1.5 text-center font-bold">{qty}</td>
+                                                    <td className="border border-black p-1.5 text-right">{formatRupiah(price)}</td>
+                                                    <td className="border border-black p-1.5 text-right font-bold">{formatRupiah(lineSubtotal)}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </>
+                                ) : (
+                                    details.map((detail, index) => {
+                                        const itemName = detail.item?.name || detail.item_name || detail.manual_item_name || '-';
+                                        const itemSpec = detail.item?.specification || detail.specification || '-';
+                                        const itemUnit = (detail.unit_type || detail.item?.unit_type || 'BOX').toUpperCase();
+                                        const qty = Number(detail.quantity_approved ?? detail.quantity_requested ?? 1);
+                                        const price = Number(detail.unit_price || 0);
+                                        const lineSubtotal = qty * price;
+
+                                        return (
+                                            <tr key={detail.id || index}>
+                                                <td className="border border-black p-1.5 text-center">{index + 1}</td>
+                                                <td className="border border-black p-1.5 font-bold">{itemName}</td>
+                                                <td className="border border-black p-1.5 text-[11px] leading-tight">{itemSpec}</td>
+                                                <td className="border border-black p-1.5 text-center">{itemUnit}</td>
+                                                <td className="border border-black p-1.5 text-center font-bold">{qty}</td>
+                                                <td className="border border-black p-1.5 text-right">{formatRupiah(price)}</td>
+                                                <td className="border border-black p-1.5 text-right font-bold">{formatRupiah(lineSubtotal)}</td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
                             </tbody>
                             <tfoot>
                                 <tr className="bg-gray-100 print:bg-transparent font-bold">

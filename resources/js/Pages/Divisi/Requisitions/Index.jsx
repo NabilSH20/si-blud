@@ -254,19 +254,7 @@ export default function Index({
                             <option value="ALL">Semua Jenis Belanja</option>
                             <option value="Operasi">Belanja Operasional</option>
                             <option value="Modal">Belanja Modal</option>
-                        </select>
-
-                        {/* Filter Status Alur */}
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition cursor-pointer"
-                        >
-                            <option value="ALL">Semua Status Alur</option>
-                            <option value="Pending_Perencanaan">Menunggu Telaah</option>
-                            <option value="Diproses_Keuangan">Proses Keuangan</option>
-                            <option value="Disetujui_Selesai">Disetujui Selesai</option>
-                            <option value="Ditolak">Perlu Perbaikan</option>
+                            <option value="Campuran">Belanja Campuran (Operasi & Modal)</option>
                         </select>
 
                         {/* Badge Tahun Anggaran Aktif */}
@@ -402,19 +390,21 @@ export default function Index({
                                                 <div className="flex items-center gap-1.5 mb-1">
                                                     <span
                                                         className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ${
-                                                            req.jenis_belanja === 'Modal'
+                                                            req.jenis_belanja === 'Campuran'
+                                                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                                                : req.jenis_belanja === 'Modal'
                                                                 ? 'bg-purple-50 text-purple-700 border border-purple-200'
                                                                 : 'bg-teal-50 text-teal-700 border border-teal-200'
                                                         }`}
                                                     >
-                                                        {req.jenis_belanja || 'Operasi'}
+                                                        {req.jenis_belanja === 'Campuran' ? 'Campuran' : (req.jenis_belanja || 'Operasi')}
                                                     </span>
                                                     <span className="text-slate-500 font-mono text-xs font-semibold">
-                                                        {req.rba_account?.account_code || '-'}
+                                                        {req.rba_account?.account_code || (req.jenis_belanja === 'Campuran' ? 'MULTI' : '-')}
                                                     </span>
                                                 </div>
-                                                <p className="text-xs font-bold text-slate-800 line-clamp-1" title={req.rba_account?.account_name}>
-                                                    {req.rba_account?.account_name || '-'}
+                                                <p className="text-xs font-bold text-slate-800 line-clamp-1" title={req.rba_account?.account_name || (req.jenis_belanja === 'Campuran' ? 'Multi-Rekening (Operasi & Modal)' : '-')}>
+                                                    {req.rba_account?.account_name || (req.jenis_belanja === 'Campuran' ? 'Multi-Rekening (Operasi & Modal)' : '-')}
                                                 </p>
                                             </td>
 

@@ -158,8 +158,16 @@ export default function RequisitionDetailModal({
                                     Identitas Dokumen Pengajuan & Sub Kegiatan RS
                                 </h3>
                             </div>
-                            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-200">
-                                Belanja {requisition.jenis_belanja || 'Operasi'} BLUD
+                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${
+                                requisition.jenis_belanja === 'Campuran'
+                                    ? 'text-indigo-800 bg-indigo-100 border-indigo-200'
+                                    : requisition.jenis_belanja === 'Modal'
+                                    ? 'text-purple-800 bg-purple-100 border-purple-200'
+                                    : 'text-emerald-800 bg-emerald-100/70 border-emerald-200'
+                            }`}>
+                                {requisition.jenis_belanja === 'Campuran'
+                                    ? 'Campuran (Operasi & Modal)'
+                                    : `Belanja ${requisition.jenis_belanja || 'Operasi'} BLUD`}
                             </span>
                         </div>
 
@@ -222,6 +230,11 @@ export default function RequisitionDetailModal({
                                     <p className="text-xs font-medium text-slate-800">
                                         <span className="font-mono font-bold block text-slate-900">[{requisition.rba_account.account_code}]</span>
                                         {requisition.rba_account.account_name}
+                                    </p>
+                                ) : requisition.jenis_belanja === 'Campuran' ? (
+                                    <p className="text-xs font-medium text-slate-800">
+                                        <span className="font-mono font-bold block text-indigo-800">[MULTI]</span>
+                                        Multi-Rekening (Operasi & Modal)
                                     </p>
                                 ) : (
                                     <span className="text-xs text-slate-400">-</span>

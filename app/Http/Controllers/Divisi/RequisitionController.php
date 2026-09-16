@@ -22,7 +22,7 @@ class RequisitionController extends Controller
     {
         $user = auth()->user()->load(['division', 'unit']);
 
-        $query = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])
+        $query = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'requisitionDetails.rbaAccount', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])
             ->latest();
 
         // Isolasi data pengajuan per unit kerja staf yang login
@@ -149,8 +149,9 @@ class RequisitionController extends Controller
         }
 
         $validated = $request->validate([
-            'rba_account_id' => ['required', 'exists:rba_accounts,id'],
-            'jenis_belanja' => ['required', 'string', 'in:Operasi,Modal,Operasional'],
+            'rba_account_id' => ['nullable', 'exists:rba_accounts,id'],
+            'jenis_belanja' => ['nullable', 'string', 'in:Operasi,Modal,Campuran,Gabungan,Operasional'],
+            'kegiatan' => ['nullable', 'string', 'max:255'],
             'sub_kegiatan' => ['required', 'string', 'max:255'],
             'budget_year' => ['nullable', 'integer', 'min:2020', 'max:2035'],
             'fiscal_year' => ['nullable', 'integer', 'min:2020', 'max:2035'],
@@ -159,17 +160,15 @@ class RequisitionController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.is_new' => ['nullable', 'boolean'],
             'items.*.item_id' => ['nullable'],
+            'items.*.rba_account_id' => ['nullable', 'exists:rba_accounts,id'],
+            'items.*.jenis_belanja' => ['nullable', 'string', 'in:Operasi,Modal,Operasional'],
             'items.*.name' => ['nullable', 'string', 'max:255'],
             'items.*.unit_type' => ['nullable', 'string', 'max:255'],
             'items.*.specification' => ['nullable', 'string'],
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
         ], [
-            'rba_account_id.required' => 'Pilih pos kode rekening belanja RBA BLUD terlebih dahulu.',
-            'rba_account_id.exists' => 'Pos rekening belanja yang dipilih tidak valid.',
-            'jenis_belanja.required' => 'Pilih klasifikasi belanja (Operasi atau Modal).',
-            'sub_kegiatan.required' => 'Sub Kegiatan rumah sakit wajib dipilih.',
-            'fiscal_year.required' => 'Tahun anggaran perencanaan kebutuhan wajib diisi.',
+            'sub_kegiatan.required' => 'Sub Kegiatan rumah sakit wajib diisi.',
             'items.required' => 'Daftar barang yang diajukan tidak boleh kosong.',
             'items.min' => 'Minimal ajukan satu barang dalam usulan belanja.',
             'items.*.quantity.required' => 'Jumlah barang wajib diisi.',
@@ -204,15 +203,22 @@ class RequisitionController extends Controller
                 $requisitionNumber = $datePrefix . str_pad($countToday, 4, '0', STR_PAD_LEFT);
             }
 
-            $rbaAccount = RbaAccount::findOrFail($validated['rba_account_id']);
-
-            // Process items, register new ones to master catalog, and calculate totals
+            // Process items, register new ones to master catalog, and calculate totals per jenis
             $processedItems = [];
-            $totalEstimated = 0;
+            $totalOperasional = 0;
+            $totalModal = 0;
+            $firstAccountId = $validated['rba_account_id'] ?? null;
 
             foreach ($validated['items'] as $itemData) {
                 $isNew = !empty($itemData['is_new']) || empty($itemData['item_id']);
                 $qty = (int) $itemData['quantity'];
+                $fallbackJenis = ($validated['jenis_belanja'] ?? 'Operasi') === 'Modal' ? 'Modal' : 'Operasi';
+                $itemJenis = !empty($itemData['jenis_belanja']) ? ($itemData['jenis_belanja'] === 'Modal' ? 'Modal' : 'Operasi') : $fallbackJenis;
+                $itemAccountId = $itemData['rba_account_id'] ?? $validated['rba_account_id'] ?? null;
+
+                if (!$firstAccountId && $itemAccountId) {
+                    $firstAccountId = $itemAccountId;
+                }
 
                 if ($isNew) {
                     $itemName = trim($itemData['name']);
@@ -220,9 +226,11 @@ class RequisitionController extends Controller
                     $spec = trim($itemData['specification'] ?? '') ?: null;
                     $unitPrice = isset($itemData['unit_price']) ? (float) $itemData['unit_price'] : 0;
 
-                    $item = Item::where('rba_account_id', $validated['rba_account_id'])
-                        ->where('name', $itemName)
-                        ->first();
+                    $queryItem = Item::where('name', $itemName);
+                    if ($itemAccountId) {
+                        $queryItem->where('rba_account_id', $itemAccountId);
+                    }
+                    $item = $queryItem->first();
 
                     if ($item) {
                         if ($unitPrice > 0 && (float) $item->standard_price !== $unitPrice) {
@@ -230,7 +238,7 @@ class RequisitionController extends Controller
                         }
                     } else {
                         $item = Item::create([
-                            'rba_account_id' => $validated['rba_account_id'],
+                            'rba_account_id' => $itemAccountId,
                             'item_code' => Item::generateNextItemCode(),
                             'name' => $itemName,
                             'specification' => $spec,
@@ -243,6 +251,9 @@ class RequisitionController extends Controller
                 } else {
                     $item = Item::findOrFail($itemData['item_id']);
                     $unitPrice = isset($itemData['unit_price']) ? (float) $itemData['unit_price'] : (float) $item->standard_price;
+                    if (!$itemAccountId && $item->rba_account_id) {
+                        $itemAccountId = $item->rba_account_id;
+                    }
 
                     // Update master item price if adjusted by requester
                     if (isset($itemData['unit_price']) && (float) $item->standard_price !== $unitPrice) {
@@ -251,14 +262,31 @@ class RequisitionController extends Controller
                 }
 
                 $subtotal = $qty * $unitPrice;
-                $totalEstimated += $subtotal;
+                if ($itemJenis === 'Modal') {
+                    $totalModal += $subtotal;
+                } else {
+                    $totalOperasional += $subtotal;
+                }
 
                 $processedItems[] = [
                     'item' => $item,
+                    'rba_account_id' => $itemAccountId,
+                    'jenis_belanja' => $itemJenis,
                     'quantity' => $qty,
                     'unit_price' => $unitPrice,
                     'subtotal' => $subtotal,
                 ];
+            }
+
+            $totalEstimated = $totalOperasional + $totalModal;
+
+            // Klasifikasi keseluruhan jenis belanja
+            if ($totalOperasional > 0 && $totalModal > 0) {
+                $overallJenis = 'Campuran';
+            } elseif ($totalModal > 0) {
+                $overallJenis = 'Modal';
+            } else {
+                $overallJenis = 'Operasi';
             }
 
             // Create Requisition Header
@@ -268,16 +296,19 @@ class RequisitionController extends Controller
                 'division_id' => $user->division_id,
                 'unit_id' => $user->unit_id,
                 'user_id' => $user->id,
-                'rba_account_id' => $rbaAccount->id,
-                'budget_id' => $rbaAccount->id,
-                'jenis_belanja' => $validated['jenis_belanja'],
+                'rba_account_id' => $firstAccountId,
+                'budget_id' => $firstAccountId,
+                'jenis_belanja' => $overallJenis,
                 'sumber_dana' => 'BLUD',
+                'kegiatan' => $validated['kegiatan'] ?? '1. Pelayanan Kesehatan',
                 'sub_kegiatan' => $validated['sub_kegiatan'],
                 'fiscal_year' => (int) ($validated['budget_year'] ?? $validated['fiscal_year'] ?? session('active_year', date('Y'))),
                 'budget_year' => (int) ($validated['budget_year'] ?? $validated['fiscal_year'] ?? session('active_year', date('Y'))),
                 'urgency_reason' => $validated['urgency_reason'] ?? null,
                 'status' => 'Pending_Perencanaan',
                 'submission_date' => today(),
+                'total_operasional' => $totalOperasional,
+                'total_modal' => $totalModal,
                 'total_estimated' => $totalEstimated,
                 'total_approved' => 0,
             ]);
@@ -286,6 +317,8 @@ class RequisitionController extends Controller
             foreach ($processedItems as $pItem) {
                 RequisitionDetail::create([
                     'requisition_id' => $requisition->id,
+                    'rba_account_id' => $pItem['rba_account_id'],
+                    'jenis_belanja' => $pItem['jenis_belanja'],
                     'item_id' => $pItem['item']->id,
                     'item_name' => $pItem['item']->name,
                     'unit_type' => $pItem['item']->unit_type,
@@ -324,26 +357,26 @@ class RequisitionController extends Controller
         }
 
         $validated = $request->validate([
-            'rba_account_id' => ['required', 'exists:rba_accounts,id'],
-            'jenis_belanja' => ['required', 'string', 'in:Operasi,Modal'],
+            'rba_account_id' => ['nullable', 'exists:rba_accounts,id'],
+            'jenis_belanja' => ['nullable', 'string', 'in:Operasi,Modal,Campuran,Gabungan,Operasional'],
+            'kegiatan' => ['nullable', 'string', 'max:255'],
             'sub_kegiatan' => ['required', 'string', 'max:255'],
-            'fiscal_year' => ['required', 'integer', 'min:2025', 'max:2035'],
+            'fiscal_year' => ['nullable', 'integer', 'min:2020', 'max:2035'],
+            'budget_year' => ['nullable', 'integer', 'min:2020', 'max:2035'],
             'nomor_surat_unit' => ['nullable', 'string', 'max:255'],
             'urgency_reason' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.is_new' => ['nullable', 'boolean'],
             'items.*.item_id' => ['nullable'],
+            'items.*.rba_account_id' => ['nullable', 'exists:rba_accounts,id'],
+            'items.*.jenis_belanja' => ['nullable', 'string', 'in:Operasi,Modal,Operasional'],
             'items.*.name' => ['nullable', 'string', 'max:255'],
             'items.*.unit_type' => ['nullable', 'string', 'max:255'],
             'items.*.specification' => ['nullable', 'string'],
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
         ], [
-            'rba_account_id.required' => 'Pilih pos kode rekening belanja RBA BLUD terlebih dahulu.',
-            'rba_account_id.exists' => 'Pos rekening belanja yang dipilih tidak valid.',
-            'jenis_belanja.required' => 'Pilih klasifikasi belanja (Operasi atau Modal).',
-            'sub_kegiatan.required' => 'Sub Kegiatan rumah sakit wajib dipilih.',
-            'fiscal_year.required' => 'Tahun anggaran perencanaan kebutuhan wajib diisi.',
+            'sub_kegiatan.required' => 'Sub Kegiatan rumah sakit wajib diisi.',
             'items.required' => 'Daftar barang yang diajukan tidak boleh kosong.',
             'items.min' => 'Minimal ajukan satu barang dalam usulan belanja.',
             'items.*.quantity.required' => 'Jumlah barang wajib diisi.',
@@ -368,15 +401,22 @@ class RequisitionController extends Controller
         }
 
         DB::transaction(function () use ($requisition, $validated) {
-            $rbaAccount = RbaAccount::findOrFail($validated['rba_account_id']);
-
-            // Process items, register new ones to master catalog, and calculate totals
+            // Process items, register new ones to master catalog, and calculate totals per jenis
             $processedItems = [];
-            $totalEstimated = 0;
+            $totalOperasional = 0;
+            $totalModal = 0;
+            $firstAccountId = $validated['rba_account_id'] ?? $requisition->rba_account_id;
 
             foreach ($validated['items'] as $itemData) {
                 $isNew = !empty($itemData['is_new']) || empty($itemData['item_id']);
                 $qty = (int) $itemData['quantity'];
+                $fallbackJenis = ($validated['jenis_belanja'] ?? $requisition->jenis_belanja ?? 'Operasi') === 'Modal' ? 'Modal' : 'Operasi';
+                $itemJenis = !empty($itemData['jenis_belanja']) ? ($itemData['jenis_belanja'] === 'Modal' ? 'Modal' : 'Operasi') : $fallbackJenis;
+                $itemAccountId = $itemData['rba_account_id'] ?? $validated['rba_account_id'] ?? $requisition->rba_account_id;
+
+                if (!$firstAccountId && $itemAccountId) {
+                    $firstAccountId = $itemAccountId;
+                }
 
                 if ($isNew) {
                     $itemName = trim($itemData['name']);
@@ -384,9 +424,11 @@ class RequisitionController extends Controller
                     $spec = trim($itemData['specification'] ?? '') ?: null;
                     $unitPrice = isset($itemData['unit_price']) ? (float) $itemData['unit_price'] : 0;
 
-                    $item = Item::where('rba_account_id', $validated['rba_account_id'])
-                        ->where('name', $itemName)
-                        ->first();
+                    $queryItem = Item::where('name', $itemName);
+                    if ($itemAccountId) {
+                        $queryItem->where('rba_account_id', $itemAccountId);
+                    }
+                    $item = $queryItem->first();
 
                     if ($item) {
                         if ($unitPrice > 0 && (float) $item->standard_price !== $unitPrice) {
@@ -394,7 +436,7 @@ class RequisitionController extends Controller
                         }
                     } else {
                         $item = Item::create([
-                            'rba_account_id' => $validated['rba_account_id'],
+                            'rba_account_id' => $itemAccountId,
                             'item_code' => Item::generateNextItemCode(),
                             'name' => $itemName,
                             'specification' => $spec,
@@ -407,6 +449,9 @@ class RequisitionController extends Controller
                 } else {
                     $item = Item::findOrFail($itemData['item_id']);
                     $unitPrice = isset($itemData['unit_price']) ? (float) $itemData['unit_price'] : (float) $item->standard_price;
+                    if (!$itemAccountId && $item->rba_account_id) {
+                        $itemAccountId = $item->rba_account_id;
+                    }
 
                     // Update master item price if adjusted by requester
                     if (isset($itemData['unit_price']) && (float) $item->standard_price !== $unitPrice) {
@@ -415,26 +460,49 @@ class RequisitionController extends Controller
                 }
 
                 $subtotal = $qty * $unitPrice;
-                $totalEstimated += $subtotal;
+                if ($itemJenis === 'Modal') {
+                    $totalModal += $subtotal;
+                } else {
+                    $totalOperasional += $subtotal;
+                }
 
                 $processedItems[] = [
                     'item' => $item,
+                    'rba_account_id' => $itemAccountId,
+                    'jenis_belanja' => $itemJenis,
                     'quantity' => $qty,
                     'unit_price' => $unitPrice,
                     'subtotal' => $subtotal,
                 ];
             }
 
+            $totalEstimated = $totalOperasional + $totalModal;
+
+            // Klasifikasi keseluruhan jenis belanja
+            if ($totalOperasional > 0 && $totalModal > 0) {
+                $overallJenis = 'Campuran';
+            } elseif ($totalModal > 0) {
+                $overallJenis = 'Modal';
+            } else {
+                $overallJenis = 'Operasi';
+            }
+
+            $finalYear = (int) ($validated['fiscal_year'] ?? $validated['budget_year'] ?? $requisition->budget_year ?? session('active_year', date('Y')));
+
             // Update Requisition Header
             $requisition->update([
                 'nomor_surat_unit' => $validated['nomor_surat_unit'] ?? null,
-                'rba_account_id' => $rbaAccount->id,
-                'budget_id' => $rbaAccount->id,
-                'jenis_belanja' => $validated['jenis_belanja'],
+                'rba_account_id' => $firstAccountId,
+                'budget_id' => $firstAccountId,
+                'jenis_belanja' => $overallJenis,
                 'sumber_dana' => 'BLUD',
+                'kegiatan' => $validated['kegiatan'] ?? $requisition->kegiatan ?? '1. Pelayanan Kesehatan',
                 'sub_kegiatan' => $validated['sub_kegiatan'],
-                'fiscal_year' => (int) $validated['fiscal_year'],
+                'fiscal_year' => $finalYear,
+                'budget_year' => $finalYear,
                 'urgency_reason' => $validated['urgency_reason'] ?? null,
+                'total_operasional' => $totalOperasional,
+                'total_modal' => $totalModal,
                 'total_estimated' => $totalEstimated,
             ]);
 
@@ -444,6 +512,8 @@ class RequisitionController extends Controller
             foreach ($processedItems as $pItem) {
                 RequisitionDetail::create([
                     'requisition_id' => $requisition->id,
+                    'rba_account_id' => $pItem['rba_account_id'],
+                    'jenis_belanja' => $pItem['jenis_belanja'],
                     'item_id' => $pItem['item']->id,
                     'item_name' => $pItem['item']->name,
                     'unit_type' => $pItem['item']->unit_type,

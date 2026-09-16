@@ -100,47 +100,64 @@ class RequisitionController extends Controller
 
         if ($validated['status'] === 'Disetujui_Selesai') {
             DB::transaction(function () use ($requisition, $validated) {
-                // Calculate grand total from approved quantities and price
+                // Group approved costs by rba_account_id
+                $accountTotals = [];
                 $grandTotal = 0;
+
                 foreach ($requisition->requisitionDetails as $detail) {
                     $qty = $detail->quantity_approved !== null
                         ? (int) $detail->quantity_approved
                         : (int) $detail->quantity_requested;
                     $price = (float) ($detail->unit_price ?? $detail->item?->standard_price ?? 0);
-                    $grandTotal += ($qty * $price);
+                    $subtotal = $qty * $price;
+                    $grandTotal += $subtotal;
+
+                    $accId = $detail->rba_account_id ?: $requisition->rba_account_id ?: ($validated['budget_id'] ?? null);
+                    if ($accId) {
+                        $accountTotals[$accId] = ($accountTotals[$accId] ?? 0) + $subtotal;
+                    }
                 }
 
-                // Determine budget ID (either passed from form or original requisition RBA account)
-                $budgetId = $validated['budget_id'] ?? $requisition->rba_account_id;
-
-                if (!$budgetId) {
-                    throw ValidationException::withMessages([
-                        'budget_id' => 'Rekening pagu anggaran belum ditentukan untuk pengajuan ini.',
-                    ]);
+                if (empty($accountTotals)) {
+                    $budgetId = $validated['budget_id'] ?? $requisition->rba_account_id;
+                    if (!$budgetId) {
+                        throw ValidationException::withMessages([
+                            'budget_id' => 'Rekening pagu anggaran belum ditentukan untuk pengajuan ini.',
+                        ]);
+                    }
+                    $accountTotals[$budgetId] = $grandTotal;
                 }
 
-                // Lock the budget record for update
-                $budget = RbaAccount::lockForUpdate()->findOrFail($budgetId);
+                // Check remaining budgets for all involved accounts
+                foreach ($accountTotals as $accId => $cost) {
+                    $budget = RbaAccount::lockForUpdate()->findOrFail($accId);
+                    if ((float) $budget->remaining_budget < (float) $cost) {
+                        $formattedRemaining = 'Rp ' . number_format($budget->remaining_budget, 0, ',', '.');
+                        $formattedCost = 'Rp ' . number_format($cost, 0, ',', '.');
 
-                if ((float) $budget->remaining_budget < (float) $grandTotal) {
-                    $formattedRemaining = 'Rp ' . number_format($budget->remaining_budget, 0, ',', '.');
-                    $formattedTotal = 'Rp ' . number_format($grandTotal, 0, ',', '.');
-
-                    throw ValidationException::withMessages([
-                        'budget_id' => "Sisa pagu anggaran pada rekening {$budget->account_name} ({$formattedRemaining}) tidak mencukupi untuk membiayai total pengajuan sebesar {$formattedTotal}.",
-                    ]);
+                        throw ValidationException::withMessages([
+                            'budget_id' => "Sisa pagu anggaran pada rekening {$budget->account_name} ({$formattedRemaining}) tidak mencukupi untuk membiayai item sebesar {$formattedCost}.",
+                        ]);
+                    }
                 }
 
-                // Deduct from remaining_budget, add to spent_budget
-                $budget->remaining_budget = (float) $budget->remaining_budget - (float) $grandTotal;
-                $budget->spent_budget = (float) $budget->spent_budget + (float) $grandTotal;
-                $budget->save();
+                // Deduct budgets
+                $primaryBudgetId = $validated['budget_id'] ?? $requisition->rba_account_id;
+                foreach ($accountTotals as $accId => $cost) {
+                    $budget = RbaAccount::lockForUpdate()->findOrFail($accId);
+                    $budget->remaining_budget = (float) $budget->remaining_budget - (float) $cost;
+                    $budget->spent_budget = (float) $budget->spent_budget + (float) $cost;
+                    $budget->save();
+                    if (!$primaryBudgetId) {
+                        $primaryBudgetId = $accId;
+                    }
+                }
 
                 // Finalize requisition
                 $requisition->update([
                     'status' => 'Disetujui_Selesai',
-                    'rba_account_id' => $budget->id,
-                    'budget_id' => $budget->id,
+                    'rba_account_id' => $primaryBudgetId,
+                    'budget_id' => $primaryBudgetId,
                     'total_approved' => $grandTotal,
                     'sp2d_number' => $validated['sp2d_number'] ?? null,
                     'receipt_number' => $validated['receipt_number'] ?? null,

@@ -18,6 +18,7 @@ class Requisition extends Model
         'budget_id',
         'jenis_belanja',
         'sumber_dana',
+        'kegiatan',
         'sub_kegiatan',
         'urgency_reason',
         'fiscal_year',
@@ -25,6 +26,8 @@ class Requisition extends Model
         'status',
         'submission_date',
         'total_estimated',
+        'total_operasional',
+        'total_modal',
         'total_approved',
         'notes_perencanaan',
         'verified_by_perencanaan_id',
@@ -45,6 +48,8 @@ class Requisition extends Model
             'fiscal_year' => 'integer',
             'budget_year' => 'integer',
             'total_estimated' => 'decimal:2',
+            'total_operasional' => 'decimal:2',
+            'total_modal' => 'decimal:2',
             'total_approved' => 'decimal:2',
         ];
     }
