@@ -61,6 +61,8 @@ Route::prefix('perencanaan')->middleware('auth')->group(function () {
         ->name('perencanaan.rba.activate');
     Route::post('/rba/shifts', [PerencanaanRbaController::class, 'storeShift'])
         ->name('perencanaan.rba.shifts.store');
+    Route::delete('/rba/shifts/{id}', [PerencanaanRbaController::class, 'destroyShift'])
+        ->name('perencanaan.rba.shifts.destroy');
     Route::patch('/rba/items/{id}', [PerencanaanRbaController::class, 'updateItem'])
         ->name('perencanaan.rba.items.update');
     Route::patch('/rba/revenue-items/{id}', [PerencanaanRbaController::class, 'updateRevenueItem'])

@@ -20,49 +20,63 @@ export default function PrintRincianBelanja({
         window.print();
     };
 
-    // Calculate total proposed items amount
-    const totalUsulanSemua = accounts_with_proposed.reduce(
-        (sum, acc) => sum + (acc.proposed_total || 0),
-        0
-    );
+    // 1. Process active approved items for print
+    const withActive = accounts_with_proposed.map((acc) => {
+        const rawItems = acc.proposed_items || [];
+        const activeItems = rawItems.filter((it) => it.status === 'Disetujui_Selesai' || !it.status);
+        const directNominal = activeItems.reduce((s, it) => s + (it.resolved_subtotal || it.subtotal || 0), 0);
+        const directCount = activeItems.length;
 
-    // Filter accounts by category
-    const operasiAccounts = accounts_with_proposed.filter(
-        (acc) => acc.kategori_belanja === 'Operasi'
-    );
-    const modalAccounts = accounts_with_proposed.filter(
-        (acc) => acc.kategori_belanja === 'Modal'
-    );
+        return {
+            ...acc,
+            active_items: activeItems,
+            active_total: directNominal,
+            active_count: directCount,
+        };
+    });
 
-    const totalUsulanOperasi = operasiAccounts.reduce(
-        (sum, acc) => sum + (acc.proposed_total || 0),
-        0
-    );
-    const totalUsulanModal = modalAccounts.reduce(
-        (sum, acc) => sum + (acc.proposed_total || 0),
-        0
-    );
+    const byCode = {};
+    withActive.forEach((a) => {
+        byCode[a.account_code] = a;
+    });
 
-    // Group accounts into parent groups & sub-accounts
-    const getGroupedData = (accounts) => {
-        const codes = new Set(accounts.map((a) => a.account_code));
-        const parentGroups = accounts.filter(
-            (acc) => !acc.parent_code || !codes.has(acc.parent_code)
-        );
-
-        return parentGroups.map((group) => {
-            const children = accounts.filter(
-                (a) => a.parent_code === group.account_code
-            );
-            return {
-                ...group,
-                children,
-            };
+    const getDescendants = (code) => {
+        let desc = [];
+        withActive.forEach((a) => {
+            if (a.parent_code === code) {
+                desc.push(a.account_code);
+                desc = desc.concat(getDescendants(a.account_code));
+            }
         });
+        return desc;
     };
 
-    const groupedOperasi = getGroupedData(operasiAccounts);
-    const groupedModal = getGroupedData(modalAccounts);
+    const withRollups = withActive.map((acc) => {
+        const descCodes = getDescendants(acc.account_code);
+        let rTot = acc.active_total;
+        let rCnt = acc.active_count;
+
+        descCodes.forEach((dc) => {
+            if (byCode[dc]) {
+                rTot += byCode[dc].active_total;
+                rCnt += byCode[dc].active_count;
+            }
+        });
+
+        return {
+            ...acc,
+            calc_rollup_total: rTot,
+            calc_rollup_count: rCnt,
+        };
+    });
+
+    // Only show accounts that have items or sub-accounts with items
+    const printOperasi = withRollups.filter((a) => a.kategori_belanja === 'Operasi' && a.calc_rollup_count > 0);
+    const printModal = withRollups.filter((a) => a.kategori_belanja === 'Modal' && a.calc_rollup_count > 0);
+
+    const totalUsulanOperasi = withActive.filter((a) => a.kategori_belanja === 'Operasi').reduce((s, a) => s + a.active_total, 0);
+    const totalUsulanModal = withActive.filter((a) => a.kategori_belanja === 'Modal').reduce((s, a) => s + a.active_total, 0);
+    const totalUsulanSemua = totalUsulanOperasi + totalUsulanModal;
 
     return (
         <>
@@ -187,50 +201,62 @@ export default function PrintRincianBelanja({
                             </tr>
 
                             {/* Belanja Operasi Accounts & Items */}
-                            {groupedOperasi.map((group) => {
-                                const groupTotal = group.children.length > 0
-                                    ? group.children.reduce((s, c) => s + (c.proposed_total || 0), 0) + (group.proposed_total || 0)
-                                    : (group.proposed_total || 0);
+                            {printOperasi.map((acc) => {
+                                const hasDirectItems = acc.active_items && acc.active_items.length > 0;
+                                const isMajorHeader = acc.level === 2; // 1.1.1, 1.1.2
+                                const isSubHeader = acc.level === 3;   // 1.1.2.1
 
                                 return (
-                                    <React.Fragment key={group.id}>
-                                        {/* Parent Group Row */}
-                                        <tr className="bg-slate-100 font-bold">
+                                    <React.Fragment key={`pop-${acc.id}`}>
+                                        {/* Account Row */}
+                                        <tr className={`border-b border-slate-800 ${isMajorHeader ? 'bg-slate-100 font-bold' : isSubHeader ? 'bg-slate-50 font-semibold' : 'bg-white font-medium'}`}>
                                             <td className="border border-slate-800 p-1 text-center font-mono text-[9px]">
-                                                {group.account_code}
+                                                {acc.account_code}
                                             </td>
-                                            <td className="border border-slate-800 p-1 pl-4" colSpan={4}>
-                                                {group.account_name}
-                                                {group.children.length > 0 && (
-                                                    <span className="text-[9px] font-normal text-slate-500 ml-2">
-                                                        ({group.children.length} sub-pos rekening)
-                                                    </span>
-                                                )}
+                                            <td
+                                                className={`border border-slate-800 p-1 ${
+                                                    acc.level === 2 ? 'pl-3' : acc.level === 3 ? 'pl-6' : acc.level === 4 ? 'pl-9' : 'pl-12'
+                                                }`}
+                                                colSpan={4}
+                                            >
+                                                <div className="flex items-center gap-1.5">
+                                                    {acc.level > 2 && <span className="text-slate-400 font-bold text-[9px]">└</span>}
+                                                    <span className={isMajorHeader ? 'uppercase tracking-tight' : ''}>{acc.account_name}</span>
+                                                    {acc.active_count > 0 && (
+                                                        <span className="text-[8px] font-bold text-slate-500 ml-1.5">
+                                                            ({acc.active_count} barang)
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
-                                            <td className="border border-slate-800 p-1 text-right font-mono text-[9px]">
-                                                {groupTotal > 0 ? formatRupiah(groupTotal) : '-'}
+                                            <td className="border border-slate-800 p-1 text-right font-mono text-[9px] font-bold">
+                                                {acc.active_total > 0
+                                                    ? formatRupiah(acc.active_total)
+                                                    : acc.calc_rollup_total > 0
+                                                    ? formatRupiah(acc.calc_rollup_total)
+                                                    : '-'}
                                             </td>
-                                            <td className="border border-slate-800 p-1 text-slate-500 text-[9px]">
-                                                Pagu: {formatRupiah(group.remaining_budget)}
+                                            <td className="border border-slate-800 p-1 text-slate-500 text-[8px]">
+                                                Pagu: {formatRupiah(acc.remaining_budget)}
                                             </td>
                                         </tr>
 
-                                        {/* If group has direct items */}
-                                        {group.proposed_items && group.proposed_items.length > 0 && group.proposed_items.map((item, iIdx) => (
-                                            <tr key={`item-${group.id}-${iIdx}`} className="hover:bg-slate-50">
+                                        {/* Direct Items under this Account */}
+                                        {hasDirectItems && acc.active_items.map((item, idx) => (
+                                            <tr key={`pitem-${acc.id}-${item.id || idx}`} className="hover:bg-slate-50">
                                                 <td className="border border-slate-800 p-1 text-center text-slate-400 font-mono text-[8px]">
                                                     &bull;
                                                 </td>
-                                                <td className="border border-slate-800 p-1 pl-7">
+                                                <td className="border border-slate-800 p-1 pl-12">
                                                     <span className="font-semibold text-slate-800">{item.item_name}</span>
                                                     {item.specification && (
-                                                        <span className="text-slate-500 block text-[9px]">
+                                                        <span className="text-slate-500 block text-[8px]">
                                                             Spesifikasi: {item.specification}
                                                         </span>
                                                     )}
                                                 </td>
                                                 <td className="border border-slate-800 p-1 text-center font-mono">
-                                                    {item.quantity_requested || item.quantity_approved || 1}
+                                                    {item.resolved_quantity || item.quantity_approved || item.quantity_requested || 1}
                                                 </td>
                                                 <td className="border border-slate-800 p-1 text-center text-slate-600">
                                                     {item.unit_type || 'Pcs'}
@@ -239,64 +265,12 @@ export default function PrintRincianBelanja({
                                                     {formatRupiah(item.unit_price)}
                                                 </td>
                                                 <td className="border border-slate-800 p-1 text-right font-mono font-bold text-slate-900">
-                                                    {formatRupiah(item.subtotal)}
+                                                    {formatRupiah(item.resolved_subtotal || item.subtotal)}
                                                 </td>
-                                                <td className="border border-slate-800 p-1 text-[9px] text-slate-700">
+                                                <td className="border border-slate-800 p-1 text-[8px] text-slate-700">
                                                     {item.requisition?.unit?.name || 'Unit RSJ'}
                                                 </td>
                                             </tr>
-                                        ))}
-
-                                        {/* Sub-Accounts of this Group */}
-                                        {group.children.map((child) => (
-                                            <React.Fragment key={child.id}>
-                                                <tr className="bg-slate-50/70 font-semibold">
-                                                    <td className="border border-slate-800 p-1 text-center font-mono text-[9px] pl-2 text-slate-700">
-                                                        {child.account_code}
-                                                    </td>
-                                                    <td className="border border-slate-800 p-1 pl-6 text-slate-800" colSpan={4}>
-                                                        {child.account_name}
-                                                    </td>
-                                                    <td className="border border-slate-800 p-1 text-right font-mono text-[9px] font-bold text-slate-800">
-                                                        {child.proposed_total > 0 ? formatRupiah(child.proposed_total) : '-'}
-                                                    </td>
-                                                    <td className="border border-slate-800 p-1 text-slate-500 text-[8px]">
-                                                        Pagu: {formatRupiah(child.remaining_budget)}
-                                                    </td>
-                                                </tr>
-
-                                                {/* Child Items */}
-                                                {child.proposed_items && child.proposed_items.length > 0 && child.proposed_items.map((cItem, cIdx) => (
-                                                    <tr key={`citem-${child.id}-${cIdx}`} className="hover:bg-slate-50">
-                                                        <td className="border border-slate-800 p-1 text-center text-slate-400 font-mono text-[8px]">
-                                                            -
-                                                        </td>
-                                                        <td className="border border-slate-800 p-1 pl-9">
-                                                            <span className="font-semibold text-slate-800">{cItem.item_name}</span>
-                                                            {cItem.specification && (
-                                                                <span className="text-slate-500 block text-[9px]">
-                                                                    Spesifikasi: {cItem.specification}
-                                                                </span>
-                                                            )}
-                                                        </td>
-                                                        <td className="border border-slate-800 p-1 text-center font-mono">
-                                                            {cItem.quantity_requested || cItem.quantity_approved || 1}
-                                                        </td>
-                                                        <td className="border border-slate-800 p-1 text-center text-slate-600">
-                                                            {cItem.unit_type || 'Pcs'}
-                                                        </td>
-                                                        <td className="border border-slate-800 p-1 text-right font-mono">
-                                                            {formatRupiah(cItem.unit_price)}
-                                                        </td>
-                                                        <td className="border border-slate-800 p-1 text-right font-mono font-bold text-slate-900">
-                                                            {formatRupiah(cItem.subtotal)}
-                                                        </td>
-                                                        <td className="border border-slate-800 p-1 text-[9px] text-slate-700">
-                                                            {cItem.requisition?.unit?.name || 'Unit RSJ'}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </React.Fragment>
                                         ))}
                                     </React.Fragment>
                                 );
@@ -317,50 +291,62 @@ export default function PrintRincianBelanja({
                             </tr>
 
                             {/* Belanja Modal Accounts & Items */}
-                            {groupedModal.map((group) => {
-                                const groupTotal = group.children.length > 0
-                                    ? group.children.reduce((s, c) => s + (c.proposed_total || 0), 0) + (group.proposed_total || 0)
-                                    : (group.proposed_total || 0);
+                            {printModal.map((acc) => {
+                                const hasDirectItems = acc.active_items && acc.active_items.length > 0;
+                                const isMajorHeader = acc.level === 2; // 1.2.1
+                                const isSubHeader = acc.level === 3;   // 1.2.1.2
 
                                 return (
-                                    <React.Fragment key={group.id}>
-                                        {/* Parent Group Row */}
-                                        <tr className="bg-slate-100 font-bold">
+                                    <React.Fragment key={`pmod-${acc.id}`}>
+                                        {/* Account Row */}
+                                        <tr className={`border-b border-slate-800 ${isMajorHeader ? 'bg-slate-100 font-bold' : isSubHeader ? 'bg-slate-50 font-semibold' : 'bg-white font-medium'}`}>
                                             <td className="border border-slate-800 p-1 text-center font-mono text-[9px]">
-                                                {group.account_code}
+                                                {acc.account_code}
                                             </td>
-                                            <td className="border border-slate-800 p-1 pl-4" colSpan={4}>
-                                                {group.account_name}
-                                                {group.children.length > 0 && (
-                                                    <span className="text-[9px] font-normal text-slate-500 ml-2">
-                                                        ({group.children.length} sub-pos rekening)
-                                                    </span>
-                                                )}
+                                            <td
+                                                className={`border border-slate-800 p-1 ${
+                                                    acc.level === 2 ? 'pl-3' : acc.level === 3 ? 'pl-6' : acc.level === 4 ? 'pl-9' : 'pl-12'
+                                                }`}
+                                                colSpan={4}
+                                            >
+                                                <div className="flex items-center gap-1.5">
+                                                    {acc.level > 2 && <span className="text-slate-400 font-bold text-[9px]">└</span>}
+                                                    <span className={isMajorHeader ? 'uppercase tracking-tight' : ''}>{acc.account_name}</span>
+                                                    {acc.active_count > 0 && (
+                                                        <span className="text-[8px] font-bold text-slate-500 ml-1.5">
+                                                            ({acc.active_count} barang)
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
-                                            <td className="border border-slate-800 p-1 text-right font-mono text-[9px]">
-                                                {groupTotal > 0 ? formatRupiah(groupTotal) : '-'}
+                                            <td className="border border-slate-800 p-1 text-right font-mono text-[9px] font-bold">
+                                                {acc.active_total > 0
+                                                    ? formatRupiah(acc.active_total)
+                                                    : acc.calc_rollup_total > 0
+                                                    ? formatRupiah(acc.calc_rollup_total)
+                                                    : '-'}
                                             </td>
-                                            <td className="border border-slate-800 p-1 text-slate-500 text-[9px]">
-                                                Pagu: {formatRupiah(group.remaining_budget)}
+                                            <td className="border border-slate-800 p-1 text-slate-500 text-[8px]">
+                                                Pagu: {formatRupiah(acc.remaining_budget)}
                                             </td>
                                         </tr>
 
-                                        {/* If group has direct items */}
-                                        {group.proposed_items && group.proposed_items.length > 0 && group.proposed_items.map((item, iIdx) => (
-                                            <tr key={`item-${group.id}-${iIdx}`} className="hover:bg-slate-50">
+                                        {/* Direct Items under modal account */}
+                                        {hasDirectItems && acc.active_items.map((item, idx) => (
+                                            <tr key={`pmitem-${acc.id}-${item.id || idx}`} className="hover:bg-slate-50">
                                                 <td className="border border-slate-800 p-1 text-center text-slate-400 font-mono text-[8px]">
                                                     &bull;
                                                 </td>
-                                                <td className="border border-slate-800 p-1 pl-7">
+                                                <td className="border border-slate-800 p-1 pl-12">
                                                     <span className="font-semibold text-slate-800">{item.item_name}</span>
                                                     {item.specification && (
-                                                        <span className="text-slate-500 block text-[9px]">
+                                                        <span className="text-slate-500 block text-[8px]">
                                                             Spesifikasi: {item.specification}
                                                         </span>
                                                     )}
                                                 </td>
                                                 <td className="border border-slate-800 p-1 text-center font-mono">
-                                                    {item.quantity_requested || item.quantity_approved || 1}
+                                                    {item.resolved_quantity || item.quantity_approved || item.quantity_requested || 1}
                                                 </td>
                                                 <td className="border border-slate-800 p-1 text-center text-slate-600">
                                                     {item.unit_type || 'Unit'}
@@ -369,64 +355,12 @@ export default function PrintRincianBelanja({
                                                     {formatRupiah(item.unit_price)}
                                                 </td>
                                                 <td className="border border-slate-800 p-1 text-right font-mono font-bold text-slate-900">
-                                                    {formatRupiah(item.subtotal)}
+                                                    {formatRupiah(item.resolved_subtotal || item.subtotal)}
                                                 </td>
-                                                <td className="border border-slate-800 p-1 text-[9px] text-slate-700">
+                                                <td className="border border-slate-800 p-1 text-[8px] text-slate-700">
                                                     {item.requisition?.unit?.name || 'Unit RSJ'}
                                                 </td>
                                             </tr>
-                                        ))}
-
-                                        {/* Sub-Accounts of this Group */}
-                                        {group.children.map((child) => (
-                                            <React.Fragment key={child.id}>
-                                                <tr className="bg-slate-50/70 font-semibold">
-                                                    <td className="border border-slate-800 p-1 text-center font-mono text-[9px] pl-2 text-slate-700">
-                                                        {child.account_code}
-                                                    </td>
-                                                    <td className="border border-slate-800 p-1 pl-6 text-slate-800" colSpan={4}>
-                                                        {child.account_name}
-                                                    </td>
-                                                    <td className="border border-slate-800 p-1 text-right font-mono text-[9px] font-bold text-slate-800">
-                                                        {child.proposed_total > 0 ? formatRupiah(child.proposed_total) : '-'}
-                                                    </td>
-                                                    <td className="border border-slate-800 p-1 text-slate-500 text-[8px]">
-                                                        Pagu: {formatRupiah(child.remaining_budget)}
-                                                    </td>
-                                                </tr>
-
-                                                {/* Child Items */}
-                                                {child.proposed_items && child.proposed_items.length > 0 && child.proposed_items.map((cItem, cIdx) => (
-                                                    <tr key={`citem-${child.id}-${cIdx}`} className="hover:bg-slate-50">
-                                                        <td className="border border-slate-800 p-1 text-center text-slate-400 font-mono text-[8px]">
-                                                            -
-                                                        </td>
-                                                        <td className="border border-slate-800 p-1 pl-9">
-                                                            <span className="font-semibold text-slate-800">{cItem.item_name}</span>
-                                                            {cItem.specification && (
-                                                                <span className="text-slate-500 block text-[9px]">
-                                                                    Spesifikasi: {cItem.specification}
-                                                                </span>
-                                                            )}
-                                                        </td>
-                                                        <td className="border border-slate-800 p-1 text-center font-mono">
-                                                            {cItem.quantity_requested || cItem.quantity_approved || 1}
-                                                        </td>
-                                                        <td className="border border-slate-800 p-1 text-center text-slate-600">
-                                                            {cItem.unit_type || 'Unit'}
-                                                        </td>
-                                                        <td className="border border-slate-800 p-1 text-right font-mono">
-                                                            {formatRupiah(cItem.unit_price)}
-                                                        </td>
-                                                        <td className="border border-slate-800 p-1 text-right font-mono font-bold text-slate-900">
-                                                            {formatRupiah(cItem.subtotal)}
-                                                        </td>
-                                                        <td className="border border-slate-800 p-1 text-[9px] text-slate-700">
-                                                            {cItem.requisition?.unit?.name || 'Unit RSJ'}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </React.Fragment>
                                         ))}
                                     </React.Fragment>
                                 );

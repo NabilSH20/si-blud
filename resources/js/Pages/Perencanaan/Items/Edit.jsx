@@ -2,10 +2,19 @@ import InputError from '@/Components/InputError';
 import PerencanaanLayout from '@/Layouts/PerencanaanLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-const unitOptions = ['Unit', 'Rim', 'Box', 'Pcs', 'Pak', 'Set', 'Botol', 'Roll'];
+const unitOptions = ['Unit', 'Rim', 'Box', 'Pcs', 'Pak', 'Set', 'Botol', 'Roll', 'Lembar', 'Meter', 'Kg', 'Liter'];
 
-export default function Edit({ item }) {
+const formatRupiah = (value) =>
+    new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(Number(value || 0));
+
+export default function Edit({ item, rbaAccounts = [] }) {
     const { data, setData, put, processing, errors } = useForm({
+        rba_account_id: item.rba_account_id ? String(item.rba_account_id) : '',
         item_code: item.item_code || '',
         name: item.name || '',
         specification: item.specification || '',
@@ -27,37 +36,67 @@ export default function Edit({ item }) {
                 <div>
                     <Link
                         href={route('items.index')}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 transition mb-2"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 hover:text-teal-800 transition mb-2"
                     >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                         </svg>
-                        Kembali ke Katalog Barang
+                        <span>Kembali ke Katalog Barang</span>
                     </Link>
-                    <h2 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
-                        Edit Barang: {item.name}
-                    </h2>
-                    <p className="mt-1 text-xs sm:text-sm text-slate-600 font-medium">
-                        Perbarui informasi kode, spesifikasi, satuan, atau harga acuan standar barang ini.
+                    <div className="flex items-center gap-2.5">
+                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                            Ubah Data Barang
+                        </h1>
+                        <span className="font-mono text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                            {item.item_code}
+                        </span>
+                    </div>
+                    <p className="mt-1 text-xs sm:text-sm text-slate-500">
+                        Perbarui rincian kode, spesifikasi, satuan ukur, pos rekening, atau harga standar barang.
                     </p>
                 </div>
 
                 {/* Form Card */}
-                <div className="overflow-hidden rounded-2xl border-2 border-slate-300 bg-white shadow-md">
-                    <div className="border-b-2 border-slate-200 bg-slate-100 px-6 py-4">
-                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                            Perubahan Data Barang
-                        </h3>
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+                    <div className="border-b border-slate-100 bg-white px-6 py-4">
+                        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                            Formulir Perubahan Data Barang
+                        </h2>
                     </div>
 
-                    <form onSubmit={submit} className="p-6 sm:p-8 space-y-5">
-                        <div className="grid gap-5 sm:grid-cols-2">
-                            <div>
+                    <form onSubmit={submit} className="p-6 sm:p-8 space-y-4">
+                        {/* Pos Rekening Belanja RBA BLUD */}
+                        <div className="space-y-1">
+                            <label
+                                htmlFor="rba_account_id"
+                                className="block text-xs font-semibold text-slate-700"
+                            >
+                                Pos Rekening Belanja RBA <span className="text-rose-500">*</span>
+                            </label>
+                            <select
+                                id="rba_account_id"
+                                value={data.rba_account_id}
+                                onChange={(e) => setData('rba_account_id', e.target.value)}
+                                className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-slate-900 shadow-2xs transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600 cursor-pointer"
+                            >
+                                <option value="" disabled>-- Pilih Pos Rekening Belanja RBA --</option>
+                                {rbaAccounts.map((account) => (
+                                    <option key={account.id} value={account.id}>
+                                        [{account.account_code}] {account.account_name}
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError message={errors.rba_account_id} className="mt-1" />
+                        </div>
+
+                        {/* Grid Kode Barang & Satuan Ukur */}
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="space-y-1">
                                 <label
                                     htmlFor="item_code"
-                                    className="mb-1.5 block text-xs font-black uppercase tracking-wider text-slate-700"
+                                    className="block text-xs font-semibold text-slate-700"
                                 >
-                                    Kode Barang <span className="text-rose-600">*</span>
+                                    Kode Barang <span className="text-rose-500">*</span>
                                 </label>
                                 <input
                                     id="item_code"
@@ -66,17 +105,17 @@ export default function Edit({ item }) {
                                     onChange={(e) =>
                                         setData('item_code', e.target.value.toUpperCase())
                                     }
-                                    className="block w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-900 uppercase shadow-2xs transition-all duration-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/30"
+                                    className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-mono font-bold text-slate-900 uppercase shadow-2xs transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
                                 />
-                                <InputError message={errors.item_code} className="mt-1.5 font-bold text-rose-600" />
+                                <InputError message={errors.item_code} className="mt-1" />
                             </div>
 
-                            <div>
+                            <div className="space-y-1">
                                 <label
                                     htmlFor="unit_type"
-                                    className="mb-1.5 block text-xs font-black uppercase tracking-wider text-slate-700"
+                                    className="block text-xs font-semibold text-slate-700"
                                 >
-                                    Satuan Ukur <span className="text-rose-600">*</span>
+                                    Satuan Ukur <span className="text-rose-500">*</span>
                                 </label>
                                 <select
                                     id="unit_type"
@@ -84,7 +123,7 @@ export default function Edit({ item }) {
                                     onChange={(e) =>
                                         setData('unit_type', e.target.value)
                                     }
-                                    className="block w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-900 shadow-2xs transition-all duration-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/30"
+                                    className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-slate-900 shadow-2xs transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600 cursor-pointer"
                                 >
                                     {unitOptions.map((unit) => (
                                         <option key={unit} value={unit}>
@@ -92,55 +131,38 @@ export default function Edit({ item }) {
                                         </option>
                                     ))}
                                 </select>
-                                <InputError message={errors.unit_type} className="mt-1.5 font-bold text-rose-600" />
+                                <InputError message={errors.unit_type} className="mt-1" />
                             </div>
                         </div>
 
-                        <div>
+                        {/* Nama Barang */}
+                        <div className="space-y-1">
                             <label
                                 htmlFor="name"
-                                className="mb-1.5 block text-xs font-black uppercase tracking-wider text-slate-700"
+                                className="block text-xs font-semibold text-slate-700"
                             >
-                                Nama Barang <span className="text-rose-600">*</span>
+                                Nama Barang <span className="text-rose-500">*</span>
                             </label>
                             <input
                                 id="name"
                                 type="text"
                                 value={data.name}
                                 onChange={(e) => setData('name', e.target.value)}
-                                className="block w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-2xs transition-all duration-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/30"
+                                className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 shadow-2xs transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
                             />
-                            <InputError message={errors.name} className="mt-1.5 font-bold text-rose-600" />
+                            <InputError message={errors.name} className="mt-1" />
                         </div>
 
-                        <div>
-                            <label
-                                htmlFor="specification"
-                                className="mb-1.5 block text-xs font-black uppercase tracking-wider text-slate-700"
-                            >
-                                Spesifikasi Teknis / Keterangan
-                            </label>
-                            <textarea
-                                id="specification"
-                                rows={3}
-                                value={data.specification}
-                                onChange={(e) =>
-                                    setData('specification', e.target.value)
-                                }
-                                className="block w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs transition-all duration-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/30"
-                            />
-                            <InputError message={errors.specification} className="mt-1.5 font-bold text-rose-600" />
-                        </div>
-
-                        <div>
+                        {/* Harga Standar Acuan */}
+                        <div className="space-y-1">
                             <label
                                 htmlFor="standard_price"
-                                className="mb-1.5 block text-xs font-black uppercase tracking-wider text-slate-700"
+                                className="block text-xs font-semibold text-slate-700"
                             >
-                                Harga Standar Acuan <span className="text-rose-600">*</span>
+                                Harga Acuan Standar (HPS) <span className="text-rose-500">*</span>
                             </label>
                             <div className="relative rounded-xl shadow-2xs">
-                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-xs font-black text-slate-500">
+                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-bold text-slate-400">
                                     Rp
                                 </div>
                                 <input
@@ -149,39 +171,50 @@ export default function Edit({ item }) {
                                     min="0"
                                     step="0.01"
                                     value={data.standard_price}
-                                    onChange={(e) =>
-                                        setData('standard_price', e.target.value)
-                                    }
-                                    className="block w-full rounded-xl border-2 border-slate-300 bg-white pl-12 pr-4 py-2.5 text-sm font-bold text-slate-900 transition-all duration-200 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/30"
+                                    onChange={(e) => setData('standard_price', e.target.value)}
+                                    className="block w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 py-2 text-xs sm:text-sm font-mono font-bold text-slate-900 placeholder:text-slate-400 transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
                                 />
                             </div>
-                            <p className="mt-1.5 text-xs text-slate-500 font-medium">Harga standar perkiraan sendiri per satu satuan unit.</p>
-                            <InputError message={errors.standard_price} className="mt-1.5 font-bold text-rose-600" />
+                            {Number(data.standard_price) > 0 && (
+                                <p className="mt-1 text-xs text-teal-800 font-bold">
+                                    {formatRupiah(data.standard_price)}
+                                </p>
+                            )}
+                            <InputError message={errors.standard_price} className="mt-1" />
                         </div>
 
-                        <div className="flex items-center justify-end gap-3 border-t-2 border-slate-200 pt-6">
+                        {/* Spesifikasi */}
+                        <div className="space-y-1">
+                            <label
+                                htmlFor="specification"
+                                className="block text-xs font-semibold text-slate-700"
+                            >
+                                Spesifikasi Teknis / Keterangan <span className="text-slate-400 font-normal">(Opsional)</span>
+                            </label>
+                            <textarea
+                                id="specification"
+                                rows={3}
+                                value={data.specification}
+                                onChange={(e) => setData('specification', e.target.value)}
+                                className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 shadow-2xs transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
+                            />
+                            <InputError message={errors.specification} className="mt-1" />
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                             <Link
                                 href={route('items.index')}
-                                className="rounded-xl border-2 border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100 active:scale-95"
+                                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
                             >
                                 Batal
                             </Link>
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 px-6 py-2.5 text-sm font-black text-white shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50"
+                                className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 text-white px-5 py-2 text-xs font-bold shadow-xs transition disabled:opacity-50 cursor-pointer"
                             >
-                                {processing ? (
-                                    <>
-                                        <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                        </svg>
-                                        Menyimpan...
-                                    </>
-                                ) : (
-                                    'Simpan Perubahan'
-                                )}
+                                {processing ? 'Menyimpan...' : 'Simpan Perubahan'}
                             </button>
                         </div>
                     </form>

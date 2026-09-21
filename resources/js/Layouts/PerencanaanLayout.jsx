@@ -24,13 +24,34 @@ const menuGroups = [
         items: [
             {
                 name: 'RBA (Rencana Bisnis)',
-                href: route('perencanaan.rba.index'),
                 routeName: 'perencanaan.rba.*',
                 icon: (
                     <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
                 ),
+                children: [
+                    {
+                        name: 'Ringkasan & SiLPA',
+                        tabKey: 'RINGKASAN',
+                    },
+                    {
+                        name: 'Rincian Usulan Belanja',
+                        tabKey: 'RINCIAN_BARANG',
+                    },
+                    {
+                        name: 'Anggaran Belanja BLUD',
+                        tabKey: 'BELANJA',
+                    },
+                    {
+                        name: 'Target Pendapatan BLUD',
+                        tabKey: 'PENDAPATAN',
+                    },
+                    {
+                        name: 'Kelola Versi & Pergeseran',
+                        tabKey: 'SHIFTS',
+                    },
+                ],
             },
         ],
     },
@@ -67,12 +88,27 @@ const menuGroups = [
 ];
 
 export default function PerencanaanLayout({ children }) {
-    const { auth, active_year, available_fiscal_years } = usePage().props;
+    const { auth, active_year, available_fiscal_years, active_tab, selected_year } = usePage().props;
+    const { url } = usePage();
     const user = auth?.user || {};
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [openDropdowns, setOpenDropdowns] = useState({});
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
     const [showNotification, setShowNotification] = useState(false);
     const [profileModalOpen, setProfileModalOpen] = useState(false);
+
+    const isRbaRoute = route().current('perencanaan.rba.*');
+    const currentRbaTab = (() => {
+        if (!isRbaRoute) return null;
+        if (active_tab) return active_tab;
+        const qIdx = url.indexOf('?');
+        if (qIdx !== -1) {
+            const params = new URLSearchParams(url.substring(qIdx));
+            if (params.has('tab')) return params.get('tab');
+        }
+        return 'RINGKASAN';
+    })();
+    const currentYear = selected_year || active_year;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-100/90 via-slate-50 to-emerald-50/50 bg-fixed font-sans text-slate-800 antialiased">
@@ -149,6 +185,79 @@ export default function PerencanaanLayout({ children }) {
                             </div>
                             <nav className="space-y-1.5">
                                 {group.items.map((item) => {
+                                    if (item.children) {
+                                        const isParentActive = route().current(item.routeName);
+                                        const isOpen = openDropdowns[item.name] ?? isParentActive;
+
+                                        return (
+                                            <div key={item.name} className="space-y-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setOpenDropdowns((prev) => ({
+                                                            ...prev,
+                                                            [item.name]: !isOpen,
+                                                        }));
+                                                    }}
+                                                    className={`w-full group flex items-center justify-between rounded-xl py-2.5 pr-3 text-sm transition-all duration-150 cursor-pointer ${
+                                                        isParentActive
+                                                            ? 'bg-emerald-50/70 text-emerald-900 font-bold border-l-4 border-emerald-600 pl-3'
+                                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-semibold pl-4'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <span
+                                                            className={`transition-colors ${
+                                                                isParentActive ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-600'
+                                                            }`}
+                                                        >
+                                                            {item.icon}
+                                                        </span>
+                                                        <span className="truncate">{item.name}</span>
+                                                    </div>
+                                                    <svg
+                                                        className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${
+                                                            isOpen ? 'rotate-180 text-emerald-600' : ''
+                                                        }`}
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        strokeWidth={2}
+                                                        stroke="currentColor"
+                                                    >
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                                    </svg>
+                                                </button>
+
+                                                {isOpen && (
+                                                    <div className="ml-4 space-y-1 border-l-2 border-slate-200 pl-3 pt-1">
+                                                        {item.children.map((child) => {
+                                                            const isChildActive = isParentActive && (child.tabKey ? currentRbaTab === child.tabKey : (child.isActive ? child.isActive(url, isParentActive) : false));
+                                                            const targetHref = child.tabKey
+                                                                ? route('perencanaan.rba.index', { tab: child.tabKey, year: currentYear })
+                                                                : child.href;
+
+                                                            return (
+                                                                <Link
+                                                                    key={child.name}
+                                                                    href={targetHref}
+                                                                    onClick={() => setSidebarOpen(false)}
+                                                                    className={`group flex items-center gap-2.5 rounded-lg py-2 px-3 text-xs transition-colors ${
+                                                                        isChildActive
+                                                                            ? 'bg-emerald-100/70 text-emerald-900 font-black shadow-2xs'
+                                                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
+                                                                    }`}
+                                                                >
+                                                                    <span className={`h-1.5 w-1.5 rounded-full ${isChildActive ? 'bg-emerald-600' : 'bg-slate-300 group-hover:bg-slate-400'}`} />
+                                                                    <span className="truncate">{child.name}</span>
+                                                                </Link>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    }
+
                                     const active = route().current(item.routeName);
                                     return (
                                         <Link

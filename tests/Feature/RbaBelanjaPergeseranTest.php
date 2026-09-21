@@ -152,4 +152,64 @@ class RbaBelanjaPergeseranTest extends TestCase
             ->has('items')
         );
     }
+
+    public function test_perencanaan_can_delete_shift_version(): void
+    {
+        $perencanaan = User::factory()->create(['role' => 'perencanaan']);
+
+        // Create a new draft shift
+        $shift = RbaShift::create([
+            'year' => 2026,
+            'shift_name' => 'Pergeseran IV Uji Hapus',
+            'doc_title' => 'RBA PERGESERAN IV UJI HAPUS',
+            'period_month' => 'Desember 2026',
+            'status' => 'Draft',
+        ]);
+
+        RbaExpenseItem::create([
+            'rba_shift_id' => $shift->id,
+            'account_code' => '1.1.2.1.99',
+            'account_name' => 'Belanja Uji Hapus',
+            'before_total' => 1000000,
+            'after_total' => 1000000,
+        ]);
+
+        $response = $this->actingAs($perencanaan)->delete(route('perencanaan.rba.shifts.destroy', $shift->id));
+
+        $response->assertRedirect(route('perencanaan.rba.index', ['year' => 2026, 'tab' => 'SHIFTS']));
+        $this->assertDatabaseMissing('rba_shifts', ['id' => $shift->id]);
+        $this->assertDatabaseMissing('rba_expense_items', ['account_code' => '1.1.2.1.99']);
+    }
+
+    public function test_perencanaan_cannot_delete_only_remaining_shift(): void
+    {
+        $perencanaan = User::factory()->create(['role' => 'perencanaan']);
+
+        // Delete other shifts so only 1 remains in 2026
+        $shifts = RbaShift::where('year', 2026)->get();
+        foreach ($shifts->skip(1) as $s) {
+            $s->delete();
+        }
+
+        $soleShift = RbaShift::where('year', 2026)->firstOrFail();
+
+        $response = $this->actingAs($perencanaan)->delete(route('perencanaan.rba.shifts.destroy', $soleShift->id));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('rba_shifts', ['id' => $soleShift->id]);
+    }
+
+    public function test_perencanaan_can_access_rba_tab_shifts(): void
+    {
+        $perencanaan = User::factory()->create(['role' => 'perencanaan']);
+
+        $response = $this->actingAs($perencanaan)->get(route('perencanaan.rba.index', ['tab' => 'SHIFTS']));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Perencanaan/RBA/Index')
+            ->where('active_tab', 'SHIFTS')
+        );
+    }
 }

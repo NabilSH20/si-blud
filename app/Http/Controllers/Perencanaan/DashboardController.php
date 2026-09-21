@@ -33,6 +33,7 @@ class DashboardController extends Controller
             ->get();
 
         return Inertia::render('Perencanaan/Dashboard', [
+            'total_requests' => (clone $baseQuery)->count(),
             'total_to_verify' => (clone $baseQuery)->where('status', 'Pending_Perencanaan')->count(),
             'total_verified' => (clone $baseQuery)->whereIn('status', ['Diproses_Keuangan', 'Disetujui_Selesai'])->count(),
             'total_items' => Item::count(),

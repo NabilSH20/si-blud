@@ -148,63 +148,8 @@ export default function Dashboard({
                     </div>
                 )}
 
-                {/* 3. Metrics Cards (4 Kotak Ringkas & Minimalis) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Card 1: Total Pengajuan */}
-                    <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 hover:border-slate-300 transition">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                            Total Pengajuan
-                        </p>
-                        <div className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 mt-1">
-                            {total_requests} <span className="text-xs font-normal text-slate-500">Berkas</span>
-                        </div>
-                        <p className="text-[11px] text-slate-400 mt-1">
-                            Estimasi: {formatRupiah(total_estimated)}
-                        </p>
-                    </div>
-
-                    {/* Card 2: Menunggu Telaah */}
-                    <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 hover:border-amber-300 transition">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">
-                            Menunggu Telaah
-                        </p>
-                        <div className="text-2xl sm:text-3xl font-bold tracking-tight text-amber-600 mt-1">
-                            {pending_requests} <span className="text-xs font-normal text-slate-500">Berkas</span>
-                        </div>
-                        <p className="text-[11px] text-slate-400 mt-1">
-                            Tahap telaah Bag. Perencanaan
-                        </p>
-                    </div>
-
-                    {/* Card 3: Proses Keuangan */}
-                    <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 hover:border-blue-300 transition">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
-                            Proses Keuangan
-                        </p>
-                        <div className="text-2xl sm:text-3xl font-bold tracking-tight text-blue-600 mt-1">
-                            {in_finance_requests} <span className="text-xs font-normal text-slate-500">Berkas</span>
-                        </div>
-                        <p className="text-[11px] text-slate-400 mt-1">
-                            Validasi pagu kas & SP2D
-                        </p>
-                    </div>
-
-                    {/* Card 4: Disetujui */}
-                    <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 hover:border-teal-300 transition">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
-                            Disetujui Selesai
-                        </p>
-                        <div className="text-2xl sm:text-3xl font-bold tracking-tight text-teal-600 mt-1">
-                            {approved_requests} <span className="text-xs font-normal text-slate-500">Berkas</span>
-                        </div>
-                        <p className="text-[11px] text-slate-400 mt-1">
-                            Disetujui: {formatRupiah(total_approved)}
-                        </p>
-                    </div>
-                </div>
-
-                {/* 4. Section: Daftar Usulan Belanja Terkini */}
-                <div className="pt-4 space-y-4">
+                {/* 3. Section: Daftar Usulan Belanja Terkini */}
+                <div className="pt-2 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div>
                             <h2 className="text-base sm:text-lg font-bold text-slate-900">

@@ -19,6 +19,7 @@ export default function QuickVerificationModal({
     const [itemsState, setItemsState] = useState([]);
     const [notesPerencanaan, setNotesPerencanaan] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showRejectConfirmation, setShowRejectConfirmation] = useState(false);
 
     const details = requisition?.requisition_details || requisition?.requisitionDetails || [];
 
@@ -26,6 +27,7 @@ export default function QuickVerificationModal({
         if (!show || !requisition) {
             setItemsState([]);
             setNotesPerencanaan('');
+            setShowRejectConfirmation(false);
             return;
         }
 
@@ -39,6 +41,7 @@ export default function QuickVerificationModal({
 
         setItemsState(initialItems);
         setNotesPerencanaan(requisition.notes_perencanaan || '');
+        setShowRejectConfirmation(false);
     }, [show, requisition]);
 
     const updateQuantityApproved = (idx, val) => {
@@ -93,218 +96,195 @@ export default function QuickVerificationModal({
         };
     }, [details, itemsState]);
 
-    // Handle Approve Submission
+    // Handle Approve Submission (Frictionless / Direct with Toast)
     const handleSubmitApprove = (e) => {
         e.preventDefault();
         if (!requisition) return;
 
-        Swal.fire({
-            title: 'Setujui & Teruskan ke Keuangan?',
-            html: `
-                <div class="text-left text-xs sm:text-sm space-y-2 mt-2">
-                    <p><strong>Nomor Pengajuan:</strong> <span class="font-mono font-bold text-slate-900">${requisition.requisition_number}</span></p>
-                    <p><strong>Unit Pemohon:</strong> ${requisition.unit?.name || requisition.division?.name || '-'}</p>
-                    <p><strong>Total Kuantitas Disetujui:</strong> <span class="font-bold text-slate-800">${totalApprovedQty} Unit</span> (dari ${totalRequestedQty} Unit diminta)</p>
-                    <p><strong>Estimasi Nilai Verifikasi:</strong> <span class="text-emerald-700 font-bold">${formatRupiah(totalEstimatedApproved)}</span></p>
-                    <p class="text-slate-500 text-xs mt-2 border-t pt-2">Pengajuan akan diteruskan ke Bagian Keuangan untuk verifikasi pagu anggaran dan penerbitan SP2D.</p>
-                </div>
-            `,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#059669',
-            cancelButtonColor: '#64748b',
-            confirmButtonText: 'Ya, Setujui & Teruskan',
-            cancelButtonText: 'Batal',
-            reverseButtons: true,
-        }).then((result) => {
-            if (result.isConfirmed) {
-                setIsSubmitting(true);
-                router.put(
-                    route('perencanaan.requisitions.update', requisition.id),
-                    {
-                        status: 'Diproses_Keuangan',
-                        notes_perencanaan: notesPerencanaan,
-                        items: itemsState,
-                    },
-                    {
-                        preserveScroll: true,
-                        onSuccess: () => {
-                            setIsSubmitting(false);
-                            onClose();
-                        },
-                        onError: () => {
-                            setIsSubmitting(false);
-                        },
-                    }
-                );
+        setIsSubmitting(true);
+        router.put(
+            route('perencanaan.requisitions.update', requisition.id),
+            {
+                status: 'Diproses_Keuangan',
+                notes_perencanaan: notesPerencanaan,
+                items: itemsState,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsSubmitting(false);
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Usulan berhasil disetujui & diteruskan ke Keuangan',
+                        showConfirmButton: false,
+                        timer: 2500,
+                        timerProgressBar: true,
+                    });
+                    onClose();
+                },
+                onError: () => {
+                    setIsSubmitting(false);
+                },
             }
-        });
+        );
     };
 
     // Handle Reject Submission
-    const handleReject = () => {
+    const handleConfirmReject = () => {
         if (!requisition) return;
 
-        Swal.fire({
-            title: 'Tolak Pengajuan Belanja?',
-            text: `Apakah Anda yakin ingin menolak pengajuan ${requisition.requisition_number}? Status dokumen akan ditutup sebagai Ditolak.`,
-            icon: 'warning',
-            input: 'textarea',
-            inputPlaceholder: 'Tuliskan catatan/alasan penolakan telaahan staf...',
-            inputValue: notesPerencanaan,
-            showCancelButton: true,
-            confirmButtonColor: '#e11d48',
-            cancelButtonColor: '#64748b',
-            confirmButtonText: 'Ya, Tolak Pengajuan',
-            cancelButtonText: 'Batal',
-            reverseButtons: true,
-        }).then((result) => {
-            if (result.isConfirmed) {
-                setIsSubmitting(true);
-                router.put(
-                    route('perencanaan.requisitions.update', requisition.id),
-                    {
-                        status: 'Ditolak',
-                        notes_perencanaan: result.value || notesPerencanaan || 'Pengajuan tidak disetujui pada verifikasi Perencanaan.',
-                        items: itemsState,
-                    },
-                    {
-                        preserveScroll: true,
-                        onSuccess: () => {
-                            setIsSubmitting(false);
-                            onClose();
-                        },
-                        onError: () => {
-                            setIsSubmitting(false);
-                        },
-                    }
-                );
+        setIsSubmitting(true);
+        router.put(
+            route('perencanaan.requisitions.update', requisition.id),
+            {
+                status: 'Ditolak',
+                notes_perencanaan: notesPerencanaan || 'Pengajuan tidak disetujui pada verifikasi Perencanaan.',
+                items: itemsState,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsSubmitting(false);
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'info',
+                        title: 'Usulan belanja ditolak',
+                        showConfirmButton: false,
+                        timer: 2500,
+                        timerProgressBar: true,
+                    });
+                    onClose();
+                },
+                onError: () => {
+                    setIsSubmitting(false);
+                },
             }
-        });
+        );
     };
 
     if (!requisition) return null;
 
+    const unitName = requisition.unit?.name || requisition.division?.name || 'Unit Pengusul';
+    const fiscalYear = requisition.budget_year || requisition.fiscal_year || '2026';
+
     return (
         <Modal show={show} onClose={onClose} maxWidth="4xl">
-            <div className="flex flex-col max-h-[92vh]">
-                {/* Header Modal */}
-                <div className="relative border-b border-emerald-100 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 px-6 py-4 text-white">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur-xs border border-white/20 text-white shadow-xs">
-                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
-                                    Verifikasi Cepat Usulan Belanja
-                                    <span className="rounded-full bg-amber-400 text-amber-950 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
-                                        {requisition.requisition_number}
-                                    </span>
-                                </h3>
-                                <p className="text-xs text-emerald-100 font-medium mt-0.5">
-                                    {requisition.unit?.name ? `${requisition.unit.name} • ` : ''}
-                                    {requisition.division?.name || '-'} • TA {requisition.fiscal_year || '2027'}
-                                </p>
-                            </div>
+            <div className="flex flex-col bg-white rounded-2xl overflow-hidden shadow-xl max-h-[92vh]">
+                {/* 1. Header Minimalis Putih (Persis Standar Admin, Divisi & Profil) */}
+                <div className="shrink-0 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
+                    <div>
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                                Verifikasi Usulan Belanja
+                            </h2>
+                            <span className="inline-block font-mono text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                                {requisition.requisition_number}
+                            </span>
+                            <span className="inline-block text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                                TA {fiscalYear}
+                            </span>
                         </div>
-
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="rounded-xl p-1.5 text-white/80 hover:bg-white/10 hover:text-white transition focus:outline-none cursor-pointer"
-                            aria-label="Tutup Modal"
-                        >
-                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                            {unitName} &bull; Sub Kegiatan: {requisition.sub_kegiatan || 'Pelayanan BLUD'}
+                        </p>
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
+                        title="Tutup dialog"
+                    >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
 
-                {/* Body Content */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-5">
-                    {/* Ringkasan Dokumen & Urgensi */}
-                    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+                {/* 2. Body Content (Scrollable) */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/40">
+                    {/* Ringkasan Pos Rekening & Klasifikasi Belanja */}
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                             <div>
-                                <span className="text-slate-500 font-medium block">Pos Rekening Belanja RBA:</span>
-                                <span className="font-bold text-slate-800">
+                                <span className="text-slate-400 font-medium block mb-0.5">Pos Rekening Belanja:</span>
+                                <span className="font-bold text-slate-900">
                                     {requisition.rba_account
                                         ? `[${requisition.rba_account.account_code}] ${requisition.rba_account.account_name}`
-                                        : '-'}
+                                        : 'Belum Terhubung'}
                                 </span>
                             </div>
                             <div>
-                                <span className="text-slate-500 font-medium block">Klasifikasi & Sumber:</span>
-                                <span className="font-bold text-emerald-800">
-                                    Belanja {requisition.jenis_belanja || 'Operasi'} • 100% BLUD
+                                <span className="text-slate-400 font-medium block mb-0.5">Klasifikasi Belanja:</span>
+                                <span className="inline-flex items-center gap-1 font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                                    Belanja {requisition.jenis_belanja || 'Operasi'} &bull; 100% BLUD
                                 </span>
                             </div>
                             <div>
-                                <span className="text-slate-500 font-medium block">Sub Kegiatan RS:</span>
-                                <span className="font-bold text-slate-800 line-clamp-1">
-                                    {requisition.sub_kegiatan || 'Pelayanan dan Penunjang Pelayanan BLUD'}
+                                <span className="text-slate-400 font-medium block mb-0.5">Unit Pengusul:</span>
+                                <span className="font-semibold text-slate-800">
+                                    {unitName}
                                 </span>
                             </div>
                         </div>
 
                         {requisition.urgency_reason && (
-                            <div className="border-t border-slate-200 pt-2.5">
-                                <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block mb-0.5">
-                                    📌 Telaahan Staf / Justifikasi Urgensi Kebutuhan:
+                            <div className="border-t border-slate-100 pt-2.5 text-xs">
+                                <span className="font-bold text-slate-600 block mb-1">
+                                    Catatan / Alasan Kebutuhan Belanja Unit:
                                 </span>
-                                <p className="text-xs text-slate-700 italic leading-relaxed whitespace-pre-line bg-amber-50/60 p-2.5 rounded-lg border border-amber-200">
+                                <p className="text-slate-700 italic bg-slate-50 p-2.5 rounded-lg border border-slate-200 leading-relaxed">
                                     "{requisition.urgency_reason}"
                                 </p>
                             </div>
                         )}
                     </div>
 
-                    {/* Toolbar Tombol Aksi Cepat Tabel */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-emerald-50/70 border border-emerald-200 p-3 rounded-xl">
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-emerald-950">
-                                Rincian {details.length} Macam Barang:
-                            </span>
-                            <span className="text-xs font-semibold text-slate-600">
-                                (Total Diminta: <strong className="text-slate-900">{totalRequestedQty}</strong> Unit)
-                            </span>
+                    {/* Tabel Rincian Barang & Input Kuantitas Disetujui */}
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2 border-b border-slate-100">
+                            <div>
+                                <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                                    Rincian Kuantitas Barang ({details.length} Item)
+                                </h3>
+                                <p className="text-[11px] text-slate-500">
+                                    Total Diminta: <strong className="text-slate-800">{totalRequestedQty} Unit</strong> &bull; Sesuaikan volume yang disetujui
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <button
+                                    type="button"
+                                    onClick={handleApproveAll}
+                                    className="rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 px-3 py-1.5 text-xs font-bold transition cursor-pointer"
+                                    title="Setujui seluruh kuantitas sesuai permintaan unit"
+                                >
+                                    ✓ Setujui Semua (100%)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleResetAll}
+                                    className="rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-2.5 py-1.5 text-xs font-semibold transition cursor-pointer"
+                                    title="Reset seluruh volume disetujui menjadi 0"
+                                >
+                                    Reset (0)
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <button
-                                type="button"
-                                onClick={handleApproveAll}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white px-3 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
-                            >
-                                <span>✨</span>
-                                Setujui Semua (100% Usulan)
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleResetAll}
-                                className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 active:scale-95 text-slate-700 px-2.5 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
-                            >
-                                Reset Kuantitas (0)
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Tabel Rincian Barang & Input Kuantitas */}
-                    <div className="overflow-hidden rounded-xl border border-slate-200 shadow-2xs">
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-slate-200 text-xs">
-                                <thead className="bg-slate-100 text-slate-800 font-bold uppercase tracking-wider">
+                        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+                            <table className="min-w-full divide-y divide-slate-100 text-xs">
+                                <thead className="bg-slate-50 font-bold text-slate-700 uppercase tracking-wider text-[11px]">
                                     <tr>
                                         <th className="w-10 px-3 py-2.5 text-center">No</th>
                                         <th className="px-4 py-2.5 text-left">Nama Barang & Spesifikasi</th>
                                         <th className="w-20 px-3 py-2.5 text-center">Satuan</th>
                                         <th className="w-32 px-3 py-2.5 text-right">Harga Satuan</th>
-                                        <th className="w-24 px-3 py-2.5 text-center">Diminta</th>
-                                        <th className="w-32 px-3 py-2.5 text-center bg-emerald-100 text-emerald-950 border-x border-emerald-300">
+                                        <th className="w-20 px-3 py-2.5 text-center">Diminta</th>
+                                        <th className="w-28 px-3 py-2 text-center bg-teal-50/70 text-teal-950 border-x border-teal-200">
                                             Disetujui *
                                         </th>
                                         <th className="w-36 px-4 py-2.5 text-right">Subtotal Disetujui</th>
@@ -321,97 +301,124 @@ export default function QuickVerificationModal({
                                         const subtotalApproved = unitPrice * Number(currentApproved || 0);
 
                                         return (
-                                            <tr key={detail.id || idx} className="hover:bg-emerald-50/30">
-                                                <td className="px-3 py-2.5 text-center text-slate-500 font-medium">
+                                            <tr key={detail.id || idx} className="hover:bg-slate-50/60 transition">
+                                                <td className="px-3 py-2.5 text-center text-slate-400 font-semibold">
                                                     {idx + 1}
                                                 </td>
                                                 <td className="px-4 py-2.5">
                                                     <div className="flex items-center gap-1.5">
-                                                        <span className="font-mono text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                                                        <span className="font-mono text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                                                             {itemCode}
                                                         </span>
                                                         <span className="font-bold text-slate-900">{itemName}</span>
                                                     </div>
                                                     {itemSpec && (
                                                         <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
-                                                            Spesifikasi: {itemSpec}
+                                                            {itemSpec}
                                                         </p>
                                                     )}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-center">
-                                                    <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-700">
-                                                        {itemUnit}
-                                                    </span>
+                                                <td className="px-3 py-2.5 text-center text-slate-600">
+                                                    {itemUnit}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-right font-medium text-slate-700">
+                                                <td className="px-3 py-2.5 text-right font-mono text-slate-700">
                                                     {formatRupiah(unitPrice)}
                                                 </td>
                                                 <td className="px-3 py-2.5 text-center font-bold text-slate-700">
                                                     {detail.quantity_requested}
                                                 </td>
-                                                <td className="px-3 py-2 text-center bg-emerald-50/50 border-x border-emerald-200">
+                                                <td className="px-3 py-2 text-center bg-teal-50/40 border-x border-teal-200">
                                                     <input
                                                         type="number"
                                                         min="0"
                                                         value={itemsState[idx]?.quantity_approved ?? ''}
                                                         onChange={(e) => updateQuantityApproved(idx, e.target.value)}
-                                                        className="w-20 text-center font-black text-sm rounded-lg border-2 border-emerald-400 bg-white py-1 px-2 text-emerald-950 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/30 shadow-2xs"
+                                                        className="w-20 text-center font-bold text-xs rounded-lg border border-slate-300 bg-white py-1 px-2 text-slate-900 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition shadow-2xs"
                                                     />
                                                 </td>
-                                                <td className="px-4 py-2.5 text-right font-black text-emerald-700">
+                                                <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-900">
                                                     {formatRupiah(subtotalApproved)}
                                                 </td>
                                             </tr>
                                         );
                                     })}
                                 </tbody>
-                                <tfoot className="bg-slate-100 border-t border-slate-300 font-bold">
-                                    <tr>
-                                        <td colSpan={5} className="px-4 py-3 text-right text-slate-700 uppercase tracking-wider text-[11px]">
-                                            Total Disetujui ({totalApprovedQty} Unit):
-                                        </td>
-                                        <td className="px-3 py-3 text-center font-black text-emerald-900 bg-emerald-100/70 border-x border-emerald-300">
-                                            {totalApprovedQty}
-                                        </td>
-                                        <td className="px-4 py-3 text-right font-black text-sm text-emerald-800">
-                                            {formatRupiah(totalEstimatedApproved)}
-                                        </td>
-                                    </tr>
-                                </tfoot>
                             </table>
+                        </div>
+
+                        {/* Baris Ringkasan Bawah Tabel */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                            <span className="text-xs text-slate-500">
+                                Total Volume Disetujui: <strong className="text-slate-800">{totalApprovedQty} Unit</strong>
+                            </span>
+                            <div className="flex items-center gap-2 self-end">
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                                    Total Nilai Disetujui:
+                                </span>
+                                <span className="text-sm sm:text-base font-bold text-teal-800 font-mono bg-teal-50 px-2.5 py-0.5 rounded-lg border border-teal-200">
+                                    {formatRupiah(totalEstimatedApproved)}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Catatan Verifikasi Perencanaan */}
-                    <div>
+                    {/* Catatan / Rekomendasi Perencanaan */}
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-1.5">
                         <label
                             htmlFor="modal_notes_perencanaan"
-                            className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1"
+                            className="block text-xs font-semibold text-slate-700"
                         >
-                            Catatan Verifikasi / Rekomendasi Perencanaan (Opsional):
+                            Catatan / Rekomendasi Telaah Perencanaan <span className="text-slate-400 font-normal">(Opsional)</span>
                         </label>
                         <textarea
                             id="modal_notes_perencanaan"
                             rows={2}
                             value={notesPerencanaan}
                             onChange={(e) => setNotesPerencanaan(e.target.value)}
-                            placeholder="Tuliskan catatan teknis untuk Bagian Keuangan atau unit pemohon..."
-                            className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500"
+                            placeholder="Tuliskan catatan arahan teknis untuk Bagian Keuangan atau unit kerja pengusul..."
+                            className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition shadow-2xs"
                         />
                     </div>
+
+                    {/* Konfirmasi Penolakan Inline jika tombol Tolak diklik */}
+                    {showRejectConfirmation && (
+                        <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4 space-y-2 animate-fade-in">
+                            <div className="flex items-center gap-2 text-rose-900 font-bold text-xs">
+                                <span>⚠️</span>
+                                <span>Konfirmasi Penolakan Usulan Belanja</span>
+                            </div>
+                            <p className="text-xs text-rose-700">
+                                Berkas usulan belanja ini akan ditutup dengan status <strong>Ditolak</strong>. Pastikan Anda telah menuliskan alasan penolakan pada kolom catatan di atas.
+                            </p>
+                            <div className="flex items-center gap-2 pt-1">
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmReject}
+                                    disabled={isSubmitting}
+                                    className="rounded-lg bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-1.5 text-xs font-bold transition cursor-pointer"
+                                >
+                                    {isSubmitting ? 'Menolak...' : 'Ya, Tetap Tolak Usulan'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowRejectConfirmation(false)}
+                                    className="rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-3 py-1.5 text-xs font-semibold transition cursor-pointer"
+                                >
+                                    Batal
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {/* Footer Modal Actions */}
-                <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-3.5">
+                {/* 3. Footer Modal Actions */}
+                <div className="shrink-0 border-t border-slate-100 bg-white px-6 py-4 flex items-center justify-between gap-3">
                     <button
                         type="button"
-                        onClick={handleReject}
+                        onClick={() => setShowRejectConfirmation(!showRejectConfirmation)}
                         disabled={isSubmitting}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 active:scale-95 px-4 py-2 text-xs font-bold transition disabled:opacity-50 cursor-pointer"
+                        className="rounded-xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100 text-rose-700 active:scale-95 px-4 py-2 text-xs font-bold transition cursor-pointer disabled:opacity-50"
                     >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
                         Tolak Pengajuan
                     </button>
 
@@ -420,7 +427,7 @@ export default function QuickVerificationModal({
                             type="button"
                             onClick={onClose}
                             disabled={isSubmitting}
-                            className="rounded-xl border border-slate-300 bg-white hover:bg-slate-100 active:scale-95 text-slate-700 px-4 py-2 text-xs font-bold transition disabled:opacity-50 cursor-pointer"
+                            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
                         >
                             Batal
                         </button>
@@ -429,22 +436,22 @@ export default function QuickVerificationModal({
                             type="button"
                             onClick={handleSubmitApprove}
                             disabled={isSubmitting}
-                            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-5 py-2 text-xs font-black shadow-md hover:shadow-lg transition disabled:opacity-50 cursor-pointer"
+                            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 text-white px-5 py-2 text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
                         >
                             {isSubmitting ? (
                                 <>
-                                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" stroke="currentColor" />
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    Memproses...
+                                    <span>Memproses...</span>
                                 </>
                             ) : (
                                 <>
                                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                                     </svg>
-                                    Setujui & Teruskan ke Keuangan
+                                    <span>Setujui & Teruskan ke Keuangan</span>
                                 </>
                             )}
                         </button>
