@@ -1,4 +1,5 @@
 import Modal from '@/Components/Modal';
+import InputError from '@/Components/InputError';
 import { useForm } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
@@ -155,7 +156,7 @@ export default function UnitFormModal({
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     {/* Field 1: Bagian / Bidang Induk */}
                     <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                        <label className="block text-xs font-medium text-slate-700 mb-1.5">
                             Bagian / Bidang Induk <span className="text-rose-600">*</span>
                         </label>
                         <select
@@ -174,14 +175,12 @@ export default function UnitFormModal({
                         <p className="mt-1 text-[11px] text-slate-500">
                             Bagian atau bidang yang membawahi unit kerja ini secara struktural.
                         </p>
-                        {errors.division_id && (
-                            <p className="mt-1 text-xs text-rose-600 font-medium">{errors.division_id}</p>
-                        )}
+                        <InputError message={errors.division_id} className="mt-1.5" />
                     </div>
 
                     {/* Field 2: Nama Unit Kerja / Ruangan */}
                     <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                        <label className="block text-xs font-medium text-slate-700 mb-1.5">
                             Nama Unit Kerja / Ruangan <span className="text-rose-600">*</span>
                         </label>
                         <input
@@ -193,15 +192,13 @@ export default function UnitFormModal({
                             autoFocus
                             required
                         />
-                        {errors.name && (
-                            <p className="mt-1 text-xs text-rose-600 font-medium">{errors.name}</p>
-                        )}
+                        <InputError message={errors.name} className="mt-1.5" />
                     </div>
 
                     {/* Field 3: Kode Singkatan Unit */}
                     <div>
                         <div className="flex items-center justify-between mb-1.5">
-                            <label className="block text-xs font-semibold text-slate-700">
+                            <label className="block text-xs font-medium text-slate-700">
                                 Kode Singkatan <span className="text-rose-600">*</span>
                             </label>
                             <span className="text-[11px] text-slate-400">
@@ -220,14 +217,12 @@ export default function UnitFormModal({
                         <p className="mt-1 text-[11px] text-slate-500">
                             Singkatan untuk identitas berkas (otomatis terisi saat mengetik nama, tetap bisa diedit).
                         </p>
-                        {errors.unit_code && (
-                            <p className="mt-1 text-xs text-rose-600 font-medium">{errors.unit_code}</p>
-                        )}
+                        <InputError message={errors.unit_code} className="mt-1.5" />
                     </div>
 
                     {/* Field 4: Keterangan / Layanan (Opsional) */}
                     <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                        <label className="block text-xs font-medium text-slate-700 mb-1.5">
                             Keterangan / Layanan <span className="text-slate-400 font-normal">(Opsional)</span>
                         </label>
                         <textarea
@@ -240,9 +235,7 @@ export default function UnitFormModal({
                         <p className="mt-1 text-[11px] text-slate-400">
                             Boleh dikosongkan jika tidak ada catatan khusus.
                         </p>
-                        {errors.description && (
-                            <p className="mt-1 text-xs text-rose-600 font-medium">{errors.description}</p>
-                        )}
+                        <InputError message={errors.description} className="mt-1.5" />
                     </div>
 
                     {/* 3. Modal Footer Actions */}

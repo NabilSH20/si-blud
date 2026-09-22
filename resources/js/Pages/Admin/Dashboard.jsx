@@ -1,5 +1,6 @@
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
+import Pagination from '@/Components/Pagination';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import {
     Bar,
@@ -24,7 +25,8 @@ export default function Dashboard({
     requisition_stats = {},
     users_by_role = [],
     divisions = [],
-    all_users = [],
+    all_users = {},
+    chart_users = [],
     users_by_division = [],
     requisitions_by_division = [],
     server_status = {},
@@ -34,13 +36,19 @@ export default function Dashboard({
     const { active_year } = usePage().props;
     const [currentTime, setCurrentTime] = useState(new Date());
 
+    const getQueryParam = (key) => {
+        if (typeof window !== 'undefined') {
+            return new URLSearchParams(window.location.search).get(key) || '';
+        }
+        return '';
+    };
+
     // Filter states
     const [selectedYear, setSelectedYear] = useState(active_year || new Date().getFullYear());
-    const [selectedDivision, setSelectedDivision] = useState('');
-    const [selectedUnit, setSelectedUnit] = useState('');
-    const [selectedRole, setSelectedRole] = useState('');
-    const [selectedStatus, setSelectedStatus] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedDivision, setSelectedDivision] = useState(getQueryParam('division'));
+    const [selectedUnit, setSelectedUnit] = useState(getQueryParam('unit'));
+    const [selectedRole, setSelectedRole] = useState(getQueryParam('role'));
+    const [selectedStatus, setSelectedStatus] = useState(getQueryParam('status'));
 
     // Live clock timer
     useEffect(() => {
@@ -73,11 +81,34 @@ export default function Dashboard({
         return found?.units || [];
     }, [divisions, selectedDivision]);
 
-    // When division changes, reset selected unit if it does not belong to the division
+    const applyFilters = (filters) => {
+        router.get(route('admin.dashboard'), filters, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    };
+
     const handleDivisionChange = (e) => {
         const divId = e.target.value;
         setSelectedDivision(divId);
         setSelectedUnit('');
+        applyFilters({ division: divId, unit: '', role: selectedRole, status: selectedStatus });
+    };
+
+    const handleUnitChange = (e) => {
+        setSelectedUnit(e.target.value);
+        applyFilters({ division: selectedDivision, unit: e.target.value, role: selectedRole, status: selectedStatus });
+    };
+
+    const handleRoleChange = (e) => {
+        setSelectedRole(e.target.value);
+        applyFilters({ division: selectedDivision, unit: selectedUnit, role: e.target.value, status: selectedStatus });
+    };
+
+    const handleStatusChange = (e) => {
+        setSelectedStatus(e.target.value);
+        applyFilters({ division: selectedDivision, unit: selectedUnit, role: selectedRole, status: e.target.value });
     };
 
     const handleResetFilter = () => {
@@ -85,38 +116,8 @@ export default function Dashboard({
         setSelectedUnit('');
         setSelectedRole('');
         setSelectedStatus('');
-        setSearchTerm('');
+        applyFilters({});
     };
-
-    // Filtered users
-    const filteredUsers = useMemo(() => {
-        return all_users.filter((user) => {
-            if (selectedDivision && String(user.division_id) !== String(selectedDivision)) {
-                return false;
-            }
-            if (selectedUnit && String(user.unit_id) !== String(selectedUnit)) {
-                return false;
-            }
-            if (selectedRole && user.role !== selectedRole) {
-                return false;
-            }
-            if (selectedStatus !== '') {
-                const isActive = selectedStatus === '1';
-                if (user.is_active !== isActive) return false;
-            }
-            if (searchTerm.trim()) {
-                const q = searchTerm.toLowerCase();
-                const nameMatch = user.name?.toLowerCase().includes(q);
-                const nipMatch = user.nip?.toLowerCase().includes(q);
-                const emailMatch = user.email?.toLowerCase().includes(q);
-                const posMatch = user.position?.toLowerCase().includes(q);
-                if (!nameMatch && !nipMatch && !emailMatch && !posMatch) {
-                    return false;
-                }
-            }
-            return true;
-        });
-    }, [all_users, selectedDivision, selectedUnit, selectedRole, selectedStatus, searchTerm]);
 
     // Pie chart data: Role breakdown of filtered users
     const pieData = useMemo(() => {
@@ -128,12 +129,12 @@ export default function Dashboard({
             admin: 'Admin Sistem',
         };
 
-        filteredUsers.forEach((u) => {
+        chart_users.forEach((u) => {
             const label = roleLabels[u.role] || u.role || 'Lainnya';
             counts[label] = (counts[label] || 0) + 1;
         });
 
-        const total = filteredUsers.length;
+        const total = chart_users.length;
         if (total === 0) return [];
 
         return Object.entries(counts).map(([name, count]) => ({
@@ -141,13 +142,13 @@ export default function Dashboard({
             value: count,
             percentage: ((count / total) * 100).toFixed(1),
         }));
-    }, [filteredUsers]);
+    }, [chart_users]);
 
     // Bar chart data: Users per division
     const barData = useMemo(() => {
         // Group filtered users by division name
         const divCounts = {};
-        filteredUsers.forEach((u) => {
+        chart_users.forEach((u) => {
             const divName = u.division?.name || 'Belum Terdata';
             divCounts[divName] = (divCounts[divName] || 0) + 1;
         });
@@ -160,7 +161,7 @@ export default function Dashboard({
 
         // Sort descending by staff count
         return entries.sort((a, b) => b.staf - a.staf).slice(0, 8);
-    }, [filteredUsers]);
+    }, [chart_users]);
 
     const getRoleBadge = (role) => {
         switch (role) {
@@ -234,7 +235,7 @@ export default function Dashboard({
 
                 {/* 2. Filter Bar (Clean Multi-Dropdown Bar matching reference) */}
                 <div className="py-6 border-b border-slate-100">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4">
                         {/* Filter 1: Tahun Anggaran */}
 
 
@@ -264,7 +265,7 @@ export default function Dashboard({
                             </label>
                             <select
                                 value={selectedUnit}
-                                onChange={(e) => setSelectedUnit(e.target.value)}
+                                onChange={handleUnitChange}
                                 className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 shadow-2xs focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition"
                             >
                                 <option value="">Semua Unit Kerja</option>
@@ -283,7 +284,7 @@ export default function Dashboard({
                             </label>
                             <select
                                 value={selectedRole}
-                                onChange={(e) => setSelectedRole(e.target.value)}
+                                onChange={handleRoleChange}
                                 className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 shadow-2xs focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition"
                             >
                                 <option value="">Semua Peran</option>
@@ -301,7 +302,7 @@ export default function Dashboard({
                             </label>
                             <select
                                 value={selectedStatus}
-                                onChange={(e) => setSelectedStatus(e.target.value)}
+                                onChange={handleStatusChange}
                                 className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 shadow-2xs focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition"
                             >
                                 <option value="">Semua Status</option>
@@ -325,10 +326,10 @@ export default function Dashboard({
                                 Reset Filter
                             </button>
 
-                            {(selectedDivision || selectedUnit || selectedRole || selectedStatus !== '' || searchTerm) && (
+                            {(selectedDivision || selectedUnit || selectedRole || selectedStatus !== '') && (
                                 <span className="text-xs text-slate-500">
-                                    Filter aktif: menampilkan <strong>{filteredUsers.length}</strong> dari{' '}
-                                    <strong>{all_users.length}</strong> staf
+                                    Filter aktif: menampilkan <strong>{all_users.total}</strong> dari{' '}
+                                    <strong>{system_stats.total_users}</strong> staf
                                 </span>
                             )}
                         </div>
@@ -347,15 +348,15 @@ export default function Dashboard({
                     </div>
 
                     {/* 2-Column Chart Layout (Matching user reference image) */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                         {/* Left: Total Pendaftar & Pie Chart */}
-                        <div className="lg:col-span-4">
+                        <div className="lg:col-span-4 bg-slate-50/50 rounded-2xl border border-slate-200 p-6 shadow-sm">
                             <div className="mb-2">
                                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                     Total Pendaftar
                                 </p>
                                 <div className="text-2xl font-bold tracking-tight text-slate-900 mt-0.5">
-                                    {filteredUsers.length} <span className="text-sm font-normal text-slate-500">Orang</span>
+                                    {all_users.total} <span className="text-sm font-normal text-slate-500">Orang</span>
                                 </div>
                             </div>
 
@@ -418,7 +419,7 @@ export default function Dashboard({
                         </div>
 
                         {/* Right: Bar Chart Tren / Distribusi per Bagian */}
-                        <div className="lg:col-span-8">
+                        <div className="lg:col-span-8 bg-slate-50/50 rounded-2xl border border-slate-200 p-6 shadow-sm">
                             <div className="mb-2">
                                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                     Sebaran Staf per Divisi / Bagian
@@ -479,7 +480,7 @@ export default function Dashboard({
                             </p>
                         </div>
                         <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-full shrink-0">
-                            Total: {filteredUsers.length} Staf
+                            Total: {all_users.total} Staf
                         </span>
                     </div>
 
@@ -513,13 +514,13 @@ export default function Dashboard({
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 bg-white">
-                                    {filteredUsers && filteredUsers.length > 0 ? (
-                                        filteredUsers.map((u, index) => {
+                                    {all_users.data && all_users.data.length > 0 ? (
+                                        all_users.data.map((u, index) => {
                                             const roleInfo = getRoleBadge(u.role);
                                             return (
                                                 <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
                                                     <td className="px-4 py-3 text-center font-mono text-slate-400">
-                                                        {index + 1}
+                                                        {(all_users.current_page - 1) * all_users.per_page + index + 1}
                                                     </td>
                                                     <td className="px-4 py-3 font-medium">
                                                         <div className="font-bold text-slate-800">
@@ -578,25 +579,14 @@ export default function Dashboard({
                         </div>
 
                         {/* Table Footer Navigation / Summary */}
-                        <div className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-100 bg-slate-50/50 px-4 py-3 text-xs text-slate-500 gap-2">
-                            <div>
-                                Menampilkan <strong>{filteredUsers.length}</strong> dari <strong>{all_users.length}</strong> staf terdaftar
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <Link
-                                    href={route('users.index')}
-                                    className="font-semibold text-teal-700 hover:text-teal-800 transition"
-                                >
-                                    Kelola Data Pengguna &rarr;
-                                </Link>
-                                <span className="text-slate-300">•</span>
-                                <Link
-                                    href={route('divisions.index')}
-                                    className="font-semibold text-teal-700 hover:text-teal-800 transition"
-                                >
-                                    Kelola Master Divisi &rarr;
-                                </Link>
-                            </div>
+                        <div className="border-t border-slate-100 bg-white px-4 py-3">
+                            <Pagination 
+                                currentPage={all_users.current_page} 
+                                totalPages={all_users.last_page} 
+                                totalItems={all_users.total} 
+                                itemsPerPage={all_users.per_page} 
+                                onPageChange={(p) => applyFilters({ division: selectedDivision, unit: selectedUnit, role: selectedRole, status: selectedStatus, page: p })} 
+                            />
                         </div>
                     </div>
                 </div>

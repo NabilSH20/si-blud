@@ -113,23 +113,41 @@ class DashboardController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        // All users for real-time filtering and staff by unit breakdown
-        $allUsers = User::with(['division:id,name', 'unit:id,name'])
-            ->orderBy('name')
-            ->get([
-                'id',
-                'name',
-                'email',
-                'nip',
-                'role',
-                'position',
-                'division_id',
-                'unit_id',
-                'is_active',
-                'created_at',
-            ]);
+        // Apply server-side filtering for users
+        $usersQuery = User::with(['division:id,name', 'unit:id,name'])->orderBy('name');
 
-        // Users count per division for distribution chart
+        if (request()->filled('division')) {
+            $usersQuery->where('division_id', request('division'));
+        }
+        if (request()->filled('unit')) {
+            $usersQuery->where('unit_id', request('unit'));
+        }
+        if (request()->filled('role')) {
+            $usersQuery->where('role', request('role'));
+        }
+        if (request()->filled('status')) {
+            $usersQuery->where('is_active', request('status') === '1');
+        }
+        if (request()->filled('search')) {
+            $search = request('search');
+            $usersQuery->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('nip', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('position', 'like', "%{$search}%");
+            });
+        }
+
+        // Unpaginated filtered users for charts
+        $chartUsers = clone $usersQuery;
+        $chartUsers = $chartUsers->get([
+            'id', 'name', 'email', 'nip', 'role', 'position', 'division_id', 'unit_id', 'is_active', 'created_at'
+        ]);
+
+        // Paginated users for the table
+        $allUsers = $usersQuery->paginate(10)->withQueryString();
+
+        // Users count per division for distribution chart (Overall system stat)
         $usersByDivision = Division::withCount('users')
             ->orderByDesc('users_count')
             ->get()
@@ -175,6 +193,7 @@ class DashboardController extends Controller
             'requisitions_by_division' => $requisitionsByDivision,
             'divisions' => $divisions,
             'all_users' => $allUsers,
+            'chart_users' => $chartUsers,
             'users_by_division' => $usersByDivision,
             'server_status' => [
                 'php_version' => PHP_VERSION,

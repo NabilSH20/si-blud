@@ -148,6 +148,51 @@ export default function Dashboard({
                     </div>
                 )}
 
+                {/* 2.5 Summary Stats Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-2">
+                    {/* Card 1: Total Pengajuan */}
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 shadow-sm">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Usulan</p>
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-slate-900">{total_requests}</span>
+                            <span className="text-xs font-medium text-slate-500">Berkas</span>
+                        </div>
+                        <p className="mt-3 text-[11px] font-bold text-slate-600">
+                            Estimasi: {formatRupiah(total_estimated)}
+                        </p>
+                    </div>
+
+                    {/* Card 2: Menunggu Telaah */}
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-5 shadow-sm">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">Menunggu Telaah</p>
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-amber-800">{pending_requests}</span>
+                            <span className="text-xs font-medium text-amber-700">Berkas</span>
+                        </div>
+                    </div>
+
+                    {/* Card 3: Proses Keuangan */}
+                    <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-5 shadow-sm">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">Proses Keuangan</p>
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-blue-800">{in_finance_requests}</span>
+                            <span className="text-xs font-medium text-blue-700">Berkas</span>
+                        </div>
+                    </div>
+
+                    {/* Card 4: Disetujui */}
+                    <div className="rounded-2xl border border-teal-200 bg-teal-50/40 p-5 shadow-sm">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">Disetujui / Selesai</p>
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-teal-800">{approved_requests}</span>
+                            <span className="text-xs font-medium text-teal-700">Berkas</span>
+                        </div>
+                        <p className="mt-3 text-[11px] font-bold text-teal-700">
+                            Disetujui: {formatRupiah(total_approved)}
+                        </p>
+                    </div>
+                </div>
+
                 {/* 3. Section: Daftar Usulan Belanja Terkini */}
                 <div className="pt-2 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

@@ -753,28 +753,20 @@ export default function RequisitionFormModal({
                             <h3 className="text-sm font-bold text-slate-900 border-b-2 border-emerald-500 pb-0.5 inline-block">
                                 3. Klasifikasi Kode Rekening (RBA BLUD)
                             </h3>
-                            {activeAccount && activeAccount.remaining_budget !== null && activeAccount.remaining_budget !== undefined && (
-                                <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                                    <span className="text-slate-400 font-medium">Sisa Pagu Rekening:</span>
-                                    <span className="font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200 font-mono">
-                                        {formatRupiah(activeAccount.remaining_budget)}
-                                    </span>
-                                </div>
-                            )}
                         </div>
 
                         {/* Dropdown Bertingkat: 2 Baris agar Seluruh Nama Rekening Terbaca Jelas */}
-                        <div className="space-y-3">
+                        <div className="space-y-4 pt-2">
                             {/* Baris 1: Akun Utama, Kelompok, dan Jenis */}
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                                <div className="sm:col-span-3">
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                                         1. Akun Utama
                                     </label>
                                     <select
                                         value={selectedAkunUtama}
                                         onChange={(e) => setSelectedAkunUtama(e.target.value)}
-                                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
+                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors shadow-sm"
                                     >
                                         {akunUtamaList.map((au) => (
                                             <option key={au.code} value={au.code}>
@@ -784,14 +776,14 @@ export default function RequisitionFormModal({
                                     </select>
                                 </div>
 
-                                <div className="sm:col-span-4">
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                                         2. Kelompok Belanja
                                     </label>
                                     <select
                                         value={selectedKelompok}
                                         onChange={(e) => handleKelompokChange(e.target.value)}
-                                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer shadow-2xs"
+                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer transition-colors shadow-sm"
                                     >
                                         {kelompokList.map((k) => (
                                             <option key={k.code} value={k.code}>
@@ -801,14 +793,14 @@ export default function RequisitionFormModal({
                                     </select>
                                 </div>
 
-                                <div className="sm:col-span-5">
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                                         3. Jenis Belanja
                                     </label>
                                     <select
                                         value={selectedJenis}
                                         onChange={(e) => handleJenisChange(e.target.value)}
-                                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer shadow-2xs"
+                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer transition-colors shadow-sm"
                                     >
                                         {jenisList.map((j) => (
                                             <option key={j.code} value={j.code}>
@@ -819,16 +811,16 @@ export default function RequisitionFormModal({
                                 </div>
                             </div>
 
-                            {/* Baris 2: Objek & Rincian Objek (Nama Panjang Lebih Lega & Tidak Terpotong) */}
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                                <div className="sm:col-span-5">
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                            {/* Baris 2: Objek & Rincian Objek */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                                         4. Objek Belanja
                                     </label>
                                     <select
                                         value={selectedObjek}
                                         onChange={(e) => handleObjekChange(e.target.value)}
-                                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer shadow-2xs"
+                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer transition-colors shadow-sm"
                                     >
                                         {objekList.map((o) => (
                                             <option key={o.code} value={o.code}>
@@ -838,14 +830,14 @@ export default function RequisitionFormModal({
                                     </select>
                                 </div>
 
-                                <div className="sm:col-span-7">
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                                         5. Rincian Objek (Rekening Belanja Aktif)
                                     </label>
                                     <select
                                         value={selectedRincianObjekId}
                                         onChange={(e) => setSelectedRincianObjekId(e.target.value)}
-                                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer shadow-2xs"
+                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer transition-colors shadow-sm"
                                     >
                                         {rincianObjekList.map((ro) => (
                                             <option key={ro.id} value={ro.id}>
@@ -869,11 +861,6 @@ export default function RequisitionFormModal({
                                         {activeAccount.account_name}
                                     </span>
                                 </div>
-                                {activeAccount.remaining_budget !== null && activeAccount.remaining_budget !== undefined && (
-                                    <div className="text-[11px] text-slate-500">
-                                        Sisa Pagu BLUD: <strong className="text-emerald-700 font-mono font-bold">{formatRupiah(activeAccount.remaining_budget)}</strong>
-                                    </div>
-                                )}
                             </div>
                         )}
                     </div>
@@ -889,109 +876,111 @@ export default function RequisitionFormModal({
                             </span>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                            {/* Nama Barang / Uraian */}
-                            <div className="sm:col-span-4 relative">
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                    Nama Barang / Uraian <span className="text-rose-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    value={inputName}
-                                    onChange={(e) => {
-                                        setInputName(e.target.value);
-                                        setIsCatalogDropdownOpen(true);
-                                    }}
-                                    onFocus={() => setIsCatalogDropdownOpen(true)}
-                                    placeholder="Ketik nama barang / pilih katalog..."
-                                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
-                                />
+                        <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-end">
+                                {/* Nama Barang / Uraian */}
+                                <div className="lg:col-span-4 relative">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                        Nama Barang / Uraian <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={inputName}
+                                        onChange={(e) => {
+                                            setInputName(e.target.value);
+                                            setIsCatalogDropdownOpen(true);
+                                        }}
+                                        onFocus={() => setIsCatalogDropdownOpen(true)}
+                                        placeholder="Ketik nama barang / pilih katalog..."
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-sm"
+                                    />
 
-                                {/* Floating Autocomplete Dropdown dari Master Katalog */}
-                                {isCatalogDropdownOpen && filteredCatalogItems.length > 0 && (
-                                    <div
-                                        ref={dropdownRef}
-                                        className="absolute left-0 right-0 top-full mt-1 z-30 max-h-48 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl py-1 text-xs"
-                                    >
-                                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">
-                                            Katalog Barang Rekening Ini ({filteredCatalogItems.length}):
+                                    {/* Floating Autocomplete Dropdown dari Master Katalog */}
+                                    {isCatalogDropdownOpen && filteredCatalogItems.length > 0 && (
+                                        <div
+                                            ref={dropdownRef}
+                                            className="absolute left-0 right-0 top-full mt-2 z-30 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl py-1 text-xs"
+                                        >
+                                            <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">
+                                                Katalog Barang Rekening Ini ({filteredCatalogItems.length}):
+                                            </div>
+                                            {filteredCatalogItems.map((catItem) => (
+                                                <button
+                                                    key={catItem.id}
+                                                    type="button"
+                                                    onClick={() => handleSelectCatalogItem(catItem)}
+                                                    className="w-full text-left px-3 py-2.5 hover:bg-teal-50 flex items-center justify-between border-b border-slate-50 last:border-0 transition cursor-pointer"
+                                                >
+                                                    <div>
+                                                        <p className="font-bold text-slate-900">{catItem.name}</p>
+                                                        <p className="text-[10px] text-slate-500">{catItem.specification || 'Standar RS'}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="font-mono font-bold text-teal-700 block">{formatRupiah(catItem.standard_price)}</span>
+                                                        <span className="text-[10px] text-slate-400 uppercase">/{catItem.unit_type || 'Unit'}</span>
+                                                    </div>
+                                                </button>
+                                            ))}
                                         </div>
-                                        {filteredCatalogItems.map((catItem) => (
-                                            <button
-                                                key={catItem.id}
-                                                type="button"
-                                                onClick={() => handleSelectCatalogItem(catItem)}
-                                                className="w-full text-left px-3 py-2 hover:bg-emerald-50 flex items-center justify-between border-b border-slate-50 last:border-0 transition cursor-pointer"
-                                            >
-                                                <div>
-                                                    <p className="font-bold text-slate-900">{catItem.name}</p>
-                                                    <p className="text-[10px] text-slate-500">{catItem.specification || 'Standar RS'}</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="font-mono font-bold text-emerald-700 block">{formatRupiah(catItem.standard_price)}</span>
-                                                    <span className="text-[10px] text-slate-400 uppercase">/{catItem.unit_type || 'Unit'}</span>
-                                                </div>
-                                            </button>
+                                    )}
+                                </div>
+
+                                {/* Volume */}
+                                <div className="lg:col-span-2">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                        Volume <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        ref={qtyInputRef}
+                                        type="number"
+                                        min="1"
+                                        value={inputQty}
+                                        onChange={(e) => setInputQty(Math.max(1, parseInt(e.target.value) || 1))}
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-center font-bold shadow-sm"
+                                    />
+                                </div>
+
+                                {/* Satuan */}
+                                <div className="lg:col-span-2">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                        Satuan <span className="text-rose-500">*</span>
+                                    </label>
+                                    <select
+                                        value={inputUnit}
+                                        onChange={(e) => setInputUnit(e.target.value)}
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer text-center font-medium shadow-sm"
+                                    >
+                                        {COMMON_UNITS.map((u) => (
+                                            <option key={u} value={u}>
+                                                {u}
+                                            </option>
                                         ))}
+                                    </select>
+                                </div>
+
+                                {/* Harga Satuan (Rp) */}
+                                <div className="lg:col-span-2">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                        Harga Satuan (Rp) <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={inputPrice}
+                                        onChange={(e) => setInputPrice(e.target.value)}
+                                        placeholder="0"
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-900 font-mono text-right font-medium focus:border-teal-500 focus:ring-1 focus:ring-teal-500 shadow-sm"
+                                    />
+                                </div>
+
+                                {/* Total Biaya (Rp) */}
+                                <div className="lg:col-span-2">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                        Total Biaya (Rp)
+                                    </label>
+                                    <div className="rounded-xl border border-teal-200 bg-teal-50 px-3 py-2.5 text-xs font-bold text-teal-900 font-mono text-right flex items-center justify-end h-[38px] shadow-sm">
+                                        <span>{formatRupiah(Number(inputQty || 0) * Number(inputPrice || 0))}</span>
                                     </div>
-                                )}
-                            </div>
-
-                            {/* Volume */}
-                            <div className="sm:col-span-2">
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                    Volume <span className="text-rose-500">*</span>
-                                </label>
-                                <input
-                                    ref={qtyInputRef}
-                                    type="number"
-                                    min="1"
-                                    value={inputQty}
-                                    onChange={(e) => setInputQty(Math.max(1, parseInt(e.target.value) || 1))}
-                                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-center font-semibold"
-                                />
-                            </div>
-
-                            {/* Satuan */}
-                            <div className="sm:col-span-2">
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                    Satuan <span className="text-rose-500">*</span>
-                                </label>
-                                <select
-                                    value={inputUnit}
-                                    onChange={(e) => setInputUnit(e.target.value)}
-                                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer text-center"
-                                >
-                                    {COMMON_UNITS.map((u) => (
-                                        <option key={u} value={u}>
-                                            {u}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Harga Satuan (Rp) */}
-                            <div className="sm:col-span-2">
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                    Harga Satuan (Rp) <span className="text-rose-500">*</span>
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={inputPrice}
-                                    onChange={(e) => setInputPrice(e.target.value)}
-                                    placeholder="0"
-                                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 font-mono text-right focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                                />
-                            </div>
-
-                            {/* Total Biaya (Rp) */}
-                            <div className="sm:col-span-2">
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                    Total Biaya (Rp)
-                                </label>
-                                <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-900 font-mono text-right flex items-center justify-end h-[34px]">
-                                    <span>{formatRupiah(Number(inputQty || 0) * Number(inputPrice || 0))}</span>
                                 </div>
                             </div>
                         </div>

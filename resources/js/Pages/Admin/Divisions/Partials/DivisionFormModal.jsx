@@ -1,4 +1,5 @@
 import Modal from '@/Components/Modal';
+import InputError from '@/Components/InputError';
 import { useForm } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
@@ -129,7 +130,7 @@ export default function DivisionFormModal({
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     {/* Field 1: Nama Bagian / Bidang */}
                     <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                        <label className="block text-xs font-medium text-slate-700 mb-1.5">
                             Nama Bagian / Bidang <span className="text-rose-600">*</span>
                         </label>
                         <input
@@ -141,15 +142,13 @@ export default function DivisionFormModal({
                             autoFocus
                             required
                         />
-                        {errors.name && (
-                            <p className="mt-1 text-xs text-rose-600 font-medium">{errors.name}</p>
-                        )}
+                        <InputError message={errors.name} className="mt-1.5" />
                     </div>
 
                     {/* Field 2: Kode Singkatan Divisi */}
                     <div>
                         <div className="flex items-center justify-between mb-1.5">
-                            <label className="block text-xs font-semibold text-slate-700">
+                            <label className="block text-xs font-medium text-slate-700">
                                 Kode Singkatan <span className="text-rose-600">*</span>
                             </label>
                             <span className="text-[11px] text-slate-400">
@@ -170,14 +169,12 @@ export default function DivisionFormModal({
                         <p className="mt-1 text-[11px] text-slate-500">
                             Singkatan untuk identitas berkas (otomatis terisi saat mengetik nama, tetap bisa diedit).
                         </p>
-                        {errors.division_code && (
-                            <p className="mt-1 text-xs text-rose-600 font-medium">{errors.division_code}</p>
-                        )}
+                        <InputError message={errors.division_code} className="mt-1.5" />
                     </div>
 
                     {/* Field 3: Kelompok Struktur Organisasi */}
                     <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-2">
+                        <label className="block text-xs font-medium text-slate-700 mb-2">
                             Kelompok Bagian / Bidang
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -235,9 +232,7 @@ export default function DivisionFormModal({
                                 </div>
                             </button>
                         </div>
-                        {errors.group && (
-                            <p className="mt-1 text-xs text-rose-600 font-medium">{errors.group}</p>
-                        )}
+                        <InputError message={errors.group} className="mt-1.5" />
                     </div>
 
                     {/* 3. Modal Footer Actions */}
