@@ -114,7 +114,7 @@ class RequisitionController extends Controller
                     $subtotal = $qty * $price;
                     $grandTotal += $subtotal;
 
-                    $accId = $detail->rba_account_id ?: ($validated['rba_account_id'] ?? $requisition->rba_account_id);
+                    $accId = $validated['rba_account_id'] ?? $requisition->rba_account_id;
                     if ($accId) {
                         $accountTotals[$accId] = ($accountTotals[$accId] ?? 0) + $subtotal;
                     }

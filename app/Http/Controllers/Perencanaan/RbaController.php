@@ -835,50 +835,7 @@ class RbaController extends Controller
                 }
             }
 
-            // For Murni shift, synchronize approved unit requisitions into expense items
-            if ($shift->shift_name === 'Murni') {
-                $approvedReqs = Requisition::with(['requisitionDetails.item.rbaAccount', 'rbaAccount'])
-                    ->where(function ($q) use ($shift) {
-                        $q->where('budget_year', $shift->year)->orWhere('fiscal_year', $shift->year);
-                    })
-                    ->where('status', 'Disetujui_Selesai')
-                    ->get();
 
-                $amountsByCode = [];
-                foreach ($approvedReqs as $req) {
-                    $amount = (float) ($req->total_approved > 0 ? $req->total_approved : $req->total_estimated);
-                    $code = $req->rbaAccount?->account_code;
-                    if ($code) {
-                        $amountsByCode[$code] = ($amountsByCode[$code] ?? 0) + $amount;
-                    }
-                }
-
-                $leafs = $shift->expenseItems()->where('is_header', false)->get();
-                foreach ($leafs as $leaf) {
-                    $amt = $amountsByCode[$leaf->account_code] ?? 0;
-                    $leaf->update([
-                        'before_jasa_layanan' => $amt,
-                        'after_jasa_layanan' => $amt,
-                        'before_total' => $amt,
-                        'after_total' => $amt,
-                        'difference' => 0,
-                    ]);
-                }
-
-                foreach ([4, 3, 2, 1] as $lvl) {
-                    $headers = $shift->expenseItems()->where('is_header', true)->where('level', $lvl)->get();
-                    foreach ($headers as $h) {
-                        $childSum = (float) $shift->expenseItems()->where('parent_code', $h->account_code)->sum('after_total');
-                        $h->update([
-                            'before_total' => $childSum,
-                            'after_total' => $childSum,
-                            'before_jasa_layanan' => $childSum,
-                            'after_jasa_layanan' => $childSum,
-                            'difference' => 0,
-                        ]);
-                    }
-                }
-            }
         });
     }
 

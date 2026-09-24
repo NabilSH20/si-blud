@@ -55,8 +55,7 @@ Route::prefix('perencanaan')->middleware(['auth', 'role:perencanaan'])->group(fu
     Route::resource('rba', PerencanaanRbaController::class)
         ->only(['index'])
         ->names('perencanaan.rba');
-    Route::patch('/rba/{id}/sahkan', [PerencanaanRbaController::class, 'sahkan'])
-        ->name('perencanaan.rba.sahkan');
+
     Route::patch('/rba/shifts/{id}/activate', [PerencanaanRbaController::class, 'activate'])
         ->name('perencanaan.rba.activate');
     Route::post('/rba/shifts', [PerencanaanRbaController::class, 'storeShift'])

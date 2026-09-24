@@ -263,19 +263,19 @@ Hapus default hardcode; wajibkan diisi saat create, atau generate otomatis dari 
 
 ## 16. Definition of Done (Batch 1: §3–§14)
 
-- [ ] P0-1 (§3) RBAC selesai + `RoleAuthorizationTest.php` hijau
-- [ ] P0-2 (§4) fallback hardcode di `buildRingkasanData()` dihapus + flag `data_incomplete`
-- [ ] P1 (§5) guard ganti-role-sendiri selesai
-- [ ] P1 (§6) `budget_id` konsisten (Opsi A/B dipilih & diimplementasikan)
-- [ ] P1 (§7) verifikasi SSH tampil & tervalidasi di tahap Perencanaan
-- [ ] P1 (§8) template `ensureShiftItemsPopulated` di-scope per tahun
-- [ ] P1 (§9) diberi label `blocked` sampai keputusan produk turun
-- [ ] P2 (§10) validasi `quantity_approved` selesai
-- [ ] P2 (§11) diberi label `blocked` sampai keputusan produk turun
-- [ ] P2 (§12) `sahkan()`/`RbaDraft` dibereskan
-- [ ] P2 (§13) dicatat sebagai backlog (opsional untuk batch ini)
-- [ ] P2 (§14) `doc_title` tidak lagi hardcode
-- [ ] Seluruh test suite (`php artisan test`) hijau
+- [x] P0-1 (§3) RBAC selesai + `RoleAuthorizationTest.php` hijau
+- [x] P0-2 (§4) fallback hardcode di `buildRingkasanData()` dihapus + flag `data_incomplete`
+- [x] P1 (§5) guard ganti-role-sendiri selesai
+- [x] P1 (§6) `budget_id` konsisten (Opsi A/B dipilih & diimplementasikan)
+- [x] P1 (§7) verifikasi SSH tampil & tervalidasi di tahap Perencanaan
+- [x] P1 (§8) template `ensureShiftItemsPopulated` di-scope per tahun
+- [x] P1 (§9) Keputusan produk: (B) Murni manual (sinkronisasi otomatis Murni ke requisition dihapus)
+- [x] P2 (§10) validasi `quantity_approved` selesai
+- [x] P2 (§11) Keputusan produk: (B) Descope kolom per-baris (rba_account_id/jenis_belanja dihapus dari requisition_details)
+- [x] P2 (§12) `sahkan()`/`RbaDraft` dibereskan
+- [x] P2 (§13) dicatat sebagai backlog (opsional untuk batch ini)
+- [x] P2 (§14) `doc_title` tidak lagi hardcode
+- [x] Seluruh test suite (`php artisan test`) hijau
 
 ## 17. Area yang Belum Direview — Batch 2 (jangan dikerjakan bersamaan Batch 1)
 

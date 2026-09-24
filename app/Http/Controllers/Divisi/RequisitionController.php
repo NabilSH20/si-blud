@@ -165,8 +165,6 @@ class RequisitionController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.is_new' => ['nullable', 'boolean'],
             'items.*.item_id' => ['nullable'],
-            'items.*.rba_account_id' => ['nullable', 'exists:rba_accounts,id'],
-            'items.*.jenis_belanja' => ['nullable', 'string', 'in:Operasi,Modal,Operasional'],
             'items.*.name' => ['nullable', 'string', 'max:255'],
             'items.*.unit_type' => ['nullable', 'string', 'max:255'],
             'items.*.specification' => ['nullable', 'string'],
@@ -326,8 +324,6 @@ class RequisitionController extends Controller
             foreach ($processedItems as $pItem) {
                 RequisitionDetail::create([
                     'requisition_id' => $requisition->id,
-                    'rba_account_id' => $pItem['rba_account_id'],
-                    'jenis_belanja' => $pItem['jenis_belanja'],
                     'item_id' => $pItem['item']->id,
                     'item_name' => $pItem['item']->name,
                     'unit_type' => $pItem['item']->unit_type,
@@ -349,16 +345,7 @@ class RequisitionController extends Controller
      */
     public function update(Request $request, Requisition $requisition): RedirectResponse
     {
-        $user = auth()->user();
-
-        // Check ownership / data isolation
-        if ($user->unit_id && $requisition->unit_id !== $user->unit_id) {
-            abort(403, 'Anda tidak memiliki hak untuk mengubah usulan belanja unit lain.');
-        } elseif (!$user->unit_id && $user->division_id && $requisition->division_id !== $user->division_id) {
-            abort(403, 'Anda tidak memiliki hak untuk mengubah usulan belanja divisi lain.');
-        } elseif (!$user->unit_id && !$user->division_id && $requisition->user_id !== $user->id) {
-            abort(403, 'Anda tidak memiliki akses ke usulan ini.');
-        }
+        $this->authorizeAccess($requisition);
 
         // Only allow update if status is Pending_Perencanaan
         if ($requisition->status !== 'Pending_Perencanaan') {
@@ -382,8 +369,6 @@ class RequisitionController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.is_new' => ['nullable', 'boolean'],
             'items.*.item_id' => ['nullable'],
-            'items.*.rba_account_id' => ['nullable', 'exists:rba_accounts,id'],
-            'items.*.jenis_belanja' => ['nullable', 'string', 'in:Operasi,Modal,Operasional'],
             'items.*.name' => ['nullable', 'string', 'max:255'],
             'items.*.unit_type' => ['nullable', 'string', 'max:255'],
             'items.*.specification' => ['nullable', 'string'],
@@ -530,8 +515,6 @@ class RequisitionController extends Controller
             foreach ($processedItems as $pItem) {
                 RequisitionDetail::create([
                     'requisition_id' => $requisition->id,
-                    'rba_account_id' => $pItem['rba_account_id'],
-                    'jenis_belanja' => $pItem['jenis_belanja'],
                     'item_id' => $pItem['item']->id,
                     'item_name' => $pItem['item']->name,
                     'unit_type' => $pItem['item']->unit_type,
@@ -553,6 +536,7 @@ class RequisitionController extends Controller
      */
     public function show(Requisition $requisition): Response
     {
+        $this->authorizeAccess($requisition);
         $requisition->load(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan']);
 
         return Inertia::render('Divisi/Requisitions/Show', [
@@ -566,6 +550,7 @@ class RequisitionController extends Controller
     public function print($id): Response
     {
         $requisition = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])->findOrFail($id);
+        $this->authorizeAccess($requisition);
 
         return Inertia::render('Shared/PrintRequisition', [
             'requisition' => $requisition,
@@ -577,6 +562,8 @@ class RequisitionController extends Controller
      */
     public function destroy(Requisition $requisition): RedirectResponse
     {
+        $this->authorizeAccess($requisition);
+
         // Hanya usulan dengan status Pending_Perencanaan atau Ditolak yang boleh dihapus oleh unit
         if (!in_array($requisition->status, ['Pending_Perencanaan', 'Ditolak'])) {
             return back()->with('error', 'Usulan belanja yang sedang diproses atau sudah disetujui tidak dapat dihapus.');
@@ -589,6 +576,21 @@ class RequisitionController extends Controller
 
         return redirect()->route('requisitions.index')
             ->with('success', 'Usulan belanja berhasil dihapus.');
+    }
+
+    /**
+     * Authorize access to the specified requisition.
+     */
+    private function authorizeAccess(Requisition $requisition): void
+    {
+        $user = auth()->user();
+        if ($user->unit_id && $requisition->unit_id !== $user->unit_id) {
+            abort(403, 'Anda tidak memiliki akses ke usulan belanja ini.');
+        } elseif (!$user->unit_id && $user->division_id && $requisition->division_id !== $user->division_id) {
+            abort(403, 'Anda tidak memiliki akses ke usulan belanja ini.');
+        } elseif (!$user->unit_id && !$user->division_id && $requisition->user_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki akses ke usulan belanja ini.');
+        }
     }
 }
 

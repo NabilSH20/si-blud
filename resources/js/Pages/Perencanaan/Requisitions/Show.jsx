@@ -399,6 +399,10 @@ export default function Show({ requisition, rbaList = [] }) {
                         </div>
 
                         {isPending ? (
+                            <div className="space-y-2">
+                                <select
+                                    value={data.rba_account_id}
+                                    onChange={(e) => setData('rba_account_id', e.target.value)}
                                     className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900 shadow-2xs transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600 cursor-pointer"
                                 >
                                     <option value="" disabled>-- Pilih Pos Rekening Belanja RBA --</option>
