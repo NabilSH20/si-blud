@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Budget;
-use App\Models\RbaDraft;
+
 use App\Models\Revenue;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -69,51 +69,6 @@ class EBludCoreExpansionTest extends TestCase
 
         $response->assertRedirect(route('revenues.index'));
         $this->assertDatabaseMissing('revenues', ['id' => $revenue->id]);
-    }
-
-    public function test_perencanaan_can_view_rba_index_and_create(): void
-    {
-        $perencanaan = User::factory()->create(['role' => 'perencanaan']);
-
-        RbaDraft::create([
-            'year' => 2026,
-            'target_revenue' => 300000000,
-            'planned_expense' => 250000000,
-            'status' => 'Draft',
-        ]);
-
-        $response = $this->actingAs($perencanaan)->get(route('perencanaan.rba.index'));
-
-        $response->assertOk();
-        $response->assertInertia(fn (Assert $page) => $page
-            ->component('Perencanaan/RBA/Index')
-            ->has('rbas', 1)
-        );
-    }
-
-    public function test_perencanaan_can_store_and_sahkan_rba(): void
-    {
-        $perencanaan = User::factory()->create(['role' => 'perencanaan']);
-
-        $response = $this->actingAs($perencanaan)->post(route('perencanaan.rba.store'), [
-            'year' => 2026,
-            'target_revenue' => 350000000,
-            'planned_expense' => 275000000,
-            'notes' => 'Plafon tahun 2026',
-        ]);
-
-        $response->assertRedirect(route('perencanaan.rba.index'));
-
-        $rba = RbaDraft::where('year', 2026)->first();
-        $this->assertNotNull($rba);
-        $this->assertEquals('Draft', $rba->status);
-
-        // Sahkan RBA
-        $sahkanResponse = $this->actingAs($perencanaan)->patch(route('perencanaan.rba.sahkan', $rba->id));
-        $sahkanResponse->assertRedirect(route('perencanaan.rba.index'));
-
-        $rba->refresh();
-        $this->assertEquals('Disahkan', $rba->status);
     }
 
     public function test_keuangan_can_view_surplus_deficit_report_and_print(): void

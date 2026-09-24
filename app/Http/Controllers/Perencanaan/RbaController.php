@@ -49,21 +49,12 @@ class RbaController extends Controller
         // Retrieve shifts for the selected year (ordered chronologically)
         $shifts = RbaShift::where('year', $selectedYear)->orderBy('id', 'asc')->get();
 
-        // If no shift exists, trigger seeder for 2026 or initialize default shift cloning baseline template
+        // If no shift exists, initialize default Murni shift
         if ($shifts->isEmpty()) {
-            if ($selectedYear === 2026) {
-                \Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\RbaPergeseran3Seeder']);
-                $shifts = RbaShift::where('year', $selectedYear)->orderBy('id', 'asc')->get();
-            } else {
-                $templateShift = RbaShift::where('status', 'Aktif')->latest('id')->first()
-                    ?? RbaShift::latest('id')->first();
+            $templateShift = RbaShift::where('status', 'Aktif')->latest('id')->first()
+                ?? RbaShift::latest('id')->first();
 
-                if (! $templateShift) {
-                    \Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\RbaPergeseran3Seeder']);
-                    $templateShift = RbaShift::latest('id')->first();
-                }
-
-                $newShift = DB::transaction(function () use ($selectedYear, $templateShift) {
+            $newShift = DB::transaction(function () use ($selectedYear, $templateShift) {
                     $shift = RbaShift::create([
                         'year' => $selectedYear,
                         'shift_name' => 'Murni',
@@ -121,7 +112,6 @@ class RbaController extends Controller
                 });
 
                 $shifts = collect([$newShift]);
-            }
         }
 
         $selectedShiftId = $request->query('shift_id');
@@ -245,8 +235,6 @@ class RbaController extends Controller
                 : 0,
         ];
 
-        $rbas = \App\Models\RbaDraft::orderBy('year', 'desc')->orderBy('id', 'desc')->get();
-
         // 3. Approved Requisitions by Unit & Ringkasan RBA
         $approvedReqs = Requisition::with(['requisitionDetails.item.rbaAccount', 'rbaAccount'])
             ->where(function ($q) use ($selectedYear) {
@@ -269,7 +257,6 @@ class RbaController extends Controller
         $accountsWithProposed = $this->getAccountsWithProposed($selectedYear);
 
         return Inertia::render('Perencanaan/RBA/Index', [
-            'rbas' => $rbas,
             'shifts' => $shifts,
             'current_shift' => $currentShift,
             'expense_items' => $expenseItems,
@@ -368,60 +355,7 @@ class RbaController extends Controller
         ]);
     }
 
-    /**
-     * Show form for creating new RBA draft (backward compatible).
-     */
-    public function create(): Response
-    {
-        return Inertia::render('Perencanaan/RBA/Create', [
-            'default_year' => (int) Carbon::now()->format('Y'),
-        ]);
-    }
 
-    /**
-     * Store new RBA draft (backward compatible).
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'year' => ['required', 'integer', 'min:2020', 'max:2099'],
-            'target_revenue' => ['required', 'numeric', 'min:0'],
-            'planned_expense' => ['required', 'numeric', 'min:0'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        DB::transaction(function () use ($validated) {
-            \App\Models\RbaDraft::create([
-                'year' => $validated['year'],
-                'target_revenue' => $validated['target_revenue'],
-                'planned_expense' => $validated['planned_expense'],
-                'status' => 'Draft',
-                'notes' => $validated['notes'] ?? null,
-            ]);
-        });
-
-        return redirect()->route('perencanaan.rba.index')
-            ->with('success', 'Draft Rencana Bisnis dan Anggaran (RBA) berhasil disusun.');
-    }
-
-    /**
-     * Sahkan RBA (backward compatible).
-     */
-    public function sahkan(int $id): RedirectResponse
-    {
-        $rba = \App\Models\RbaDraft::find($id);
-        if ($rba) {
-            $rba->update(['status' => 'Disahkan']);
-        }
-
-        $shift = RbaShift::find($id);
-        if ($shift) {
-            $shift->activate();
-        }
-
-        return redirect()->route('perencanaan.rba.index')
-            ->with('success', 'RBA berhasil disahkan secara resmi.');
-    }
 
     /**
      * Activate a budget shift version and synchronize to active budgets.
@@ -844,16 +778,11 @@ class RbaController extends Controller
      */
     protected function ensureShiftItemsPopulated(RbaShift $shift): void
     {
-        $template = RbaShift::where('id', '!=', $shift->id)
+        $template = RbaShift::where('year', $shift->year)
+            ->where('id', '!=', $shift->id)
             ->whereHas('expenseItems')
+            ->orderByDesc('id')
             ->first();
-
-        if (! $template) {
-            \Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\RbaPergeseran3Seeder']);
-            $template = RbaShift::where('id', '!=', $shift->id)
-                ->whereHas('expenseItems')
-                ->first();
-        }
 
         if (! $template) {
             return;
@@ -1194,6 +1123,9 @@ class RbaController extends Controller
         $totRevBefore = $isMurni ? $totRevAfter : ($rootRevenue ? (float) $rootRevenue->before_amount : $totRevAfter);
         $totRevDiff = $totRevAfter - $totRevBefore;
 
+        $missing_accounts = [];
+        $data_incomplete = false;
+
         if (! $isMurni && $expenseItems->isNotEmpty()) {
             $expApbdRow = $expenseItems->firstWhere('account_code', '1.1.2') ?? $expenseItems->firstWhere('account_code', '1.1');
             $expOperasiRow = $expenseItems->firstWhere('account_code', '1.1');
@@ -1204,32 +1136,41 @@ class RbaController extends Controller
             $expGedungRow = $expenseItems->firstWhere('account_code', '1.2.1.3');
             $expTanahRow = $expenseItems->firstWhere('account_code', '1.2.1.1');
 
-            $bApbdBefore = 18473614708;
-            $bApbdAfter = 18473614708;
+            if (!$expOperasiRow) { $missing_accounts[] = '1.1'; $data_incomplete = true; }
+            if (!$expBarangJasaRow) { $missing_accounts[] = '1.1.2.1'; $data_incomplete = true; }
+            if (!$expPegawaiRow) { $missing_accounts[] = '1.1.1'; $data_incomplete = true; }
+            if (!$expModalRow) { $missing_accounts[] = '1.2'; $data_incomplete = true; }
+            if (!$expPeralatanRow) { $missing_accounts[] = '1.2.1.2'; $data_incomplete = true; }
+            if (!$expGedungRow) { $missing_accounts[] = '1.2.1.3'; $data_incomplete = true; }
+            if (!$expTanahRow) { $missing_accounts[] = '1.2.1.1'; $data_incomplete = true; }
+            if (!$rootExpense) { $missing_accounts[] = '1'; $data_incomplete = true; }
 
-            $bOperasiBefore = $expOperasiRow ? (float) ($expOperasiRow->before_jasa_layanan + $expOperasiRow->before_hasil_kerjasama + $expOperasiRow->before_lain_lain_sah + $expOperasiRow->before_silpa) : 24807414128;
-            $bOperasiAfter = $expOperasiRow ? (float) ($expOperasiRow->after_jasa_layanan + $expOperasiRow->after_hasil_kerjasama + $expOperasiRow->after_lain_lain_sah + $expOperasiRow->after_silpa) : 24718190128;
+            $bApbdBefore = 0;
+            $bApbdAfter = 0;
 
-            $bBarangJasaBefore = $expBarangJasaRow ? (float) $expBarangJasaRow->before_total : 24807414128;
-            $bBarangJasaAfter = $expBarangJasaRow ? (float) $expBarangJasaRow->after_total : 24718190128;
+            $bOperasiBefore = $expOperasiRow ? (float) ($expOperasiRow->before_jasa_layanan + $expOperasiRow->before_hasil_kerjasama + $expOperasiRow->before_lain_lain_sah + $expOperasiRow->before_silpa) : 0;
+            $bOperasiAfter = $expOperasiRow ? (float) ($expOperasiRow->after_jasa_layanan + $expOperasiRow->after_hasil_kerjasama + $expOperasiRow->after_lain_lain_sah + $expOperasiRow->after_silpa) : 0;
+
+            $bBarangJasaBefore = $expBarangJasaRow ? (float) $expBarangJasaRow->before_total : 0;
+            $bBarangJasaAfter = $expBarangJasaRow ? (float) $expBarangJasaRow->after_total : 0;
 
             $bPegawaiBefore = $expPegawaiRow ? (float) $expPegawaiRow->before_total : 0;
             $bPegawaiAfter = $expPegawaiRow ? (float) $expPegawaiRow->after_total : 0;
 
-            $bModalBefore = $expModalRow ? (float) ($expModalRow->before_jasa_layanan + $expModalRow->before_hasil_kerjasama + $expModalRow->before_lain_lain_sah + $expModalRow->before_silpa) : 1000000000;
-            $bModalAfter = $expModalRow ? (float) ($expModalRow->after_jasa_layanan + $expModalRow->after_hasil_kerjasama + $expModalRow->after_lain_lain_sah + $expModalRow->after_silpa) : 1000000000;
+            $bModalBefore = $expModalRow ? (float) ($expModalRow->before_jasa_layanan + $expModalRow->before_hasil_kerjasama + $expModalRow->before_lain_lain_sah + $expModalRow->before_silpa) : 0;
+            $bModalAfter = $expModalRow ? (float) ($expModalRow->after_jasa_layanan + $expModalRow->after_hasil_kerjasama + $expModalRow->after_lain_lain_sah + $expModalRow->after_silpa) : 0;
 
             $bTanahBefore = $expTanahRow ? (float) $expTanahRow->before_total : 0;
             $bTanahAfter = $expTanahRow ? (float) $expTanahRow->after_total : 0;
 
-            $bPeralatanBefore = $expPeralatanRow ? (float) $expPeralatanRow->before_total : 500000000;
-            $bPeralatanAfter = $expPeralatanRow ? (float) $expPeralatanRow->after_total : 500000000;
+            $bPeralatanBefore = $expPeralatanRow ? (float) $expPeralatanRow->before_total : 0;
+            $bPeralatanAfter = $expPeralatanRow ? (float) $expPeralatanRow->after_total : 0;
 
-            $bGedungBefore = $expGedungRow ? (float) $expGedungRow->before_total : 500000000;
-            $bGedungAfter = $expGedungRow ? (float) $expGedungRow->after_total : 500000000;
+            $bGedungBefore = $expGedungRow ? (float) $expGedungRow->before_total : 0;
+            $bGedungAfter = $expGedungRow ? (float) $expGedungRow->after_total : 0;
 
-            $totExpBefore = $rootExpense ? (float) $rootExpense->before_total : 44281028836;
-            $totExpAfter = $rootExpense ? (float) $rootExpense->after_total : 44191804836;
+            $totExpBefore = $rootExpense ? (float) $rootExpense->before_total : 0;
+            $totExpAfter = $rootExpense ? (float) $rootExpense->after_total : 0;
         } else {
             // Murni: values directly reflect approved requisitions
             $bApbdAfter = $reqBelanja['apbd'];
@@ -1278,6 +1219,8 @@ class RbaController extends Controller
         $silpaTahunBerkenaan = $surplusAfter + $pembiayaanNetto;
 
         return [
+            'data_incomplete' => $data_incomplete ?? false,
+            'missing_accounts' => $missing_accounts ?? [],
             'pendapatan' => [
                 'jasa_layanan' => [
                     'before' => $isMurni ? $jasaAfter : ($catJasaLayanan ? (float) $catJasaLayanan->before_amount : $jasaAfter),

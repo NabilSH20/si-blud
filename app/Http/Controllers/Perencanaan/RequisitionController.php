@@ -74,6 +74,8 @@ class RequisitionController extends Controller
      */
     public function update(Request $request, string $id): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'perencanaan', 403, 'Akses ditolak.');
+
         $requisition = Requisition::with(['requisitionDetails'])->findOrFail($id);
 
         $validated = $request->validate([
@@ -82,7 +84,15 @@ class RequisitionController extends Controller
             'notes_perencanaan' => ['nullable', 'string', 'max:500'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.id' => ['required', 'exists:requisition_details,id'],
-            'items.*.quantity_approved' => ['required', 'integer', 'min:0'],
+            'items.*.quantity_approved' => ['required', 'integer', 'min:0', function ($attribute, $value, $fail) use ($requisition) {
+                $index = explode('.', $attribute)[1];
+                $detailId = request()->input("items.{$index}.id");
+                
+                $detail = $requisition->requisitionDetails->firstWhere('id', $detailId);
+                if ($detail && $value > $detail->quantity_requested) {
+                    $fail("Jumlah disetujui tidak boleh melebihi jumlah diminta ({$detail->quantity_requested}).");
+                }
+            }],
         ], [
             'status.required' => 'Status verifikasi wajib dipilih.',
             'status.in' => 'Status verifikasi harus berupa persetujuan atau penolakan.',
@@ -90,6 +100,28 @@ class RequisitionController extends Controller
             'items.*.quantity_approved.required' => 'Jumlah yang disetujui wajib diisi.',
             'items.*.quantity_approved.min' => 'Jumlah yang disetujui minimal 0.',
         ]);
+
+        if ($validated['status'] === 'Diproses_Keuangan') {
+            $exceedsSSH = false;
+            foreach ($validated['items'] as $itemData) {
+                $detail = clone $requisition->requisitionDetails->firstWhere('id', $itemData['id']);
+                // Load item if not loaded
+                if ($detail && !$detail->relationLoaded('item')) {
+                    $detail->load('item');
+                }
+                
+                if ($detail && $detail->item && $detail->unit_price > $detail->item->standard_price) {
+                    $exceedsSSH = true;
+                    break;
+                }
+            }
+
+            if ($exceedsSSH && empty($validated['notes_perencanaan'])) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'notes_perencanaan' => 'Terdapat item dengan harga pengajuan melebihi Standar Satuan Harga (SSH). Wajib mengisi catatan alasan persetujuan.'
+                ]);
+            }
+        }
 
         DB::transaction(function () use ($requisition, $validated) {
             $totalApproved = 0;
@@ -103,10 +135,16 @@ class RequisitionController extends Controller
                 if ($detail) {
                     $qtyApproved = (int) $itemData['quantity_approved'];
                     $subtotal = $qtyApproved * (float) $detail->unit_price;
+                    
+                    if (!$detail->relationLoaded('item')) {
+                        $detail->load('item');
+                    }
+                    $isExceeding = $detail->item && $detail->unit_price > $detail->item->standard_price;
 
                     $detail->update([
                         'quantity_approved' => $qtyApproved,
                         'subtotal' => $subtotal,
+                        'exceeds_ssh' => $isExceeding,
                     ]);
 
                     $totalApproved += $subtotal;

@@ -18,7 +18,6 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             RbaAccountSeeder::class,
             ItemSeeder::class,
-            RbaSeeder::class,
             RevenueSeeder::class,
             RequisitionSeeder::class,
             RbaPergeseran3Seeder::class,

@@ -15,7 +15,6 @@ class Requisition extends Model
         'unit_id',
         'user_id',
         'rba_account_id',
-        'budget_id',
         'jenis_belanja',
         'sumber_dana',
         'program',
@@ -111,10 +110,5 @@ class Requisition extends Model
     public function rbaAccount(): BelongsTo
     {
         return $this->belongsTo(RbaAccount::class, 'rba_account_id');
-    }
-
-    public function budget(): BelongsTo
-    {
-        return $this->belongsTo(Budget::class, 'budget_id');
     }
 }

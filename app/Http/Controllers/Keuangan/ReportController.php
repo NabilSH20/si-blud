@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Keuangan;
 
 use App\Http\Controllers\Controller;
 use App\Models\Budget;
-use App\Models\RbaDraft;
+use App\Models\RbaShift;
 use App\Models\RequisitionDetail;
 use App\Models\Revenue;
 use Carbon\Carbon;
@@ -111,12 +111,22 @@ class ReportController extends Controller
         $isSurplus = $surplusDeficit >= 0;
 
         // RBA Benchmark (Active RBA for active year)
-        $rba = RbaDraft::where('year', $activeYear)
-            ->orderByRaw("CASE WHEN status = 'Disahkan' THEN 1 ELSE 2 END")
+        // RBA Benchmark (Active RBA for active year)
+        $rba = RbaShift::where('year', $activeYear)
+            ->where('status', 'Aktif')
             ->first();
 
-        $targetRevenue = $rba ? (float) $rba->target_revenue : 0;
-        $plannedExpense = $rba ? (float) $rba->planned_expense : 0;
+        $targetRevenue = 0;
+        $plannedExpense = 0;
+
+        if ($rba) {
+            $rootRevenue = $rba->revenueItems()->where('item_code', '0')->first();
+            $rootExpense = $rba->expenseItems()->where('account_code', '1')->first();
+
+            $targetRevenue = $rootRevenue ? (float) $rootRevenue->after_amount : 0;
+            $plannedExpense = $rootExpense ? (float) $rootExpense->after_total : 0;
+        }
+
         $revenueAchievement = $targetRevenue > 0 ? round(($totalRevenue / $targetRevenue) * 100, 1) : 0;
         $expenseAbsorption = $plannedExpense > 0 ? round(($totalExpense / $plannedExpense) * 100, 1) : 0;
 

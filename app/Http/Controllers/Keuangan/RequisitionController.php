@@ -84,18 +84,20 @@ class RequisitionController extends Controller
      */
     public function update(Request $request, string $id): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'keuangan', 403, 'Akses ditolak.');
+
         $requisition = Requisition::with(['requisitionDetails.item', 'rbaAccount'])->findOrFail($id);
 
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:Disetujui_Selesai,Ditolak'],
-            'budget_id' => ['nullable', 'exists:rba_accounts,id'],
+            'rba_account_id' => ['nullable', 'exists:rba_accounts,id'],
             'sp2d_number' => ['nullable', 'string', 'max:255'],
             'receipt_number' => ['nullable', 'string', 'max:255'],
             'notes_keuangan' => ['nullable', 'string', 'max:500'],
         ], [
             'status.required' => 'Status persetujuan wajib dipilih.',
             'status.in' => 'Status tidak valid.',
-            'budget_id.exists' => 'Rekening pagu anggaran yang dipilih tidak ditemukan.',
+            'rba_account_id.exists' => 'Rekening pagu anggaran yang dipilih tidak ditemukan.',
         ]);
 
         if ($validated['status'] === 'Disetujui_Selesai') {
@@ -112,17 +114,17 @@ class RequisitionController extends Controller
                     $subtotal = $qty * $price;
                     $grandTotal += $subtotal;
 
-                    $accId = $detail->rba_account_id ?: $requisition->rba_account_id ?: ($validated['budget_id'] ?? null);
+                    $accId = $detail->rba_account_id ?: ($validated['rba_account_id'] ?? $requisition->rba_account_id);
                     if ($accId) {
                         $accountTotals[$accId] = ($accountTotals[$accId] ?? 0) + $subtotal;
                     }
                 }
 
                 if (empty($accountTotals)) {
-                    $budgetId = $validated['budget_id'] ?? $requisition->rba_account_id;
+                    $budgetId = $validated['rba_account_id'] ?? $requisition->rba_account_id;
                     if (!$budgetId) {
                         throw ValidationException::withMessages([
-                            'budget_id' => 'Rekening pagu anggaran belum ditentukan untuk pengajuan ini.',
+                            'rba_account_id' => 'Rekening pagu anggaran belum ditentukan untuk pengajuan ini.',
                         ]);
                     }
                     $accountTotals[$budgetId] = $grandTotal;
@@ -136,13 +138,13 @@ class RequisitionController extends Controller
                         $formattedCost = 'Rp ' . number_format($cost, 0, ',', '.');
 
                         throw ValidationException::withMessages([
-                            'budget_id' => "Sisa pagu anggaran pada rekening {$budget->account_name} ({$formattedRemaining}) tidak mencukupi untuk membiayai item sebesar {$formattedCost}.",
+                            'rba_account_id' => "Sisa pagu anggaran pada rekening {$budget->account_name} ({$formattedRemaining}) tidak mencukupi untuk membiayai item sebesar {$formattedCost}.",
                         ]);
                     }
                 }
 
                 // Deduct budgets
-                $primaryBudgetId = $validated['budget_id'] ?? $requisition->rba_account_id;
+                $primaryBudgetId = $validated['rba_account_id'] ?? $requisition->rba_account_id;
                 foreach ($accountTotals as $accId => $cost) {
                     $budget = RbaAccount::lockForUpdate()->findOrFail($accId);
                     $budget->remaining_budget = (float) $budget->remaining_budget - (float) $cost;
@@ -157,7 +159,6 @@ class RequisitionController extends Controller
                 $requisition->update([
                     'status' => 'Disetujui_Selesai',
                     'rba_account_id' => $primaryBudgetId,
-                    'budget_id' => $primaryBudgetId,
                     'total_approved' => $grandTotal,
                     'sp2d_number' => $validated['sp2d_number'] ?? null,
                     'receipt_number' => $validated['receipt_number'] ?? null,

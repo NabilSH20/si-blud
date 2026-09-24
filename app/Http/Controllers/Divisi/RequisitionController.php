@@ -302,7 +302,6 @@ class RequisitionController extends Controller
                 'unit_id' => $user->unit_id,
                 'user_id' => $user->id,
                 'rba_account_id' => $firstAccountId,
-                'budget_id' => $firstAccountId,
                 'jenis_belanja' => $overallJenis,
                 'sumber_dana' => 'BLUD',
                 'program' => $validated['program'] ?? 'Program Peningkatan Pelayanan Kesehatan Pada BLUD',
@@ -508,7 +507,6 @@ class RequisitionController extends Controller
             $requisition->update([
                 'nomor_surat_unit' => $validated['nomor_surat_unit'] ?? null,
                 'rba_account_id' => $firstAccountId,
-                'budget_id' => $firstAccountId,
                 'jenis_belanja' => $overallJenis,
                 'sumber_dana' => 'BLUD',
                 'program' => $validated['program'] ?? $requisition->program ?? 'Program Peningkatan Pelayanan Kesehatan Pada BLUD',

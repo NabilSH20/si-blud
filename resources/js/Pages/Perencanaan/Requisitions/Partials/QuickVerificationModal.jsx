@@ -96,10 +96,27 @@ export default function QuickVerificationModal({
         };
     }, [details, itemsState]);
 
+    const isAnyItemExceedingSSH = useMemo(() => {
+        return details.some(d => {
+            const unitPrice = Number(d.unit_price || 0);
+            const standardPrice = Number(d.item?.standard_price || 0);
+            return d.item && unitPrice > standardPrice;
+        });
+    }, [details]);
+
     // Handle Approve Submission (Frictionless / Direct with Toast)
     const handleSubmitApprove = (e) => {
         e.preventDefault();
         if (!requisition) return;
+
+        if (isAnyItemExceedingSSH && !notesPerencanaan.trim()) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Catatan Wajib Diisi',
+                text: 'Terdapat pengajuan yang melebihi SSH. Mohon isi catatan persetujuan.',
+            });
+            return;
+        }
 
         setIsSubmitting(true);
         router.put(
@@ -124,8 +141,15 @@ export default function QuickVerificationModal({
                     });
                     onClose();
                 },
-                onError: () => {
+                onError: (err) => {
                     setIsSubmitting(false);
+                    if (err.notes_perencanaan) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Validasi Gagal',
+                            text: err.notes_perencanaan,
+                        });
+                    }
                 },
             }
         );
@@ -321,8 +345,15 @@ export default function QuickVerificationModal({
                                                 <td className="px-3 py-2.5 text-center text-slate-600">
                                                     {itemUnit}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-right font-mono text-slate-700">
-                                                    {formatRupiah(unitPrice)}
+                                                <td className="px-3 py-2 text-right">
+                                                    <div className={detail.item && unitPrice > Number(detail.item.standard_price || 0) ? "text-rose-600 font-bold font-mono" : "text-slate-700 font-mono"}>
+                                                        {formatRupiah(unitPrice)}
+                                                    </div>
+                                                    {detail.item && (
+                                                        <div className="text-[9px] text-slate-400 mt-0.5">
+                                                            SSH: {formatRupiah(detail.item.standard_price || 0)}
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="px-3 py-2.5 text-center font-bold text-slate-700">
                                                     {detail.quantity_requested}
@@ -364,11 +395,20 @@ export default function QuickVerificationModal({
 
                     {/* Catatan / Rekomendasi Perencanaan */}
                     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-1.5">
+                        {isAnyItemExceedingSSH && (
+                            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 mb-2 flex items-start gap-2">
+                                <div className="text-amber-500 shrink-0">⚠️</div>
+                                <div className="text-[11px] text-amber-900 leading-tight">
+                                    Terdapat usulan dengan harga melebihi Standar Satuan Harga (SSH). Anda diwajibkan untuk mengisi <strong>Catatan Persetujuan</strong>.
+                                </div>
+                            </div>
+                        )}
+
                         <label
                             htmlFor="modal_notes_perencanaan"
                             className="block text-xs font-semibold text-slate-700"
                         >
-                            Catatan / Rekomendasi Telaah Perencanaan <span className="text-slate-400 font-normal">(Opsional)</span>
+                            Catatan / Rekomendasi Telaah Perencanaan {isAnyItemExceedingSSH ? <span className="text-rose-500 font-bold">* (Wajib)</span> : <span className="text-slate-400 font-normal">(Opsional)</span>}
                         </label>
                         <textarea
                             id="modal_notes_perencanaan"

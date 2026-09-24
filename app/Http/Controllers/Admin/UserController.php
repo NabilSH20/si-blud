@@ -50,6 +50,8 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'nip' => ['nullable', 'string', 'max:30', 'unique:users,nip'],
@@ -139,6 +141,8 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'nip' => ['nullable', 'string', 'max:30', Rule::unique('users')->ignore($user->id)],
@@ -172,6 +176,10 @@ class UserController extends Controller
             'unit_id.required' => 'Pengguna dengan peran Divisi / Pemohon wajib memilih Unit kerja.',
             'unit_id.exists' => 'Unit kerja yang dipilih tidak valid.',
         ]);
+
+        if ($user->id === auth()->id() && $validated['role'] !== $user->role) {
+            return back()->with('error', 'Anda tidak dapat mengubah role akun Anda sendiri.')->withInput();
+        }
 
         if ($validated['role'] === 'divisi') {
             $allowedDivisions = Division::whereIn('division_code', ['MEDIK', 'RAWAT', 'PENUNJANG_DIKLIT', 'YAN', 'PENUNJANG'])
@@ -219,6 +227,8 @@ class UserController extends Controller
      */
     public function toggleStatus(User $user): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
+
         if ($user->id === auth()->id()) {
             return back()->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
         }
@@ -237,6 +247,8 @@ class UserController extends Controller
      */
     public function destroy(User $user): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
+
         if ($user->id === auth()->id()) {
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri saat sedang aktif login.');
         }

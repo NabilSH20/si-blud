@@ -171,6 +171,15 @@ export default function Show({ requisition, rbaList = [] }) {
     const handleApprove = (e) => {
         e.preventDefault();
 
+        if (isAnyItemExceedingSSH && !data.notes_perencanaan.trim()) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Catatan Wajib Diisi',
+                text: 'Terdapat harga pengajuan yang melebihi Standar Satuan Harga (SSH). Mohon isi Catatan / Rekomendasi Tim Perencanaan sebagai justifikasi.',
+            });
+            return;
+        }
+
         put(
             route('perencanaan.requisitions.update', requisition.id),
             {
@@ -362,25 +371,34 @@ export default function Show({ requisition, rbaList = [] }) {
                             </div>
 
                             {activeRbaAccount && (
-                                <span className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 self-start sm:self-auto">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
-                                    [{activeRbaAccount.account_code}] {activeRbaAccount.account_name}
-                                </span>
+                                <div className="flex flex-col gap-2 items-start sm:items-end">
+                                    <span className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 self-start sm:self-auto">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+                                        [{activeRbaAccount.account_code}] {activeRbaAccount.account_name}
+                                    </span>
+                                    {activeRbaAccount.remaining_budget !== null && activeRbaAccount.remaining_budget !== undefined && (
+                                        <div className="flex flex-col sm:flex-row gap-2 mt-1 w-full sm:w-auto">
+                                            <div className="text-[11px] bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg flex items-center justify-between gap-4">
+                                                <span className="text-slate-500 font-medium">Sisa Pagu Rekening:</span>
+                                                <span className="font-mono font-bold text-slate-800">{formatRupiah(activeRbaAccount.remaining_budget)}</span>
+                                            </div>
+                                            <div className={`text-[11px] border px-3 py-1.5 rounded-lg flex items-center justify-between gap-4 ${
+                                                activeRbaAccount.remaining_budget - totalEstimatedApproved < 0 
+                                                ? 'bg-rose-50 border-rose-300' 
+                                                : 'bg-emerald-50 border-emerald-200'
+                                            }`}>
+                                                <span className={`${activeRbaAccount.remaining_budget - totalEstimatedApproved < 0 ? 'text-rose-700' : 'text-emerald-700'} font-medium`}>Estimasi Sisa Akhir:</span>
+                                                <span className={`font-mono font-bold ${activeRbaAccount.remaining_budget - totalEstimatedApproved < 0 ? 'text-rose-700' : 'text-emerald-800'}`}>
+                                                    {formatRupiah(activeRbaAccount.remaining_budget - totalEstimatedApproved)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             )}
                         </div>
 
                         {isPending ? (
-                            <div className="space-y-2">
-                                <label
-                                    htmlFor="select_rba_account"
-                                    className="block text-xs font-semibold text-slate-700"
-                                >
-                                    Pilih Rekening Belanja RBA (Rekening Definitif / Leaf) <span className="text-rose-500">*</span>
-                                </label>
-                                <select
-                                    id="select_rba_account"
-                                    value={data.rba_account_id}
-                                    onChange={(e) => setData('rba_account_id', e.target.value)}
                                     className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900 shadow-2xs transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600 cursor-pointer"
                                 >
                                     <option value="" disabled>-- Pilih Pos Rekening Belanja RBA --</option>
@@ -485,8 +503,15 @@ export default function Show({ requisition, rbaList = [] }) {
                                                 <td className="px-3 py-2.5 text-center text-slate-600">
                                                     {detail.unit_type || detail.item?.unit_type || 'Unit'}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-right font-mono text-slate-700">
-                                                    {formatRupiah(unitPrice)}
+                                                <td className="px-3 py-2.5 text-right font-mono">
+                                                    <div className={detail.item && unitPrice > Number(detail.item.standard_price || 0) ? "text-rose-600 font-bold" : "text-slate-700"}>
+                                                        {formatRupiah(unitPrice)}
+                                                    </div>
+                                                    {detail.item && (
+                                                        <div className="text-[9px] text-slate-400 mt-0.5">
+                                                            SSH: {formatRupiah(detail.item.standard_price || 0)}
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="px-3 py-2.5 text-center font-bold text-slate-700">
                                                     {detail.quantity_requested}
@@ -516,28 +541,46 @@ export default function Show({ requisition, rbaList = [] }) {
                             </table>
                         </div>
 
-                        {/* Baris Ringkasan Akumulasi Total */}
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-slate-100">
                             <span className="text-xs text-slate-500">
                                 Total Volume Disetujui: <strong className="text-slate-800">{totalApprovedQty} Unit</strong>
                             </span>
-                            <div className="flex items-center gap-2 self-end">
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                                    Total Nilai Disetujui:
-                                </span>
-                                <span className="text-sm sm:text-base font-bold text-teal-800 font-mono bg-teal-50 px-2.5 py-0.5 rounded-lg border border-teal-200">
-                                    {formatRupiah(totalEstimatedApproved)}
-                                </span>
+                            <div className="flex flex-col items-end gap-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                                        Total Nilai Disetujui:
+                                    </span>
+                                    <span className="text-sm sm:text-base font-bold text-teal-800 font-mono bg-teal-50 px-2.5 py-0.5 rounded-lg border border-teal-200">
+                                        {formatRupiah(totalEstimatedApproved)}
+                                    </span>
+                                </div>
+                                {activeRbaAccount && activeRbaAccount.remaining_budget !== null && (activeRbaAccount.remaining_budget - totalEstimatedApproved < 0) && (
+                                    <span className="text-[10px] font-bold text-rose-600 animate-pulse">
+                                        ⚠️ Peringatan: Total disetujui melebihi sisa pagu rekening!
+                                    </span>
+                                )}
                             </div>
                         </div>
 
                         {/* Catatan / Rekomendasi Tim Perencanaan */}
                         <div className="pt-3 border-t border-slate-100 space-y-1.5">
+                            {isAnyItemExceedingSSH && (
+                                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 mb-4 flex items-start gap-3">
+                                    <div className="text-amber-500 mt-0.5 shrink-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div className="text-xs text-amber-900">
+                                        <strong>Perhatian:</strong> Terdapat harga pengajuan yang melebihi Standar Satuan Harga (SSH). Anda diwajibkan untuk mengisi Catatan Persetujuan sebagai justifikasi.
+                                    </div>
+                                </div>
+                            )}
                             <label
                                 htmlFor="notes_perencanaan"
                                 className="block text-xs font-semibold text-slate-700"
                             >
-                                Catatan / Rekomendasi Tim Perencanaan <span className="text-slate-400 font-normal">(Opsional)</span>
+                                Catatan / Rekomendasi Tim Perencanaan {isAnyItemExceedingSSH ? <span className="text-rose-500 font-bold">* (Wajib karena melebihi SSH)</span> : <span className="text-slate-400 font-normal">(Opsional)</span>}
                             </label>
                             {isPending ? (
                                 <textarea

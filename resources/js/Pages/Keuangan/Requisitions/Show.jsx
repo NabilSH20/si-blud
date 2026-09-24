@@ -86,13 +86,13 @@ export default function Show({ requisition, budgets = [] }) {
         return { grandTotal: total, totalApprovedItems: qtyTotal };
     }, [details]);
 
-    // Initial budget ID: prioritize requisition.rba_account_id or budget_id
-    const initialBudgetId = requisition.rba_account_id || requisition.budget_id || (budgets[0]?.id ? String(budgets[0].id) : '');
+    // Initial account ID
+    const initialAccountId = requisition.rba_account_id || (budgets[0]?.id ? String(budgets[0].id) : '');
 
     // Inertia form for approval & disbursement
     const { data, setData, put, processing, errors } = useForm({
         status: 'Disetujui_Selesai',
-        budget_id: initialBudgetId ? String(initialBudgetId) : '',
+        rba_account_id: initialAccountId ? String(initialAccountId) : '',
         sp2d_number: requisition.sp2d_number || '',
         receipt_number: requisition.receipt_number || '',
         notes_keuangan: requisition.notes_keuangan || '',
@@ -100,8 +100,8 @@ export default function Show({ requisition, budgets = [] }) {
 
     // Selected Budget preview
     const selectedBudget = useMemo(() => {
-        return budgets.find((b) => String(b.id) === String(data.budget_id));
-    }, [budgets, data.budget_id]);
+        return budgets.find((b) => String(b.id) === String(data.rba_account_id));
+    }, [budgets, data.rba_account_id]);
 
     const remainingAfterDeduction = useMemo(() => {
         if (!selectedBudget) return null;
@@ -114,7 +114,7 @@ export default function Show({ requisition, budgets = [] }) {
     const handleApprove = (e) => {
         e.preventDefault();
 
-        if (!data.budget_id) {
+        if (!data.rba_account_id) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Pilih Rekening Anggaran',
@@ -158,7 +158,7 @@ export default function Show({ requisition, budgets = [] }) {
                     route('keuangan.requisitions.update', requisition.id),
                     {
                         status: 'Disetujui_Selesai',
-                        budget_id: data.budget_id,
+                        rba_account_id: data.rba_account_id,
                         sp2d_number: data.sp2d_number,
                         receipt_number: data.receipt_number,
                         notes_keuangan: data.notes_keuangan,
@@ -516,8 +516,9 @@ export default function Show({ requisition, budgets = [] }) {
                                         Rekening Pagu Anggaran RBA <span className="text-rose-600">*</span>
                                     </label>
                                     <select
-                                        value={data.budget_id}
-                                        onChange={(e) => setData('budget_id', e.target.value)}
+                                        id="rba_account_id"
+                                        value={data.rba_account_id}
+                                        onChange={(e) => setData('rba_account_id', e.target.value)}
                                         className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 transition focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500"
                                     >
                                         <option value="">-- Pilih Rekening Pagu Anggaran --</option>
@@ -528,9 +529,9 @@ export default function Show({ requisition, budgets = [] }) {
                                         ))}
                                     </select>
 
-                                    {errors.budget_id && (
-                                        <p className="mt-1 text-xs font-bold text-rose-600">
-                                            {errors.budget_id}
+                                    {errors.rba_account_id && (
+                                        <p className="mt-1.5 text-[11px] font-medium text-rose-600 animate-pulse">
+                                            {errors.rba_account_id}
                                         </p>
                                     )}
                                 </div>
@@ -644,7 +645,7 @@ export default function Show({ requisition, budgets = [] }) {
 
                                     <button
                                         type="submit"
-                                        disabled={processing || isBudgetInsufficient || !data.budget_id}
+                                        disabled={processing || isBudgetInsufficient || !data.rba_account_id}
                                         className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-5 py-2.5 text-xs font-bold shadow-md shadow-emerald-700/20 hover:shadow-lg hover:shadow-emerald-700/30 transition duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                         {processing ? (

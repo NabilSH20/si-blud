@@ -169,7 +169,7 @@ class EndToEndRequisitionWorkflowTest extends TestCase
         $disburseResponse = $this->actingAs($this->keuanganUser)
             ->put(route('keuangan.requisitions.update', $requisition->id), [
                 'status' => 'Disetujui_Selesai',
-                'budget_id' => $this->rbaAccount->id,
+                'rba_account_id' => $this->rbaAccount->id,
                 'sp2d_number' => 'SP2D-BLUD-2026-0089',
                 'receipt_number' => 'KWT-2026-0045',
                 'notes_keuangan' => 'Pencairan dana transfer kas BLUD selesai.',

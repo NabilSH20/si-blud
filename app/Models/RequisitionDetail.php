@@ -27,8 +27,4 @@ class RequisitionDetail extends Model
         return $this->belongsTo(Item::class);
     }
 
-    public function rbaAccount(): BelongsTo
-    {
-        return $this->belongsTo(RbaAccount::class, 'rba_account_id');
-    }
 }

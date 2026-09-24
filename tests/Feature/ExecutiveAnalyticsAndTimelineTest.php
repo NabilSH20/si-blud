@@ -53,7 +53,7 @@ class ExecutiveAnalyticsAndTimelineTest extends TestCase
 
     public function test_inertia_shares_flash_messages(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($user)
             ->withSession(['success' => 'Operasi berhasil dieksekusi!'])

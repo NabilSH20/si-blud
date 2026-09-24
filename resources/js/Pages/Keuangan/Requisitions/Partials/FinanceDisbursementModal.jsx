@@ -127,7 +127,7 @@ export default function FinanceDisbursementModal({
                 setProcessing(true);
                 router.put(route('keuangan.requisitions.update', requisition.id), {
                     status: 'Disetujui_Selesai',
-                    budget_id: selectedBudgetId,
+                    rba_account_id: selectedBudgetId,
                     sp2d_number: sp2dNumber,
                     receipt_number: receiptNumber,
                     notes_keuangan: notesKeuangan,
@@ -146,7 +146,7 @@ export default function FinanceDisbursementModal({
                     },
                     onError: (err) => {
                         setProcessing(false);
-                        const msg = err.budget_id || err.status || Object.values(err)[0] || 'Gagal memproses persetujuan.';
+                        const msg = err.rba_account_id || err.status || Object.values(err)[0] || 'Gagal memproses persetujuan.';
                         Swal.fire({
                             icon: 'error',
                             title: 'Gagal Memproses',
@@ -184,7 +184,7 @@ export default function FinanceDisbursementModal({
                 setProcessing(true);
                 router.put(route('keuangan.requisitions.update', requisition.id), {
                     status: 'Ditolak',
-                    budget_id: selectedBudgetId,
+                    rba_account_id: selectedBudgetId,
                     notes_keuangan: result.value,
                     sp2d_number: '',
                     receipt_number: '',

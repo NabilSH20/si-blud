@@ -81,7 +81,6 @@ class RequisitionSeeder extends Seeder
                     'division_id' => $user->division_id,
                     'user_id' => $user->id,
                     'rba_account_id' => $account->id,
-                    'budget_id' => $account->id,
                     'jenis_belanja' => $account->kategori_belanja ?? 'Operasi',
                     'status' => $plan['status'],
                     'submission_date' => $date->toDateString(),

@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         //
+        $middleware->alias([
+            'role' => \App\Http\Middleware\EnsureUserHasRole::class,
+        ]);
+
         // User yang sudah login dan membuka halaman guest (login/register)
         // diarahkan ke dashboard role-nya masing-masing.
         $middleware->redirectTo(

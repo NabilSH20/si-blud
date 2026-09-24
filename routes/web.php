@@ -34,14 +34,14 @@ Route::post('/set-year', function (\Illuminate\Http\Request $request) {
     return back();
 })->name('set-year');
 
-Route::prefix('divisi')->middleware('auth')->group(function () {
+Route::prefix('divisi')->middleware(['auth', 'role:divisi'])->group(function () {
     Route::get('/dashboard', [DivisiDashboardController::class, 'index'])
         ->name('divisi.dashboard');
 
     Route::resource('requisitions', DivisiRequisitionController::class);
 });
 
-Route::prefix('perencanaan')->middleware('auth')->group(function () {
+Route::prefix('perencanaan')->middleware(['auth', 'role:perencanaan'])->group(function () {
     Route::get('/dashboard', [PerencanaanDashboardController::class, 'index'])
         ->name('perencanaan.dashboard');
 
@@ -53,7 +53,7 @@ Route::prefix('perencanaan')->middleware('auth')->group(function () {
         ->names('perencanaan.requisitions');
 
     Route::resource('rba', PerencanaanRbaController::class)
-        ->only(['index', 'create', 'store'])
+        ->only(['index'])
         ->names('perencanaan.rba');
     Route::patch('/rba/{id}/sahkan', [PerencanaanRbaController::class, 'sahkan'])
         ->name('perencanaan.rba.sahkan');
@@ -81,7 +81,7 @@ Route::prefix('perencanaan')->middleware('auth')->group(function () {
         ->name('perencanaan.rba.print-rincian-belanja');
 });
 
-Route::prefix('keuangan')->middleware('auth')->group(function () {
+Route::prefix('keuangan')->middleware(['auth', 'role:keuangan'])->group(function () {
     Route::get('/dashboard', [KeuanganDashboardController::class, 'index'])
         ->name('keuangan.dashboard');
 
@@ -99,7 +99,7 @@ Route::prefix('keuangan')->middleware('auth')->group(function () {
     Route::get('/reports/surplus-deficit/print', [KeuanganReportController::class, 'printSurplusDeficit'])->name('reports.surplus-deficit.print');
 });
 
-Route::prefix('admin')->middleware('auth')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])
         ->name('admin.dashboard');
 

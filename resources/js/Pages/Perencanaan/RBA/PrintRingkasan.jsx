@@ -59,8 +59,23 @@ export default function PrintRingkasan({ shift, ringkasan = {} }) {
                     </button>
                 </div>
 
+                {ringkasan.data_incomplete && (
+                    <div className="print:hidden max-w-4xl mx-auto mb-4 p-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-sm">
+                        <strong className="font-bold">⚠️ Peringatan: Data Belum Lengkap!</strong><br />
+                        Terdapat kode akun wajib yang belum di-mapping di versi RBA ini (Akun hilang: {ringkasan.missing_accounts?.join(', ')}). 
+                        Angka yang ditampilkan mungkin tidak akurat (0). Harap lengkapi RBA sebelum mencetak dokumen resmi.
+                    </div>
+                )}
+
                 {/* Printable Document Area */}
-                <div className="max-w-4xl mx-auto text-slate-900 leading-tight">
+                <div className="max-w-4xl mx-auto text-slate-900 leading-tight relative">
+                    {ringkasan.data_incomplete && (
+                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-10 z-0">
+                            <span className="text-[150px] font-black uppercase text-rose-600 rotate-[-45deg] whitespace-nowrap">
+                                DATA TIDAK LENGKAP
+                            </span>
+                        </div>
+                    )}
                     {/* Official Document Header with Logo */}
                     <div className="relative mb-5 text-center">
                         <div className="absolute left-0 top-0 hidden sm:block print:block">

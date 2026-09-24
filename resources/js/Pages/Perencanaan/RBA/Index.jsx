@@ -68,9 +68,9 @@ export default function Index({
     // Form for creating new shift
     const shiftForm = useForm({
         year: current_year,
-        shift_name: 'Pergeseran IV',
-        doc_title: 'RENCANA BISNIS DAN ANGGARAN PERGESERAN IV',
-        period_month: 'Oktober 2026',
+        shift_name: '',
+        doc_title: '',
+        period_month: '',
         notes: '',
     });
 

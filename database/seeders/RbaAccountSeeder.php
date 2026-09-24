@@ -679,7 +679,7 @@ class RbaAccountSeeder extends Seeder
             if ($oldAcc && $newAcc) {
                 \App\Models\Item::where('rba_account_id', $oldAcc->id)->update(['rba_account_id' => $newAcc->id]);
                 \App\Models\Requisition::where('rba_account_id', $oldAcc->id)->update(['rba_account_id' => $newAcc->id]);
-                \App\Models\Requisition::where('budget_id', $oldAcc->id)->update(['budget_id' => $newAcc->id]);
+                \App\Models\Requisition::where('rba_account_id', $oldAcc->id)->update(['rba_account_id' => $newAcc->id]);
             }
         }
     }
