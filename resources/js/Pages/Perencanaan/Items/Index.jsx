@@ -19,10 +19,14 @@ export default function Index({
     rbaAccounts = [],
     nextItemCode = '',
     success,
-    error,
+    sourceFilter = 'ALL',
 }) {
     const [search, setSearch] = useState('');
-    const [selectedSource, setSelectedSource] = useState('ALL'); // 'ALL' | 'STANDAR' | 'USULAN_UNIT'
+    const [selectedSource, setSelectedSource] = useState(sourceFilter);
+
+    useEffect(() => {
+        setSelectedSource(sourceFilter);
+    }, [sourceFilter]);
     const [selectedUnit, setSelectedUnit] = useState('ALL');
     const [selectedRba, setSelectedRba] = useState('ALL');
     const [currentPage, setCurrentPage] = useState(1);
@@ -151,33 +155,21 @@ export default function Index({
         <PerencanaanLayout>
             <Head title="Katalog Barang Acuan Standar - E-BLUD RSJ Tampan" />
 
-            {/* 1. Header Minimalis (Sesuai Standar Admin, Divisi & Verifikasi) */}
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* 1. Header Minimalis */}
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <div className="flex items-center gap-2.5 flex-wrap">
-                        <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                            Katalog Barang Acuan RS
-                        </h1>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-0.5 text-xs font-bold text-teal-800 border border-teal-200">
-                            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
-                            {sourceCounts.standar} Standar Baku RS
-                        </span>
-                        {sourceCounts.usulan > 0 && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-0.5 text-xs font-bold text-blue-800 border border-blue-200">
-                                <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
-                                {sourceCounts.usulan} Usulan Unit
-                            </span>
-                        )}
-                    </div>
-                    <p className="mt-1 text-xs sm:text-sm text-slate-500">
-                        Daftar barang acuan standar pengadaan beserta pos rekening belanja RBA BLUD dan harga perkiraan standar.
+                    <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                        {sourceFilter === 'USULAN_UNIT' ? 'Usulan Unit Baru' : 'Katalog Standar Baku RS'}
+                    </h1>
+                    <p className="mt-1 text-xs sm:text-sm text-slate-500 max-w-xl">
+                        {sourceFilter === 'USULAN_UNIT' ? 'Daftar barang baru yang diusulkan oleh unit kerja dan menunggu proses verifikasi dan pengesahan.' : 'Daftar barang acuan standar pengadaan beserta pos rekening belanja RBA BLUD dan harga perkiraan standar.'}
                     </p>
                 </div>
 
                 <button
                     type="button"
                     onClick={openCreateModal}
-                    className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-2xs transition cursor-pointer"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer whitespace-nowrap"
                 >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -216,20 +208,6 @@ export default function Index({
                                     </svg>
                                 </button>
                             )}
-                        </div>
-
-                        {/* Filter Sumber Barang */}
-                        <div className="relative">
-                            <select
-                                value={selectedSource}
-                                onChange={(e) => setSelectedSource(e.target.value)}
-                                aria-label="Filter Sumber Barang"
-                                className="block rounded-lg border border-slate-300 bg-white py-1.5 pl-3 pr-8 text-xs font-semibold text-slate-700 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition shadow-2xs cursor-pointer"
-                            >
-                                <option value="ALL">Semua Sumber ({items.length})</option>
-                                <option value="STANDAR">🏛️ Standar RS ({sourceCounts.standar})</option>
-                                <option value="USULAN_UNIT">📋 Usulan Unit ({sourceCounts.usulan})</option>
-                            </select>
                         </div>
 
                         {/* Filter Pos Rekening Belanja RBA */}
@@ -317,7 +295,7 @@ export default function Index({
                                 paginatedItems.map((item, idx) => (
                                     <tr
                                         key={item.id}
-                                        className="hover:bg-slate-50/60 transition"
+                                        className={`transition-colors group ${item.source === 'USULAN_UNIT' ? 'bg-amber-50/40 hover:bg-amber-100/50' : 'bg-white hover:bg-slate-50/80'}`}
                                     >
                                         <td className="px-3 py-3 text-center text-slate-400 font-semibold">
                                             #{(currentPage - 1) * itemsPerPage + idx + 1}
@@ -338,8 +316,8 @@ export default function Index({
                                                         Standar RS
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.2 text-[10px] font-bold text-blue-800 border border-blue-200">
-                                                        <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
+                                                    <span className="inline-flex items-center gap-1 rounded bg-amber-100/80 px-1.5 py-0.2 text-[10px] font-bold text-amber-800 border border-amber-300">
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
                                                         Usulan: {item.origin_unit?.name || 'Unit Kerja'}
                                                     </span>
                                                 )}

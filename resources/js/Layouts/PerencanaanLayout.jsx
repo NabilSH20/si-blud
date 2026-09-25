@@ -60,13 +60,24 @@ const menuGroups = [
         items: [
             {
                 name: 'Katalog Barang Acuan',
-                href: route('items.index'),
                 routeName: 'items.*',
                 icon: (
                     <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                     </svg>
                 ),
+                children: [
+                    {
+                        name: 'Standar Baku RS',
+                        href: route('items.index', { source: 'STANDAR' }),
+                        isActive: (url) => url.includes('source=STANDAR') || !url.includes('source='),
+                    },
+                    {
+                        name: 'Usulan Unit Baru',
+                        href: route('items.index', { source: 'USULAN_UNIT' }),
+                        isActive: (url) => url.includes('source=USULAN_UNIT'),
+                    },
+                ]
             },
         ],
     },
@@ -75,13 +86,39 @@ const menuGroups = [
         items: [
             {
                 name: 'Verifikasi Pengajuan',
-                href: route('perencanaan.requisitions.index'),
                 routeName: 'perencanaan.requisitions.*',
                 icon: (
                     <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 ),
+                children: [
+                    {
+                        name: 'Semua Usulan',
+                        href: route('perencanaan.requisitions.index'),
+                        isActive: (url) => !url.includes('status='),
+                    },
+                    {
+                        name: 'Menunggu Telaah',
+                        href: route('perencanaan.requisitions.index', { status: 'Pending_Perencanaan' }),
+                        isActive: (url) => url.includes('status=Pending_Perencanaan'),
+                    },
+                    {
+                        name: 'Diteruskan ke Keuangan',
+                        href: route('perencanaan.requisitions.index', { status: 'Diproses_Keuangan' }),
+                        isActive: (url) => url.includes('status=Diproses_Keuangan'),
+                    },
+                    {
+                        name: 'Disetujui Selesai',
+                        href: route('perencanaan.requisitions.index', { status: 'Disetujui_Selesai' }),
+                        isActive: (url) => url.includes('status=Disetujui_Selesai'),
+                    },
+                    {
+                        name: 'Ditolak',
+                        href: route('perencanaan.requisitions.index', { status: 'Ditolak' }),
+                        isActive: (url) => url.includes('status=Ditolak'),
+                    },
+                ]
             },
         ],
     },

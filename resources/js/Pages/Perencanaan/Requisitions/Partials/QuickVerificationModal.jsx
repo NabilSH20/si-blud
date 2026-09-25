@@ -196,31 +196,37 @@ export default function QuickVerificationModal({
 
     return (
         <Modal show={show} onClose={onClose} maxWidth="4xl">
-            <div className="flex flex-col bg-white rounded-2xl overflow-hidden shadow-xl max-h-[92vh]">
-                {/* 1. Header Minimalis Putih (Persis Standar Admin, Divisi & Profil) */}
-                <div className="shrink-0 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
-                    <div>
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                            <h2 className="text-base sm:text-lg font-bold text-slate-900">
-                                Verifikasi Usulan Belanja
-                            </h2>
-                            <span className="inline-block font-mono text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                                {requisition.requisition_number}
-                            </span>
-                            <span className="inline-block text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                                TA {fiscalYear}
-                            </span>
+            <div className="flex flex-col max-h-[92vh] bg-slate-50/50">
+                {/* Header Modal (White, Clean) */}
+                <div className="shrink-0 flex items-start justify-between border-b border-slate-200 bg-white px-6 py-5">
+                    <div className="flex items-start gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600 border border-teal-100">
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
                         </div>
-                        <p className="mt-0.5 text-xs text-slate-500">
-                            {unitName} &bull; Sub Kegiatan: {requisition.sub_kegiatan || 'Pelayanan BLUD'}
-                        </p>
+                        <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                                    Verifikasi Usulan Belanja
+                                </h2>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-cyan-50 text-cyan-800 border border-cyan-200 uppercase">
+                                    {requisition.requisition_number}
+                                </span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                    TA {fiscalYear}
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1 font-medium">
+                                {unitName} • Sub Kegiatan: {requisition.sub_kegiatan || 'Pelayanan BLUD'}
+                            </p>
+                        </div>
                     </div>
 
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
-                        title="Tutup dialog"
+                        className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
                     >
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -229,56 +235,78 @@ export default function QuickVerificationModal({
                 </div>
 
                 {/* 2. Body Content (Scrollable) */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/40">
-                    {/* Ringkasan Pos Rekening & Klasifikasi Belanja */}
-                    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                            <div>
-                                <span className="text-slate-400 font-medium block mb-0.5">Pos Rekening Belanja:</span>
-                                <span className="font-bold text-slate-900">
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {/* SECTION 1: Identitas Dokumen Pengajuan */}
+                    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                        <div className="border-b border-slate-100 bg-white px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-100 text-teal-700 font-bold text-xs">
+                                    1
+                                </span>
+                                <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900">
+                                    Identitas Dokumen Pengajuan
+                                </h3>
+                            </div>
+                            <span className={`text-[11px] font-bold px-3 py-1 rounded-md border ${
+                                requisition.jenis_belanja === 'Campuran'
+                                    ? 'text-indigo-800 bg-indigo-100 border-indigo-200'
+                                    : requisition.jenis_belanja === 'Modal'
+                                    ? 'text-purple-700 bg-purple-50 border-purple-200'
+                                    : 'text-teal-700 bg-teal-50 border-teal-200'
+                            }`}>
+                                Belanja {requisition.jenis_belanja || 'Operasi'} BLUD
+                            </span>
+                        </div>
+
+                        <div className="p-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            <div className="space-y-1">
+                                <span className="block text-xs font-semibold text-slate-500">
+                                    Pos Rekening Belanja RBA
+                                </span>
+                                <p className="text-sm font-bold text-slate-900">
                                     {requisition.rba_account
                                         ? `[${requisition.rba_account.account_code}] ${requisition.rba_account.account_name}`
                                         : 'Belum Terhubung'}
-                                </span>
+                                </p>
                             </div>
-                            <div>
-                                <span className="text-slate-400 font-medium block mb-0.5">Klasifikasi Belanja:</span>
-                                <span className="inline-flex items-center gap-1 font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                                    Belanja {requisition.jenis_belanja || 'Operasi'} &bull; 100% BLUD
+                            <div className="space-y-1">
+                                <span className="block text-xs font-semibold text-slate-500">
+                                    Unit & Bidang Pengusul
                                 </span>
-                            </div>
-                            <div>
-                                <span className="text-slate-400 font-medium block mb-0.5">Unit Pengusul:</span>
-                                <span className="font-semibold text-slate-800">
+                                <p className="text-sm font-bold text-slate-900">
                                     {unitName}
+                                </p>
+                            </div>
+                            <div className="space-y-1 sm:col-span-1">
+                                <span className="block text-xs font-semibold text-slate-500">
+                                    Sub Kegiatan RS
                                 </span>
+                                <p className="text-xs font-semibold text-slate-800">
+                                    {requisition.sub_kegiatan || 'Pelayanan BLUD'}
+                                </p>
+                            </div>
+                            <div className="space-y-1 sm:col-span-3">
+                                <span className="block text-xs font-semibold text-slate-500">
+                                    Catatan / Alasan Kebutuhan Belanja Unit
+                                </span>
+                                <p className="text-xs font-medium text-slate-700 whitespace-pre-line leading-relaxed">
+                                    {requisition.urgency_reason || 'Tidak ada catatan urgensi dari unit pengusul.'}
+                                </p>
                             </div>
                         </div>
-
-                        {requisition.urgency_reason && (
-                            <div className="border-t border-slate-100 pt-2.5 text-xs">
-                                <span className="font-bold text-slate-600 block mb-1">
-                                    Catatan / Alasan Kebutuhan Belanja Unit:
-                                </span>
-                                <p className="text-slate-700 italic bg-slate-50 p-2.5 rounded-lg border border-slate-200 leading-relaxed">
-                                    "{requisition.urgency_reason}"
-                                </p>
-                            </div>
-                        )}
                     </div>
 
-                    {/* Tabel Rincian Barang & Input Kuantitas Disetujui */}
-                    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2 border-b border-slate-100">
-                            <div>
-                                <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-                                    Rincian Kuantitas Barang ({details.length} Item)
+                    {/* SECTION 2: Rincian Barang & Input Kuantitas */}
+                    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                        <div className="border-b border-slate-100 bg-white px-6 py-5 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-100 text-teal-700 font-bold text-xs">
+                                    2
+                                </span>
+                                <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900">
+                                    Rincian Barang Yang Diusulkan
                                 </h3>
-                                <p className="text-[11px] text-slate-500">
-                                    Total Diminta: <strong className="text-slate-800">{totalRequestedQty} Unit</strong> &bull; Sesuaikan volume yang disetujui
-                                </p>
                             </div>
-
                             <div className="flex items-center gap-2 flex-wrap">
                                 <button
                                     type="button"
@@ -286,7 +314,7 @@ export default function QuickVerificationModal({
                                     className="rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 px-3 py-1.5 text-xs font-bold transition cursor-pointer"
                                     title="Setujui seluruh kuantitas sesuai permintaan unit"
                                 >
-                                    ✓ Setujui Semua (100%)
+                                    ✓ Setujui Semua
                                 </button>
                                 <button
                                     type="button"
@@ -299,19 +327,19 @@ export default function QuickVerificationModal({
                             </div>
                         </div>
 
-                        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+                        <div className="overflow-x-auto bg-white">
                             <table className="min-w-full divide-y divide-slate-100 text-xs">
-                                <thead className="bg-slate-50 font-bold text-slate-700 uppercase tracking-wider text-[11px]">
+                                <thead className="bg-slate-50 font-bold text-slate-600 uppercase tracking-wider text-[11px]">
                                     <tr>
-                                        <th className="w-10 px-3 py-2.5 text-center">No</th>
-                                        <th className="px-4 py-2.5 text-left">Nama Barang & Spesifikasi</th>
-                                        <th className="w-20 px-3 py-2.5 text-center">Satuan</th>
-                                        <th className="w-32 px-3 py-2.5 text-right">Harga Satuan</th>
-                                        <th className="w-20 px-3 py-2.5 text-center">Diminta</th>
-                                        <th className="w-28 px-3 py-2 text-center bg-teal-50/70 text-teal-950 border-x border-teal-200">
+                                        <th className="w-10 px-4 py-3.5 text-center">No</th>
+                                        <th className="px-5 py-3.5 text-left">Nama Barang & Spesifikasi</th>
+                                        <th className="w-20 px-4 py-3.5 text-center">Satuan</th>
+                                        <th className="w-32 px-4 py-3.5 text-right">Harga Satuan</th>
+                                        <th className="w-20 px-4 py-3.5 text-center">Diminta</th>
+                                        <th className="w-36 px-4 py-3 text-center bg-teal-50/70 text-teal-950 border-x border-teal-200">
                                             Disetujui *
                                         </th>
-                                        <th className="w-36 px-4 py-2.5 text-right">Subtotal Disetujui</th>
+                                        <th className="w-36 px-4 py-3.5 text-right">Subtotal Disetujui</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -326,27 +354,22 @@ export default function QuickVerificationModal({
 
                                         return (
                                             <tr key={detail.id || idx} className="hover:bg-slate-50/60 transition">
-                                                <td className="px-3 py-2.5 text-center text-slate-400 font-semibold">
+                                                <td className="px-4 py-3.5 text-center text-slate-400 font-semibold">
                                                     {idx + 1}
                                                 </td>
-                                                <td className="px-4 py-2.5">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className="font-mono text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                                                            {itemCode}
-                                                        </span>
-                                                        <span className="font-bold text-slate-900">{itemName}</span>
-                                                    </div>
+                                                <td className="px-5 py-3.5">
+                                                    <p className="font-bold text-slate-900">{itemName}</p>
                                                     {itemSpec && (
                                                         <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
                                                             {itemSpec}
                                                         </p>
                                                     )}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-center text-slate-600">
+                                                <td className="px-4 py-3.5 text-center text-slate-600 font-medium">
                                                     {itemUnit}
                                                 </td>
-                                                <td className="px-3 py-2 text-right">
-                                                    <div className={detail.item && unitPrice > Number(detail.item.standard_price || 0) ? "text-rose-600 font-bold font-mono" : "text-slate-700 font-mono"}>
+                                                <td className="px-4 py-3.5 text-right">
+                                                    <div className={detail.item && unitPrice > Number(detail.item.standard_price || 0) ? "text-rose-600 font-bold font-mono" : "text-slate-700 font-medium font-mono"}>
                                                         {formatRupiah(unitPrice)}
                                                     </div>
                                                     {detail.item && (
@@ -355,19 +378,35 @@ export default function QuickVerificationModal({
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-center font-bold text-slate-700">
+                                                <td className="px-4 py-3.5 text-center font-bold text-slate-700">
                                                     {detail.quantity_requested}
                                                 </td>
-                                                <td className="px-3 py-2 text-center bg-teal-50/40 border-x border-teal-200">
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        value={itemsState[idx]?.quantity_approved ?? ''}
-                                                        onChange={(e) => updateQuantityApproved(idx, e.target.value)}
-                                                        className="w-20 text-center font-bold text-xs rounded-lg border border-slate-300 bg-white py-1 px-2 text-slate-900 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition shadow-2xs"
-                                                    />
+                                                <td className="px-4 py-2 text-center bg-teal-50/40 border-x border-teal-200">
+                                                    <div className="flex items-center justify-center gap-1.5">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => updateQuantityApproved(idx, Math.max(0, currentApproved - 1))}
+                                                            className="flex h-7 w-7 items-center justify-center rounded border border-slate-300 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-800 active:scale-95 transition cursor-pointer"
+                                                        >
+                                                            &minus;
+                                                        </button>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={currentApproved === 0 && itemsState[idx]?.quantity_approved === 0 ? '0' : currentApproved || ''}
+                                                            onChange={(e) => updateQuantityApproved(idx, e.target.value)}
+                                                            className="w-14 text-center font-bold text-xs rounded border border-slate-300 bg-white px-1 py-1.5 text-slate-900 focus:border-teal-500 focus:ring-teal-500 focus:bg-white shadow-inner transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => updateQuantityApproved(idx, currentApproved + 1)}
+                                                            className="flex h-7 w-7 items-center justify-center rounded border border-slate-300 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-800 active:scale-95 transition cursor-pointer"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
                                                 </td>
-                                                <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-900">
+                                                <td className="px-4 py-3.5 text-right font-mono font-bold text-teal-800">
                                                     {formatRupiah(subtotalApproved)}
                                                 </td>
                                             </tr>
@@ -452,12 +491,12 @@ export default function QuickVerificationModal({
                 </div>
 
                 {/* 3. Footer Modal Actions */}
-                <div className="shrink-0 border-t border-slate-100 bg-white px-6 py-4 flex items-center justify-between gap-3">
+                <div className="shrink-0 border-t border-slate-200 bg-white px-6 py-5 flex flex-wrap items-center justify-between gap-3">
                     <button
                         type="button"
                         onClick={() => setShowRejectConfirmation(!showRejectConfirmation)}
                         disabled={isSubmitting}
-                        className="rounded-xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100 text-rose-700 active:scale-95 px-4 py-2 text-xs font-bold transition cursor-pointer disabled:opacity-50"
+                        className="rounded-xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100 text-rose-700 px-6 py-2.5 text-xs font-bold transition cursor-pointer disabled:opacity-50"
                     >
                         Tolak Pengajuan
                     </button>
@@ -467,7 +506,7 @@ export default function QuickVerificationModal({
                             type="button"
                             onClick={onClose}
                             disabled={isSubmitting}
-                            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
+                            className="rounded-xl border border-slate-300 bg-white px-6 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
                         >
                             Batal
                         </button>
@@ -476,7 +515,7 @@ export default function QuickVerificationModal({
                             type="button"
                             onClick={handleSubmitApprove}
                             disabled={isSubmitting}
-                            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 text-white px-5 py-2 text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
+                            className="inline-flex items-center gap-2 rounded-xl bg-[#0d9488] hover:bg-teal-700 px-6 py-2.5 text-xs font-bold text-white transition cursor-pointer disabled:opacity-50 whitespace-nowrap"
                         >
                             {isSubmitting ? (
                                 <>

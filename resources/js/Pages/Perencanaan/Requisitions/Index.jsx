@@ -75,6 +75,17 @@ export default function Index({ requisitions = [], success, error, selectedYear 
     const [quickVerifyReq, setQuickVerifyReq] = useState(null);
     const [detailReq, setDetailReq] = useState(null);
 
+    // Baca parameter status dari URL jika ada
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const s = params.get('status');
+            if (s) {
+                setStatusFilter(s);
+            }
+        }
+    }, []);
+
     const filteredRequisitions = useMemo(() => {
         return requisitions.filter((req) => {
             const matchesStatus =
@@ -196,19 +207,7 @@ export default function Index({ requisitions = [], success, error, selectedYear 
                                 </button>
                             )}
                         </div>
-
-                        {/* Filter Status Alur Telaah */}
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition cursor-pointer"
-                        >
-                            <option value="ALL">Semua Status</option>
-                            <option value="Pending_Perencanaan">Menunggu Telaah ({pendingCount})</option>
-                            <option value="Diproses_Keuangan">Diteruskan ke Keuangan</option>
-                            <option value="Disetujui_Selesai">Disetujui Selesai</option>
-                            <option value="Ditolak">Ditolak</option>
-                        </select>
+                        {/* Filter Status dihapus dari UI karena dikelola via Sidebar dropdown */}
 
                         {/* Filter Jenis Belanja */}
                         <select

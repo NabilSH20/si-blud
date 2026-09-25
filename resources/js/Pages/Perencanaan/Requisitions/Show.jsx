@@ -167,6 +167,13 @@ export default function Show({ requisition, rbaList = [] }) {
         };
     }, [details, data.items, isPending]);
 
+    const isAnyItemExceedingSSH = useMemo(() => {
+        return details.some((d) => {
+            if (!d.item || !d.item.standard_price) return false;
+            return Number(d.unit_price || 0) > Number(d.item.standard_price);
+        });
+    }, [details]);
+
     // Handle Approve (Frictionless Submission with Toast)
     const handleApprove = (e) => {
         e.preventDefault();
@@ -241,114 +248,133 @@ export default function Show({ requisition, rbaList = [] }) {
         <PerencanaanLayout>
             <Head title={`Telaah Pengajuan ${requisition.requisition_number} - E-BLUD RSJ Tampan`} />
 
-            <div className="space-y-6">
-                {/* 1. Top Bar / Breadcrumb & Header Title */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100">
+            <div className="mx-auto max-w-5xl space-y-6">
+                {/* Header Back & Info */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <Link
                             href={route('perencanaan.requisitions.index')}
                             className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-700 hover:text-teal-800 transition mb-2"
                         >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                             </svg>
-                            <span>Kembali ke Daftar Verifikasi</span>
+                            Kembali ke Daftar Verifikasi
                         </Link>
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-                                Telaah Usulan Belanja
-                            </h1>
-                            <span className="font-mono text-xs font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-md border border-teal-200">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                                 {requisition.requisition_number}
+                            </h2>
+                            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-xs font-bold border ${statusInfo.bg}`}>
+                                <span className={`h-2 w-2 rounded-full ${statusInfo.dot}`} />
+                                {statusInfo.label}
                             </span>
-                            <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+                            <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-700">
                                 TA {fiscalYear}
                             </span>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border ${statusInfo.bg}`}>
-                            <span className={`h-2 w-2 rounded-full ${statusInfo.dot}`} />
-                            {statusInfo.label}
-                        </span>
-
+                    <div className="flex items-center gap-2.5">
                         {!isPending && (
                             <a
                                 href={route('requisitions.print', requisition.id)}
                                 target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 text-teal-800 px-3.5 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition cursor-pointer"
                             >
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24-1.077-.32-2.14-.32-3.193 0-5.18 4.02-9.386 8.974-9.386 4.954 0 8.973 4.207 8.973 9.386 0 1.053-.08 2.116-.32 3.193M12 18v-4.5m0 0l-2.25 2.25M12 13.5l2.25 2.25M3.75 19.5h16.5" />
                                 </svg>
-                                <span>Cetak Dokumen</span>
+                                Cetak Nota Dinas
                             </a>
                         )}
                     </div>
                 </div>
 
-                {/* 2. Informasi Berkas Usulan (Clean White Card) */}
-                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+                {/* Status Notice Card */}
+                <div className={`rounded-xl border p-4 shadow-2xs ${statusInfo.bg}`}>
+                    <div className="flex items-start gap-3">
+                        <span className={`mt-0.5 h-2.5 w-2.5 rounded-full shrink-0 ${statusInfo.dot}`} />
+                        <div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider">{statusInfo.label}</h4>
+                            <p className="mt-0.5 text-xs font-medium opacity-90 leading-relaxed">
+                                {statusInfo.desc}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 2. Informasi Berkas Usulan (Divisi Style) */}
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4">
                     <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                        <h2 className="text-xs sm:text-sm font-bold text-slate-900">
-                            Identitas & Informasi Usulan Unit
-                        </h2>
-                        <span className="text-[11px] font-semibold text-slate-500">
-                            Diajukan: {formatTanggal(requisition.submission_date || requisition.created_at)}
+                        <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                            Identitas Dokumen Usulan Belanja
+                        </h3>
+                        <span className="inline-flex items-center rounded-md bg-teal-50 px-2 py-0.5 text-[11px] font-bold text-teal-800 border border-teal-200">
+                            Dana BLUD RSJ Tampan
                         </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-                        <div>
-                            <span className="text-slate-400 font-medium block mb-0.5">Unit Kerja Pemohon:</span>
-                            <span className="font-bold text-slate-900 text-sm block">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-xs">
+                        <div className="space-y-1">
+                            <span className="text-slate-500 font-medium">Unit Kerja Pemohon</span>
+                            <p className="font-bold text-slate-900 text-sm">
                                 {unitName}
-                            </span>
+                            </p>
                             {requisition.division?.name && requisition.unit?.name && (
-                                <span className="text-[11px] text-slate-500">
-                                    Bidang: {requisition.division.name}
-                                </span>
+                                <p className="text-[11px] text-slate-500">
+                                    Bidang: <span className="font-semibold text-slate-700">{requisition.division.name}</span>
+                                </p>
                             )}
                         </div>
 
-                        <div>
-                            <span className="text-slate-400 font-medium block mb-0.5">Petugas PIC Pengusul:</span>
-                            <span className="font-bold text-slate-900 text-sm block">
+                        <div className="space-y-1">
+                            <span className="text-slate-500 font-medium">Tanggal Pengajuan</span>
+                            <p className="font-bold text-slate-900">
+                                {formatTanggal(requisition.submission_date || requisition.created_at)}
+                            </p>
+                            <p className="text-[11px] text-slate-500">
+                                Tahun Anggaran: <span className="font-semibold text-teal-800">TA {fiscalYear}</span>
+                            </p>
+                        </div>
+
+                        <div className="space-y-1">
+                            <span className="text-slate-500 font-medium">PIC / Pengusul</span>
+                            <p className="font-bold text-slate-900">
                                 {requisition.user?.name || '-'}
-                            </span>
-                            <span className="text-[11px] text-slate-500">
+                            </p>
+                            <p className="text-[11px] text-slate-500">
                                 NIP: {requisition.user?.nip || '-'}
-                            </span>
+                            </p>
                         </div>
 
-                        <div>
-                            <span className="text-slate-400 font-medium block mb-0.5">Klasifikasi Belanja:</span>
-                            <span className="inline-flex items-center gap-1 font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 text-xs">
-                                Belanja {requisition.jenis_belanja || 'Operasi'} &bull; 100% BLUD
-                            </span>
-                            <span className="text-[11px] text-slate-500 block mt-0.5">
+                        <div className="space-y-1 sm:col-span-2">
+                            <span className="text-slate-500 font-medium">Klasifikasi Belanja</span>
+                            <p className="font-semibold text-slate-900">
+                                <span className="inline-flex items-center gap-1 font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 text-[11px]">
+                                    Belanja {requisition.jenis_belanja || 'Operasi'} &bull; 100% BLUD
+                                </span>
+                            </p>
+                            <p className="text-[11px] text-slate-500 mt-1">
                                 Sumber: Pendapatan BLUD
-                            </span>
+                            </p>
                         </div>
 
-                        <div>
-                            <span className="text-slate-400 font-medium block mb-0.5">Sub Kegiatan RS:</span>
-                            <span className="font-semibold text-slate-800 block line-clamp-2">
+                        <div className="space-y-1 sm:col-span-1">
+                            <span className="text-slate-500 font-medium">Sub Kegiatan Rumah Sakit</span>
+                            <p className="font-semibold text-slate-800 leading-snug">
                                 {requisition.sub_kegiatan || 'Pelayanan dan Penunjang Pelayanan BLUD RS Jiwa Tampan'}
-                            </span>
+                            </p>
                         </div>
                     </div>
 
                     {/* Catatan Alasan Kebutuhan Belanja Unit */}
                     {requisition.urgency_reason && (
-                        <div className="border-t border-slate-100 pt-3 text-xs">
-                            <span className="font-semibold text-slate-600 block mb-1">
-                                Catatan / Justifikasi Urgensi Kebutuhan Pemohon:
-                            </span>
-                            <p className="text-slate-800 italic bg-slate-50 p-3 rounded-xl border border-slate-200 leading-relaxed whitespace-pre-line">
-                                "{requisition.urgency_reason}"
+                        <div className="mt-4 pt-3 border-t border-slate-100 text-xs">
+                            <span className="font-bold text-slate-700">Latar Belakang / Urgensi Kebutuhan:</span>
+                            <p className="mt-1 text-slate-600 whitespace-pre-line leading-relaxed">
+                                {requisition.urgency_reason}
                             </p>
                         </div>
                     )}
@@ -399,11 +425,16 @@ export default function Show({ requisition, rbaList = [] }) {
                         </div>
 
                         {isPending ? (
-                            <div className="space-y-2">
+                            <div className="space-y-1">
+                                <label
+                                    className="block text-xs font-bold text-slate-700 mb-1"
+                                >
+                                    Pilih Rekening Definitif
+                                </label>
                                 <select
                                     value={data.rba_account_id}
                                     onChange={(e) => setData('rba_account_id', e.target.value)}
-                                    className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900 shadow-2xs transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600 cursor-pointer"
+                                    className="block w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-2xs transition focus:border-teal-500 focus:ring-teal-500 focus:outline-none cursor-pointer"
                                 >
                                     <option value="" disabled>-- Pilih Pos Rekening Belanja RBA --</option>
                                     {leafAccounts.map((acc) => (
@@ -412,11 +443,11 @@ export default function Show({ requisition, rbaList = [] }) {
                                         </option>
                                     ))}
                                 </select>
-                                <p className="text-[11px] text-slate-400">
+                                <p className="text-[11px] text-slate-400 mt-1">
                                     Sistem secara otomatis menyaring hanya rekening definitif yang dapat dibebani alokasi anggaran RBA.
                                 </p>
                                 {errors.rba_account_id && (
-                                    <p className="text-xs font-medium text-rose-600">{errors.rba_account_id}</p>
+                                    <p className="text-xs font-medium text-rose-600 mt-1">{errors.rba_account_id}</p>
                                 )}
                             </div>
                         ) : (
@@ -427,14 +458,14 @@ export default function Show({ requisition, rbaList = [] }) {
                     </div>
 
                     {/* Tabel Rincian Barang & Kuantitas Disetujui */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+                        <div className="border-b border-slate-100 bg-slate-50/60 px-6 py-4 flex items-center justify-between">
                             <div>
-                                <h2 className="text-xs sm:text-sm font-bold text-slate-900">
-                                    Verifikasi Spesifikasi & Kuantitas Barang ({details.length} Item)
-                                </h2>
-                                <p className="text-[11px] text-slate-500">
-                                    Total Diminta: <strong className="text-slate-800">{totalRequestedQty} Unit</strong> &bull; Sesuaikan volume yang disetujui
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                                    Verifikasi Spesifikasi & Kuantitas Barang
+                                </h3>
+                                <p className="text-[11px] text-slate-500 mt-1">
+                                    Total Diminta: <strong className="text-slate-700">{totalRequestedQty} Unit</strong> &bull; Sesuaikan volume yang disetujui
                                 </p>
                             </div>
 
@@ -443,15 +474,15 @@ export default function Show({ requisition, rbaList = [] }) {
                                     <button
                                         type="button"
                                         onClick={handleApproveAll}
-                                        className="rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 px-3 py-1.5 text-xs font-bold transition cursor-pointer"
+                                        className="rounded-md bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 px-3 py-1.5 text-xs font-bold transition cursor-pointer"
                                         title="Setujui seluruh kuantitas sesuai permintaan unit"
                                     >
-                                        ✓ Setujui Semua (100%)
+                                        ✓ Setujui Semua
                                     </button>
                                     <button
                                         type="button"
                                         onClick={handleResetAll}
-                                        className="rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-2.5 py-1.5 text-xs font-semibold transition cursor-pointer"
+                                        className="rounded-md border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-2.5 py-1.5 text-xs font-semibold transition cursor-pointer"
                                         title="Reset seluruh volume disetujui menjadi 0"
                                     >
                                         Reset (0)
@@ -460,22 +491,22 @@ export default function Show({ requisition, rbaList = [] }) {
                             )}
                         </div>
 
-                        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-                            <table className="min-w-full divide-y divide-slate-100 text-xs">
-                                <thead className="bg-slate-50 font-bold text-slate-700 uppercase tracking-wider text-[11px]">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-100">
+                                <thead className="bg-slate-50/80 text-slate-600 uppercase tracking-wider text-[11px] font-bold">
                                     <tr>
-                                        <th className="w-10 px-3 py-2.5 text-center">No</th>
-                                        <th className="px-4 py-2.5 text-left">Nama Barang & Spesifikasi</th>
-                                        <th className="w-20 px-3 py-2.5 text-center">Satuan</th>
-                                        <th className="w-32 px-3 py-2.5 text-right">Harga Satuan</th>
-                                        <th className="w-20 px-3 py-2.5 text-center">Diminta</th>
-                                        <th className="w-28 px-3 py-2 text-center bg-teal-50/70 text-teal-950 border-x border-teal-200">
+                                        <th className="w-12 px-4 py-3 text-center">No</th>
+                                        <th className="px-5 py-3 text-left">Nama Barang / Jasa</th>
+                                        <th className="w-20 px-4 py-3 text-center">Satuan</th>
+                                        <th className="w-32 px-4 py-3 text-right">Harga Satuan</th>
+                                        <th className="w-20 px-4 py-3 text-center">Diminta</th>
+                                        <th className="w-32 px-4 py-3 text-center bg-teal-50/70 text-teal-950 border-x border-teal-200">
                                             Disetujui *
                                         </th>
-                                        <th className="w-36 px-4 py-2.5 text-right">Subtotal Disetujui</th>
+                                        <th className="w-36 px-4 py-3 text-right">Subtotal</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 bg-white">
+                                <tbody className="divide-y divide-slate-100 bg-white text-xs">
                                     {details.map((detail, idx) => {
                                         const currentApproved = isPending
                                             ? data.items[idx]?.quantity_approved ?? detail.quantity_requested
@@ -485,29 +516,29 @@ export default function Show({ requisition, rbaList = [] }) {
                                         const itemCode = detail.item?.item_code || (detail.item_id ? `ITM-${String(detail.item_id).padStart(4, '0')}` : 'ITM-BARU');
 
                                         return (
-                                            <tr key={detail.id || idx} className="hover:bg-slate-50/60 transition">
-                                                <td className="px-3 py-2.5 text-center text-slate-400 font-semibold">
-                                                    {idx + 1}
+                                            <tr key={detail.id || idx} className={`transition ${currentApproved === 0 && !isPending ? 'bg-rose-50/50 opacity-75 grayscale-[30%]' : 'hover:bg-slate-50/50'}`}>
+                                                <td className="whitespace-nowrap px-4 py-3 text-center text-slate-400 font-semibold">
+                                                    #{idx + 1}
                                                 </td>
-                                                <td className="px-4 py-2.5">
-                                                    <div className="flex items-center gap-1.5">
+                                                <td className="px-5 py-3">
+                                                    <div className="flex items-center gap-1.5 mb-0.5">
                                                         <span className="font-mono text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                                                             {itemCode}
                                                         </span>
-                                                        <span className="font-bold text-slate-900">
+                                                        <span className="font-semibold text-slate-900">
                                                             {detail.item?.name || detail.item_name || '-'}
                                                         </span>
                                                     </div>
                                                     {(detail.item?.specification || detail.specification) && (
-                                                        <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                                                        <p className="text-[11px] text-slate-400">
                                                             {detail.item?.specification || detail.specification}
                                                         </p>
                                                     )}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-center text-slate-600">
+                                                <td className="whitespace-nowrap px-4 py-3 text-center text-slate-600">
                                                     {detail.unit_type || detail.item?.unit_type || 'Unit'}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-right font-mono">
+                                                <td className="whitespace-nowrap px-4 py-3 text-right font-mono">
                                                     <div className={detail.item && unitPrice > Number(detail.item.standard_price || 0) ? "text-rose-600 font-bold" : "text-slate-700"}>
                                                         {formatRupiah(unitPrice)}
                                                     </div>
@@ -517,89 +548,109 @@ export default function Show({ requisition, rbaList = [] }) {
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-center font-bold text-slate-700">
+                                                <td className="whitespace-nowrap px-4 py-3 text-center font-bold text-slate-700">
                                                     {detail.quantity_requested}
                                                 </td>
-                                                <td className="px-3 py-2 text-center bg-teal-50/40 border-x border-teal-200">
+                                                <td className="whitespace-nowrap px-4 py-2 text-center bg-teal-50/40 border-x border-teal-200">
                                                     {isPending ? (
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            value={data.items[idx]?.quantity_approved ?? ''}
-                                                            onChange={(e) => updateApprovedQty(idx, e.target.value)}
-                                                            className="w-20 text-center font-bold text-xs rounded-lg border border-slate-300 bg-white py-1 px-2 text-slate-900 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition shadow-2xs"
-                                                        />
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => updateApprovedQty(idx, Math.max(0, (Number(data.items[idx]?.quantity_approved ?? detail.quantity_requested)) - 1))}
+                                                                className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 active:scale-95 transition cursor-pointer"
+                                                            >
+                                                                &minus;
+                                                            </button>
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                value={data.items[idx]?.quantity_approved ?? ''}
+                                                                onChange={(e) => updateApprovedQty(idx, e.target.value)}
+                                                                className="w-12 text-center font-bold text-xs rounded-md border border-slate-300 bg-white px-1 py-1 text-slate-800 focus:border-teal-500 focus:ring-teal-500 focus:outline-none transition shadow-2xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => updateApprovedQty(idx, (Number(data.items[idx]?.quantity_approved ?? detail.quantity_requested)) + 1)}
+                                                                className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 active:scale-95 transition cursor-pointer"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        </div>
                                                     ) : (
                                                         <span className="font-bold text-xs text-teal-800">
                                                             {detail.quantity_approved ?? detail.quantity_requested}
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-900">
+                                                <td className="whitespace-nowrap px-4 py-3 text-right font-mono font-bold text-slate-900">
                                                     {formatRupiah(subtotal)}
                                                 </td>
                                             </tr>
                                         );
                                     })}
                                 </tbody>
+                                <tfoot className="border-t border-slate-200 bg-slate-50/70 font-bold text-xs">
+                                    <tr>
+                                        <td colSpan="4" className="px-5 py-3.5 text-right uppercase tracking-wider text-slate-600">
+                                            Total Disetujui:
+                                        </td>
+                                        <td className="px-4 py-3.5 text-center text-slate-800">
+                                            {totalRequestedQty}
+                                        </td>
+                                        <td className="px-4 py-3.5 text-center text-teal-800 bg-teal-50/70 border-x border-teal-200">
+                                            {totalApprovedQty}
+                                        </td>
+                                        <td className="whitespace-nowrap px-4 py-3.5 text-right text-sm font-bold text-teal-700">
+                                            <div className="flex flex-col items-end gap-1">
+                                                <span>{formatRupiah(totalEstimatedApproved)}</span>
+                                                {activeRbaAccount && activeRbaAccount.remaining_budget !== null && (activeRbaAccount.remaining_budget - totalEstimatedApproved < 0) && (
+                                                    <span className="text-[10px] font-bold text-rose-600 animate-pulse bg-rose-50 px-1.5 py-0.5 rounded">
+                                                        ⚠️ Melebihi sisa pagu rekening!
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-slate-100">
-                            <span className="text-xs text-slate-500">
-                                Total Volume Disetujui: <strong className="text-slate-800">{totalApprovedQty} Unit</strong>
-                            </span>
-                            <div className="flex flex-col items-end gap-1">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                                        Total Nilai Disetujui:
-                                    </span>
-                                    <span className="text-sm sm:text-base font-bold text-teal-800 font-mono bg-teal-50 px-2.5 py-0.5 rounded-lg border border-teal-200">
-                                        {formatRupiah(totalEstimatedApproved)}
-                                    </span>
-                                </div>
-                                {activeRbaAccount && activeRbaAccount.remaining_budget !== null && (activeRbaAccount.remaining_budget - totalEstimatedApproved < 0) && (
-                                    <span className="text-[10px] font-bold text-rose-600 animate-pulse">
-                                        ⚠️ Peringatan: Total disetujui melebihi sisa pagu rekening!
-                                    </span>
+                        {/* Catatan / Rekomendasi Tim Perencanaan */}
+                        <div className="px-6 pb-6 pt-2">
+                            <div className="border-t border-slate-100 pt-4 space-y-1.5">
+                                {isAnyItemExceedingSSH && (
+                                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 mb-4 flex items-start gap-3">
+                                        <div className="text-amber-500 mt-0.5 shrink-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <div className="text-xs text-amber-900">
+                                            <strong>Perhatian:</strong> Terdapat harga pengajuan yang melebihi Standar Satuan Harga (SSH). Anda diwajibkan untuk mengisi Catatan Persetujuan sebagai justifikasi.
+                                        </div>
+                                    </div>
+                                )}
+                                <label
+                                    htmlFor="notes_perencanaan"
+                                    className="block text-xs font-bold text-slate-700 mb-1"
+                                >
+                                    Catatan / Rekomendasi Tim Perencanaan {isAnyItemExceedingSSH ? <span className="text-rose-500 font-bold">* (Wajib karena melebihi SSH)</span> : <span className="text-slate-400 font-normal">(Opsional)</span>}
+                                </label>
+                                {isPending ? (
+                                    <textarea
+                                        id="notes_perencanaan"
+                                        rows={3}
+                                        value={data.notes_perencanaan}
+                                        onChange={(e) => setData('notes_perencanaan', e.target.value)}
+                                        placeholder="Tuliskan catatan arahan teknis untuk Bagian Keuangan atau unit kerja pengusul..."
+                                        className="block w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-teal-500 focus:ring-teal-500 focus:outline-none transition shadow-2xs"
+                                    />
+                                ) : (
+                                    <p className="text-xs font-medium text-slate-700 bg-slate-50 p-3 rounded-md border border-slate-200 leading-relaxed">
+                                        {requisition.notes_perencanaan || 'Tidak ada catatan khusus dari Tim Perencanaan.'}
+                                    </p>
                                 )}
                             </div>
-                        </div>
-
-                        {/* Catatan / Rekomendasi Tim Perencanaan */}
-                        <div className="pt-3 border-t border-slate-100 space-y-1.5">
-                            {isAnyItemExceedingSSH && (
-                                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 mb-4 flex items-start gap-3">
-                                    <div className="text-amber-500 mt-0.5 shrink-0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div className="text-xs text-amber-900">
-                                        <strong>Perhatian:</strong> Terdapat harga pengajuan yang melebihi Standar Satuan Harga (SSH). Anda diwajibkan untuk mengisi Catatan Persetujuan sebagai justifikasi.
-                                    </div>
-                                </div>
-                            )}
-                            <label
-                                htmlFor="notes_perencanaan"
-                                className="block text-xs font-semibold text-slate-700"
-                            >
-                                Catatan / Rekomendasi Tim Perencanaan {isAnyItemExceedingSSH ? <span className="text-rose-500 font-bold">* (Wajib karena melebihi SSH)</span> : <span className="text-slate-400 font-normal">(Opsional)</span>}
-                            </label>
-                            {isPending ? (
-                                <textarea
-                                    id="notes_perencanaan"
-                                    rows={2}
-                                    value={data.notes_perencanaan}
-                                    onChange={(e) => setData('notes_perencanaan', e.target.value)}
-                                    placeholder="Tuliskan catatan arahan teknis untuk Bagian Keuangan atau unit kerja pengusul..."
-                                    className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition shadow-2xs"
-                                />
-                            ) : (
-                                <p className="text-xs font-medium text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200 leading-relaxed">
-                                    {requisition.notes_perencanaan || 'Tidak ada catatan khusus dari Tim Perencanaan.'}
-                                </p>
-                            )}
                         </div>
                     </div>
 
@@ -634,59 +685,61 @@ export default function Show({ requisition, rbaList = [] }) {
                     )}
 
                     {/* Action Buttons Bar */}
-                    {isPending ? (
-                        <div className="flex items-center justify-between gap-3 pt-2">
-                            <button
-                                type="button"
-                                onClick={() => setShowRejectConfirmation(!showRejectConfirmation)}
-                                disabled={processing}
-                                className="rounded-xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100 text-rose-700 active:scale-95 px-4 py-2 text-xs font-bold transition cursor-pointer disabled:opacity-50"
-                            >
-                                Tolak Pengajuan
-                            </button>
+                    <div className="sticky bottom-0 z-10 -mx-6 -mb-6 mt-6 border-t border-slate-200 bg-white/90 backdrop-blur-md px-6 py-4 shadow-[0_-8px_20px_-10px_rgba(0,0,0,0.1)]">
+                        {isPending ? (
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowRejectConfirmation(!showRejectConfirmation)}
+                                    disabled={processing}
+                                    className="w-full sm:w-auto rounded-xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100 text-rose-700 active:scale-95 px-4 py-2 text-xs font-bold transition cursor-pointer disabled:opacity-50"
+                                >
+                                    Tolak Pengajuan
+                                </button>
 
-                            <div className="flex items-center gap-2.5">
+                                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                                    <Link
+                                        href={route('perencanaan.requisitions.index')}
+                                        className="w-full sm:w-auto text-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                                    >
+                                        Batal
+                                    </Link>
+
+                                    <button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="w-full sm:w-auto inline-flex justify-center items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                    >
+                                        {processing ? (
+                                            <>
+                                                <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" stroke="currentColor" />
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                </svg>
+                                                <span>Memproses...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                                </svg>
+                                                <span>Setujui & Teruskan ke Keuangan</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-end">
                                 <Link
                                     href={route('perencanaan.requisitions.index')}
-                                    className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                                    className="rounded-xl border border-slate-300 bg-white px-5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
                                 >
-                                    Batal
+                                    &larr; Kembali ke Daftar Verifikasi
                                 </Link>
-
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 text-white px-5 py-2 text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
-                                >
-                                    {processing ? (
-                                        <>
-                                            <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" stroke="currentColor" />
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                            </svg>
-                                            <span>Memproses...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                            </svg>
-                                            <span>Setujui & Teruskan ke Keuangan</span>
-                                        </>
-                                    )}
-                                </button>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="flex items-center justify-end">
-                            <Link
-                                href={route('perencanaan.requisitions.index')}
-                                className="rounded-xl border border-slate-300 bg-white px-5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
-                            >
-                                &larr; Kembali ke Daftar Verifikasi
-                            </Link>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </form>
 
                 {/* 4. Jejak Audit Alur Berkas Timeline */}

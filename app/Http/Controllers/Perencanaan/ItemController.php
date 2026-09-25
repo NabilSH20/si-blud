@@ -16,7 +16,7 @@ class ItemController extends Controller
     /**
      * Display a listing of the items.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
         return Inertia::render('Perencanaan/Items/Index', [
             'items' => Item::with([
@@ -33,6 +33,7 @@ class ItemController extends Controller
             'nextItemCode' => Item::generateNextItemCode(),
             'success' => session('success'),
             'error' => session('error'),
+            'sourceFilter' => $request->query('source', 'STANDAR'),
         ]);
     }
 

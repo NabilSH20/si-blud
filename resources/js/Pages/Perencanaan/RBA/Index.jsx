@@ -448,14 +448,14 @@ export default function Index({
                         </h1>
                         <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border ${
                             current_shift?.status === 'Aktif'
-                                ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                                ? 'bg-teal-100 text-teal-900 border-teal-300'
                                 : 'bg-amber-100 text-amber-900 border-amber-300'
                         }`}>
-                            <span className={`h-2 w-2 rounded-full ${current_shift?.status === 'Aktif' ? 'bg-emerald-600' : 'bg-amber-500'}`} />
+                            <span className={`h-2 w-2 rounded-full ${current_shift?.status === 'Aktif' ? 'bg-teal-600' : 'bg-amber-500'}`} />
                             {current_shift?.status || 'Draft'}
                         </span>
                         <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-black text-slate-700 shadow-2xs">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
                             T.A. {current_shift?.year || selected_year}
                         </span>
                     </div>
@@ -472,7 +472,7 @@ export default function Index({
                         <select
                             value={selected_year}
                             onChange={(e) => router.get(route('perencanaan.rba.index'), { year: e.target.value, tab: activeTab })}
-                            className="rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-8 text-xs font-bold text-slate-800 shadow-2xs focus:border-emerald-600 focus:ring-emerald-500"
+                            className="rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-8 text-xs font-bold text-slate-800 shadow-2xs focus:border-teal-600 focus:ring-teal-500"
                         >
                             {available_years.map((y) => (
                                 <option key={y} value={y}>
@@ -488,7 +488,7 @@ export default function Index({
                         <select
                             value={current_shift?.id || ''}
                             onChange={(e) => router.get(route('perencanaan.rba.index'), { year: selected_year, shift_id: e.target.value, tab: activeTab })}
-                            className="rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-8 text-xs font-bold text-slate-800 shadow-2xs focus:border-emerald-600 focus:ring-emerald-500"
+                            className="rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-8 text-xs font-bold text-slate-800 shadow-2xs focus:border-teal-600 focus:ring-teal-500"
                         >
                             {shifts.map((s) => (
                                 <option key={s.id} value={s.id}>
@@ -506,11 +506,11 @@ export default function Index({
                             className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition active:scale-95 cursor-pointer"
                             title="Pilih Format Cetak Dokumen RBA"
                         >
-                            <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <svg className="h-4 w-4 text-teal-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24-1.077-.32-2.14-.32-3.193 0-5.18 4.02-9.386 8.974-9.386 4.954 0 8.973 4.207 8.973 9.386 0 1.053-.08 2.116-.32 3.193M12 18v-4.5m0 0l-2.25 2.25M12 13.5l2.25 2.25M3.75 19.5h16.5" />
                             </svg>
                             <span>Cetak RBA</span>
-                            <svg className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${printDropdownOpen ? 'rotate-180 text-emerald-600' : ''}`} fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <svg className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${printDropdownOpen ? 'rotate-180 text-teal-600' : ''}`} fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                             </svg>
                         </button>
@@ -528,7 +528,7 @@ export default function Index({
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             onClick={() => setPrintDropdownOpen(false)}
-                                            className="flex items-start gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 transition"
+                                            className="flex items-start gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-teal-50 hover:text-teal-900 transition"
                                         >
                                             <span className="text-base mt-0.5">📊</span>
                                             <div>
@@ -541,7 +541,7 @@ export default function Index({
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             onClick={() => setPrintDropdownOpen(false)}
-                                            className="flex items-start gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 transition"
+                                            className="flex items-start gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-teal-50 hover:text-teal-900 transition"
                                         >
                                             <span className="text-base mt-0.5">💰</span>
                                             <div>
@@ -554,7 +554,7 @@ export default function Index({
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             onClick={() => setPrintDropdownOpen(false)}
-                                            className="flex items-start gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 transition"
+                                            className="flex items-start gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-teal-50 hover:text-teal-900 transition"
                                         >
                                             <span className="text-base mt-0.5">⚡</span>
                                             <div>
@@ -567,7 +567,7 @@ export default function Index({
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             onClick={() => setPrintDropdownOpen(false)}
-                                            className="flex items-start gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 transition"
+                                            className="flex items-start gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-teal-50 hover:text-teal-900 transition"
                                         >
                                             <span className="text-base mt-0.5">📋</span>
                                             <div>
@@ -594,7 +594,7 @@ export default function Index({
                     <button
                         type="button"
                         onClick={handleOpenCreateShift}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition active:scale-95 cursor-pointer"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-teal-700 hover:bg-teal-800 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition active:scale-95 cursor-pointer"
                     >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -604,10 +604,11 @@ export default function Index({
                 </div>
             </div>
 
-            {/* Minimalist Active Section Header */}
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl bg-white p-4 sm:p-5 border border-slate-200/80 shadow-2xs">
-                <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-2xl border border-emerald-200/80 shadow-2xs">
+            {/* Premium Active Section Header */}
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-gradient-to-r from-white to-slate-50/80 p-5 border border-slate-200/80 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-teal-500 rounded-l-2xl"></div>
+                <div className="flex items-center gap-4 min-w-0">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-2xl shadow-sm border border-teal-100 transition-transform hover:scale-105 duration-300">
                         {activeTab === 'RINGKASAN' && '📊'}
                         {activeTab === 'RINCIAN_BARANG' && '🛒'}
                         {activeTab === 'BELANJA' && '⚡'}
@@ -615,19 +616,19 @@ export default function Index({
                         {activeTab === 'SHIFTS' && '⚙️'}
                     </div>
                     <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <h2 className="text-base sm:text-lg font-black tracking-tight text-slate-900 truncate">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                            <h2 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 truncate">
                                 {activeTab === 'RINGKASAN' && 'Ringkasan & SiLPA'}
                                 {activeTab === 'RINCIAN_BARANG' && `Rincian Usulan Belanja Unit (${totalUsulanCount})`}
                                 {activeTab === 'BELANJA' && 'Anggaran Belanja BLUD'}
                                 {activeTab === 'PENDAPATAN' && `Target Pendapatan BLUD (${revenue_items.filter(r => !r.is_header && r.item_code !== '0').length})`}
                                 {activeTab === 'SHIFTS' && `Kelola Versi & Pergeseran (${shifts.length})`}
                             </h2>
-                            <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 border border-emerald-200 shrink-0">
+                            <span className="rounded-full bg-teal-100/80 text-teal-800 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 border border-teal-200/50 shrink-0 shadow-2xs">
                                 T.A. {current_shift?.year || selected_year}
                             </span>
                         </div>
-                        <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
+                        <p className="text-xs text-slate-500 font-medium mt-1 truncate">
                             {activeTab === 'RINGKASAN' && 'Neraca Lembar Kerja resmi (Pendapatan vs Belanja) dan Proyeksi Pembiayaan SiLPA.'}
                             {activeTab === 'RINCIAN_BARANG' && 'Daftar kebutuhan barang/jasa yang diusulkan unit kerja per rekening belanja.'}
                             {activeTab === 'BELANJA' && 'Matriks 16 kolom pergeseran anggaran belanja operasi, belanja modal, dan APBD.'}
@@ -641,8 +642,45 @@ export default function Index({
             {/* TAB 1: RINGKASAN RBA & SURPLUS/DEFISIT */}
             {activeTab === 'RINGKASAN' && (
                 <div className="space-y-6">
-
-
+                    {/* KPI Cards for Macro View */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+                        <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50 to-teal-100/50 p-5 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                            <div className="absolute -right-4 -top-4 opacity-10 text-6xl transition-transform duration-300 group-hover:scale-110">💰</div>
+                            <h4 className="text-teal-800 text-xs font-black uppercase tracking-wider">Total Pendapatan BLUD</h4>
+                            <p className="mt-2 text-2xl font-black text-teal-950 tracking-tight">
+                                {formatRupiah(p.total?.after)}
+                            </p>
+                            <p className="mt-1 text-[11px] font-semibold text-teal-700">
+                                {p.total?.diff > 0 ? '+' : ''}{formatRupiah(p.total?.diff)} dari pagu sebelum
+                            </p>
+                        </div>
+                        <div className="rounded-2xl border border-rose-100 bg-gradient-to-br from-rose-50 to-rose-100/50 p-5 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                            <div className="absolute -right-4 -top-4 opacity-10 text-6xl transition-transform duration-300 group-hover:scale-110">💸</div>
+                            <h4 className="text-rose-800 text-xs font-black uppercase tracking-wider">Total Belanja BLUD</h4>
+                            <p className="mt-2 text-2xl font-black text-rose-950 tracking-tight">
+                                {formatRupiah(b.total?.after)}
+                            </p>
+                            <p className="mt-1 text-[11px] font-semibold text-rose-700">
+                                {b.total?.diff > 0 ? '+' : ''}{formatRupiah(b.total?.diff)} dari pagu sebelum
+                            </p>
+                        </div>
+                        <div className={`rounded-2xl border p-5 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
+                            sd.defisit_after > 0
+                                ? 'border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/50'
+                                : 'border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50'
+                        }`}>
+                            <div className="absolute -right-4 -top-4 opacity-10 text-6xl transition-transform duration-300 group-hover:scale-110">⚖️</div>
+                            <h4 className={`text-xs font-black uppercase tracking-wider ${sd.defisit_after > 0 ? 'text-amber-800' : 'text-blue-800'}`}>
+                                {sd.defisit_after > 0 ? 'Defisit Anggaran' : 'Surplus Anggaran'}
+                            </h4>
+                            <p className={`mt-2 text-2xl font-black tracking-tight ${sd.defisit_after > 0 ? 'text-amber-950' : 'text-blue-950'}`}>
+                                {formatRupiah(sd.defisit_after > 0 ? sd.defisit_after : sd.surplus_after)}
+                            </p>
+                            <p className={`mt-1 text-[11px] font-semibold ${sd.defisit_after > 0 ? 'text-amber-700' : 'text-blue-700'}`}>
+                                Penerimaan SiLPA: {formatRupiah(c.silpa?.after)}
+                            </p>
+                        </div>
+                    </div>
                     {/* Official 5-Column Ringkasan Table matching PDF */}
                     <div className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-md">
                         <div className="border-b border-slate-200 bg-slate-100/80 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -730,7 +768,7 @@ export default function Index({
                                         <td className="border border-slate-300 px-3 py-2 text-center"></td>
                                         <td className="border border-slate-300 px-4 py-2 pl-8 text-right uppercase">Jumlah Pendapatan</td>
                                         <td className="border border-slate-300 px-4 py-2 text-right font-mono">{formatRupiah(p.total?.before)}</td>
-                                        <td className="border border-slate-300 px-4 py-2 text-right font-mono font-black text-emerald-800">{formatRupiah(p.total?.after)}</td>
+                                        <td className="border border-slate-300 px-4 py-2 text-right font-mono font-black text-teal-800">{formatRupiah(p.total?.after)}</td>
                                         <td className="border border-slate-300 px-4 py-2 text-right font-mono font-bold">{formatRupiah(p.total?.diff)}</td>
                                     </tr>
 
@@ -837,7 +875,7 @@ export default function Index({
                                         <td className="border border-slate-300 px-3 py-2 text-center"></td>
                                         <td className="border border-slate-300 px-4 py-2 pl-8 text-right uppercase">Jumlah Belanja</td>
                                         <td className="border border-slate-300 px-4 py-2 text-right font-mono">{formatRupiah(b.total?.before)}</td>
-                                        <td className="border border-slate-300 px-4 py-2 text-right font-mono font-black text-emerald-800">{formatRupiah(b.total?.after)}</td>
+                                        <td className="border border-slate-300 px-4 py-2 text-right font-mono font-black text-teal-800">{formatRupiah(b.total?.after)}</td>
                                         <td className="border border-slate-300 px-4 py-2 text-right font-mono font-bold">{formatRupiah(b.total?.diff)}</td>
                                     </tr>
 
@@ -846,8 +884,8 @@ export default function Index({
                                         const sdVal = Number(sd.after || 0);
                                         const isSdSurplus = sdVal > 0;
                                         const isSdDefisit = sdVal < 0;
-                                        const sdRowBg = isSdSurplus ? 'bg-emerald-100/90 text-emerald-950' : isSdDefisit ? 'bg-rose-100/90 text-rose-950' : 'bg-blue-100/90 text-blue-950';
-                                        const sdTextCol = isSdSurplus ? 'text-emerald-950' : isSdDefisit ? 'text-rose-950' : 'text-blue-950';
+                                        const sdRowBg = isSdSurplus ? 'bg-teal-100/90 text-teal-950' : isSdDefisit ? 'bg-rose-100/90 text-rose-950' : 'bg-blue-100/90 text-blue-950';
+                                        const sdTextCol = isSdSurplus ? 'text-teal-950' : isSdDefisit ? 'text-rose-950' : 'text-blue-950';
 
                                         return (
                                             <tr className={`font-black text-sm ${sdRowBg}`}>
@@ -988,7 +1026,7 @@ export default function Index({
                                     value={revenueSearchQuery}
                                     onChange={(e) => setRevenueSearchQuery(e.target.value)}
                                     placeholder="Cari pos layanan (IGD, Farmasi, Lab, APBD)..."
-                                    className="w-full rounded-xl border border-slate-300 bg-white pl-9 pr-8 py-1.5 text-xs text-slate-900 font-medium focus:border-emerald-600 focus:ring-emerald-500"
+                                    className="w-full rounded-xl border border-slate-300 bg-white pl-9 pr-8 py-1.5 text-xs text-slate-900 font-medium focus:border-teal-600 focus:ring-teal-500"
                                 />
                                 {revenueSearchQuery && (
                                     <button
@@ -1019,7 +1057,7 @@ export default function Index({
                                     onClick={() => setRevenueCategoryFilter('1')}
                                     className={`px-3 py-1 font-bold rounded-lg transition cursor-pointer ${
                                         revenueCategoryFilter === '1'
-                                            ? 'bg-white text-emerald-800 shadow-2xs'
+                                            ? 'bg-white text-teal-800 shadow-2xs'
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
@@ -1069,7 +1107,7 @@ export default function Index({
                                     onClick={() => setRevenueViewMode('RINGKAS')}
                                     className={`px-3 py-1 rounded-lg transition cursor-pointer ${
                                         revenueViewMode === 'RINGKAS'
-                                            ? 'bg-white text-emerald-800 shadow-2xs font-black'
+                                            ? 'bg-white text-teal-800 shadow-2xs font-black'
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
@@ -1138,11 +1176,11 @@ export default function Index({
                                                         {(!is_murni && revenueViewMode === 'PERGESERAN') ? (
                                                             <>
                                                                 <td className="px-4 py-3 text-right font-mono">{formatRupiah(item.before_amount)}</td>
-                                                                <td className="px-4 py-3 text-right font-mono text-emerald-400 font-bold">{formatRupiah(item.after_amount)}</td>
+                                                                <td className="px-4 py-3 text-right font-mono text-teal-400 font-bold">{formatRupiah(item.after_amount)}</td>
                                                                 <td className="px-4 py-3 text-right font-mono">{diff !== 0 ? formatRupiah(diff) : '-'}</td>
                                                             </>
                                                         ) : (
-                                                            <td className="px-4 py-3 text-right font-mono text-emerald-400 font-bold text-sm">
+                                                            <td className="px-4 py-3 text-right font-mono text-teal-400 font-bold text-sm">
                                                                 {formatRupiah(item.after_amount)}
                                                             </td>
                                                         )}
@@ -1150,7 +1188,7 @@ export default function Index({
                                                             {formatRupiah(item.realized_amount)}
                                                         </td>
                                                         <td className="px-3 py-3 text-center">
-                                                            <span className="inline-flex items-center rounded-full bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 text-xs font-bold">
+                                                            <span className="inline-flex items-center rounded-full bg-teal-500/20 text-teal-300 px-2.5 py-0.5 text-xs font-bold">
                                                                 {rate}%
                                                             </span>
                                                         </td>
@@ -1163,13 +1201,13 @@ export default function Index({
 
                                             if (isHeader) {
                                                 return (
-                                                    <tr key={item.id} className="bg-emerald-50/50 text-emerald-950 font-bold border-t border-emerald-100/70">
-                                                        <td className="px-3.5 py-2.5 text-center font-mono text-xs text-emerald-800">
+                                                    <tr key={item.id} className="bg-teal-50/50 text-teal-950 font-bold border-t border-teal-100/70">
+                                                        <td className="px-3.5 py-2.5 text-center font-mono text-xs text-teal-800">
                                                             {item.item_code}
                                                         </td>
                                                         <td className="px-4 py-2.5">
                                                             <div className="flex items-center gap-2">
-                                                                <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                                                                <span className="h-2 w-2 rounded-full bg-teal-600" />
                                                                 <span className="uppercase tracking-wide text-xs">
                                                                     {item.item_name}
                                                                 </span>
@@ -1181,7 +1219,7 @@ export default function Index({
                                                                 <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-900">{formatRupiah(item.after_amount)}</td>
                                                                 <td className="px-4 py-2.5 text-right font-mono font-bold">
                                                                     {diff !== 0 ? (
-                                                                        <span className={diff > 0 ? 'text-emerald-700' : 'text-rose-700'}>
+                                                                        <span className={diff > 0 ? 'text-teal-700' : 'text-rose-700'}>
                                                                             {formatRupiah(diff)}
                                                                         </span>
                                                                     ) : '-'}
@@ -1192,11 +1230,11 @@ export default function Index({
                                                                 {formatRupiah(item.after_amount)}
                                                             </td>
                                                         )}
-                                                        <td className="px-4 py-2.5 text-right font-mono font-bold text-emerald-800">
+                                                        <td className="px-4 py-2.5 text-right font-mono font-bold text-teal-800">
                                                             {formatRupiah(item.realized_amount)}
                                                         </td>
                                                         <td className="px-3 py-2.5 text-center">
-                                                            <span className="font-bold text-[11px] text-emerald-900">
+                                                            <span className="font-bold text-[11px] text-teal-900">
                                                                 {rate}%
                                                             </span>
                                                         </td>
@@ -1214,7 +1252,7 @@ export default function Index({
                                                     </td>
                                                     <td className="px-4 py-2.5 pl-9 text-slate-800 font-medium">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-slate-300 group-hover:text-emerald-500 transition">↳</span>
+                                                            <span className="text-slate-300 group-hover:text-teal-500 transition">↳</span>
                                                             <span>{item.item_name}</span>
                                                         </div>
                                                     </td>
@@ -1228,7 +1266,7 @@ export default function Index({
                                                             </td>
                                                             <td className="px-4 py-2.5 text-right font-mono font-bold">
                                                                 {diff !== 0 ? (
-                                                                    <span className={diff > 0 ? 'text-emerald-700' : 'text-rose-700'}>
+                                                                    <span className={diff > 0 ? 'text-teal-700' : 'text-rose-700'}>
                                                                         {formatRupiah(diff)}
                                                                     </span>
                                                                 ) : '-'}
@@ -1239,13 +1277,13 @@ export default function Index({
                                                             {formatRupiah(item.after_amount)}
                                                         </td>
                                                     )}
-                                                    <td className="px-4 py-2.5 text-right font-mono font-semibold text-emerald-800">
+                                                    <td className="px-4 py-2.5 text-right font-mono font-semibold text-teal-800">
                                                         {formatRupiah(item.realized_amount)}
                                                     </td>
                                                     <td className="px-3 py-2.5 text-center">
                                                         <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ${
                                                             rate >= 80
-                                                                ? 'bg-emerald-100 text-emerald-800'
+                                                                ? 'bg-teal-100 text-teal-800'
                                                                 : rate >= 50
                                                                 ? 'bg-blue-100 text-blue-800'
                                                                 : 'bg-slate-100 text-slate-600'
@@ -1257,7 +1295,7 @@ export default function Index({
                                                         <button
                                                             type="button"
                                                             onClick={() => handleOpenEditRevenueModal(item)}
-                                                            className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-800 transition cursor-pointer"
+                                                            className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs hover:bg-teal-50 hover:border-teal-300 hover:text-teal-800 transition cursor-pointer"
                                                             title="Atur Target Pendapatan Pos Ini"
                                                         >
                                                             Atur Target
@@ -1290,7 +1328,7 @@ export default function Index({
                                     value={expenseSearchQuery}
                                     onChange={(e) => setExpenseSearchQuery(e.target.value)}
                                     placeholder="Cari kode akun, nama belanja, catatan..."
-                                    className="w-full rounded-xl border border-slate-300 bg-white pl-9 pr-8 py-1.5 text-xs text-slate-900 font-medium focus:border-emerald-600 focus:ring-emerald-500"
+                                    className="w-full rounded-xl border border-slate-300 bg-white pl-9 pr-8 py-1.5 text-xs text-slate-900 font-medium focus:border-teal-600 focus:ring-teal-500"
                                 />
                                 {expenseSearchQuery && (
                                     <button
@@ -1321,7 +1359,7 @@ export default function Index({
                                     onClick={() => setExpenseCategoryFilter('OPERASI')}
                                     className={`px-3 py-1 font-bold rounded-lg transition cursor-pointer ${
                                         expenseCategoryFilter === 'OPERASI'
-                                            ? 'bg-white text-emerald-800 shadow-2xs'
+                                            ? 'bg-white text-teal-800 shadow-2xs'
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
@@ -1348,7 +1386,7 @@ export default function Index({
                                 onClick={() => setExpenseMatrixMode('RINGKAS')}
                                 className={`px-3 py-1 rounded-lg transition cursor-pointer ${
                                     expenseMatrixMode === 'RINGKAS'
-                                        ? 'bg-white text-emerald-800 shadow-2xs font-black'
+                                        ? 'bg-white text-teal-800 shadow-2xs font-black'
                                         : 'text-slate-600 hover:text-slate-900'
                                 }`}
                                 title="Tampilan Ramping Bebas Scroll Horizontal"
@@ -1404,23 +1442,23 @@ export default function Index({
 
                                                 if (isRoot) {
                                                     return (
-                                                        <tr key={item.id} className="bg-slate-900 text-white font-black">
-                                                            <td className="px-3.5 py-3 text-center font-mono text-xs opacity-70">
+                                                        <tr key={item.id} className="bg-teal-900 text-white font-black shadow-sm">
+                                                            <td className="px-3.5 py-3 text-center font-mono text-xs text-teal-200">
                                                                 {item.account_code}
                                                             </td>
-                                                            <td className="px-4 py-3 uppercase tracking-wider font-bold">
+                                                            <td className="px-4 py-3 uppercase tracking-wider font-bold text-sm">
                                                                 {item.account_name}
                                                             </td>
-                                                            <td className="px-4 py-3 text-right font-mono text-emerald-400 font-bold text-sm">
+                                                            <td className="px-4 py-3 text-right font-mono text-teal-300 font-bold text-sm">
                                                                 {formatRupiah(item.after_total)}
                                                             </td>
-                                                            <td className="px-4 py-3 text-xs text-slate-300 font-normal">
+                                                            <td className="px-4 py-3 text-xs text-teal-100/80 font-normal">
                                                                 Total Gabungan BLUD & APBD
                                                             </td>
-                                                            <td className="px-4 py-3 text-xs text-slate-400 font-normal">
+                                                            <td className="px-4 py-3 text-xs text-teal-200/60 font-normal">
                                                                 {item.keterangan || '-'}
                                                             </td>
-                                                            <td className="px-3 py-3 text-center text-xs opacity-50">
+                                                            <td className="px-3 py-3 text-center text-xs text-teal-200/50">
                                                                 Induk
                                                             </td>
                                                         </tr>
@@ -1431,7 +1469,7 @@ export default function Index({
                                                     return (
                                                         <tr key={item.id} className={`font-bold border-t ${
                                                             item.level === 2
-                                                                ? 'bg-emerald-50/60 text-emerald-950 border-emerald-200/80'
+                                                                ? 'bg-teal-100/60 text-teal-950 border-teal-200'
                                                                 : 'bg-slate-50 text-slate-900 border-slate-200'
                                                         }`}>
                                                             <td className="px-3.5 py-2.5 text-center font-mono text-xs font-bold text-slate-700">
@@ -1463,7 +1501,7 @@ export default function Index({
 
                                                 return (
                                                     <tr key={item.id} className="hover:bg-slate-50/80 transition group">
-                                                        <td className="px-3.5 py-2.5 text-center font-mono text-xs font-bold text-slate-600 group-hover:text-emerald-700">
+                                                        <td className="px-3.5 py-2.5 text-center font-mono text-xs font-bold text-slate-600 group-hover:text-teal-700">
                                                             {item.account_code}
                                                         </td>
                                                         <td
@@ -1471,7 +1509,7 @@ export default function Index({
                                                             style={{ paddingLeft: `${(item.level - 1) * 14 + 16}px` }}
                                                         >
                                                             <div className="flex items-center gap-1.5">
-                                                                <span className="text-slate-300 group-hover:text-emerald-500 transition">↳</span>
+                                                                <span className="text-slate-300 group-hover:text-teal-500 transition">↳</span>
                                                                 <span>{item.account_name}</span>
                                                             </div>
                                                         </td>
@@ -1481,7 +1519,7 @@ export default function Index({
                                                         <td className="px-4 py-2.5">
                                                             <div className="flex flex-wrap items-center gap-1.5">
                                                                 {jl > 0 && (
-                                                                    <span className="inline-flex items-center rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold px-2 py-0.5 border border-emerald-200">
+                                                                    <span className="inline-flex items-center rounded-md bg-teal-50 text-teal-800 text-[10px] font-bold px-2 py-0.5 border border-teal-200">
                                                                         Jasa Layanan: {formatRupiah(jl)}
                                                                     </span>
                                                                 )}
@@ -1519,7 +1557,7 @@ export default function Index({
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleOpenEditModal(item)}
-                                                                className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-800 transition cursor-pointer"
+                                                                className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs hover:bg-teal-50 hover:border-teal-300 hover:text-teal-800 transition cursor-pointer"
                                                                 title="Atur Pagu & Sumber Pembiayaan"
                                                             >
                                                                 Atur Pagu
@@ -1550,12 +1588,12 @@ export default function Index({
                                 <table className="min-w-full border-collapse border border-slate-300 text-[10px]">
                                     <thead>
                                         <tr className="bg-slate-100 text-center font-bold text-slate-800">
-                                            <th rowSpan="3" className="border border-slate-300 p-1 w-12">No</th>
-                                            <th rowSpan="3" className="border border-slate-300 p-1 min-w-[200px]">Uraian</th>
+                                            <th rowSpan="3" className="border border-slate-300 p-1 w-12 sticky left-0 z-20 bg-slate-100 shadow-[1px_0_0_0_#cbd5e1]">No</th>
+                                            <th rowSpan="3" className="border border-slate-300 p-1 min-w-[200px] sticky left-12 z-20 bg-slate-100 shadow-[1px_0_0_0_#cbd5e1]">Uraian</th>
                                             <th colSpan="6" className="border border-slate-300 p-1 bg-slate-200/70">
                                                 Sumber Dana Sebelum {current_shift?.shift_name}
                                             </th>
-                                            <th colSpan="6" className="border border-slate-300 p-1 bg-emerald-100/70">
+                                            <th colSpan="6" className="border border-slate-300 p-1 bg-teal-100/70">
                                                 Sumber Dana Setelah {current_shift?.shift_name}
                                             </th>
                                             <th rowSpan="3" className="border border-slate-300 p-1 w-24">Bertambah / Berkurang</th>
@@ -1592,17 +1630,17 @@ export default function Index({
                                                     key={item.id}
                                                     className={
                                                         isRoot
-                                                            ? 'font-black bg-slate-100 text-slate-900'
+                                                            ? 'font-black bg-slate-100 text-slate-900 hover:bg-slate-200 transition group'
                                                             : isHeader
-                                                            ? 'font-bold bg-slate-50 text-slate-900'
-                                                            : 'hover:bg-emerald-50/40 transition'
+                                                            ? 'font-bold bg-slate-50 text-slate-900 hover:bg-slate-100 transition group'
+                                                            : 'hover:bg-teal-50/40 bg-white transition group'
                                                     }
                                                 >
-                                                    <td className="border border-slate-300 p-1 text-center font-mono font-bold">
+                                                    <td className={`border border-slate-300 p-1 text-center font-mono font-bold sticky left-0 z-10 shadow-[1px_0_0_0_#cbd5e1] ${isRoot ? 'bg-slate-100 group-hover:bg-slate-200' : isHeader ? 'bg-slate-50 group-hover:bg-slate-100' : 'bg-white group-hover:bg-teal-50'}`}>
                                                         {item.account_code}
                                                     </td>
                                                     <td
-                                                        className="border border-slate-300 p-1"
+                                                        className={`border border-slate-300 p-1 sticky left-12 z-10 shadow-[1px_0_0_0_#cbd5e1] ${isRoot ? 'bg-slate-100 group-hover:bg-slate-200' : isHeader ? 'bg-slate-50 group-hover:bg-slate-100' : 'bg-white group-hover:bg-teal-50'}`}
                                                         style={{ paddingLeft: `${(item.level - 1) * 12 + 6}px` }}
                                                     >
                                                         <span className={isHeader ? 'font-bold uppercase' : 'font-medium'}>
@@ -1641,7 +1679,7 @@ export default function Index({
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleOpenEditModal(item)}
-                                                                className="rounded-md border border-slate-300 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition cursor-pointer"
+                                                                className="rounded-md border border-slate-300 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition cursor-pointer"
                                                             >
                                                                 Ubah
                                                             </button>
@@ -1670,7 +1708,7 @@ export default function Index({
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Cari nama barang, spesifikasi, unit pengusul, kode akun..."
-                                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs text-slate-900 font-medium focus:border-emerald-600 focus:ring-emerald-500"
+                                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs text-slate-900 font-medium focus:border-teal-600 focus:ring-teal-500"
                                 />
                             </div>
 
@@ -1681,7 +1719,7 @@ export default function Index({
                                     onClick={() => setStatusFilter('DISETUJUI')}
                                     className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
                                         statusFilter === 'DISETUJUI'
-                                            ? 'bg-white text-emerald-800 shadow-2xs font-black'
+                                            ? 'bg-white text-teal-800 shadow-2xs font-black'
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
@@ -1706,7 +1744,7 @@ export default function Index({
                                     type="checkbox"
                                     checked={showOnlyWithItems}
                                     onChange={(e) => setShowOnlyWithItems(e.target.checked)}
-                                    className="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
+                                    className="rounded text-teal-600 focus:ring-teal-500 h-4 w-4"
                                 />
                                 <span>Hanya Rekening Terisi ({accountsWithItemsCount})</span>
                             </label>
@@ -1747,7 +1785,7 @@ export default function Index({
                                         <td className="border border-slate-300 px-4 py-2 uppercase tracking-wider" colSpan={4}>
                                             BELANJA BLUD RS JIWA TAMPAN
                                         </td>
-                                        <td className="border border-slate-300 px-4 py-2 text-right font-mono font-black text-emerald-800">
+                                        <td className="border border-slate-300 px-4 py-2 text-right font-mono font-black text-teal-800">
                                             {formatRupiah(totalUsulanNominal)}
                                         </td>
                                         <td className="border border-slate-300 px-4 py-2 text-xs font-bold text-slate-600">
@@ -1756,15 +1794,15 @@ export default function Index({
                                     </tr>
 
                                     {/* SEKSI 1.1: BELANJA OPERASI */}
-                                    <tr className="bg-emerald-50/90 text-emerald-950 font-black border-y border-emerald-200">
-                                        <td className="border border-slate-300 px-3 py-2 text-center font-mono text-emerald-900">1.1</td>
+                                    <tr className="bg-teal-50/90 text-teal-950 font-black border-y border-teal-200">
+                                        <td className="border border-slate-300 px-3 py-2 text-center font-mono text-teal-900">1.1</td>
                                         <td className="border border-slate-300 px-4 py-2 uppercase tracking-wider pl-4" colSpan={4}>
                                             1.1 BELANJA OPERASI BLUD
                                         </td>
-                                        <td className="border border-slate-300 px-4 py-2 text-right font-mono font-black text-emerald-900">
+                                        <td className="border border-slate-300 px-4 py-2 text-right font-mono font-black text-teal-900">
                                             {formatRupiah(totalUsulanOperasi)}
                                         </td>
-                                        <td className="border border-slate-300 px-4 py-2 text-xs font-medium text-emerald-800">
+                                        <td className="border border-slate-300 px-4 py-2 text-xs font-medium text-teal-800">
                                             Operasional Pelayanan RS
                                         </td>
                                     </tr>
@@ -1794,7 +1832,7 @@ export default function Index({
                                                                 : isSubHeader
                                                                 ? 'bg-slate-50/80 font-bold text-slate-800'
                                                                 : hasDirectItems
-                                                                ? 'bg-emerald-50/30 hover:bg-emerald-50/50 font-bold text-slate-900'
+                                                                ? 'bg-teal-50/30 hover:bg-teal-50/50 font-bold text-slate-900'
                                                                 : 'bg-white hover:bg-slate-50/70 font-semibold text-slate-700'
                                                         }`}
                                                     >
@@ -1813,7 +1851,7 @@ export default function Index({
                                                                 {acc.active_count > 0 && (
                                                                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-black border ${
                                                                         statusFilter === 'DISETUJUI'
-                                                                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                                                            ? 'bg-teal-100 text-teal-800 border-teal-300'
                                                                             : 'bg-blue-100 text-blue-800 border-blue-300'
                                                                     }`}>
                                                                         {acc.active_count} Barang Usulan
@@ -1841,7 +1879,7 @@ export default function Index({
                                                             </td>
                                                             <td className="border border-slate-300 px-4 py-2 pl-16 sm:pl-20">
                                                                 <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                                                                    <span className="text-emerald-600 font-black">&bull;</span>
+                                                                    <span className="text-teal-600 font-black">&bull;</span>
                                                                     <span>{item.item_name}</span>
                                                                 </div>
                                                                 {item.specification && (
@@ -1872,14 +1910,14 @@ export default function Index({
                                                                     </span>
                                                                     <span className={`inline-flex items-center gap-1 text-[10px] font-black mt-0.5 ${
                                                                         item.status === 'Disetujui_Selesai'
-                                                                            ? 'text-emerald-700'
+                                                                            ? 'text-teal-700'
                                                                             : item.status === 'Diproses_Keuangan'
                                                                             ? 'text-blue-700'
                                                                             : 'text-amber-700'
                                                                     }`}>
                                                                         <span className={`h-1.5 w-1.5 rounded-full ${
                                                                             item.status === 'Disetujui_Selesai'
-                                                                                ? 'bg-emerald-500'
+                                                                                ? 'bg-teal-500'
                                                                                 : item.status === 'Diproses_Keuangan'
                                                                                 ? 'bg-blue-500'
                                                                                 : 'bg-amber-500'
@@ -2016,14 +2054,14 @@ export default function Index({
                                                                     </span>
                                                                     <span className={`inline-flex items-center gap-1 text-[10px] font-black mt-0.5 ${
                                                                         item.status === 'Disetujui_Selesai'
-                                                                            ? 'text-emerald-700'
+                                                                            ? 'text-teal-700'
                                                                             : item.status === 'Diproses_Keuangan'
                                                                             ? 'text-blue-700'
                                                                             : 'text-amber-700'
                                                                     }`}>
                                                                         <span className={`h-1.5 w-1.5 rounded-full ${
                                                                             item.status === 'Disetujui_Selesai'
-                                                                                ? 'bg-emerald-500'
+                                                                                ? 'bg-teal-500'
                                                                                 : item.status === 'Diproses_Keuangan'
                                                                                 ? 'bg-blue-500'
                                                                                 : 'bg-amber-500'
@@ -2089,7 +2127,7 @@ export default function Index({
                                             <tr
                                                 key={s.id}
                                                 className={`hover:bg-slate-50/80 transition ${
-                                                    isCurrent ? 'bg-emerald-50/30' : ''
+                                                    isCurrent ? 'bg-teal-50/30' : ''
                                                 }`}
                                             >
                                                 <td className="py-3.5 px-4 font-bold text-slate-400 text-center">
@@ -2101,12 +2139,12 @@ export default function Index({
                                                             {s.shift_name}
                                                         </span>
                                                         {isCurrent && (
-                                                            <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-black text-emerald-800 border border-emerald-200">
+                                                            <span className="rounded-md bg-teal-100 px-1.5 py-0.5 text-[10px] font-black text-teal-800 border border-teal-200">
                                                                 Sedang Dilihat
                                                             </span>
                                                         )}
                                                         {isActive && (
-                                                            <span className="rounded-md bg-emerald-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+                                                            <span className="rounded-md bg-teal-600 px-1.5 py-0.5 text-[10px] font-black text-white">
                                                                 Acuan Resmi
                                                             </span>
                                                         )}
@@ -2130,7 +2168,7 @@ export default function Index({
                                                     <span
                                                         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold border ${
                                                             isActive
-                                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                                                ? 'bg-teal-50 text-teal-700 border-teal-300'
                                                                 : isDraft
                                                                 ? 'bg-amber-50 text-amber-700 border-amber-300'
                                                                 : 'bg-slate-100 text-slate-600 border-slate-300'
@@ -2139,7 +2177,7 @@ export default function Index({
                                                         <span
                                                             className={`h-1.5 w-1.5 rounded-full ${
                                                                 isActive
-                                                                    ? 'bg-emerald-500 animate-pulse'
+                                                                    ? 'bg-teal-500 animate-pulse'
                                                                     : isDraft
                                                                     ? 'bg-amber-500'
                                                                     : 'bg-slate-400'
@@ -2211,7 +2249,7 @@ export default function Index({
                 <Modal show={!!editingRevenueItem} onClose={() => setEditingRevenueItem(null)} maxWidth="md">
                     <form onSubmit={submitRevenueItemEdit} className="p-6">
                         <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 text-xl font-bold">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-800 text-xl font-bold">
                                 💰
                             </span>
                             <div>
@@ -2233,9 +2271,9 @@ export default function Index({
                                         {formatRupiah(editingRevenueItem.after_amount || editingRevenueItem.before_amount)}
                                     </span>
                                 </div>
-                                <div className="rounded-xl bg-emerald-50/60 p-3 border border-emerald-200/80">
-                                    <span className="text-emerald-700 block text-[11px]">Realisasi Kas Masuk:</span>
-                                    <span className="font-mono font-bold text-emerald-900 text-sm block mt-0.5">
+                                <div className="rounded-xl bg-teal-50/60 p-3 border border-teal-200/80">
+                                    <span className="text-teal-700 block text-[11px]">Realisasi Kas Masuk:</span>
+                                    <span className="font-mono font-bold text-teal-900 text-sm block mt-0.5">
                                         {formatRupiah(editingRevenueItem.realized_amount)}
                                     </span>
                                 </div>
@@ -2253,19 +2291,19 @@ export default function Index({
                                         step="1000"
                                         value={revenueItemForm.data.after_amount}
                                         onChange={(e) => revenueItemForm.setData('after_amount', e.target.value)}
-                                        className="w-full rounded-xl border border-slate-300 font-mono font-bold text-slate-900 focus:border-emerald-600 focus:ring-emerald-500 text-sm py-2 pl-10 pr-3 shadow-2xs"
+                                        className="w-full rounded-xl border border-slate-300 font-mono font-bold text-slate-900 focus:border-teal-600 focus:ring-teal-500 text-sm py-2 pl-10 pr-3 shadow-2xs"
                                         required
                                     />
                                 </div>
                                 <div className="mt-2 flex items-center justify-between text-xs">
                                     <span className="text-slate-500">Format Nilai:</span>
-                                    <span className="font-mono font-bold text-emerald-800">
+                                    <span className="font-mono font-bold text-teal-800">
                                         {formatRupiah(revenueItemForm.data.after_amount)}
                                     </span>
                                 </div>
                             </div>
 
-                            <div className="rounded-xl bg-emerald-50 p-3 text-[11px] text-emerald-800 border border-emerald-200/80 flex items-start gap-2">
+                            <div className="rounded-xl bg-teal-50 p-3 text-[11px] text-teal-800 border border-teal-200/80 flex items-start gap-2">
                                 <span className="text-sm shrink-0">💡</span>
                                 <p className="font-medium leading-relaxed">
                                     Target yang Anda tetapkan akan otomatis mengakumulasi kelompok pos induk dan langsung memperbarui neraca <strong>Ringkasan & SiLPA</strong>.
@@ -2284,7 +2322,7 @@ export default function Index({
                             <button
                                 type="submit"
                                 disabled={revenueItemForm.processing}
-                                className="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 py-2 text-xs font-bold text-white shadow-md transition disabled:opacity-50 cursor-pointer"
+                                className="rounded-xl bg-teal-600 hover:bg-teal-700 px-5 py-2 text-xs font-bold text-white shadow-md transition disabled:opacity-50 cursor-pointer"
                             >
                                 {revenueItemForm.processing ? 'Menyimpan...' : 'Simpan Target Pendapatan'}
                             </button>
@@ -2308,7 +2346,7 @@ export default function Index({
                         return (
                             <form onSubmit={submitItemEdit} className="p-6">
                                 <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
-                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 text-xl font-bold">
+                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-800 text-xl font-bold">
                                         ⚡
                                     </span>
                                     <div>
@@ -2357,7 +2395,7 @@ export default function Index({
                                             min="0"
                                             value={itemForm.data.after_jasa_layanan}
                                             onChange={(e) => itemForm.setData('after_jasa_layanan', e.target.value)}
-                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-emerald-600 focus:ring-emerald-500 font-bold text-slate-900"
+                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
                                         />
                                         <span className="mt-1 block text-[10px] text-slate-500">
                                             {formatRupiah(itemForm.data.after_jasa_layanan)}
@@ -2373,7 +2411,7 @@ export default function Index({
                                             min="0"
                                             value={itemForm.data.after_hasil_kerjasama}
                                             onChange={(e) => itemForm.setData('after_hasil_kerjasama', e.target.value)}
-                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-emerald-600 focus:ring-emerald-500 font-bold text-slate-900"
+                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
                                         />
                                         <span className="mt-1 block text-[10px] text-slate-500">
                                             {formatRupiah(itemForm.data.after_hasil_kerjasama)}
@@ -2389,7 +2427,7 @@ export default function Index({
                                             min="0"
                                             value={itemForm.data.after_lain_lain_sah}
                                             onChange={(e) => itemForm.setData('after_lain_lain_sah', e.target.value)}
-                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-emerald-600 focus:ring-emerald-500 font-bold text-slate-900"
+                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
                                         />
                                         <span className="mt-1 block text-[10px] text-slate-500">
                                             {formatRupiah(itemForm.data.after_lain_lain_sah)}
@@ -2405,7 +2443,7 @@ export default function Index({
                                             min="0"
                                             value={itemForm.data.after_silpa}
                                             onChange={(e) => itemForm.setData('after_silpa', e.target.value)}
-                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-emerald-600 focus:ring-emerald-500 font-bold text-slate-900"
+                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
                                         />
                                         <span className="mt-1 block text-[10px] text-slate-500">
                                             {formatRupiah(itemForm.data.after_silpa)}
@@ -2421,7 +2459,7 @@ export default function Index({
                                             min="0"
                                             value={itemForm.data.after_apbd}
                                             onChange={(e) => itemForm.setData('after_apbd', e.target.value)}
-                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-emerald-600 focus:ring-emerald-500 font-bold text-slate-900"
+                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
                                         />
                                         <span className="mt-1 block text-[10px] text-slate-500">
                                             {formatRupiah(itemForm.data.after_apbd)}
@@ -2437,7 +2475,7 @@ export default function Index({
                                             value={itemForm.data.keterangan}
                                             onChange={(e) => itemForm.setData('keterangan', e.target.value)}
                                             placeholder="Contoh: Berdasarkan Telaahan Staf PPTK Kegiatan mengenai penyesuaian pagu rekening..."
-                                            className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-medium focus:border-emerald-600 focus:ring-emerald-500 shadow-2xs"
+                                            className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-medium focus:border-teal-600 focus:ring-teal-500 shadow-2xs"
                                         />
                                     </div>
                                 </div>
@@ -2453,7 +2491,7 @@ export default function Index({
                                     <button
                                         type="submit"
                                         disabled={itemForm.processing}
-                                        className="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 py-2 text-xs font-bold text-white shadow-md transition disabled:opacity-50 cursor-pointer"
+                                        className="rounded-xl bg-teal-600 hover:bg-teal-700 px-5 py-2 text-xs font-bold text-white shadow-md transition disabled:opacity-50 cursor-pointer"
                                     >
                                         {itemForm.processing ? 'Menyimpan...' : 'Simpan Alokasi Belanja'}
                                     </button>
@@ -2577,7 +2615,7 @@ export default function Index({
                 <Modal show={showShiftModal} onClose={() => setShowShiftModal(false)} maxWidth="lg">
                     <form onSubmit={submitCreateShift} className="p-6">
                         <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
-                            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 text-lg font-bold shadow-2xs">
+                            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-800 text-lg font-bold shadow-2xs">
                                 ➕
                             </span>
                             <div>
@@ -2591,7 +2629,7 @@ export default function Index({
                         </div>
 
                         {/* Informative Guidance Banner */}
-                        <div className="my-4 rounded-xl bg-emerald-50/70 p-3.5 border border-emerald-200 text-xs text-emerald-900 leading-relaxed flex items-start gap-2.5">
+                        <div className="my-4 rounded-xl bg-teal-50/70 p-3.5 border border-teal-200 text-xs text-teal-900 leading-relaxed flex items-start gap-2.5">
                             <span className="text-base leading-none shrink-0">💡</span>
                             <div>
                                 <span className="font-bold">Kloning Data Otomatis:</span> Sistem akan menduplikasi seluruh rekening belanja dan target pendapatan dari versi aktif saat ini (<strong>{current_shift?.shift_name || 'RBA Murni'}</strong>). Anda dapat langsung menyesuaikan angka pergeseran tanpa perlu menginput ulang dari awal.
@@ -2621,7 +2659,7 @@ export default function Index({
                                         value={shiftForm.data.shift_name}
                                         onChange={(e) => shiftForm.setData('shift_name', e.target.value)}
                                         placeholder="Contoh: Pergeseran IV"
-                                        className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-bold text-slate-900 focus:border-emerald-600 focus:ring-emerald-500"
+                                        className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-bold text-slate-900 focus:border-teal-600 focus:ring-teal-500"
                                         required
                                     />
                                 </div>
@@ -2636,7 +2674,7 @@ export default function Index({
                                     value={shiftForm.data.period_month}
                                     onChange={(e) => shiftForm.setData('period_month', e.target.value)}
                                     placeholder="Contoh: Oktober 2026 atau Triwulan IV"
-                                    className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-medium focus:border-emerald-600 focus:ring-emerald-500"
+                                    className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-medium focus:border-teal-600 focus:ring-teal-500"
                                     required
                                 />
                             </div>
@@ -2650,7 +2688,7 @@ export default function Index({
                                     value={shiftForm.data.doc_title}
                                     onChange={(e) => shiftForm.setData('doc_title', e.target.value)}
                                     placeholder="PERUBAHAN RENCANA BISNIS DAN ANGGARAN..."
-                                    className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-medium focus:border-emerald-600 focus:ring-emerald-500"
+                                    className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-medium focus:border-teal-600 focus:ring-teal-500"
                                     required
                                 />
                             </div>
@@ -2664,7 +2702,7 @@ export default function Index({
                                     value={shiftForm.data.notes}
                                     onChange={(e) => shiftForm.setData('notes', e.target.value)}
                                     placeholder="Contoh: Penyesuaian SILPA dan optimalisasi belanja barang jasa..."
-                                    className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-medium focus:border-emerald-600 focus:ring-emerald-500 shadow-2xs"
+                                    className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-medium focus:border-teal-600 focus:ring-teal-500 shadow-2xs"
                                 />
                             </div>
                         </div>
@@ -2680,7 +2718,7 @@ export default function Index({
                             <button
                                 type="submit"
                                 disabled={shiftForm.processing}
-                                className="rounded-xl bg-emerald-700 hover:bg-emerald-800 px-5 py-2 text-xs font-bold text-white shadow-md transition disabled:opacity-50 cursor-pointer"
+                                className="rounded-xl bg-teal-700 hover:bg-teal-800 px-5 py-2 text-xs font-bold text-white shadow-md transition disabled:opacity-50 cursor-pointer"
                             >
                                 {shiftForm.processing ? 'Memproses Kloning...' : 'Buat Draft Pergeseran'}
                             </button>

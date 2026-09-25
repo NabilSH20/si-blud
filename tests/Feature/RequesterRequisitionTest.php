@@ -691,7 +691,48 @@ class RequesterRequisitionTest extends TestCase
         $this->assertDatabaseHas('requisitions', ['id' => $requisition->id]);
     }
 
+    public function test_requester_can_submit_campuran_requisition_with_both_operasional_and_modal_items(): void
+    {
+        $payload = [
+            'sub_kegiatan' => 'PELAYANAN FARMASI 2027',
+            'fiscal_year' => 2027,
+            'nomor_surat_unit' => '099/FAR/CAMPURAN/2026',
+            'urgency_reason' => 'Pengajuan gabungan kebutuhan operasional obat dan modal alat penyimpanan obat.',
+            'items' => [
+                [
+                    'item_id' => $this->itemObat->id,
+                    'quantity' => 10,
+                    'unit_price' => 75000,
+                    'jenis_belanja' => 'Operasi',
+                    'rba_account_id' => $this->rbaOperasiBlud->id,
+                ],
+                [
+                    'item_id' => $this->itemAlkesModal->id,
+                    'quantity' => 2,
+                    'unit_price' => 150000000,
+                    'jenis_belanja' => 'Modal',
+                    'rba_account_id' => $this->rbaModalBlud->id,
+                ],
+            ],
+        ];
 
+        $response = $this->actingAs($this->farmasiUser)->post(route('requisitions.store'), $payload);
+
+        $response->assertRedirect(route('requisitions.index'));
+
+        $this->assertDatabaseHas('requisitions', [
+            'unit_id' => $this->farmasiUnit->id,
+            'jenis_belanja' => 'Campuran',
+            'sub_kegiatan' => 'PELAYANAN FARMASI 2027',
+            'total_operasional' => 750000, // 10 * 75.000
+            'total_modal' => 300000000, // 2 * 150.000.000
+            'total_estimated' => 300750000,
+        ]);
+
+        $requisition = \App\Models\Requisition::where('nomor_surat_unit', '099/FAR/CAMPURAN/2026')->first();
+        $this->assertNotNull($requisition);
+        $this->assertCount(2, $requisition->requisitionDetails);
+    }
 
     public function test_requester_can_create_requisition_with_program_and_performance_indicators(): void
     {

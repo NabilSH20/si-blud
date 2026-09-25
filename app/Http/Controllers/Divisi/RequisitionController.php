@@ -22,7 +22,7 @@ class RequisitionController extends Controller
     {
         $user = auth()->user()->load(['division', 'unit']);
 
-        $query = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'requisitionDetails.rbaAccount', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])
+        $query = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])
             ->latest();
 
         // Isolasi data pengajuan per unit kerja staf yang login
@@ -170,6 +170,8 @@ class RequisitionController extends Controller
             'items.*.specification' => ['nullable', 'string'],
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.jenis_belanja' => ['nullable', 'string', 'in:Operasi,Modal'],
+            'items.*.rba_account_id' => ['nullable', 'exists:rba_accounts,id'],
         ], [
             'sub_kegiatan.required' => 'Sub Kegiatan rumah sakit wajib diisi.',
             'items.required' => 'Daftar barang yang diajukan tidak boleh kosong.',
@@ -374,6 +376,8 @@ class RequisitionController extends Controller
             'items.*.specification' => ['nullable', 'string'],
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.jenis_belanja' => ['nullable', 'string', 'in:Operasi,Modal'],
+            'items.*.rba_account_id' => ['nullable', 'exists:rba_accounts,id'],
         ], [
             'sub_kegiatan.required' => 'Sub Kegiatan rumah sakit wajib diisi.',
             'items.required' => 'Daftar barang yang diajukan tidak boleh kosong.',

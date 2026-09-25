@@ -24,6 +24,8 @@ const formatRupiahShort = (number) => {
     return formatRupiah(number);
 };
 
+const PIE_COLORS = ['#38bdf8', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6'];
+
 const formatDate = (dateString) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
@@ -81,10 +83,10 @@ export default function Dashboard({
     ];
 
     const pieData = [
-        { name: 'Menunggu Telaah', value: status_data.pending_perencanaan || 0, color: '#f59e0b' },
-        { name: 'Diproses Keuangan', value: status_data.diproses_keuangan || 0, color: '#3b82f6' },
-        { name: 'Disetujui', value: status_data.disetujui || 0, color: '#10b981' },
-        { name: 'Ditolak', value: status_data.ditolak || 0, color: '#ef4444' },
+        { name: 'Menunggu Telaah', value: status_data.pending_perencanaan || 0, color: PIE_COLORS[3] }, // Amber
+        { name: 'Diproses Keuangan', value: status_data.diproses_keuangan || 0, color: PIE_COLORS[0] }, // Blue/Sky
+        { name: 'Disetujui', value: status_data.disetujui || 0, color: PIE_COLORS[2] }, // Emerald
+        { name: 'Ditolak', value: status_data.ditolak || 0, color: PIE_COLORS[1] }, // Rose
     ].filter(item => item.value > 0);
 
     // Custom Tooltip for BarChart
@@ -132,7 +134,7 @@ export default function Dashboard({
 
                         <Link
                             href={route('perencanaan.requisitions.index')}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer whitespace-nowrap"
                         >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -142,143 +144,178 @@ export default function Dashboard({
                     </div>
                 </div>
 
-                {/* 2. KPI Summary Cards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* 2. KPI Summary Cards Grid (Matching Divisi Style) */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-2">
                     {/* Card 1: Total Usulan Masuk */}
-                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center gap-4 group hover:border-slate-300 transition-all">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600 shadow-inner">
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Usulan Masuk</p>
-                            <h3 className="text-2xl font-black text-slate-900 mt-0.5 group-hover:scale-105 transform origin-left transition-transform duration-300">{total_requests}</h3>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 shadow-sm">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Usulan Masuk</p>
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-slate-900">{total_requests}</span>
+                            <span className="text-xs font-medium text-slate-500">Berkas</span>
                         </div>
                     </div>
 
                     {/* Card 2: Perlu Ditelaah */}
-                    <div className="bg-white rounded-2xl p-5 border border-amber-200/80 shadow-xs flex items-center gap-4 group hover:border-amber-300 hover:shadow-md transition-all">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-inner shadow-amber-300/50">
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">Menunggu Telaah</p>
-                            <h3 className="text-2xl font-black text-amber-900 mt-0.5 group-hover:scale-105 transform origin-left transition-transform duration-300">{total_to_verify}</h3>
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-5 shadow-sm">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">Menunggu Telaah</p>
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-amber-800">{total_to_verify}</span>
+                            <span className="text-xs font-medium text-amber-700">Berkas</span>
                         </div>
                     </div>
 
                     {/* Card 3: Selesai Ditelaah */}
-                    <div className="bg-white rounded-2xl p-5 border border-emerald-200/80 shadow-xs flex items-center gap-4 group hover:border-emerald-300 transition-all">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-inner shadow-emerald-300/50">
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Selesai Ditelaah</p>
-                            <h3 className="text-2xl font-black text-emerald-900 mt-0.5 group-hover:scale-105 transform origin-left transition-transform duration-300">{total_verified}</h3>
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-5 shadow-sm">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Selesai Ditelaah</p>
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-emerald-800">{total_verified}</span>
+                            <span className="text-xs font-medium text-emerald-700">Berkas</span>
                         </div>
                     </div>
 
                     {/* Card 4: Katalog Barang */}
-                    <div className="bg-white rounded-2xl p-5 border border-blue-200/80 shadow-xs flex items-center gap-4 group hover:border-blue-300 transition-all">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 shadow-inner">
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Total Item Katalog</p>
-                            <h3 className="text-2xl font-black text-blue-900 mt-0.5 group-hover:scale-105 transform origin-left transition-transform duration-300">{total_items}</h3>
+                    <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-5 shadow-sm">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">Total Item Katalog</p>
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-blue-800">{total_items}</span>
+                            <span className="text-xs font-medium text-blue-700">Macam Barang</span>
                         </div>
                     </div>
                 </div>
 
-                {/* 3. Charts Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Bar Chart: Proyeksi RBA vs Realisasi */}
-                    <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col">
-                        <div className="mb-6">
-                            <h3 className="text-base font-bold text-slate-900">Proyeksi RBA: Target vs Realisasi</h3>
-                            <p className="text-xs text-slate-500 mt-0.5">Membandingkan target pendapatan dan pagu belanja dengan realisasi saat ini.</p>
+                {/* 3. Charts Section (Matching Admin Style) */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    {/* Left: Total Usulan & Pie Chart */}
+                    <div className="lg:col-span-4 bg-slate-50/50 rounded-2xl border border-slate-200 p-6 shadow-sm">
+                        <div className="mb-2">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                Total Usulan Belanja
+                            </p>
+                            <div className="text-2xl font-bold tracking-tight text-slate-900 mt-0.5">
+                                {total_requests} <span className="text-sm font-normal text-slate-500">Berkas</span>
+                            </div>
                         </div>
-                        <div className="flex-1 min-h-[300px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={barData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 600, fill: '#64748b' }} dy={10} />
-                                    <YAxis 
-                                        axisLine={false} 
-                                        tickLine={false} 
-                                        tick={{ fontSize: 11, fill: '#64748b' }} 
-                                        tickFormatter={formatRupiahShort}
-                                        dx={-10}
-                                    />
-                                    <RechartsTooltip content={<CustomBarTooltip />} cursor={{ fill: '#f1f5f9', opacity: 0.4 }} />
-                                    <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
-                                    <Bar dataKey="Target" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={60} />
-                                    <Bar dataKey="Realisasi" fill="#0d9488" radius={[4, 4, 0, 0]} maxBarSize={60} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
 
-                    {/* Donut Chart: Distribusi Status Usulan */}
-                    <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col">
-                        <div className="mb-6">
-                            <h3 className="text-base font-bold text-slate-900">Distribusi Status Usulan</h3>
-                            <p className="text-xs text-slate-500 mt-0.5">Proporsi usulan belanja berdasarkan status terkini.</p>
-                        </div>
-                        <div className="flex-1 min-h-[300px] flex items-center justify-center relative">
+                        {/* Clean Pie Chart */}
+                        <div className="h-64 w-full">
                             {pieData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
-                                        <Pie
-                                            data={pieData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={70}
-                                            outerRadius={95}
-                                            paddingAngle={3}
-                                            dataKey="value"
-                                        >
-                                            {pieData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                        </Pie>
                                         <RechartsTooltip 
                                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                             itemStyle={{ fontSize: '13px', fontWeight: 'bold' }}
                                         />
+                                        <Pie
+                                            data={pieData}
+                                            dataKey="value"
+                                            nameKey="name"
+                                            cx="50%"
+                                            cy="50%"
+                                            outerRadius={85}
+                                            innerRadius={0}
+                                            label={({ cx, cy, midAngle, innerRadius, outerRadius, percentage }) => {
+                                                const RADIAN = Math.PI / 180;
+                                                const radius = innerRadius + (outerRadius - innerRadius) * 0.55;
+                                                const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                                const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                                if (Number(percentage) < 0.08) return null;
+                                                return (
+                                                    <text
+                                                        x={x}
+                                                        y={y}
+                                                        fill="#ffffff"
+                                                        textAnchor="middle"
+                                                        dominantBaseline="central"
+                                                        className="text-[11px] font-bold"
+                                                    >
+                                                        {`${(percentage * 100).toFixed(0)}%`}
+                                                    </text>
+                                                );
+                                            }}
+                                            labelLine={false}
+                                        >
+                                            {pieData.map((entry, index) => (
+                                                <Cell
+                                                    key={`cell-${index}`}
+                                                    fill={entry.color}
+                                                />
+                                            ))}
+                                        </Pie>
+                                        <Legend
+                                            verticalAlign="bottom"
+                                            iconType="circle"
+                                            iconSize={8}
+                                            wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                                        />
                                     </PieChart>
                                 </ResponsiveContainer>
                             ) : (
-                                <div className="text-center text-slate-400 text-sm">Belum ada data usulan.</div>
-                            )}
-                            
-                            {/* Inner Text for Donut */}
-                            {pieData.length > 0 && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-2">
-                                    <span className="text-3xl font-black text-slate-800">{total_requests}</span>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total</span>
+                                <div className="flex h-full items-center justify-center text-xs text-slate-400">
+                                    Tidak ada data usulan
                                 </div>
                             )}
                         </div>
-                        {/* Custom Legend for Donut */}
-                        {pieData.length > 0 && (
-                            <div className="mt-4 grid grid-cols-2 gap-2">
-                                {pieData.map((entry, idx) => (
-                                    <div key={idx} className="flex items-center gap-2 text-xs">
-                                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></span>
-                                        <span className="text-slate-600 truncate">{entry.name}</span>
-                                        <span className="font-bold text-slate-900 ml-auto">{entry.value}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                    </div>
+
+                    {/* Right: Bar Chart Proyeksi RBA vs Realisasi */}
+                    <div className="lg:col-span-8 bg-slate-50/50 rounded-2xl border border-slate-200 p-6 shadow-sm">
+                        <div className="mb-2">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                Target vs Realisasi (Pendapatan & Belanja)
+                            </p>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                                Membandingkan target pendapatan dan pagu belanja dengan realisasi saat ini
+                            </p>
+                        </div>
+
+                        <div className="h-64 w-full">
+                            {barData.some(d => d.Target > 0 || d.Realisasi > 0) ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={barData}
+                                        margin={{ top: 15, right: 10, left: -20, bottom: 25 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                        <XAxis
+                                            dataKey="name"
+                                            tick={{ fontSize: 11, fill: '#64748b' }}
+                                            axisLine={false}
+                                            tickLine={false}
+                                        />
+                                        <YAxis
+                                            tickFormatter={formatRupiahShort}
+                                            tick={{ fontSize: 11, fill: '#64748b' }}
+                                            axisLine={false}
+                                            tickLine={false}
+                                        />
+                                        <RechartsTooltip content={<CustomBarTooltip />} cursor={{ fill: '#f1f5f9', opacity: 0.4 }} />
+                                        <Legend 
+                                            iconType="circle"
+                                            iconSize={8}
+                                            wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} 
+                                        />
+                                        <Bar 
+                                            dataKey="Target" 
+                                            fill="#38bdf8" 
+                                            radius={[6, 6, 0, 0]} 
+                                            maxBarSize={45} 
+                                            animationDuration={1500} 
+                                        />
+                                        <Bar 
+                                            dataKey="Realisasi" 
+                                            fill="#10b981" 
+                                            radius={[6, 6, 0, 0]} 
+                                            maxBarSize={45} 
+                                            animationDuration={1500} 
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="flex h-full items-center justify-center text-xs text-slate-400">
+                                    Tidak ada data pendapatan & belanja untuk tahun ini
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
