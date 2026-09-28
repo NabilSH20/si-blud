@@ -31,7 +31,7 @@ class RbaController extends Controller
         if (empty($activeFiscalYears)) {
             $shiftYears = RbaShift::distinct()->pluck('year')->filter()->toArray();
             $reqYears = \App\Models\Requisition::distinct()->pluck('budget_year')->filter()->toArray();
-            $activeFiscalYears = array_values(array_unique(array_merge([2026, 2027], $shiftYears, $reqYears)));
+            $activeFiscalYears = array_values(array_unique(array_merge($shiftYears, $reqYears)));
         }
 
         $defaultYear = class_exists(FiscalYear::class) ? FiscalYear::getDefaultYear() : (int) date('Y');

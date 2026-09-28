@@ -32,9 +32,9 @@ export default function Index({
     summary = {},
     revenue_summary = {},
     ringkasan_rba = {},
-    selected_year = 2026,
-    available_years = [2026, 2027],
-    current_year = 2026,
+    selected_year = new Date().getFullYear(),
+    available_years = [],
+    current_year = new Date().getFullYear(),
     active_tab = 'RINGKASAN',
     is_murni = false,
     approved_requisitions_total = 0,
@@ -454,10 +454,6 @@ export default function Index({
                             <span className={`h-2 w-2 rounded-full ${current_shift?.status === 'Aktif' ? 'bg-teal-600' : 'bg-amber-500'}`} />
                             {current_shift?.status || 'Draft'}
                         </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-black text-slate-700 shadow-2xs">
-                            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
-                            T.A. {current_shift?.year || selected_year}
-                        </span>
                     </div>
                     <p className="mt-1 text-xs sm:text-sm text-slate-600 font-medium">
                         Kompilasi Anggaran Pendapatan, Belanja, dan Pembiayaan BLUD RS Jiwa Tampan T.A. {current_shift?.year || selected_year}.
@@ -530,7 +526,9 @@ export default function Index({
                                             onClick={() => setPrintDropdownOpen(false)}
                                             className="flex items-start gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-teal-50 hover:text-teal-900 transition"
                                         >
-                                            <span className="text-base mt-0.5">📊</span>
+                                            <div className="mt-0.5 text-teal-600">
+                                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                                            </div>
                                             <div>
                                                 <p className="font-bold text-slate-900">Ringkasan Eksekutif & SiLPA</p>
                                                 <p className="text-[11px] text-slate-500 font-normal">Format resmi pendapatan vs belanja</p>
@@ -543,7 +541,9 @@ export default function Index({
                                             onClick={() => setPrintDropdownOpen(false)}
                                             className="flex items-start gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-teal-50 hover:text-teal-900 transition"
                                         >
-                                            <span className="text-base mt-0.5">💰</span>
+                                            <div className="mt-0.5 text-teal-600">
+                                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            </div>
                                             <div>
                                                 <p className="font-bold text-slate-900">RBA Target Pendapatan</p>
                                                 <p className="text-[11px] text-slate-500 font-normal">23 Pos target layanan RS Jiwa Tampan</p>
@@ -556,7 +556,9 @@ export default function Index({
                                             onClick={() => setPrintDropdownOpen(false)}
                                             className="flex items-start gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-teal-50 hover:text-teal-900 transition"
                                         >
-                                            <span className="text-base mt-0.5">⚡</span>
+                                            <div className="mt-0.5 text-teal-600">
+                                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                            </div>
                                             <div>
                                                 <p className="font-bold text-slate-900">RBA Anggaran Belanja</p>
                                                 <p className="text-[11px] text-slate-500 font-normal">Matriks 16 kolom pergeseran lanskap</p>
@@ -569,7 +571,9 @@ export default function Index({
                                             onClick={() => setPrintDropdownOpen(false)}
                                             className="flex items-start gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-teal-50 hover:text-teal-900 transition"
                                         >
-                                            <span className="text-base mt-0.5">📋</span>
+                                            <div className="mt-0.5 text-teal-600">
+                                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                                            </div>
                                             <div>
                                                 <p className="font-bold text-slate-900">Rincian Usulan Barang Unit</p>
                                                 <p className="text-[11px] text-slate-500 font-normal">Rincian belanja per rekening unit kerja</p>
@@ -604,40 +608,7 @@ export default function Index({
                 </div>
             </div>
 
-            {/* Premium Active Section Header */}
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-gradient-to-r from-white to-slate-50/80 p-5 border border-slate-200/80 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-teal-500 rounded-l-2xl"></div>
-                <div className="flex items-center gap-4 min-w-0">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-2xl shadow-sm border border-teal-100 transition-transform hover:scale-105 duration-300">
-                        {activeTab === 'RINGKASAN' && '📊'}
-                        {activeTab === 'RINCIAN_BARANG' && '🛒'}
-                        {activeTab === 'BELANJA' && '⚡'}
-                        {activeTab === 'PENDAPATAN' && '💰'}
-                        {activeTab === 'SHIFTS' && '⚙️'}
-                    </div>
-                    <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2.5">
-                            <h2 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 truncate">
-                                {activeTab === 'RINGKASAN' && 'Ringkasan & SiLPA'}
-                                {activeTab === 'RINCIAN_BARANG' && `Rincian Usulan Belanja Unit (${totalUsulanCount})`}
-                                {activeTab === 'BELANJA' && 'Anggaran Belanja BLUD'}
-                                {activeTab === 'PENDAPATAN' && `Target Pendapatan BLUD (${revenue_items.filter(r => !r.is_header && r.item_code !== '0').length})`}
-                                {activeTab === 'SHIFTS' && `Kelola Versi & Pergeseran (${shifts.length})`}
-                            </h2>
-                            <span className="rounded-full bg-teal-100/80 text-teal-800 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 border border-teal-200/50 shrink-0 shadow-2xs">
-                                T.A. {current_shift?.year || selected_year}
-                            </span>
-                        </div>
-                        <p className="text-xs text-slate-500 font-medium mt-1 truncate">
-                            {activeTab === 'RINGKASAN' && 'Neraca Lembar Kerja resmi (Pendapatan vs Belanja) dan Proyeksi Pembiayaan SiLPA.'}
-                            {activeTab === 'RINCIAN_BARANG' && 'Daftar kebutuhan barang/jasa yang diusulkan unit kerja per rekening belanja.'}
-                            {activeTab === 'BELANJA' && 'Matriks 16 kolom pergeseran anggaran belanja operasi, belanja modal, dan APBD.'}
-                            {activeTab === 'PENDAPATAN' && 'Target 23 pos pendapatan layanan BLUD, kerja sama, dan realisasi kas tahun berjalan.'}
-                            {activeTab === 'SHIFTS' && 'Daftar versi penetapan RBA, tahapan pergeseran anggaran, dan aktivasi versi resmi.'}
-                        </p>
-                    </div>
-                </div>
-            </div>
+
 
             {/* TAB 1: RINGKASAN RBA & SURPLUS/DEFISIT */}
             {activeTab === 'RINGKASAN' && (
@@ -645,7 +616,9 @@ export default function Index({
                     {/* KPI Cards for Macro View */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
                         <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50 to-teal-100/50 p-5 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-                            <div className="absolute -right-4 -top-4 opacity-10 text-6xl transition-transform duration-300 group-hover:scale-110">💰</div>
+                            <div className="absolute -right-6 -top-6 opacity-[0.03] text-teal-900 transition-transform duration-300 group-hover:scale-110">
+                                <svg className="w-32 h-32" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </div>
                             <h4 className="text-teal-800 text-xs font-black uppercase tracking-wider">Total Pendapatan BLUD</h4>
                             <p className="mt-2 text-2xl font-black text-teal-950 tracking-tight">
                                 {formatRupiah(p.total?.after)}
@@ -655,7 +628,9 @@ export default function Index({
                             </p>
                         </div>
                         <div className="rounded-2xl border border-rose-100 bg-gradient-to-br from-rose-50 to-rose-100/50 p-5 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-                            <div className="absolute -right-4 -top-4 opacity-10 text-6xl transition-transform duration-300 group-hover:scale-110">💸</div>
+                            <div className="absolute -right-6 -top-6 opacity-[0.03] text-rose-900 transition-transform duration-300 group-hover:scale-110">
+                                <svg className="w-32 h-32" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                            </div>
                             <h4 className="text-rose-800 text-xs font-black uppercase tracking-wider">Total Belanja BLUD</h4>
                             <p className="mt-2 text-2xl font-black text-rose-950 tracking-tight">
                                 {formatRupiah(b.total?.after)}
@@ -665,19 +640,21 @@ export default function Index({
                             </p>
                         </div>
                         <div className={`rounded-2xl border p-5 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
-                            sd.defisit_after > 0
+                            (sd.after || 0) < 0
                                 ? 'border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/50'
                                 : 'border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50'
                         }`}>
-                            <div className="absolute -right-4 -top-4 opacity-10 text-6xl transition-transform duration-300 group-hover:scale-110">⚖️</div>
-                            <h4 className={`text-xs font-black uppercase tracking-wider ${sd.defisit_after > 0 ? 'text-amber-800' : 'text-blue-800'}`}>
-                                {sd.defisit_after > 0 ? 'Defisit Anggaran' : 'Surplus Anggaran'}
+                            <div className={`absolute -right-6 -top-6 opacity-[0.03] transition-transform duration-300 group-hover:scale-110 ${ (sd.after || 0) < 0 ? 'text-amber-900' : 'text-blue-900'}`}>
+                                <svg className="w-32 h-32" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>
+                            </div>
+                            <h4 className={`text-xs font-black uppercase tracking-wider ${ (sd.after || 0) < 0 ? 'text-amber-800' : 'text-blue-800'}`}>
+                                { (sd.after || 0) < 0 ? 'Defisit Anggaran' : 'Surplus Anggaran'}
                             </h4>
-                            <p className={`mt-2 text-2xl font-black tracking-tight ${sd.defisit_after > 0 ? 'text-amber-950' : 'text-blue-950'}`}>
-                                {formatRupiah(sd.defisit_after > 0 ? sd.defisit_after : sd.surplus_after)}
+                            <p className={`mt-2 text-2xl font-black tracking-tight ${ (sd.after || 0) < 0 ? 'text-amber-950' : 'text-blue-950'}`}>
+                                {formatRupiah(Math.abs(sd.after || 0))}
                             </p>
-                            <p className={`mt-1 text-[11px] font-semibold ${sd.defisit_after > 0 ? 'text-amber-700' : 'text-blue-700'}`}>
-                                Penerimaan SiLPA: {formatRupiah(c.silpa?.after)}
+                            <p className={`mt-1 text-[11px] font-semibold ${ (sd.after || 0) < 0 ? 'text-amber-700' : 'text-blue-700'}`}>
+                                Penerimaan SiLPA: {formatRupiah(c.silpa_sebelumnya || 0)}
                             </p>
                         </div>
                     </div>
@@ -697,7 +674,7 @@ export default function Index({
                                 onClick={handleOpenPembiayaanModal}
                                 className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-bold text-slate-800 shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
                             >
-                                <span>✏️</span>
+                                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                 Kelola Pembiayaan & SiLPA
                             </button>
                         </div>
@@ -1150,7 +1127,7 @@ export default function Index({
                                         <th className="px-3 py-3 text-center w-24 border-b border-slate-200">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 bg-white">
+                                <tbody className="divide-y divide-slate-200/60 bg-white">
                                     {filteredRevenueItems.length === 0 ? (
                                         <tr>
                                             <td colSpan={(!is_murni && revenueViewMode === 'PERGESERAN') ? 8 : 6} className="py-12 text-center text-slate-400 font-medium">
@@ -1295,7 +1272,7 @@ export default function Index({
                                                         <button
                                                             type="button"
                                                             onClick={() => handleOpenEditRevenueModal(item)}
-                                                            className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs hover:bg-teal-50 hover:border-teal-300 hover:text-teal-800 transition cursor-pointer"
+                                                            className="inline-flex items-center justify-center rounded-lg bg-teal-50/50 px-3 py-1.5 text-[11px] font-black tracking-wide text-teal-700 transition-all hover:bg-teal-600 hover:text-white border border-teal-200/80 shadow-sm cursor-pointer active:scale-95"
                                                             title="Atur Target Pendapatan Pos Ini"
                                                         >
                                                             Atur Target
@@ -1411,16 +1388,16 @@ export default function Index({
                     {/* MODE 1: TAMPILAN RINGKAS (Minimalis, Bebas Scroll Horizontal) */}
                     {expenseMatrixMode === 'RINGKAS' && (
                         <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xs">
-                            <div className="overflow-x-auto">
+                            <div className="overflow-auto max-h-[70vh]">
                                 <table className="min-w-full divide-y divide-slate-200 text-xs">
-                                    <thead>
-                                        <tr className="bg-slate-50 text-slate-700 font-bold">
-                                            <th className="px-3.5 py-3 text-center w-28 border-b border-slate-200 font-mono">Kode Rekening</th>
-                                            <th className="px-4 py-3 text-left border-b border-slate-200 min-w-[260px]">Uraian Rekening Belanja</th>
-                                            <th className="px-4 py-3 text-right w-44 border-b border-slate-200">Pagu Anggaran (Rp)</th>
-                                            <th className="px-4 py-3 text-left border-b border-slate-200 min-w-[280px]">Alokasi Sumber Pembiayaan</th>
-                                            <th className="px-4 py-3 text-left border-b border-slate-200 min-w-[180px]">Keterangan</th>
-                                            <th className="px-3 py-3 text-center w-24 border-b border-slate-200">Aksi</th>
+                                    <thead className="sticky top-0 z-20">
+                                        <tr className="bg-slate-50 text-slate-700 font-bold shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                                            <th className="px-3.5 py-3 text-center w-28 border-b border-slate-200 font-mono bg-slate-50">Kode Rekening</th>
+                                            <th className="px-4 py-3 text-left border-b border-slate-200 min-w-[260px] bg-slate-50">Uraian Rekening Belanja</th>
+                                            <th className="px-4 py-3 text-right w-44 border-b border-slate-200 bg-slate-50">Pagu Anggaran (Rp)</th>
+                                            <th className="px-4 py-3 text-left border-b border-slate-200 min-w-[280px] bg-slate-50">Alokasi Sumber Pembiayaan</th>
+                                            <th className="px-4 py-3 text-left border-b border-slate-200 min-w-[180px] bg-slate-50">Keterangan</th>
+                                            <th className="px-3 py-3 text-center w-24 border-b border-slate-200 bg-slate-50">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 bg-white">
@@ -1557,7 +1534,7 @@ export default function Index({
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleOpenEditModal(item)}
-                                                                className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs hover:bg-teal-50 hover:border-teal-300 hover:text-teal-800 transition cursor-pointer"
+                                                                className="inline-flex items-center justify-center rounded-lg bg-teal-50/50 px-3 py-1.5 text-[11px] font-black tracking-wide text-teal-700 transition-all hover:bg-teal-600 hover:text-white border border-teal-200/80 shadow-sm cursor-pointer active:scale-95"
                                                                 title="Atur Pagu & Sumber Pembiayaan"
                                                             >
                                                                 Atur Pagu
@@ -1584,16 +1561,16 @@ export default function Index({
                                     Gunakan horizontal scroll untuk meninjau rincian sumber dana
                                 </span>
                             </div>
-                            <div className="overflow-x-auto">
+                            <div className="overflow-auto max-h-[75vh]">
                                 <table className="min-w-full border-collapse border border-slate-300 text-[10px]">
-                                    <thead>
+                                    <thead className="sticky top-0 z-30">
                                         <tr className="bg-slate-100 text-center font-bold text-slate-800">
-                                            <th rowSpan="3" className="border border-slate-300 p-1 w-12 sticky left-0 z-20 bg-slate-100 shadow-[1px_0_0_0_#cbd5e1]">No</th>
-                                            <th rowSpan="3" className="border border-slate-300 p-1 min-w-[200px] sticky left-12 z-20 bg-slate-100 shadow-[1px_0_0_0_#cbd5e1]">Uraian</th>
-                                            <th colSpan="6" className="border border-slate-300 p-1 bg-slate-200/70">
+                                            <th rowSpan="3" className="border border-slate-300 p-1 min-w-[120px] max-w-[120px] sticky left-0 z-40 bg-slate-100 shadow-[1px_0_0_0_#cbd5e1]">Kode Rek</th>
+                                            <th rowSpan="3" className="border border-slate-300 p-1 min-w-[240px] sticky left-[120px] z-40 bg-slate-100 shadow-[1px_0_0_0_#cbd5e1]">Uraian</th>
+                                            <th colSpan="6" className="border border-slate-300 p-1 bg-slate-200">
                                                 Sumber Dana Sebelum {current_shift?.shift_name}
                                             </th>
-                                            <th colSpan="6" className="border border-slate-300 p-1 bg-teal-100/70">
+                                            <th colSpan="6" className="border border-slate-300 p-1 bg-teal-100">
                                                 Sumber Dana Setelah {current_shift?.shift_name}
                                             </th>
                                             <th rowSpan="3" className="border border-slate-300 p-1 w-24">Bertambah / Berkurang</th>
@@ -1636,11 +1613,11 @@ export default function Index({
                                                             : 'hover:bg-teal-50/40 bg-white transition group'
                                                     }
                                                 >
-                                                    <td className={`border border-slate-300 p-1 text-center font-mono font-bold sticky left-0 z-10 shadow-[1px_0_0_0_#cbd5e1] ${isRoot ? 'bg-slate-100 group-hover:bg-slate-200' : isHeader ? 'bg-slate-50 group-hover:bg-slate-100' : 'bg-white group-hover:bg-teal-50'}`}>
+                                                    <td className={`border border-slate-300 p-1 text-center font-mono font-bold sticky left-0 z-10 shadow-[1px_0_0_0_#cbd5e1] min-w-[120px] max-w-[120px] truncate ${isRoot ? 'bg-slate-100 group-hover:bg-slate-200' : isHeader ? 'bg-slate-50 group-hover:bg-slate-100' : 'bg-white group-hover:bg-teal-50'}`} title={item.account_code}>
                                                         {item.account_code}
                                                     </td>
                                                     <td
-                                                        className={`border border-slate-300 p-1 sticky left-12 z-10 shadow-[1px_0_0_0_#cbd5e1] ${isRoot ? 'bg-slate-100 group-hover:bg-slate-200' : isHeader ? 'bg-slate-50 group-hover:bg-slate-100' : 'bg-white group-hover:bg-teal-50'}`}
+                                                        className={`border border-slate-300 p-1 sticky left-[120px] z-10 shadow-[1px_0_0_0_#cbd5e1] min-w-[240px] ${isRoot ? 'bg-slate-100 group-hover:bg-slate-200' : isHeader ? 'bg-slate-50 group-hover:bg-slate-100' : 'bg-white group-hover:bg-teal-50'}`}
                                                         style={{ paddingLeft: `${(item.level - 1) * 12 + 6}px` }}
                                                     >
                                                         <span className={isHeader ? 'font-bold uppercase' : 'font-medium'}>
@@ -1679,7 +1656,7 @@ export default function Index({
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleOpenEditModal(item)}
-                                                                className="rounded-md border border-slate-300 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition cursor-pointer"
+                                                                className="inline-flex items-center justify-center rounded-md bg-teal-50/50 px-2.5 py-1 text-[10px] font-black tracking-wide text-teal-700 transition-all hover:bg-teal-600 hover:text-white border border-teal-200/80 shadow-sm cursor-pointer active:scale-95"
                                                             >
                                                                 Ubah
                                                             </button>
@@ -1764,45 +1741,45 @@ export default function Index({
                     </div>
 
                     {/* Main Minimalist Table Matching RSJ Tampan Official Breakdown */}
-                    <div className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-xs">
+                    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-slate-200 text-xs">
                                 <thead>
-                                    <tr className="bg-slate-100 text-center font-bold text-slate-800">
-                                        <th className="border border-slate-300 px-3 py-2.5 w-28">Kode Rekening</th>
-                                        <th className="border border-slate-300 px-4 py-2.5 text-left min-w-[280px]">Uraian Akun & Usulan Barang</th>
-                                        <th className="border border-slate-300 px-3 py-2.5 w-24">Volume Disetujui</th>
-                                        <th className="border border-slate-300 px-3 py-2.5 w-20">Satuan</th>
-                                        <th className="border border-slate-300 px-4 py-2.5 text-right w-36">Harga Satuan (Rp)</th>
-                                        <th className="border border-slate-300 px-4 py-2.5 text-right w-36">Jumlah (Rp)</th>
-                                        <th className="border border-slate-300 px-4 py-2.5 text-left w-52">Unit Pengusul</th>
+                                    <tr className="bg-white border-b border-slate-200 text-left text-slate-500 uppercase tracking-widest text-[10px]">
+                                        <th className="px-3 py-2.5 w-28">Kode Rekening</th>
+                                        <th className="px-4 py-2.5 text-left min-w-[280px]">Uraian Akun & Usulan Barang</th>
+                                        <th className="px-3 py-2.5 w-24">Volume Disetujui</th>
+                                        <th className="px-3 py-2.5 w-20">Satuan</th>
+                                        <th className="px-4 py-2.5 text-right w-36">Harga Satuan (Rp)</th>
+                                        <th className="px-4 py-2.5 text-right w-36">Jumlah (Rp)</th>
+                                        <th className="px-4 py-2.5 text-left w-52">Unit Pengusul</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-200 bg-white">
+                                <tbody className="divide-y divide-slate-100/60 bg-white">
                                     {/* BAB 1: BELANJA */}
-                                    <tr className="bg-slate-100 font-black text-slate-900">
-                                        <td className="border border-slate-300 px-3 py-2 text-center font-mono">1</td>
-                                        <td className="border border-slate-300 px-4 py-2 uppercase tracking-wider" colSpan={4}>
+                                    <tr className="bg-slate-50 font-black text-slate-900 border-b border-slate-200/60">
+                                        <td className="px-3 py-2 text-center font-mono">1</td>
+                                        <td className="px-4 py-2 uppercase tracking-wider" colSpan={4}>
                                             BELANJA BLUD RS JIWA TAMPAN
                                         </td>
-                                        <td className="border border-slate-300 px-4 py-2 text-right font-mono font-black text-teal-800">
+                                        <td className="px-4 py-2 text-right font-mono font-black text-teal-800">
                                             {formatRupiah(totalUsulanNominal)}
                                         </td>
-                                        <td className="border border-slate-300 px-4 py-2 text-xs font-bold text-slate-600">
+                                        <td className="px-4 py-2 text-xs font-bold text-slate-600">
                                             Total {totalUsulanCount} Barang {statusFilter === 'DISETUJUI' ? 'Disetujui' : 'Usulan'}
                                         </td>
                                     </tr>
 
                                     {/* SEKSI 1.1: BELANJA OPERASI */}
                                     <tr className="bg-teal-50/90 text-teal-950 font-black border-y border-teal-200">
-                                        <td className="border border-slate-300 px-3 py-2 text-center font-mono text-teal-900">1.1</td>
-                                        <td className="border border-slate-300 px-4 py-2 uppercase tracking-wider pl-4" colSpan={4}>
+                                        <td className="px-3 py-2 text-center font-mono text-teal-900">1.1</td>
+                                        <td className="px-4 py-2 uppercase tracking-wider pl-4" colSpan={4}>
                                             1.1 BELANJA OPERASI BLUD
                                         </td>
-                                        <td className="border border-slate-300 px-4 py-2 text-right font-mono font-black text-teal-900">
+                                        <td className="px-4 py-2 text-right font-mono font-black text-teal-900">
                                             {formatRupiah(totalUsulanOperasi)}
                                         </td>
-                                        <td className="border border-slate-300 px-4 py-2 text-xs font-medium text-teal-800">
+                                        <td className="px-4 py-2 text-xs font-medium text-teal-800">
                                             Operasional Pelayanan RS
                                         </td>
                                     </tr>
@@ -1836,11 +1813,11 @@ export default function Index({
                                                                 : 'bg-white hover:bg-slate-50/70 font-semibold text-slate-700'
                                                         }`}
                                                     >
-                                                        <td className="border border-slate-300 px-3 py-2 text-center font-mono text-xs text-slate-800">
+                                                        <td className="px-3 py-2 text-center font-mono text-xs text-slate-800">
                                                             {acc.account_code}
                                                         </td>
                                                         <td
-                                                            className={`border border-slate-300 px-4 py-2 ${
+                                                            className={`px-4 py-2 ${
                                                                 acc.level === 2 ? 'pl-4' : acc.level === 3 ? 'pl-8' : acc.level === 4 ? 'pl-12' : 'pl-16'
                                                             }`}
                                                             colSpan={4}
@@ -1859,14 +1836,14 @@ export default function Index({
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className="border border-slate-300 px-4 py-2 text-right font-mono font-bold text-slate-900">
+                                                        <td className="px-4 py-2 text-right font-mono font-bold text-slate-900">
                                                             {acc.active_total > 0
                                                                 ? formatRupiah(acc.active_total)
                                                                 : acc.calc_rollup_total > 0
                                                                 ? formatRupiah(acc.calc_rollup_total)
                                                                 : '-'}
                                                         </td>
-                                                        <td className="border border-slate-300 px-4 py-2 text-slate-500 text-xs">
+                                                        <td className="px-4 py-2 text-slate-500 text-xs">
                                                             Pagu: <span className="font-semibold text-slate-700">{formatRupiah(acc.remaining_budget)}</span>
                                                         </td>
                                                     </tr>
@@ -1874,10 +1851,10 @@ export default function Index({
                                                     {/* Direct Items under this Account */}
                                                     {hasDirectItems && acc.active_items.map((item, idx) => (
                                                         <tr key={`item-${acc.id}-${item.id || idx}`} className="hover:bg-slate-50/80 transition bg-white">
-                                                            <td className="border border-slate-300 px-3 py-2 text-center text-slate-400 font-mono text-[10px]">
+                                                            <td className="px-3 py-2 text-center text-slate-400 font-mono text-[10px]">
                                                                 #{idx + 1}
                                                             </td>
-                                                            <td className="border border-slate-300 px-4 py-2 pl-16 sm:pl-20">
+                                                            <td className="px-4 py-2 pl-16 sm:pl-20">
                                                                 <div className="font-bold text-slate-900 flex items-center gap-1.5">
                                                                     <span className="text-teal-600 font-black">&bull;</span>
                                                                     <span>{item.item_name}</span>
@@ -1888,19 +1865,19 @@ export default function Index({
                                                                     </p>
                                                                 )}
                                                             </td>
-                                                            <td className="border border-slate-300 px-3 py-2 text-center font-mono font-bold text-slate-800">
+                                                            <td className="px-3 py-2 text-center font-mono font-bold text-slate-800">
                                                                 {item.resolved_quantity || item.quantity_approved || item.quantity_requested || 1}
                                                             </td>
-                                                            <td className="border border-slate-300 px-3 py-2 text-center text-slate-600 font-medium">
+                                                            <td className="px-3 py-2 text-center text-slate-600 font-medium">
                                                                 {item.unit_type || 'Pcs'}
                                                             </td>
-                                                            <td className="border border-slate-300 px-4 py-2 text-right font-mono text-slate-700">
+                                                            <td className="px-4 py-2 text-right font-mono text-slate-700">
                                                                 {formatRupiah(item.unit_price)}
                                                             </td>
-                                                            <td className="border border-slate-300 px-4 py-2 text-right font-mono font-black text-slate-900">
+                                                            <td className="px-4 py-2 text-right font-mono font-black text-slate-900">
                                                                 {formatRupiah(item.resolved_subtotal || item.subtotal)}
                                                             </td>
-                                                            <td className="border border-slate-300 px-4 py-2 text-xs">
+                                                            <td className="px-4 py-2 text-xs">
                                                                 <div className="flex flex-col gap-0.5">
                                                                     <span className="inline-block rounded-md bg-slate-100 text-slate-800 font-bold px-2 py-0.5 border border-slate-200 w-fit">
                                                                         {item.requisition?.unit?.name || 'Unit Kerja'}
@@ -1908,12 +1885,12 @@ export default function Index({
                                                                     <span className="text-[10px] text-slate-400 font-mono">
                                                                         {item.requisition?.requisition_number}
                                                                     </span>
-                                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-black mt-0.5 ${
+                                                                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-black mt-1 w-fit ${
                                                                         item.status === 'Disetujui_Selesai'
-                                                                            ? 'text-teal-700'
+                                                                            ? 'bg-teal-50 text-teal-700 border border-teal-200/80 shadow-sm'
                                                                             : item.status === 'Diproses_Keuangan'
-                                                                            ? 'text-blue-700'
-                                                                            : 'text-amber-700'
+                                                                            ? 'bg-blue-50 text-blue-700 border border-blue-200/80 shadow-sm'
+                                                                            : 'bg-amber-50 text-amber-700 border border-amber-200/80 shadow-sm'
                                                                     }`}>
                                                                         <span className={`h-1.5 w-1.5 rounded-full ${
                                                                             item.status === 'Disetujui_Selesai'
@@ -1939,14 +1916,14 @@ export default function Index({
 
                                     {/* SEKSI 1.2: BELANJA MODAL */}
                                     <tr className="bg-purple-50/90 text-purple-950 font-black border-y border-purple-200">
-                                        <td className="border border-slate-300 px-3 py-2 text-center font-mono text-purple-900">1.2</td>
-                                        <td className="border border-slate-300 px-4 py-2 uppercase tracking-wider pl-4" colSpan={4}>
+                                        <td className="px-3 py-2 text-center font-mono text-purple-900">1.2</td>
+                                        <td className="px-4 py-2 uppercase tracking-wider pl-4" colSpan={4}>
                                             1.2 BELANJA MODAL BLUD
                                         </td>
-                                        <td className="border border-slate-300 px-4 py-2 text-right font-mono font-black text-purple-900">
+                                        <td className="px-4 py-2 text-right font-mono font-black text-purple-900">
                                             {formatRupiah(totalUsulanModal)}
                                         </td>
-                                        <td className="border border-slate-300 px-4 py-2 text-xs font-medium text-purple-800">
+                                        <td className="px-4 py-2 text-xs font-medium text-purple-800">
                                             Investasi Fisik Rumah Sakit
                                         </td>
                                     </tr>
@@ -1980,11 +1957,11 @@ export default function Index({
                                                                 : 'bg-white hover:bg-slate-50/70 font-semibold text-slate-700'
                                                         }`}
                                                     >
-                                                        <td className="border border-slate-300 px-3 py-2 text-center font-mono text-xs text-slate-800">
+                                                        <td className="px-3 py-2 text-center font-mono text-xs text-slate-800">
                                                             {acc.account_code}
                                                         </td>
                                                         <td
-                                                            className={`border border-slate-300 px-4 py-2 ${
+                                                            className={`px-4 py-2 ${
                                                                 acc.level === 2 ? 'pl-4' : acc.level === 3 ? 'pl-8' : acc.level === 4 ? 'pl-12' : 'pl-16'
                                                             }`}
                                                             colSpan={4}
@@ -2003,14 +1980,14 @@ export default function Index({
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className="border border-slate-300 px-4 py-2 text-right font-mono font-bold text-slate-900">
+                                                        <td className="px-4 py-2 text-right font-mono font-bold text-slate-900">
                                                             {acc.active_total > 0
                                                                 ? formatRupiah(acc.active_total)
                                                                 : acc.calc_rollup_total > 0
                                                                 ? formatRupiah(acc.calc_rollup_total)
                                                                 : '-'}
                                                         </td>
-                                                        <td className="border border-slate-300 px-4 py-2 text-slate-500 text-xs">
+                                                        <td className="px-4 py-2 text-slate-500 text-xs">
                                                             Pagu: <span className="font-semibold text-slate-700">{formatRupiah(acc.remaining_budget)}</span>
                                                         </td>
                                                     </tr>
@@ -2018,10 +1995,10 @@ export default function Index({
                                                     {/* Direct items under modal account */}
                                                     {hasDirectItems && acc.active_items.map((item, idx) => (
                                                         <tr key={`mitem-${acc.id}-${item.id || idx}`} className="hover:bg-slate-50/80 transition bg-white">
-                                                            <td className="border border-slate-300 px-3 py-2 text-center text-slate-400 font-mono text-[10px]">
+                                                            <td className="px-3 py-2 text-center text-slate-400 font-mono text-[10px]">
                                                                 #{idx + 1}
                                                             </td>
-                                                            <td className="border border-slate-300 px-4 py-2 pl-16 sm:pl-20">
+                                                            <td className="px-4 py-2 pl-16 sm:pl-20">
                                                                 <div className="font-bold text-slate-900 flex items-center gap-1.5">
                                                                     <span className="text-purple-600 font-black">&bull;</span>
                                                                     <span>{item.item_name}</span>
@@ -2032,19 +2009,19 @@ export default function Index({
                                                                     </p>
                                                                 )}
                                                             </td>
-                                                            <td className="border border-slate-300 px-3 py-2 text-center font-mono font-bold text-slate-800">
+                                                            <td className="px-3 py-2 text-center font-mono font-bold text-slate-800">
                                                                 {item.resolved_quantity || item.quantity_approved || item.quantity_requested || 1}
                                                             </td>
-                                                            <td className="border border-slate-300 px-3 py-2 text-center text-slate-600 font-medium">
+                                                            <td className="px-3 py-2 text-center text-slate-600 font-medium">
                                                                 {item.unit_type || 'Unit'}
                                                             </td>
-                                                            <td className="border border-slate-300 px-4 py-2 text-right font-mono text-slate-700">
+                                                            <td className="px-4 py-2 text-right font-mono text-slate-700">
                                                                 {formatRupiah(item.unit_price)}
                                                             </td>
-                                                            <td className="border border-slate-300 px-4 py-2 text-right font-mono font-black text-slate-900">
+                                                            <td className="px-4 py-2 text-right font-mono font-black text-slate-900">
                                                                 {formatRupiah(item.resolved_subtotal || item.subtotal)}
                                                             </td>
-                                                            <td className="border border-slate-300 px-4 py-2 text-xs">
+                                                            <td className="px-4 py-2 text-xs">
                                                                 <div className="flex flex-col gap-0.5">
                                                                     <span className="inline-block rounded-md bg-slate-100 text-slate-800 font-bold px-2 py-0.5 border border-slate-200 w-fit">
                                                                         {item.requisition?.unit?.name || 'Unit Kerja'}
@@ -2201,7 +2178,7 @@ export default function Index({
                                                                         tab: 'RINGKASAN',
                                                                     })
                                                                 }
-                                                                className="rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer"
+                                                                className="rounded-lg bg-white hover:bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer"
                                                                 title="Buka Dokumen Ini"
                                                             >
                                                                 Buka
@@ -2291,7 +2268,7 @@ export default function Index({
                                         step="1000"
                                         value={revenueItemForm.data.after_amount}
                                         onChange={(e) => revenueItemForm.setData('after_amount', e.target.value)}
-                                        className="w-full rounded-xl border border-slate-300 font-mono font-bold text-slate-900 focus:border-teal-600 focus:ring-teal-500 text-sm py-2 pl-10 pr-3 shadow-2xs"
+                                        className="w-full rounded-xl font-mono font-bold text-slate-900 focus:border-teal-600 focus:ring-teal-500 text-sm py-2 pl-10 pr-3 shadow-2xs"
                                         required
                                     />
                                 </div>
@@ -2315,7 +2292,7 @@ export default function Index({
                             <button
                                 type="button"
                                 onClick={() => setEditingRevenueItem(null)}
-                                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                                className="rounded-xl bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                             >
                                 Batal
                             </button>
@@ -2395,7 +2372,7 @@ export default function Index({
                                             min="0"
                                             value={itemForm.data.after_jasa_layanan}
                                             onChange={(e) => itemForm.setData('after_jasa_layanan', e.target.value)}
-                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
+                                            className="w-full rounded-xl font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
                                         />
                                         <span className="mt-1 block text-[10px] text-slate-500">
                                             {formatRupiah(itemForm.data.after_jasa_layanan)}
@@ -2411,7 +2388,7 @@ export default function Index({
                                             min="0"
                                             value={itemForm.data.after_hasil_kerjasama}
                                             onChange={(e) => itemForm.setData('after_hasil_kerjasama', e.target.value)}
-                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
+                                            className="w-full rounded-xl font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
                                         />
                                         <span className="mt-1 block text-[10px] text-slate-500">
                                             {formatRupiah(itemForm.data.after_hasil_kerjasama)}
@@ -2427,7 +2404,7 @@ export default function Index({
                                             min="0"
                                             value={itemForm.data.after_lain_lain_sah}
                                             onChange={(e) => itemForm.setData('after_lain_lain_sah', e.target.value)}
-                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
+                                            className="w-full rounded-xl font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
                                         />
                                         <span className="mt-1 block text-[10px] text-slate-500">
                                             {formatRupiah(itemForm.data.after_lain_lain_sah)}
@@ -2443,7 +2420,7 @@ export default function Index({
                                             min="0"
                                             value={itemForm.data.after_silpa}
                                             onChange={(e) => itemForm.setData('after_silpa', e.target.value)}
-                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
+                                            className="w-full rounded-xl font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
                                         />
                                         <span className="mt-1 block text-[10px] text-slate-500">
                                             {formatRupiah(itemForm.data.after_silpa)}
@@ -2459,7 +2436,7 @@ export default function Index({
                                             min="0"
                                             value={itemForm.data.after_apbd}
                                             onChange={(e) => itemForm.setData('after_apbd', e.target.value)}
-                                            className="w-full rounded-xl border border-slate-300 font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
+                                            className="w-full rounded-xl font-mono py-2 px-3 text-xs shadow-2xs focus:border-teal-600 focus:ring-teal-500 font-bold text-slate-900"
                                         />
                                         <span className="mt-1 block text-[10px] text-slate-500">
                                             {formatRupiah(itemForm.data.after_apbd)}
@@ -2475,7 +2452,7 @@ export default function Index({
                                             value={itemForm.data.keterangan}
                                             onChange={(e) => itemForm.setData('keterangan', e.target.value)}
                                             placeholder="Contoh: Berdasarkan Telaahan Staf PPTK Kegiatan mengenai penyesuaian pagu rekening..."
-                                            className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-medium focus:border-teal-600 focus:ring-teal-500 shadow-2xs"
+                                            className="w-full rounded-xl py-2 px-3 text-xs font-medium focus:border-teal-600 focus:ring-teal-500 shadow-2xs"
                                         />
                                     </div>
                                 </div>
@@ -2484,7 +2461,7 @@ export default function Index({
                                     <button
                                         type="button"
                                         onClick={() => setEditingItem(null)}
-                                        className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                                        className="rounded-xl bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                                     >
                                         Batal
                                     </button>
@@ -2533,7 +2510,7 @@ export default function Index({
                                     min="0"
                                     value={pembiayaanForm.data.penerimaan_silpa}
                                     onChange={(e) => pembiayaanForm.setData('penerimaan_silpa', e.target.value)}
-                                    className="w-full rounded-xl border border-slate-300 font-mono py-1.5 px-3 text-xs"
+                                    className="w-full rounded-xl font-mono py-1.5 px-3 text-xs"
                                 />
                             </div>
                             <div>
@@ -2545,7 +2522,7 @@ export default function Index({
                                     min="0"
                                     value={pembiayaanForm.data.penerimaan_divestasi}
                                     onChange={(e) => pembiayaanForm.setData('penerimaan_divestasi', e.target.value)}
-                                    className="w-full rounded-xl border border-slate-300 font-mono py-1.5 px-3 text-xs"
+                                    className="w-full rounded-xl font-mono py-1.5 px-3 text-xs"
                                 />
                             </div>
                             <div>
@@ -2557,7 +2534,7 @@ export default function Index({
                                     min="0"
                                     value={pembiayaanForm.data.penerimaan_pinjaman}
                                     onChange={(e) => pembiayaanForm.setData('penerimaan_pinjaman', e.target.value)}
-                                    className="w-full rounded-xl border border-slate-300 font-mono py-1.5 px-3 text-xs"
+                                    className="w-full rounded-xl font-mono py-1.5 px-3 text-xs"
                                 />
                             </div>
 
@@ -2573,7 +2550,7 @@ export default function Index({
                                     min="0"
                                     value={pembiayaanForm.data.pengeluaran_investasi}
                                     onChange={(e) => pembiayaanForm.setData('pengeluaran_investasi', e.target.value)}
-                                    className="w-full rounded-xl border border-slate-300 font-mono py-1.5 px-3 text-xs"
+                                    className="w-full rounded-xl font-mono py-1.5 px-3 text-xs"
                                 />
                             </div>
                             <div>
@@ -2585,7 +2562,7 @@ export default function Index({
                                     min="0"
                                     value={pembiayaanForm.data.pengeluaran_pokok_utang}
                                     onChange={(e) => pembiayaanForm.setData('pengeluaran_pokok_utang', e.target.value)}
-                                    className="w-full rounded-xl border border-slate-300 font-mono py-1.5 px-3 text-xs"
+                                    className="w-full rounded-xl font-mono py-1.5 px-3 text-xs"
                                 />
                             </div>
                         </div>
@@ -2594,7 +2571,7 @@ export default function Index({
                             <button
                                 type="button"
                                 onClick={() => setShowPembiayaanModal(false)}
-                                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                                className="rounded-xl bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
                             >
                                 Batal
                             </button>
@@ -2646,7 +2623,7 @@ export default function Index({
                                         type="number"
                                         value={shiftForm.data.year}
                                         onChange={(e) => shiftForm.setData('year', e.target.value)}
-                                        className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs bg-slate-50 font-bold text-slate-700"
+                                        className="w-full rounded-xl py-2 px-3 text-xs bg-slate-50 font-bold text-slate-700"
                                         required
                                     />
                                 </div>
@@ -2659,7 +2636,7 @@ export default function Index({
                                         value={shiftForm.data.shift_name}
                                         onChange={(e) => shiftForm.setData('shift_name', e.target.value)}
                                         placeholder="Contoh: Pergeseran IV"
-                                        className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-bold text-slate-900 focus:border-teal-600 focus:ring-teal-500"
+                                        className="w-full rounded-xl py-2 px-3 text-xs font-bold text-slate-900 focus:border-teal-600 focus:ring-teal-500"
                                         required
                                     />
                                 </div>
@@ -2674,7 +2651,7 @@ export default function Index({
                                     value={shiftForm.data.period_month}
                                     onChange={(e) => shiftForm.setData('period_month', e.target.value)}
                                     placeholder="Contoh: Oktober 2026 atau Triwulan IV"
-                                    className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-medium focus:border-teal-600 focus:ring-teal-500"
+                                    className="w-full rounded-xl py-2 px-3 text-xs font-medium focus:border-teal-600 focus:ring-teal-500"
                                     required
                                 />
                             </div>
@@ -2688,7 +2665,7 @@ export default function Index({
                                     value={shiftForm.data.doc_title}
                                     onChange={(e) => shiftForm.setData('doc_title', e.target.value)}
                                     placeholder="PERUBAHAN RENCANA BISNIS DAN ANGGARAN..."
-                                    className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-medium focus:border-teal-600 focus:ring-teal-500"
+                                    className="w-full rounded-xl py-2 px-3 text-xs font-medium focus:border-teal-600 focus:ring-teal-500"
                                     required
                                 />
                             </div>
@@ -2702,7 +2679,7 @@ export default function Index({
                                     value={shiftForm.data.notes}
                                     onChange={(e) => shiftForm.setData('notes', e.target.value)}
                                     placeholder="Contoh: Penyesuaian SILPA dan optimalisasi belanja barang jasa..."
-                                    className="w-full rounded-xl border border-slate-300 py-2 px-3 text-xs font-medium focus:border-teal-600 focus:ring-teal-500 shadow-2xs"
+                                    className="w-full rounded-xl py-2 px-3 text-xs font-medium focus:border-teal-600 focus:ring-teal-500 shadow-2xs"
                                 />
                             </div>
                         </div>
@@ -2711,7 +2688,7 @@ export default function Index({
                             <button
                                 type="button"
                                 onClick={() => setShowShiftModal(false)}
-                                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                                className="rounded-xl bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                             >
                                 Batal
                             </button>
@@ -2751,7 +2728,7 @@ export default function Index({
                             <button
                                 type="button"
                                 onClick={() => setActivatingShift(null)}
-                                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                                className="rounded-xl bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                             >
                                 Batal
                             </button>
@@ -2795,7 +2772,7 @@ export default function Index({
                             <button
                                 type="button"
                                 onClick={() => setDeletingShift(null)}
-                                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                                className="rounded-xl bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                             >
                                 Batal
                             </button>

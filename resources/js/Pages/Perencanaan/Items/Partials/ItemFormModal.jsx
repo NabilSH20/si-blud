@@ -205,7 +205,7 @@ export default function ItemFormModal({
                             id="rba_account_id"
                             value={data.rba_account_id}
                             onChange={(e) => setData('rba_account_id', e.target.value)}
-                            className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-2xs transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-medium text-slate-800 shadow-sm transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer"
                         >
                             <option value="" disabled>-- Pilih Pos Rekening Belanja RBA --</option>
                             {rbaAccounts.map((account) => (
@@ -239,7 +239,7 @@ export default function ItemFormModal({
                                 value={data.item_code}
                                 onChange={(e) => setData('item_code', e.target.value.toUpperCase())}
                                 placeholder="ITM-0001"
-                                className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-mono font-bold text-slate-800 uppercase shadow-2xs transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-mono font-bold text-slate-800 uppercase shadow-sm transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
                             />
                             <InputError message={errors.item_code} className="mt-1" />
                         </div>
@@ -255,7 +255,7 @@ export default function ItemFormModal({
                                 id="unit_type_select"
                                 value={isCustomUnit ? 'Lainnya' : data.unit_type}
                                 onChange={(e) => handleUnitTypeChange(e.target.value)}
-                                className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-2xs transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer"
+                                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-medium text-slate-800 shadow-sm transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer"
                             >
                                 {commonUnits.map((u) => (
                                     <option key={u} value={u}>
@@ -270,7 +270,7 @@ export default function ItemFormModal({
                                     value={customUnitValue}
                                     onChange={(e) => handleCustomUnitChange(e.target.value)}
                                     placeholder="Ketik satuan baru (cth: Dus, Galon)..."
-                                    className="mt-1.5 w-full rounded-md border border-teal-300 bg-teal-50/40 px-3 py-1.5 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                    className="mt-1.5 w-full rounded-xl border border-teal-300 bg-teal-50/40 px-3.5 py-2 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
                                 />
                             )}
                             <InputError message={errors.unit_type} className="mt-1" />
@@ -291,7 +291,7 @@ export default function ItemFormModal({
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                             placeholder="Contoh: Kertas HVS Folio / F4 75gr PaperOne"
-                            className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 placeholder:text-slate-400 shadow-2xs transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-medium text-slate-800 placeholder:text-slate-400 shadow-sm transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
                         />
                         <InputError message={errors.name} className="mt-1" />
                     </div>
@@ -304,7 +304,7 @@ export default function ItemFormModal({
                         >
                             Harga Acuan Standar (HPS) <span className="text-rose-500">*</span>
                         </label>
-                        <div className="relative rounded-md shadow-2xs">
+                        <div className="relative rounded-xl shadow-sm">
                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-bold text-slate-400">
                                 Rp
                             </div>
@@ -316,7 +316,7 @@ export default function ItemFormModal({
                                 value={data.standard_price}
                                 onChange={(e) => setData('standard_price', e.target.value)}
                                 placeholder="45000"
-                                className="w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 py-1.5 text-xs font-mono font-bold text-slate-800 placeholder:text-slate-400 transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                className="w-full rounded-xl border border-slate-300 bg-white pl-9 pr-4 py-2 text-xs font-mono font-bold text-slate-800 placeholder:text-slate-400 transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
                             />
                         </div>
                         <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
@@ -344,7 +344,7 @@ export default function ItemFormModal({
                             value={data.specification}
                             onChange={(e) => setData('specification', e.target.value)}
                             placeholder="Rincian merek, ukuran, tipe kemasan, atau catatan spesifikasi teknis pengadaan..."
-                            className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 placeholder:text-slate-400 shadow-2xs transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-medium text-slate-800 placeholder:text-slate-400 shadow-sm transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
                         />
                         <InputError message={errors.specification} className="mt-1" />
                     </div>

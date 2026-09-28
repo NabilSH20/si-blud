@@ -213,19 +213,13 @@ export default function Index({ requisitions = [], success, error, selectedYear 
                         <select
                             value={jenisFilter}
                             onChange={(e) => setJenisFilter(e.target.value)}
-                            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition cursor-pointer"
+                            className="rounded-xl border border-slate-300 bg-white pl-3 pr-8 py-2.5 text-xs font-semibold text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition cursor-pointer"
                         >
                             <option value="ALL">Semua Jenis Belanja</option>
                             <option value="Operasi">Belanja Operasional</option>
                             <option value="Modal">Belanja Modal</option>
                             <option value="Campuran">Belanja Campuran</option>
                         </select>
-
-                        {/* Badge Tahun Anggaran Aktif */}
-                        <div className="inline-flex items-center gap-1.5 rounded-xl border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-800">
-                            <span className="h-2 w-2 rounded-full bg-teal-600" />
-                            <span>TA {currentActiveYear}</span>
-                        </div>
 
                         {/* Data Counter */}
                         <div className="text-xs text-slate-500 font-medium whitespace-nowrap">

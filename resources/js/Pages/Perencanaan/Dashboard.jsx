@@ -24,7 +24,7 @@ const formatRupiahShort = (number) => {
     return formatRupiah(number);
 };
 
-const PIE_COLORS = ['#38bdf8', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6'];
+const PIE_COLORS = ['#0ea5e9', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6'];
 
 const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -93,12 +93,12 @@ export default function Dashboard({
     const CustomBarTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-white border border-slate-200 p-3 rounded-xl shadow-lg">
-                    <p className="font-bold text-slate-800 mb-2">{label}</p>
+                <div className="bg-white/95 backdrop-blur-sm border border-slate-200/60 p-4 rounded-2xl shadow-xl">
+                    <p className="font-black text-slate-800 mb-3 text-sm">{label}</p>
                     {payload.map((entry, index) => (
-                        <div key={index} className="flex justify-between items-center gap-4 text-xs">
-                            <span style={{ color: entry.color }} className="font-semibold">{entry.name}</span>
-                            <span className="font-mono text-slate-900">{formatRupiah(entry.value)}</span>
+                        <div key={index} className="flex justify-between items-center gap-6 text-xs mb-1.5 last:mb-0">
+                            <span style={{ color: entry.color?.includes('url') ? (index === 0 ? '#0284c7' : '#059669') : entry.color }} className="font-bold tracking-wide">{entry.name}</span>
+                            <span className="font-mono font-black text-slate-900">{formatRupiah(entry.value)}</span>
                         </div>
                     ))}
                 </div>
@@ -202,8 +202,8 @@ export default function Dashboard({
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <RechartsTooltip 
-                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                            itemStyle={{ fontSize: '13px', fontWeight: 'bold' }}
+                                            contentStyle={{ borderRadius: '16px', border: '1px solid rgba(226, 232, 240, 0.8)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
+                                            itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
                                         />
                                         <Pie
                                             data={pieData}
@@ -211,8 +211,10 @@ export default function Dashboard({
                                             nameKey="name"
                                             cx="50%"
                                             cy="50%"
-                                            outerRadius={85}
-                                            innerRadius={0}
+                                            outerRadius={90}
+                                            innerRadius={55}
+                                            paddingAngle={4}
+                                            stroke="none"
                                             label={({ cx, cy, midAngle, innerRadius, outerRadius, percentage }) => {
                                                 const RADIAN = Math.PI / 180;
                                                 const radius = innerRadius + (outerRadius - innerRadius) * 0.55;
@@ -275,6 +277,16 @@ export default function Dashboard({
                                         data={barData}
                                         margin={{ top: 15, right: 10, left: -20, bottom: 25 }}
                                     >
+                                        <defs>
+                                            <linearGradient id="colorTarget" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#38bdf8" stopOpacity={1}/>
+                                                <stop offset="95%" stopColor="#0284c7" stopOpacity={0.8}/>
+                                            </linearGradient>
+                                            <linearGradient id="colorRealisasi" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#34d399" stopOpacity={1}/>
+                                                <stop offset="95%" stopColor="#059669" stopOpacity={0.8}/>
+                                            </linearGradient>
+                                        </defs>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                         <XAxis
                                             dataKey="name"
@@ -296,17 +308,19 @@ export default function Dashboard({
                                         />
                                         <Bar 
                                             dataKey="Target" 
-                                            fill="#38bdf8" 
-                                            radius={[6, 6, 0, 0]} 
-                                            maxBarSize={45} 
-                                            animationDuration={1500} 
+                                            fill="url(#colorTarget)" 
+                                            radius={[8, 8, 0, 0]} 
+                                            maxBarSize={40} 
+                                            animationDuration={1200}
+                                            animationEasing="ease-out"
                                         />
                                         <Bar 
                                             dataKey="Realisasi" 
-                                            fill="#10b981" 
-                                            radius={[6, 6, 0, 0]} 
-                                            maxBarSize={45} 
-                                            animationDuration={1500} 
+                                            fill="url(#colorRealisasi)" 
+                                            radius={[8, 8, 0, 0]} 
+                                            maxBarSize={40} 
+                                            animationDuration={1200}
+                                            animationEasing="ease-out"
                                         />
                                     </BarChart>
                                 </ResponsiveContainer>

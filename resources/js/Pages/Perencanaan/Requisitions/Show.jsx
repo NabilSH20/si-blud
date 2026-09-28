@@ -434,7 +434,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                 <select
                                     value={data.rba_account_id}
                                     onChange={(e) => setData('rba_account_id', e.target.value)}
-                                    className="block w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-2xs transition focus:border-teal-500 focus:ring-teal-500 focus:outline-none cursor-pointer"
+                                    className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-medium text-slate-800 shadow-sm transition focus:border-teal-500 focus:ring-teal-500 focus:outline-none cursor-pointer"
                                 >
                                     <option value="" disabled>-- Pilih Pos Rekening Belanja RBA --</option>
                                     {leafAccounts.map((acc) => (
@@ -443,7 +443,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                         </option>
                                     ))}
                                 </select>
-                                <p className="text-[11px] text-slate-400 mt-1">
+                                <p className="text-[11px] text-slate-400 mt-1.5 ml-1">
                                     Sistem secara otomatis menyaring hanya rekening definitif yang dapat dibebani alokasi anggaran RBA.
                                 </p>
                                 {errors.rba_account_id && (
@@ -474,7 +474,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                     <button
                                         type="button"
                                         onClick={handleApproveAll}
-                                        className="rounded-md bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 px-3 py-1.5 text-xs font-bold transition cursor-pointer"
+                                        className="rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 px-3.5 py-1.5 text-xs font-bold transition cursor-pointer active:scale-95 shadow-sm"
                                         title="Setujui seluruh kuantitas sesuai permintaan unit"
                                     >
                                         ✓ Setujui Semua
@@ -482,7 +482,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                     <button
                                         type="button"
                                         onClick={handleResetAll}
-                                        className="rounded-md border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-2.5 py-1.5 text-xs font-semibold transition cursor-pointer"
+                                        className="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-1.5 text-xs font-semibold transition cursor-pointer active:scale-95 shadow-sm"
                                         title="Reset seluruh volume disetujui menjadi 0"
                                     >
                                         Reset (0)
@@ -553,11 +553,11 @@ export default function Show({ requisition, rbaList = [] }) {
                                                 </td>
                                                 <td className="whitespace-nowrap px-4 py-2 text-center bg-teal-50/40 border-x border-teal-200">
                                                     {isPending ? (
-                                                        <div className="flex items-center justify-center gap-1">
+                                                        <div className="inline-flex items-center rounded-xl bg-white p-1 shadow-sm border border-teal-200/60 focus-within:ring-4 focus-within:ring-teal-500/10 focus-within:border-teal-500 transition-all">
                                                             <button
                                                                 type="button"
                                                                 onClick={() => updateApprovedQty(idx, Math.max(0, (Number(data.items[idx]?.quantity_approved ?? detail.quantity_requested)) - 1))}
-                                                                className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 active:scale-95 transition cursor-pointer"
+                                                                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-teal-50 hover:text-teal-700 active:scale-95 transition cursor-pointer font-bold"
                                                             >
                                                                 &minus;
                                                             </button>
@@ -566,12 +566,12 @@ export default function Show({ requisition, rbaList = [] }) {
                                                                 min="0"
                                                                 value={data.items[idx]?.quantity_approved ?? ''}
                                                                 onChange={(e) => updateApprovedQty(idx, e.target.value)}
-                                                                className="w-12 text-center font-bold text-xs rounded-md border border-slate-300 bg-white px-1 py-1 text-slate-800 focus:border-teal-500 focus:ring-teal-500 focus:outline-none transition shadow-2xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                className="w-12 border-none bg-transparent px-1 py-1 text-center text-xs font-black text-teal-900 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                             />
                                                             <button
                                                                 type="button"
                                                                 onClick={() => updateApprovedQty(idx, (Number(data.items[idx]?.quantity_approved ?? detail.quantity_requested)) + 1)}
-                                                                className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 active:scale-95 transition cursor-pointer"
+                                                                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-teal-50 hover:text-teal-700 active:scale-95 transition cursor-pointer font-bold"
                                                             >
                                                                 +
                                                             </button>
@@ -643,7 +643,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                         value={data.notes_perencanaan}
                                         onChange={(e) => setData('notes_perencanaan', e.target.value)}
                                         placeholder="Tuliskan catatan arahan teknis untuk Bagian Keuangan atau unit kerja pengusul..."
-                                        className="block w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-teal-500 focus:ring-teal-500 focus:outline-none transition shadow-2xs"
+                                        className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-teal-500 focus:ring-teal-500 focus:outline-none transition shadow-sm"
                                     />
                                 ) : (
                                     <p className="text-xs font-medium text-slate-700 bg-slate-50 p-3 rounded-md border border-slate-200 leading-relaxed">
