@@ -2,8 +2,9 @@ import KeuanganLayout from '@/Layouts/KeuanganLayout';
 import Pagination from '@/Components/Pagination';
 import RevenueFormModal from './Partials/RevenueFormModal';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { useMemo, useState, useEffect } from 'react';
+import { Plus, Wallet, TrendingUp, HandCoins, ReceiptText, Search, Trash2 } from 'lucide-react';
 
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -31,10 +32,21 @@ export default function Index({
     sources = [],
     default_date = '',
 }) {
+    const { url } = usePage();
+    const [selectedCategory, setSelectedCategory] = useState('Semua');
+
+    // Sync selectedCategory from URL
+    useEffect(() => {
+        let currentCategory = 'Semua';
+        if (url.includes('?category=')) {
+            currentCategory = decodeURIComponent(url.split('?category=')[1].split('&')[0]);
+        }
+        setSelectedCategory(currentCategory);
+    }, [url]);
+
     const [selectedRevenue, setSelectedRevenue] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState('Semua');
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -82,7 +94,7 @@ export default function Index({
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-                        Penerimaan Pendapatan E-BLUD
+                        Penerimaan Pendapatan E-BLUD {selectedCategory !== 'Semua' ? `- ${selectedCategory}` : ''}
                     </h1>
                     <p className="mt-1 text-xs font-semibold text-slate-500 sm:text-sm">
                         Pencatatan arus kas masuk dari unit layanan, farmasi, poliklinik, dan penunjang medis
@@ -93,106 +105,71 @@ export default function Index({
                     <button
                         type="button"
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition-all duration-200 cursor-pointer whitespace-nowrap"
                     >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
+                        <Plus className="h-4 w-4" strokeWidth={2.5} />
                         Catat Pendapatan Baru
                     </button>
                 </div>
             </div>
 
-            {/* KPI Cards Grid */}
+            {/* KPI Cards Grid (Simplified like Perencanaan) */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-                {/* Total Pendapatan Akumulasi */}
-                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
-                    <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Pendapatan</p>
-                        <h3 className="text-xl sm:text-2xl font-black text-emerald-700 mt-1.5 truncate">
-                            {formatRupiah(stats.total_revenue)}
-                        </h3>
-                        <p className="mt-1 text-[11px] font-bold text-emerald-600">Realisasi Penerimaan</p>
+                <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Pendapatan</p>
+                        <div className="rounded-lg bg-emerald-50 p-2 text-emerald-600">
+                            <Wallet className="h-5 w-5" strokeWidth={2} />
+                        </div>
                     </div>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-500/20">
-                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-800 mt-2 truncate">
+                        {formatRupiah(stats.total_revenue)}
+                    </h3>
                 </div>
 
-                {/* Pendapatan Bulan Ini */}
-                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
-                    <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Bulan Ini</p>
-                        <h3 className="text-xl sm:text-2xl font-black text-teal-700 mt-1.5 truncate">
-                            {formatRupiah(stats.monthly_revenue)}
-                        </h3>
-                        <p className="mt-1 text-[11px] font-bold text-teal-600">Penerimaan Berjalan</p>
+                <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Bulan Ini</p>
+                        <div className="rounded-lg bg-teal-50 p-2 text-teal-600">
+                            <TrendingUp className="h-5 w-5" strokeWidth={2} />
+                        </div>
                     </div>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600 ring-1 ring-teal-500/20">
-                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.253M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                        </svg>
-                    </div>
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-800 mt-2 truncate">
+                        {formatRupiah(stats.monthly_revenue)}
+                    </h3>
                 </div>
 
-                {/* Pendapatan Hari Ini */}
-                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
-                    <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Hari Ini</p>
-                        <h3 className="text-xl sm:text-2xl font-black text-blue-700 mt-1.5 truncate">
-                            {formatRupiah(stats.today_revenue)}
-                        </h3>
-                        <p className="mt-1 text-[11px] font-bold text-blue-600">Penerimaan Harian</p>
+                <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Hari Ini</p>
+                        <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
+                            <HandCoins className="h-5 w-5" strokeWidth={2} />
+                        </div>
                     </div>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-500/20">
-                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-800 mt-2 truncate">
+                        {formatRupiah(stats.today_revenue)}
+                    </h3>
                 </div>
 
-                {/* Total Transaksi */}
-                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
-                    <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Transaksi</p>
-                        <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1.5">
-                            {stats.total_transactions}
-                        </h3>
-                        <p className="mt-1 text-[11px] font-bold text-slate-500">Slip Bukti Penerimaan</p>
+                <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Transaksi</p>
+                        <div className="rounded-lg bg-purple-50 p-2 text-purple-600">
+                            <ReceiptText className="h-5 w-5" strokeWidth={2} />
+                        </div>
                     </div>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600 ring-1 ring-purple-500/20">
-                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
-                        </svg>
-                    </div>
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-800 mt-2">
+                        {stats.total_transactions}
+                    </h3>
                 </div>
             </div>
 
-            {/* Filter & Search Bar */}
-            <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-emerald-100/90 bg-white p-3.5 shadow-xs sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-wrap items-center gap-1.5">
-                    {categories.map((cat) => (
-                        <button
-                            key={cat}
-                            type="button"
-                            onClick={() => {
-                                setSelectedCategory(cat);
-                                setCurrentPage(1);
-                            }}
-                            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                                selectedCategory === cat
-                                    ? 'bg-emerald-700 text-white shadow-xs'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                            }`}
-                        >
-                            {cat}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="w-full sm:w-72">
+            {/* Filter & Search Bar (Simplified) */}
+            <div className="mb-4 bg-white rounded-2xl border border-slate-200 p-3 shadow-sm flex items-center">
+                <div className="relative w-full sm:w-96">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <Search className="h-4 w-4 text-slate-400" />
+                    </div>
                     <input
                         type="text"
                         placeholder="Cari nomor bukti, pos rekening, atau keterangan..."
@@ -201,42 +178,42 @@ export default function Index({
                             setSearchQuery(e.target.value);
                             setCurrentPage(1);
                         }}
-                        className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-emerald-500"
+                        className="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-teal-500 focus:ring-teal-500 focus:bg-white transition-colors"
                     />
                 </div>
             </div>
 
             {/* Main Table Container */}
-            <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-shadow">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-slate-700 divide-y divide-emerald-100 border-collapse">
-                        <thead className="bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90 font-bold border-b border-emerald-100 text-emerald-950 uppercase tracking-wider text-xs">
+                    <table className="w-full text-left text-sm text-slate-700 divide-y divide-slate-200 border-collapse">
+                        <thead className="bg-slate-50 font-bold border-b border-slate-200 text-slate-800 text-xs">
                             <tr>
-                                <th className="px-4 py-3.5 text-center w-14 text-emerald-950">No</th>
-                                <th className="px-5 py-3.5 text-emerald-950">Nomor Bukti</th>
-                                <th className="px-4 py-3.5 text-center text-emerald-950">Tanggal</th>
-                                <th className="px-5 py-3.5 text-emerald-950">Pos Rekening / Unit Layanan</th>
-                                <th className="px-5 py-3.5 text-emerald-950">Uraian / Keterangan</th>
-                                <th className="px-5 py-3.5 text-right text-emerald-950">Nominal (IDR)</th>
-                                <th className="px-4 py-3.5 text-center w-24 text-emerald-950">Aksi</th>
+                                <th className="px-4 py-3.5 text-center w-14">No</th>
+                                <th className="px-5 py-3.5">Nomor Bukti</th>
+                                <th className="px-4 py-3.5 text-center">Tanggal</th>
+                                <th className="px-5 py-3.5">Pos Rekening / Unit Layanan</th>
+                                <th className="px-5 py-3.5">Uraian / Keterangan</th>
+                                <th className="px-5 py-3.5 text-right">Nominal (IDR)</th>
+                                <th className="px-4 py-3.5 text-center w-24">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
                             {filteredRevenues.length > 0 ? (
                                 paginatedRevenues.map((item, index) => (
-                                    <tr key={item.id} className="transition-colors duration-150 hover:bg-emerald-50/40">
-                                        <td className="px-4 py-3.5 text-center text-xs font-semibold text-slate-500">
+                                    <tr key={item.id} className="transition-colors duration-150 hover:bg-slate-50/50">
+                                        <td className="px-4 py-4 text-center text-xs font-semibold text-slate-500">
                                             {(currentPage - 1) * itemsPerPage + index + 1}
                                         </td>
-                                        <td className="px-5 py-3.5 font-mono text-xs font-bold text-slate-900 whitespace-nowrap">
+                                        <td className="px-5 py-4 font-mono text-xs font-bold text-slate-900 whitespace-nowrap">
                                             {item.revenue_number}
                                         </td>
-                                        <td className="px-4 py-3.5 text-center text-xs font-semibold text-slate-600 whitespace-nowrap">
+                                        <td className="px-4 py-4 text-center text-xs font-semibold text-slate-600 whitespace-nowrap">
                                             {formatTanggal(item.date)}
                                         </td>
-                                        <td className="px-5 py-3.5 font-bold text-slate-800">
+                                        <td className="px-5 py-4 font-bold text-slate-800">
                                             <div className="flex flex-col gap-1 items-start">
-                                                <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-800 border border-emerald-200 uppercase tracking-wider">
+                                                <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-600 border border-slate-200 uppercase tracking-wider">
                                                     {item.category || 'Jasa Layanan'}
                                                 </span>
                                                 <span className="text-xs font-bold text-slate-900">
@@ -244,31 +221,28 @@ export default function Index({
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-5 py-3.5 text-xs text-slate-600">
+                                        <td className="px-5 py-4 text-xs text-slate-600">
                                             {item.description || '-'}
                                         </td>
-                                        <td className="px-5 py-3.5 text-right font-black text-emerald-700 whitespace-nowrap">
+                                        <td className="px-5 py-4 text-right font-black text-emerald-700 whitespace-nowrap">
                                             {formatRupiah(item.amount)}
                                         </td>
-                                        <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                                        <td className="px-4 py-4 text-center whitespace-nowrap">
                                             <button
                                                 type="button"
                                                 onClick={() => handleDeleteClick(item)}
-                                                className="inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition"
+                                                className="inline-flex items-center justify-center p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                                                 title="Hapus Catatan"
                                             >
-                                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                                </svg>
-                                                Hapus
+                                                <Trash2 className="h-4 w-4" strokeWidth={2} />
                                             </button>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-10 text-center text-slate-400 font-medium">
-                                        Tidak ada penerimaan pendapatan yang sesuai dengan filter.
+                                    <td colSpan={7} className="px-6 py-12 text-center">
+                                        <p className="text-slate-500 text-sm font-medium">Tidak ada penerimaan pendapatan yang sesuai dengan pencarian Anda.</p>
                                     </td>
                                 </tr>
                             )}

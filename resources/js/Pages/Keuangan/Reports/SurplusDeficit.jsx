@@ -85,6 +85,28 @@ export default function SurplusDeficit({
                 </div>
             </div>
 
+            {/* Discrepancy Warning Notice */}
+            {summary.has_discrepancy && (
+                <div className="mb-6 rounded-2xl border-2 border-rose-300 bg-rose-50 p-5 shadow-xs">
+                    <div className="flex items-start gap-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-200 text-rose-800">
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-black text-rose-900">Perhatian: Ditemukan Selisih Data Realisasi Belanja!</h3>
+                            <p className="mt-1 text-sm font-medium text-rose-800">
+                                Sistem mendeteksi adanya selisih sebesar <strong>{formatRupiah(summary.discrepancy_amount)}</strong> antara total transaksi riil yang disetujui (Requisition) dengan selisih pagu awal dan sisa di buku Pagu Anggaran (Budget).
+                            </p>
+                            <p className="mt-1 text-xs text-rose-700">
+                                Angka pengeluaran yang ditampilkan pada laporan ini menggunakan <strong>data transaksi riil (Requisition)</strong> untuk menjamin akurasi. Silakan lakukan audit terhadap tabel Pagu Anggaran.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Top 3 Strategic Metric Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 {/* Total Realisasi Pendapatan */}

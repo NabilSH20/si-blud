@@ -84,7 +84,7 @@ Route::prefix('keuangan')->middleware(['auth', 'role:keuangan'])->group(function
     Route::get('/dashboard', [KeuanganDashboardController::class, 'index'])
         ->name('keuangan.dashboard');
 
-    Route::resource('budgets', BudgetController::class)->except(['show']);
+    Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
     Route::resource('revenues', KeuanganRevenueController::class)->except(['edit', 'update', 'show']);
     Route::resource('requisitions', KeuanganRequisitionController::class)
         ->only(['index', 'show', 'update'])

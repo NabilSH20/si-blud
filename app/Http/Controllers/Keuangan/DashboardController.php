@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Keuangan;
 use App\Http\Controllers\Controller;
 use App\Models\Budget;
 use App\Models\Requisition;
+use App\Models\RequisitionDetail;
 use App\Models\Revenue;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,13 +25,26 @@ class DashboardController extends Controller
 
         $totalInitial = (float) Budget::where('period_year', $activeYear)->sum('total_budget');
         $totalRemaining = (float) Budget::where('period_year', $activeYear)->sum('remaining_budget');
-        $totalSpent = max(0, $totalInitial - $totalRemaining);
+        
+        // P0-2 FIX: Official expense is the sum of approved requisitions, not the ledger difference
+        $totalSpent = (float) RequisitionDetail::whereHas('requisition', function ($q) use ($activeYear) {
+            $q->where('status', 'Disetujui_Selesai')
+              ->where(function ($sq) use ($activeYear) {
+                  $sq->where('budget_year', $activeYear)
+                     ->orWhere(function ($ssq) use ($activeYear) {
+                         $ssq->whereNull('budget_year')->where('fiscal_year', $activeYear);
+                     });
+              });
+        })->sum('subtotal');
+        
         $totalRevenue = (float) Revenue::whereYear('date', $activeYear)->sum('amount');
+
+        $totalLedgerSpent = max(0, $totalInitial - $totalRemaining);
 
         $budgetChartData = [
             [
                 'name' => 'Realisasi Belanja (Terpakai)',
-                'value' => $totalSpent,
+                'value' => $totalLedgerSpent,
                 'fill' => '#f59e0b',
             ],
             [
@@ -58,6 +72,24 @@ class DashboardController extends Controller
                 ];
             });
 
+        // Monthly Revenue Trend
+        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
+        $monthlyData = array_fill_keys($months, 0);
+        $revenues = Revenue::whereYear('date', $activeYear)->get();
+        foreach ($revenues as $rev) {
+            // $rev->date is cast to Carbon
+            $monthIndex = (int) $rev->date->format('n') - 1;
+            $monthlyData[$months[$monthIndex]] += (float) $rev->amount;
+        }
+        
+        $revenueTrend = [];
+        foreach ($monthlyData as $m => $val) {
+            $revenueTrend[] = [
+                'name' => $m,
+                'pendapatan' => $val,
+            ];
+        }
+
         $totalProcessed = Requisition::where('status', 'Disetujui_Selesai')
             ->where(function ($q) use ($activeYear) {
                 $q->where('budget_year', $activeYear)
@@ -74,6 +106,7 @@ class DashboardController extends Controller
             'total_revenue' => $totalRevenue,
             'budget_chart_data' => $budgetChartData,
             'top_budgets' => $topBudgets,
+            'revenue_trend' => $revenueTrend,
             'total_spent' => $totalSpent,
             'active_year' => $activeYear,
         ]);

@@ -89,6 +89,9 @@ class EBludCoreExpansionTest extends TestCase
             'total_budget' => 20000000,
             'remaining_budget' => 15000000, // spent = 5.000.000
         ]);
+        
+        // RequisitionDetail is empty in this test, so total_expense should be 0, 
+        // while budget_ledger_expense is 5000000, triggering discrepancy flag.
 
         $response = $this->actingAs($keuangan)->get(route('reports.surplus-deficit'));
 
@@ -96,16 +99,19 @@ class EBludCoreExpansionTest extends TestCase
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Keuangan/Reports/SurplusDeficit')
             ->where('summary.total_revenue', 50000000)
-            ->where('summary.total_expense', 5000000)
-            ->where('summary.surplus_deficit', 45000000)
+            ->where('summary.total_expense', 0) // Changed to 0 because official expense comes from RequisitionDetail
+            ->where('summary.surplus_deficit', 50000000)
             ->where('summary.is_surplus', true)
+            ->where('summary.has_discrepancy', true)
+            ->where('summary.discrepancy_amount', 5000000)
         );
 
         $printResponse = $this->actingAs($keuangan)->get(route('reports.surplus-deficit.print'));
         $printResponse->assertOk();
         $printResponse->assertInertia(fn (Assert $page) => $page
             ->component('Shared/PrintSurplusDeficit')
-            ->where('summary.surplus_deficit', 45000000)
+            ->where('summary.surplus_deficit', 50000000)
+            ->where('summary.has_discrepancy', true)
         );
     }
 }

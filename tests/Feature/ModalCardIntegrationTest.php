@@ -118,25 +118,29 @@ class ModalCardIntegrationTest extends TestCase
         );
     }
 
-    public function test_keuangan_budgets_modal_store_and_index(): void
+    public function test_keuangan_budgets_index_is_read_only(): void
     {
-        $payload = [
-            'account_code' => '5.2.02.01.9999',
-            'account_name' => 'Belanja Modal Alat Kesehatan Uji Coba',
-            'period_year' => 2027,
-            'total_budget' => 75000000,
-        ];
-
+        // 1. Verify index page works
         $response = $this->actingAs($this->keuanganUser)
-            ->post(route('budgets.store'), $payload);
+            ->get(route('budgets.index'));
 
-        $response->assertRedirect(route('budgets.index'));
-        $this->assertDatabaseHas('rba_accounts', [
-            'account_code' => '5.2.02.01.9999',
-            'account_name' => 'Belanja Modal Alat Kesehatan Uji Coba',
-            'total_budget' => 75000000,
-            'remaining_budget' => 75000000,
-        ]);
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Keuangan/Budgets/Index')
+            ->has('budgets')
+        );
+
+        // 2. Verify store route is removed/returns 404 or 405
+        $postResponse = $this->actingAs($this->keuanganUser)
+            ->post('/keuangan/budgets', [
+                'account_code' => '5.2.02.01.9999',
+                'account_name' => 'Belanja Modal Alat Kesehatan Uji Coba',
+                'period_year' => 2027,
+                'total_budget' => 75000000,
+            ]);
+
+        // Route should not exist, or Method Not Allowed if resource route is strictly GET
+        $this->assertTrue(in_array($postResponse->status(), [404, 405]));
     }
 
     public function test_keuangan_revenues_index_supplies_grouped_sources_and_stores_revenue(): void

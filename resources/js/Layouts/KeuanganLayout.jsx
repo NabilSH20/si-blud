@@ -3,6 +3,8 @@ import ProfileSettingsModal from '@/Components/ProfileSettingsModal';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+import { LayoutDashboard, Wallet, PiggyBank, ClipboardCheck, FileText, TrendingDown } from 'lucide-react';
+
 const menuGroups = [
     {
         title: 'Menu Utama',
@@ -11,11 +13,7 @@ const menuGroups = [
                 name: 'Dashboard',
                 href: route('keuangan.dashboard'),
                 routeName: 'keuangan.dashboard',
-                icon: (
-                    <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-                    </svg>
-                ),
+                icon: <LayoutDashboard className="h-5 w-5 shrink-0" strokeWidth={2} />,
             },
         ],
     },
@@ -26,21 +24,20 @@ const menuGroups = [
                 name: 'Pendapatan BLUD',
                 href: route('revenues.index'),
                 routeName: 'revenues.*',
-                icon: (
-                    <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                ),
+                icon: <Wallet className="h-5 w-5 shrink-0" strokeWidth={2} />,
+                subItems: [
+                    { name: 'Semua', href: route('revenues.index') },
+                    { name: 'Jasa Layanan', href: route('revenues.index', { category: 'Jasa Layanan' }) },
+                    { name: 'Hasil Kerja Sama', href: route('revenues.index', { category: 'Hasil Kerja Sama' }) },
+                    { name: 'APBD', href: route('revenues.index', { category: 'APBD' }) },
+                    { name: 'Lain-lain BLUD Sah', href: route('revenues.index', { category: 'Lain-lain BLUD Sah' }) },
+                ]
             },
             {
                 name: 'Pagu Anggaran DPA',
                 href: route('budgets.index'),
                 routeName: 'budgets.*',
-                icon: (
-                    <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
-                    </svg>
-                ),
+                icon: <PiggyBank className="h-5 w-5 shrink-0" strokeWidth={2} />,
             },
         ],
     },
@@ -51,11 +48,7 @@ const menuGroups = [
                 name: 'Validasi Requisition',
                 href: route('keuangan.requisitions.index'),
                 routeName: 'keuangan.requisitions.*',
-                icon: (
-                    <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                ),
+                icon: <ClipboardCheck className="h-5 w-5 shrink-0" strokeWidth={2} />,
             },
         ],
     },
@@ -66,21 +59,13 @@ const menuGroups = [
                 name: 'Laporan Realisasi',
                 href: route('reports.index'),
                 routeName: 'reports.index',
-                icon: (
-                    <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
-                ),
+                icon: <FileText className="h-5 w-5 shrink-0" strokeWidth={2} />,
             },
             {
                 name: 'Surplus / Defisit',
                 href: route('reports.surplus-deficit'),
                 routeName: 'reports.surplus-deficit*',
-                icon: (
-                    <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                    </svg>
-                ),
+                icon: <TrendingDown className="h-5 w-5 shrink-0" strokeWidth={2} />,
             },
         ],
     },
@@ -90,6 +75,7 @@ export default function KeuanganLayout({ children }) {
     const { auth, active_year, available_fiscal_years } = usePage().props;
     const user = auth?.user || {};
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [openDropdowns, setOpenDropdowns] = useState({});
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
     const [showNotification, setShowNotification] = useState(false);
     const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -170,29 +156,104 @@ export default function KeuanganLayout({ children }) {
                             <nav className="space-y-1.5">
                                 {group.items.map((item) => {
                                     const active = route().current(item.routeName);
+                                    const isOpen = openDropdowns[item.name] ?? active;
+                                    
+                                    // Extract category from URL to highlight sub-items
+                                    const url = usePage().url;
+                                    let currentCategory = 'Semua';
+                                    if (url.includes('?category=')) {
+                                        currentCategory = decodeURIComponent(url.split('?category=')[1].split('&')[0]);
+                                    }
+                                    
+                                    if (item.subItems) {
+                                        return (
+                                            <div key={item.name} className="space-y-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setOpenDropdowns((prev) => ({
+                                                            ...prev,
+                                                            [item.name]: !isOpen,
+                                                        }));
+                                                    }}
+                                                    className={`w-full group flex items-center justify-between rounded-xl py-2.5 pr-3 text-sm transition-all duration-150 cursor-pointer ${
+                                                        active
+                                                            ? 'bg-emerald-50/70 text-emerald-900 font-bold border-l-4 border-emerald-600 pl-3'
+                                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-semibold pl-4'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <span
+                                                            className={`transition-colors ${
+                                                                active ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-600'
+                                                            }`}
+                                                        >
+                                                            {item.icon}
+                                                        </span>
+                                                        <span className="truncate">{item.name}</span>
+                                                    </div>
+                                                    <svg
+                                                        className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${
+                                                            isOpen ? 'rotate-180 text-emerald-600' : ''
+                                                        }`}
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        strokeWidth={2}
+                                                        stroke="currentColor"
+                                                    >
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                                    </svg>
+                                                </button>
+
+                                                {isOpen && (
+                                                    <div className="ml-4 space-y-1 border-l-2 border-slate-200 pl-3 pt-1">
+                                                        {item.subItems.map((sub) => {
+                                                            const isSubActive = active && sub.name === currentCategory;
+                                                            return (
+                                                                <Link
+                                                                    key={sub.name}
+                                                                    href={sub.href}
+                                                                    onClick={() => setSidebarOpen(false)}
+                                                                    className={`group flex items-center gap-2.5 rounded-lg py-2 px-3 text-xs transition-colors ${
+                                                                        isSubActive
+                                                                            ? 'bg-emerald-100/70 text-emerald-900 font-black shadow-2xs'
+                                                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
+                                                                    }`}
+                                                                >
+                                                                    <span className={`h-1.5 w-1.5 rounded-full ${isSubActive ? 'bg-emerald-600' : 'bg-slate-300 group-hover:bg-slate-400'}`} />
+                                                                    <span className="truncate">{sub.name}</span>
+                                                                </Link>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    }
+
                                     return (
-                                        <Link
-                                            key={item.name}
-                                            href={item.href}
-                                            onClick={() => setSidebarOpen(false)}
-                                            className={`group flex items-center gap-3 rounded-xl py-2.5 pr-3 text-sm transition-all duration-150 ${
-                                                active
-                                                    ? 'bg-emerald-50/90 text-emerald-900 font-black border-l-4 border-emerald-600 pl-3 shadow-2xs'
-                                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-semibold pl-4'
-                                            }`}
-                                        >
-                                            <span
-                                                className={`transition-colors ${
-                                                    active ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-600'
+                                        <div key={item.name} className="flex flex-col gap-1">
+                                            <Link
+                                                href={item.href}
+                                                onClick={() => {
+                                                    if (!item.subItems) setSidebarOpen(false);
+                                                }}
+                                                className={`group flex items-center gap-3 rounded-xl py-2.5 pr-3 text-sm transition-all duration-150 ${
+                                                    active
+                                                        ? 'bg-emerald-50/90 text-emerald-900 font-black border-l-4 border-emerald-600 pl-3 shadow-2xs'
+                                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-semibold pl-4'
                                                 }`}
                                             >
-                                                {item.icon}
-                                            </span>
-                                            <span className="truncate">{item.name}</span>
-                                            {active && (
-                                                <span className="ml-auto h-2 w-2 rounded-full bg-emerald-600 shadow-xs shadow-emerald-500/50" />
-                                            )}
-                                        </Link>
+                                                <span
+                                                    className={`transition-colors ${
+                                                        active ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-600'
+                                                    }`}
+                                                >
+                                                    {item.icon}
+                                                </span>
+                                                <span className="truncate">{item.name}</span>
+                                            </Link>
+                                        </div>
                                     );
                                 })}
                             </nav>

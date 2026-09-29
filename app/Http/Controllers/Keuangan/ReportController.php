@@ -104,7 +104,13 @@ class ReportController extends Controller
             });
 
         $totalBudgetSpent = (float) $budgetExpenses->sum('spent');
-        $totalExpense = max($requisitionExpense, $totalBudgetSpent);
+        
+        // P0-2 FIX: Official expense must be exactly the sum of actual requisitions
+        $totalExpense = $requisitionExpense;
+        
+        // Calculate discrepancy between ledger and actual transactions
+        $discrepancyAmount = abs($requisitionExpense - $totalBudgetSpent);
+        $hasDiscrepancy = $discrepancyAmount > 1000; // Tolerance for small rounding issues
 
         // Surplus / Defisit
         $surplusDeficit = $totalRevenue - $totalExpense;
@@ -120,10 +126,12 @@ class ReportController extends Controller
         $plannedExpense = 0;
 
         if ($rba) {
-            $rootRevenue = $rba->revenueItems()->where('item_code', '0')->first();
-            $rootExpense = $rba->expenseItems()->where('account_code', '1')->first();
+            // P1-1 FIX: Dinamis menjumlahkan kategori level 1, jangan asumsikan item_code '0' selalu ada/akurat
+            $targetRevenue = (float) $rba->revenueItems()
+                ->whereIn('item_code', ['1', '2', '3', '4', '5'])
+                ->sum('after_amount');
 
-            $targetRevenue = $rootRevenue ? (float) $rootRevenue->after_amount : 0;
+            $rootExpense = $rba->expenseItems()->where('account_code', '1')->first();
             $plannedExpense = $rootExpense ? (float) $rootExpense->after_total : 0;
         }
 
@@ -135,6 +143,9 @@ class ReportController extends Controller
             'summary' => [
                 'total_revenue' => $totalRevenue,
                 'total_expense' => $totalExpense,
+                'budget_ledger_expense' => $totalBudgetSpent,
+                'has_discrepancy' => $hasDiscrepancy,
+                'discrepancy_amount' => $discrepancyAmount,
                 'surplus_deficit' => $surplusDeficit,
                 'is_surplus' => $isSurplus,
                 'target_revenue' => $targetRevenue,

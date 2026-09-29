@@ -97,6 +97,16 @@ export default function PrintSurplusDeficit({
                 </p>
             </div>
 
+            {/* Discrepancy Warning Notice for Print */}
+            {summary.has_discrepancy && (
+                <div className="mb-6 border-2 border-black p-4 bg-gray-50 print:bg-white print:border-dotted">
+                    <h4 className="text-xs font-black uppercase text-black mb-1">Catatan Audit Internal (Discrepancy Warning):</h4>
+                    <p className="text-[11px] text-black text-justify">
+                        Terdapat selisih pencatatan sebesar <strong>{formatRupiah(summary.discrepancy_amount)}</strong> antara agregat realisasi buku Pagu Anggaran dengan total nilai riil <em>Requisition</em> yang telah disetujui dan diselesaikan. Nilai beban pengeluaran pada laporan ini secara otomatis dihitung menggunakan <strong>data transaksi <em>Requisition</em> final</strong> guna menjamin objektivitas dan akurasi materialitas Laporan Operasional ini.
+                    </p>
+                </div>
+            )}
+
             {/* Financial Tables */}
             <div className="space-y-6">
                 {/* 1. Pendapatan Operasional */}
