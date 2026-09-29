@@ -55,6 +55,8 @@ class BudgetController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'keuangan', 403, 'Akses ditolak.');
+
         $validated = $request->validate([
             'account_code' => ['required', 'string', 'max:255'],
             'account_name' => ['required', 'string', 'max:255'],
@@ -87,6 +89,8 @@ class BudgetController extends Controller
      */
     public function update(Request $request, Budget $budget): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'keuangan', 403, 'Akses ditolak.');
+
         $validated = $request->validate([
             'account_code' => ['required', 'string', 'max:255'],
             'account_name' => ['required', 'string', 'max:255'],
@@ -107,6 +111,8 @@ class BudgetController extends Controller
      */
     public function destroy(Budget $budget): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'keuangan', 403, 'Akses ditolak.');
+
         $budget->delete();
 
         return redirect()
