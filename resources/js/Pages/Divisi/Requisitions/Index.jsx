@@ -6,6 +6,8 @@ import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { ClipboardList } from 'lucide-react';
+
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -320,7 +322,7 @@ export default function Index({
                                 <tr>
                                     <td colSpan="8" className="px-6 py-16 text-center bg-white">
                                         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                                            📋
+                                            <ClipboardList size={18} className="inline mr-1 text-slate-500" />
                                         </div>
                                         <p className="mt-3 text-sm font-bold text-slate-800">
                                             {search || statusFilter !== 'ALL' || jenisFilter !== 'ALL'

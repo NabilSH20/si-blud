@@ -4,6 +4,8 @@ import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
+import { Calendar, Star, ClipboardList, CircleDollarSign } from 'lucide-react';
+
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -307,7 +309,7 @@ export default function Index({ fiscalYears = [], success, error }) {
                                 <tr>
                                     <td colSpan="6" className="px-6 py-16 text-center bg-white">
                                         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                                            📅
+                                            <Calendar size={18} className="inline mr-1 text-blue-500" />
                                         </div>
                                         <p className="mt-3 text-sm font-bold text-slate-800">
                                             Tidak ada data tahun anggaran yang sesuai
@@ -338,7 +340,7 @@ export default function Index({ fiscalYears = [], success, error }) {
                                                 </span>
                                                 {fy.is_default && (
                                                     <span className="inline-flex items-center rounded-md bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-800 border border-teal-200">
-                                                        ★ Default
+                                                        <Star fill="currentColor" size={14} className="inline mr-1 text-amber-500" /> Default
                                                     </span>
                                                 )}
                                             </div>
@@ -358,11 +360,11 @@ export default function Index({ fiscalYears = [], success, error }) {
                                         <td className="px-5 py-4">
                                             <div className="flex flex-col gap-1 text-xs">
                                                 <div className="flex items-center gap-1.5 font-bold text-slate-800">
-                                                    <span className="text-slate-400">📋</span>
+                                                    <span className="text-slate-400"><ClipboardList size={18} className="inline mr-1 text-slate-500" /></span>
                                                     <span>{fy.requisitions_count || 0} Usulan Belanja</span>
                                                 </div>
                                                 <div className="text-[11px] text-teal-700 font-mono font-bold">
-                                                    💰 {formatRupiah(fy.revenues_sum)}
+                                                    <CircleDollarSign size={18} className="inline mr-1 text-emerald-500" /> {formatRupiah(fy.revenues_sum)}
                                                 </div>
                                             </div>
                                         </td>
@@ -402,7 +404,7 @@ export default function Index({ fiscalYears = [], success, error }) {
                                                         className="inline-flex items-center gap-1 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 hover:text-teal-900 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-teal-800 shadow-2xs transition cursor-pointer"
                                                         title="Jadikan tahun ini sebagai default saat login"
                                                     >
-                                                        ★ Set Default
+                                                        <Star fill="currentColor" size={14} className="inline mr-1 text-amber-500" /> Set Default
                                                     </button>
                                                 )}
 
@@ -445,7 +447,7 @@ export default function Index({ fiscalYears = [], success, error }) {
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-4">
                         <div className="flex items-center gap-2.5">
                             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-700 font-bold border border-teal-100">
-                                📅
+                                <Calendar size={18} className="inline mr-1 text-blue-500" />
                             </div>
                             <div>
                                 <h3 className="text-base font-bold text-slate-900">

@@ -5,6 +5,8 @@ import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { Users, Landmark } from 'lucide-react';
+
 const getRoleBadge = (role) => {
     switch (role) {
         case 'admin':
@@ -327,7 +329,7 @@ export default function Index({ users = [], divisions = [], success, error }) {
                                 <tr>
                                     <td colSpan="8" className="px-6 py-16 text-center bg-white">
                                         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                                            👥
+                                            <Users size={20} className="inline mr-1 text-blue-500" />
                                         </div>
                                         <p className="mt-3 text-sm font-bold text-slate-800">
                                             Tidak ada data pengguna yang sesuai
@@ -380,7 +382,7 @@ export default function Index({ users = [], divisions = [], success, error }) {
                                             <td className="px-5 py-4 text-xs font-bold">
                                                 {u.division ? (
                                                     <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                                                        <span>🏛️</span> {u.division.name} ({u.division.division_code})
+                                                        <span><Landmark size={18} className="inline mr-1 text-indigo-500" /></span> {u.division.name} ({u.division.division_code})
                                                     </span>
                                                 ) : (
                                                     <span className="text-slate-400 font-normal">-</span>

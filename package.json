@@ -25,8 +25,11 @@
         "@laravel/multiplex": "^0.4.1"
     },
     "dependencies": {
+        "@heroicons/react": "^2.2.0",
+        "lucide-react": "^1.48.0",
         "react-hot-toast": "^2.6.0",
         "react-is": "^18.3.1",
-        "recharts": "^3.10.1"
+        "recharts": "^3.10.1",
+        "sweetalert2": "^11.26.25"
     }
 }

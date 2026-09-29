@@ -1,6 +1,8 @@
 import AuditTrailTimeline from '@/Components/AuditTrailTimeline';
 import Modal from '@/Components/Modal';
 
+import { ClipboardList, Pen } from 'lucide-react';
+
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -87,7 +89,7 @@ export default function RequisitionDetailModal({
                 <div className="shrink-0 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
                     <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 font-bold border border-teal-100">
-                            📋
+                            <ClipboardList size={18} className="inline mr-1 text-slate-500" />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
@@ -379,7 +381,7 @@ export default function RequisitionDetailModal({
                                 }}
                                 className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 px-4 py-2 text-xs font-bold text-amber-900 transition cursor-pointer"
                             >
-                                <span>✎ Ubah Usulan</span>
+                                <span><Pen size={16} className="inline mr-1" /> Ubah Usulan</span>
                             </button>
                         )}
 

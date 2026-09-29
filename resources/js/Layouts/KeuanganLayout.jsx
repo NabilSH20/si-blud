@@ -275,31 +275,7 @@ export default function KeuanganLayout({ children }) {
                             )}
                         </div>
 
-                        {/* Global Year Selector next to User Avatar */}
-                        <div className="flex items-center gap-1.5 rounded-2xl border-2 border-slate-200 bg-slate-50 px-2.5 py-1 text-xs shadow-2xs">
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider hidden sm:inline">TA</span>
-                            <select
-                                value={active_year || 2026}
-                                onChange={(e) => router.post(route('set-year'), { year: e.target.value })}
-                                className="bg-transparent border-none text-xs font-black text-slate-800 focus:ring-0 cursor-pointer p-0 pr-6"
-                                aria-label="Tahun Anggaran"
-                            >
-                                {available_fiscal_years && available_fiscal_years.length > 0 ? (
-                                    available_fiscal_years.map((y) => (
-                                        <option key={y.year} value={y.year}>
-                                            {y.year} {y.is_default ? '★' : ''}
-                                        </option>
-                                    ))
-                                ) : (
-                                    <>
-                                        <option value="2025">2025</option>
-                                        <option value="2026">2026</option>
-                                        <option value="2027">2027</option>
-                                        <option value="2028">2028</option>
-                                    </>
-                                )}
-                            </select>
-                        </div>
+                                                
 
                         {/* User Avatar & Dropdown */}
                         <div className="relative">

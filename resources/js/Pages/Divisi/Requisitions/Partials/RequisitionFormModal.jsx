@@ -2,6 +2,8 @@ import Modal from '@/Components/Modal';
 import { useForm, usePage } from '@inertiajs/react';
 import { useState, useEffect, useMemo, useRef } from 'react';
 
+import { ClipboardList, AlertTriangle, X } from 'lucide-react';
+
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -507,7 +509,7 @@ export default function RequisitionFormModal({
                 <div className="flex items-center justify-between border-b border-slate-200/80 bg-white px-6 py-4">
                     <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-600 text-white shadow-xs font-bold text-lg">
-                            📋
+                            <ClipboardList size={18} className="inline mr-1 text-slate-500" />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
@@ -543,7 +545,7 @@ export default function RequisitionFormModal({
                     {submitError && (
                         <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-800 animate-fade-in">
                             <div className="flex items-center gap-2">
-                                <span>⚠️</span>
+                                <span><AlertTriangle size={18} className="inline mr-1 text-amber-500" /></span>
                                 <p>{submitError}</p>
                             </div>
                             <button
@@ -551,7 +553,7 @@ export default function RequisitionFormModal({
                                 onClick={() => setSubmitError(null)}
                                 className="text-rose-500 hover:text-rose-700 cursor-pointer font-bold px-1"
                             >
-                                ✕
+                                <X size={16} className="inline mr-1" />
                             </button>
                         </div>
                     )}
@@ -987,7 +989,7 @@ export default function RequisitionFormModal({
 
                         {quickAddError && (
                             <p className="mt-2 text-xs font-semibold text-rose-600 animate-fade-in">
-                                ⚠️ {quickAddError}
+                                <AlertTriangle size={18} className="inline mr-1 text-amber-500" /> {quickAddError}
                             </p>
                         )}
 

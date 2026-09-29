@@ -3,6 +3,8 @@ import ProfileSettingsModal from '@/Components/ProfileSettingsModal';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
+import { Hand } from 'lucide-react';
+
 const getUrlParams = (urlStr) => {
     try {
         if (!urlStr) return new URLSearchParams();
@@ -468,7 +470,7 @@ export default function AdminLayout({ children }) {
                         </button>
                         <div className="min-w-0">
                             <h1 className="text-sm sm:text-base font-black text-slate-900 truncate">
-                                Selamat datang, {user.name} 👋
+                                Selamat datang, {user.name} <Hand size={18} className="inline ml-1 text-amber-500" />
                             </h1>
                             <p className="text-xs font-semibold text-slate-500 truncate">
                                 Portal Administrator Sistem
@@ -480,31 +482,7 @@ export default function AdminLayout({ children }) {
 
                     {/* Right Column: Actions & Profile Dropdown */}
                     <div className="flex items-center gap-2.5 sm:gap-3.5">
-                        {/* Global Year Selector */}
-                        <div className="flex items-center gap-1.5 rounded-2xl border-2 border-slate-200 bg-slate-50 px-2.5 py-1 text-xs shadow-2xs">
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider hidden sm:inline">TA</span>
-                            <select
-                                value={active_year || 2026}
-                                onChange={(e) => router.post(route('set-year'), { year: e.target.value })}
-                                className="bg-transparent border-none text-xs font-black text-slate-800 focus:ring-0 cursor-pointer p-0 pr-6"
-                                aria-label="Tahun Anggaran"
-                            >
-                                {available_fiscal_years && available_fiscal_years.length > 0 ? (
-                                    available_fiscal_years.map((y) => (
-                                        <option key={y.year} value={y.year}>
-                                            {y.year} {y.is_default ? '★' : ''}
-                                        </option>
-                                    ))
-                                ) : (
-                                    <>
-                                        <option value="2025">2025</option>
-                                        <option value="2026">2026</option>
-                                        <option value="2027">2027</option>
-                                        <option value="2028">2028</option>
-                                    </>
-                                )}
-                            </select>
-                        </div>
+                                                
 
                         {/* Notification Bell */}
                         <div className="relative">

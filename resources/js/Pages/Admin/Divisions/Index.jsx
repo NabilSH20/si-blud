@@ -6,6 +6,8 @@ import UnitFormModal from './Partials/UnitFormModal';
 import { Head, useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { Landmark, Stethoscope, Building2, Hospital } from 'lucide-react';
+
 export default function Index({ divisions = [], units = [], initial_tab = 'divisions', success, error }) {
     const getInitialTab = () => {
         if (typeof window !== 'undefined') {
@@ -297,7 +299,7 @@ export default function Index({ divisions = [], units = [], initial_tab = 'divis
                                     <tr>
                                         <td colSpan="6" className="px-6 py-16 text-center bg-white">
                                             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                                                🏛️
+                                                <Landmark size={18} className="inline mr-1 text-indigo-500" />
                                             </div>
                                             <p className="mt-3 text-sm font-bold text-slate-800">
                                                 {search ? 'Tidak ada divisi yang cocok dengan pencarian' : 'Belum ada data divisi'}
@@ -350,11 +352,11 @@ export default function Index({ divisions = [], units = [], initial_tab = 'divis
                                             <td className="whitespace-nowrap px-5 py-4 text-xs font-bold">
                                                 {division.group === 'Pelayanan_Keperawatan' ? (
                                                     <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                                                        <span>🩺</span> Pelayanan & Keperawatan
+                                                        <span><Stethoscope size={18} className="inline mr-1 text-rose-500" /></span> Pelayanan & Keperawatan
                                                     </span>
                                                 ) : (
                                                     <span className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
-                                                        <span>🏢</span> Umum, Ren & Keuangan
+                                                        <span><Building2 size={18} className="inline mr-1 text-sky-500" /></span> Umum, Ren & Keuangan
                                                     </span>
                                                 )}
                                             </td>
@@ -365,7 +367,7 @@ export default function Index({ divisions = [], units = [], initial_tab = 'divis
                                                     className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-300 hover:border-emerald-300 px-3 py-1 text-xs font-bold text-slate-700 transition cursor-pointer"
                                                     title="Tambah Unit di bawah divisi ini"
                                                 >
-                                                    <span>🏥</span>
+                                                    <span><Hospital size={20} className="inline mr-1 text-emerald-500" /></span>
                                                     <strong>{division.units_count ?? division.units?.length ?? 0}</strong> Unit
                                                     <span className="text-emerald-600 font-black">+</span>
                                                 </button>
@@ -433,7 +435,7 @@ export default function Index({ divisions = [], units = [], initial_tab = 'divis
                                     <tr>
                                         <td colSpan="6" className="px-6 py-16 text-center bg-white">
                                             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                                                🏥
+                                                <Hospital size={20} className="inline mr-1 text-emerald-500" />
                                             </div>
                                             <p className="mt-3 text-sm font-bold text-slate-800">
                                                 {search ? 'Tidak ada unit kerja yang cocok dengan pencarian' : 'Belum ada data unit kerja'}
@@ -472,7 +474,7 @@ export default function Index({ divisions = [], units = [], initial_tab = 'divis
                                             <td className="px-5 py-4 text-xs font-bold">
                                                 {unit.division ? (
                                                     <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                                                        <span>🏛️</span> {unit.division.name} ({unit.division.division_code})
+                                                        <span><Landmark size={18} className="inline mr-1 text-indigo-500" /></span> {unit.division.name} ({unit.division.division_code})
                                                     </span>
                                                 ) : (
                                                     <span className="text-slate-400">-</span>

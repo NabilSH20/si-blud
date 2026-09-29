@@ -3,6 +3,8 @@ import { router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2';
 
+import { Check, AlertTriangle } from 'lucide-react';
+
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -314,7 +316,7 @@ export default function QuickVerificationModal({
                                     className="rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 px-3 py-1.5 text-xs font-bold transition cursor-pointer"
                                     title="Setujui seluruh kuantitas sesuai permintaan unit"
                                 >
-                                    ✓ Setujui Semua
+                                    <Check size={16} className="inline mr-1" /> Setujui Semua
                                 </button>
                                 <button
                                     type="button"
@@ -436,7 +438,7 @@ export default function QuickVerificationModal({
                     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-1.5">
                         {isAnyItemExceedingSSH && (
                             <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 mb-2 flex items-start gap-2">
-                                <div className="text-amber-500 shrink-0">⚠️</div>
+                                <div className="text-amber-500 shrink-0"><AlertTriangle size={18} className="inline mr-1 text-amber-500" /></div>
                                 <div className="text-[11px] text-amber-900 leading-tight">
                                     Terdapat usulan dengan harga melebihi Standar Satuan Harga (SSH). Anda diwajibkan untuk mengisi <strong>Catatan Persetujuan</strong>.
                                 </div>
@@ -463,7 +465,7 @@ export default function QuickVerificationModal({
                     {showRejectConfirmation && (
                         <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4 space-y-2 animate-fade-in">
                             <div className="flex items-center gap-2 text-rose-900 font-bold text-xs">
-                                <span>⚠️</span>
+                                <span><AlertTriangle size={18} className="inline mr-1 text-amber-500" /></span>
                                 <span>Konfirmasi Penolakan Usulan Belanja</span>
                             </div>
                             <p className="text-xs text-rose-700">

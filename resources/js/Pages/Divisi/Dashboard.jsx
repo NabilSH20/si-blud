@@ -2,6 +2,8 @@ import DivisiLayout from '@/Layouts/DivisiLayout';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
+import { AlertTriangle } from 'lucide-react';
+
 const formatRupiah = (number) => {
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -129,7 +131,7 @@ export default function Dashboard({
                 {rejected_requests > 0 && (
                     <div className="rounded-xl border border-rose-200 bg-rose-50/70 p-4 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5">
-                            <span className="text-base">⚠️</span>
+                            <span className="text-base"><AlertTriangle size={18} className="inline mr-1 text-amber-500" /></span>
                             <div>
                                 <p className="text-xs font-bold text-rose-900">
                                     Ada {rejected_requests} berkas usulan yang memerlukan perbaikan

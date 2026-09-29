@@ -4,6 +4,8 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2';
 
+import { Check, AlertTriangle } from 'lucide-react';
+
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -477,7 +479,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                         className="rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 px-3.5 py-1.5 text-xs font-bold transition cursor-pointer active:scale-95 shadow-sm"
                                         title="Setujui seluruh kuantitas sesuai permintaan unit"
                                     >
-                                        ✓ Setujui Semua
+                                        <Check size={16} className="inline mr-1" /> Setujui Semua
                                     </button>
                                     <button
                                         type="button"
@@ -605,7 +607,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                                 <span>{formatRupiah(totalEstimatedApproved)}</span>
                                                 {activeRbaAccount && activeRbaAccount.remaining_budget !== null && (activeRbaAccount.remaining_budget - totalEstimatedApproved < 0) && (
                                                     <span className="text-[10px] font-bold text-rose-600 animate-pulse bg-rose-50 px-1.5 py-0.5 rounded">
-                                                        ⚠️ Melebihi sisa pagu rekening!
+                                                        <AlertTriangle size={18} className="inline mr-1 text-amber-500" /> Melebihi sisa pagu rekening!
                                                     </span>
                                                 )}
                                             </div>
@@ -658,7 +660,7 @@ export default function Show({ requisition, rbaList = [] }) {
                     {showRejectConfirmation && (
                         <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4 space-y-2 animate-fade-in">
                             <div className="flex items-center gap-2 text-rose-900 font-bold text-xs">
-                                <span>⚠️</span>
+                                <span><AlertTriangle size={18} className="inline mr-1 text-amber-500" /></span>
                                 <span>Konfirmasi Penolakan Usulan Belanja</span>
                             </div>
                             <p className="text-xs text-rose-700">

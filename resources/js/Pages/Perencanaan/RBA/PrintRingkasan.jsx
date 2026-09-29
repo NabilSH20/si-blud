@@ -1,5 +1,7 @@
 import { Head } from '@inertiajs/react';
 
+import { AlertTriangle } from 'lucide-react';
+
 const formatRupiah = (value) => {
     const val = Number(value || 0);
     if (val === 0) return '-';
@@ -61,7 +63,7 @@ export default function PrintRingkasan({ shift, ringkasan = {} }) {
 
                 {ringkasan.data_incomplete && (
                     <div className="print:hidden max-w-4xl mx-auto mb-4 p-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-sm">
-                        <strong className="font-bold">⚠️ Peringatan: Data Belum Lengkap!</strong><br />
+                        <strong className="font-bold"><AlertTriangle size={18} className="inline mr-1 text-amber-500" /> Peringatan: Data Belum Lengkap!</strong><br />
                         Terdapat kode akun wajib yang belum di-mapping di versi RBA ini (Akun hilang: {ringkasan.missing_accounts?.join(', ')}). 
                         Angka yang ditampilkan mungkin tidak akurat (0). Harap lengkapi RBA sebelum mencetak dokumen resmi.
                     </div>

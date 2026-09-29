@@ -4,6 +4,8 @@ import { useForm } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 
+import { ClipboardList } from 'lucide-react';
+
 const commonUnits = [
     'Unit',
     'Rim',
@@ -181,7 +183,7 @@ export default function ItemFormModal({
                     {/* Banner Asal Usul Barang jika dari usulan unit */}
                     {isEdit && item?.source === 'USULAN_UNIT' && (
                         <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3.5 text-xs text-blue-900 flex items-start gap-2.5">
-                            <span className="text-base shrink-0">📋</span>
+                            <span className="text-base shrink-0"><ClipboardList size={18} className="inline mr-1 text-slate-500" /></span>
                             <div className="space-y-0.5">
                                 <p className="font-bold text-blue-950">
                                     Barang ini berasal dari Usulan Unit Kerja

@@ -3,6 +3,8 @@ import PerencanaanLayout from '@/Layouts/PerencanaanLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useMemo, useState, useEffect, Fragment } from 'react';
 
+import { X, Sparkles, ClipboardList, Printer, Settings, CircleDollarSign, Lightbulb, Zap, BarChart3, Plus, AlertTriangle, Pin } from 'lucide-react';
+
 const formatRupiah = (value, zeroAsDash = true) => {
     const val = Number(value || 0);
     if (val === 0) return zeroAsDash ? '-' : 'Rp 0';
@@ -1011,7 +1013,7 @@ export default function Index({
                                         onClick={() => setRevenueSearchQuery('')}
                                         className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs"
                                     >
-                                        ✕
+                                        <X size={16} className="inline mr-1" />
                                     </button>
                                 )}
                             </div>
@@ -1088,7 +1090,7 @@ export default function Index({
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
-                                    ✨ Tampilan Ringkas
+                                    <Sparkles size={18} className="inline mr-1 text-amber-500" /> Tampilan Ringkas
                                 </button>
                                 <button
                                     type="button"
@@ -1099,7 +1101,7 @@ export default function Index({
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
-                                    📋 Format Pergeseran
+                                    <ClipboardList size={18} className="inline mr-1 text-slate-500" /> Format Pergeseran
                                 </button>
                             </div>
                         )}
@@ -1313,7 +1315,7 @@ export default function Index({
                                         onClick={() => setExpenseSearchQuery('')}
                                         className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs"
                                     >
-                                        ✕
+                                        <X size={16} className="inline mr-1" />
                                     </button>
                                 )}
                             </div>
@@ -1368,7 +1370,7 @@ export default function Index({
                                 }`}
                                 title="Tampilan Ramping Bebas Scroll Horizontal"
                             >
-                                ✨ Tampilan Ringkas
+                                <Sparkles size={18} className="inline mr-1 text-amber-500" /> Tampilan Ringkas
                             </button>
                             <button
                                 type="button"
@@ -1380,7 +1382,7 @@ export default function Index({
                                 }`}
                                 title="Matriks Lengkap 16 Kolom Akuntansi"
                             >
-                                📋 Matriks Lengkap (16 Kolom)
+                                <ClipboardList size={18} className="inline mr-1 text-slate-500" /> Matriks Lengkap (16 Kolom)
                             </button>
                         </div>
                     </div>
@@ -1734,7 +1736,7 @@ export default function Index({
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs transition active:scale-95 cursor-pointer"
                             >
-                                <span>🖨️</span>
+                                <span><Printer size={18} className="inline mr-1 text-slate-600" /></span>
                                 Cetak Rincian Belanja
                             </a>
                         </div>
@@ -2072,7 +2074,7 @@ export default function Index({
                         <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div>
                                 <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                                    <span>⚙️</span> Daftar Lengkap Versi RBA & SK Penetapan
+                                    <span><Settings size={18} className="inline mr-1 text-slate-500" /></span> Daftar Lengkap Versi RBA & SK Penetapan
                                </h3>
                                 <p className="mt-0.5 text-xs text-slate-500 font-medium">
                                     Perbandingan total belanja, pendapatan, serta status acuan resmi rumah sakit.
@@ -2227,7 +2229,7 @@ export default function Index({
                     <form onSubmit={submitRevenueItemEdit} className="p-6">
                         <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
                             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-800 text-xl font-bold">
-                                💰
+                                <CircleDollarSign size={18} className="inline mr-1 text-emerald-500" />
                             </span>
                             <div>
                                 <h3 className="text-base font-black text-slate-900">
@@ -2281,7 +2283,7 @@ export default function Index({
                             </div>
 
                             <div className="rounded-xl bg-teal-50 p-3 text-[11px] text-teal-800 border border-teal-200/80 flex items-start gap-2">
-                                <span className="text-sm shrink-0">💡</span>
+                                <span className="text-sm shrink-0"><Lightbulb size={18} className="inline mr-1 text-amber-500" /></span>
                                 <p className="font-medium leading-relaxed">
                                     Target yang Anda tetapkan akan otomatis mengakumulasi kelompok pos induk dan langsung memperbarui neraca <strong>Ringkasan & SiLPA</strong>.
                                 </p>
@@ -2324,7 +2326,7 @@ export default function Index({
                             <form onSubmit={submitItemEdit} className="p-6">
                                 <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
                                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-800 text-xl font-bold">
-                                        ⚡
+                                        <Zap size={18} className="inline mr-1 text-amber-500" />
                                     </span>
                                     <div>
                                         <h3 className="text-base font-black text-slate-900">
@@ -2485,7 +2487,7 @@ export default function Index({
                     <form onSubmit={submitPembiayaanEdit} className="p-6">
                         <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
                             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-800 text-lg font-bold">
-                                📊
+                                <BarChart3 size={18} className="inline mr-1 text-indigo-500" />
                             </span>
                             <div>
                                 <h3 className="text-base font-black text-slate-900">
@@ -2593,7 +2595,7 @@ export default function Index({
                     <form onSubmit={submitCreateShift} className="p-6">
                         <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
                             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-800 text-lg font-bold shadow-2xs">
-                                ➕
+                                <Plus size={18} className="inline mr-1" />
                             </span>
                             <div>
                                 <h3 className="text-base font-black text-slate-900">
@@ -2607,7 +2609,7 @@ export default function Index({
 
                         {/* Informative Guidance Banner */}
                         <div className="my-4 rounded-xl bg-teal-50/70 p-3.5 border border-teal-200 text-xs text-teal-900 leading-relaxed flex items-start gap-2.5">
-                            <span className="text-base leading-none shrink-0">💡</span>
+                            <span className="text-base leading-none shrink-0"><Lightbulb size={18} className="inline mr-1 text-amber-500" /></span>
                             <div>
                                 <span className="font-bold">Kloning Data Otomatis:</span> Sistem akan menduplikasi seluruh rekening belanja dan target pendapatan dari versi aktif saat ini (<strong>{current_shift?.shift_name || 'RBA Murni'}</strong>). Anda dapat langsung menyesuaikan angka pergeseran tanpa perlu menginput ulang dari awal.
                             </div>
@@ -2710,7 +2712,7 @@ export default function Index({
                     <div className="p-6">
                         <div className="flex items-start gap-4">
                             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-800 text-2xl font-bold shadow-2xs">
-                                ⚠️
+                                <AlertTriangle size={18} className="inline mr-1 text-amber-500" />
                             </div>
                             <div className="flex-1 min-w-0 text-left">
                                 <h3 className="text-base font-black text-slate-900">
@@ -2720,7 +2722,7 @@ export default function Index({
                                     Mengaktifkan versi ini akan menyelaraskan seluruh pagu belanja dan target pendapatan resmi BLUD RS Jiwa Tampan ke sistem keuangan dan operasional.
                                 </p>
                                 <div className="mt-3 rounded-xl bg-amber-50 p-3 text-xs font-semibold text-amber-900 border border-amber-200">
-                                    📌 Seluruh pagu rekening operasional unit (Daftar Akun RBA) akan otomatis diperbarui mengikuti angka pada dokumen <strong>{activatingShift.shift_name}</strong>, dan versi sebelumnya akan diarsipkan.
+                                    <Pin size={18} className="inline mr-1 text-rose-500" /> Seluruh pagu rekening operasional unit (Daftar Akun RBA) akan otomatis diperbarui mengikuti angka pada dokumen <strong>{activatingShift.shift_name}</strong>, dan versi sebelumnya akan diarsipkan.
                                 </div>
                             </div>
                         </div>
@@ -2763,7 +2765,7 @@ export default function Index({
                                 </p>
                                 {deletingShift.status === 'Aktif' && (
                                     <div className="mt-3 rounded-xl bg-amber-50 p-3 text-xs font-semibold text-amber-800 border border-amber-200">
-                                        ⚠️ <strong>Peringatan:</strong> Dokumen ini saat ini berstatus <strong>Aktif</strong>. Menghapusnya akan otomatis mengaktifkan dokumen versi lain yang tersisa.
+                                        <AlertTriangle size={18} className="inline mr-1 text-amber-500" /> <strong>Peringatan:</strong> Dokumen ini saat ini berstatus <strong>Aktif</strong>. Menghapusnya akan otomatis mengaktifkan dokumen versi lain yang tersisa.
                                     </div>
                                 )}
                             </div>
