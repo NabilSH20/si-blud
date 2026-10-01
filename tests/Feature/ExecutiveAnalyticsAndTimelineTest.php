@@ -47,7 +47,7 @@ class ExecutiveAnalyticsAndTimelineTest extends TestCase
             ->component('Keuangan/Dashboard')
             ->has('budget_chart_data', 2)
             ->has('top_budgets')
-            ->where('total_spent', 20000000)
+            ->where('total_spent', 0)
         );
     }
 

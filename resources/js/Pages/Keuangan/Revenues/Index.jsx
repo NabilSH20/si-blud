@@ -113,52 +113,52 @@ export default function Index({
                 </div>
             </div>
 
-            {/* KPI Cards Grid (Simplified like Perencanaan) */}
+            {/* KPI Cards Grid (High Contrast Style) */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-                <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                <div className="bg-white rounded-2xl p-5 border-2 border-emerald-300 shadow-md flex flex-col transition hover:-translate-y-0.5 hover:shadow-lg">
                     <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Pendapatan</p>
+                        <p className="text-xs font-black uppercase tracking-wider text-emerald-600">Total Pendapatan</p>
                         <div className="rounded-lg bg-emerald-50 p-2 text-emerald-600">
                             <Wallet className="h-5 w-5" strokeWidth={2} />
                         </div>
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-black text-slate-800 mt-2 truncate">
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-2 truncate">
                         {formatRupiah(stats.total_revenue)}
                     </h3>
                 </div>
 
-                <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                <div className="bg-white rounded-2xl p-5 border-2 border-teal-300 shadow-md flex flex-col transition hover:-translate-y-0.5 hover:shadow-lg">
                     <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Bulan Ini</p>
+                        <p className="text-xs font-black uppercase tracking-wider text-teal-600">Bulan Ini</p>
                         <div className="rounded-lg bg-teal-50 p-2 text-teal-600">
                             <TrendingUp className="h-5 w-5" strokeWidth={2} />
                         </div>
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-black text-slate-800 mt-2 truncate">
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-2 truncate">
                         {formatRupiah(stats.monthly_revenue)}
                     </h3>
                 </div>
 
-                <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                <div className="bg-white rounded-2xl p-5 border-2 border-blue-300 shadow-md flex flex-col transition hover:-translate-y-0.5 hover:shadow-lg">
                     <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Hari Ini</p>
+                        <p className="text-xs font-black uppercase tracking-wider text-blue-600">Hari Ini</p>
                         <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
                             <HandCoins className="h-5 w-5" strokeWidth={2} />
                         </div>
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-black text-slate-800 mt-2 truncate">
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-2 truncate">
                         {formatRupiah(stats.today_revenue)}
                     </h3>
                 </div>
 
-                <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                <div className="bg-white rounded-2xl p-5 border-2 border-purple-300 shadow-md flex flex-col transition hover:-translate-y-0.5 hover:shadow-lg">
                     <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Transaksi</p>
+                        <p className="text-xs font-black uppercase tracking-wider text-purple-600">Total Transaksi</p>
                         <div className="rounded-lg bg-purple-50 p-2 text-purple-600">
                             <ReceiptText className="h-5 w-5" strokeWidth={2} />
                         </div>
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-black text-slate-800 mt-2">
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-2">
                         {stats.total_transactions}
                     </h3>
                 </div>

@@ -2,8 +2,9 @@ import KeuanganLayout from '@/Layouts/KeuanganLayout';
 import Pagination from '@/Components/Pagination';
 import FinanceDisbursementModal from './Partials/FinanceDisbursementModal';
 import RequisitionDetailModal from '@/Pages/Shared/RequisitionDetailModal';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
+import { Search, Inbox, CheckCircle2, AlertCircle, Zap, FileText, Printer } from 'lucide-react';
 
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -64,8 +65,14 @@ const getStatusBadge = (status) => {
 };
 
 export default function Index({ requisitions = [], budgets = [], success, error, selectedYear = 'ALL' }) {
+    const { url } = usePage();
+    let initialStatus = 'ALL';
+    if (url.includes('?status=')) {
+        initialStatus = decodeURIComponent(url.split('?status=')[1].split('&')[0]);
+    }
+
     const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState('ALL');
+    const [statusFilter, setStatusFilter] = useState(initialStatus);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
@@ -87,6 +94,14 @@ export default function Index({ requisitions = [], budgets = [], success, error,
             return matchesStatus && matchesSearch;
         });
     }, [requisitions, search, statusFilter]);
+
+    useEffect(() => {
+        let newStatus = 'ALL';
+        if (url.includes('?status=')) {
+            newStatus = decodeURIComponent(url.split('?status=')[1].split('&')[0]);
+        }
+        setStatusFilter(newStatus);
+    }, [url]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -131,121 +146,34 @@ export default function Index({ requisitions = [], budgets = [], success, error,
 
             {/* Alerts */}
             {success && (
-                <div className="mb-5 flex items-center gap-3 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-4 text-sm font-bold text-emerald-900 shadow-xs">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-200 text-emerald-900">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                        </svg>
-                    </div>
+                <div className="mb-5 flex items-center gap-3 rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900 shadow-sm">
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
                     <p className="flex-1">{success}</p>
                 </div>
             )}
             {error && (
-                <div className="mb-5 flex items-center gap-3 rounded-2xl border-2 border-rose-300 bg-rose-50 p-4 text-sm font-bold text-rose-900 shadow-xs">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-200 text-rose-900">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                        </svg>
-                    </div>
+                <div className="mb-5 flex items-center gap-3 rounded-2xl border-2 border-rose-200 bg-rose-50 p-4 text-sm font-bold text-rose-900 shadow-sm">
+                    <AlertCircle className="h-5 w-5 shrink-0 text-rose-600" />
                     <p className="flex-1">{error}</p>
                 </div>
             )}
 
             {/* Table Container Card (Clean & Modern) */}
-            <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-shadow">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 {/* Search & Filter Toolbar */}
-                <div className="flex flex-col gap-3 border-b border-emerald-100 bg-gradient-to-r from-emerald-50/70 via-teal-50/30 to-slate-50/50 p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-1 flex-col gap-2.5 sm:flex-row sm:items-center">
-                        <div className="relative flex-1 sm:max-w-xs">
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                                </svg>
+                <div className="flex flex-col gap-3 border-b border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+                        <div className="relative w-full sm:w-96">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <Search className="h-4 w-4 text-slate-400" />
                             </div>
                             <input
                                 type="text"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Cari nomor, divisi, atau PIC..."
-                                className="block w-full rounded-xl border border-slate-300 bg-white pl-9 pr-8 py-2 text-sm text-slate-900 placeholder-slate-400 font-medium transition focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500"
+                                className="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-teal-500 focus:ring-teal-500 focus:bg-white transition-colors"
                             />
-                            {search && (
-                                <button
-                                    type="button"
-                                    onClick={() => setSearch('')}
-                                    className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600"
-                                >
-                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Year Filter Switcher */}
-                        <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 text-xs">
-                            <span className="text-[10px] font-black uppercase text-slate-400 px-1">TA:</span>
-                            {['ALL', '2026', '2027', '2028'].map((y) => (
-                                <button
-                                    key={y}
-                                    type="button"
-                                    onClick={() => router.get(route('keuangan.requisitions.index'), { fiscal_year: y })}
-                                    className={`rounded-lg px-2.5 py-1 text-xs font-black transition cursor-pointer ${
-                                        String(selectedYear) === String(y) || (selectedYear === 'ALL' && y === 'ALL')
-                                            ? 'bg-emerald-700 text-white shadow-xs'
-                                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                                    }`}
-                                >
-                                    {y === 'ALL' ? 'Semua' : y}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-xs">
-                            <button
-                                type="button"
-                                onClick={() => setStatusFilter('ALL')}
-                                className={`rounded-lg px-3 py-1.5 font-bold transition border ${
-                                    statusFilter === 'ALL'
-                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                                }`}
-                            >
-                                Semua ({requisitions.length})
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setStatusFilter('Diproses_Keuangan')}
-                                className={`rounded-lg px-3 py-1.5 font-bold transition border ${
-                                    statusFilter === 'Diproses_Keuangan'
-                                        ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                                }`}
-                            >
-                                Siap Validasi ({pendingFinanceCount})
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setStatusFilter('Disetujui_Selesai')}
-                                className={`rounded-lg px-3 py-1.5 font-bold transition border ${
-                                    statusFilter === 'Disetujui_Selesai'
-                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                                }`}
-                            >
-                                Selesai
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setStatusFilter('Ditolak')}
-                                className={`rounded-lg px-3 py-1.5 font-bold transition border ${
-                                    statusFilter === 'Ditolak'
-                                        ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
-                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                                }`}
-                            >
-                                Ditolak
-                            </button>
                         </div>
                     </div>
 
@@ -256,43 +184,25 @@ export default function Index({ requisitions = [], budgets = [], success, error,
 
                 {/* Modern Soft Table */}
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-emerald-100">
-                        <thead className="bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90 font-bold border-b border-emerald-100 text-emerald-950 uppercase tracking-wider text-xs">
+                    <table className="w-full text-left text-sm text-slate-700 divide-y divide-slate-200 border-collapse">
+                        <thead className="bg-slate-50 font-bold border-b border-slate-200 text-slate-800 text-xs">
                             <tr>
-                                <th className="w-14 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
-                                    No
-                                </th>
-                                <th className="w-32 px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-emerald-950">
-                                    Tanggal
-                                </th>
-                                <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-emerald-950">
-                                    Nomor & Rekening RBA
-                                </th>
-                                <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-emerald-950">
-                                    Divisi / Pemohon
-                                </th>
-                                <th className="w-28 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
-                                    Item
-                                </th>
-                                <th className="w-44 px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-emerald-950">
-                                    Total Beban Anggaran
-                                </th>
-                                <th className="w-48 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
-                                    Status
-                                </th>
-                                <th className="w-36 px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-950">
-                                    Aksi
-                                </th>
+                                <th className="px-4 py-3.5 text-center w-14">No</th>
+                                <th className="px-4 py-3.5 text-left w-32">Tanggal</th>
+                                <th className="px-5 py-3.5 text-left">Nomor & Rekening RBA</th>
+                                <th className="px-5 py-3.5 text-left">Divisi / Pemohon</th>
+                                <th className="px-4 py-3.5 text-center w-28">Item</th>
+                                <th className="px-5 py-3.5 text-right w-44">Total Beban Anggaran</th>
+                                <th className="px-4 py-3.5 text-center w-48">Status</th>
+                                <th className="px-4 py-3.5 text-center w-36">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
                             {filteredRequisitions.length === 0 ? (
                                 <tr>
                                     <td colSpan="8" className="px-6 py-16 text-center bg-white">
-                                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
+                                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 text-slate-400 mb-3 border border-slate-100">
+                                            <Inbox className="h-6 w-6" strokeWidth={1.5} />
                                         </div>
                                         <p className="mt-3 text-sm font-bold text-slate-800">
                                             {search || statusFilter !== 'ALL'
@@ -321,7 +231,7 @@ export default function Index({ requisitions = [], budgets = [], success, error,
                                     return (
                                         <tr
                                             key={req.id}
-                                            className="hover:bg-emerald-50/40 transition-colors"
+                                            className="hover:bg-slate-50/50 transition-colors duration-150"
                                         >
                                             {/* No */}
                                             <td className="whitespace-nowrap px-4 py-4 text-center text-xs font-semibold text-slate-500">
@@ -397,16 +307,17 @@ export default function Index({ requisitions = [], budgets = [], success, error,
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setDisbursingReq(req)}
-                                                                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-3 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
+                                                                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-3 py-1.5 text-xs font-bold shadow-sm transition cursor-pointer"
                                                             >
-                                                                <span>⚡</span>
+                                                                <Zap className="h-3.5 w-3.5" strokeWidth={2.5} />
                                                                 Validasi & Cairkan
                                                             </button>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setDetailReq(req)}
-                                                                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 px-2.5 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
+                                                                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 px-2.5 py-1.5 text-xs font-bold shadow-sm transition cursor-pointer"
                                                             >
+                                                                <FileText className="h-3.5 w-3.5" strokeWidth={2} />
                                                                 Detail
                                                             </button>
                                                         </>
@@ -415,20 +326,20 @@ export default function Index({ requisitions = [], budgets = [], success, error,
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setDetailReq(req)}
-                                                                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 px-3 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
+                                                                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 px-3 py-1.5 text-xs font-bold shadow-sm transition cursor-pointer"
                                                             >
+                                                                <FileText className="h-3.5 w-3.5" strokeWidth={2} />
                                                                 Rincian
                                                             </button>
                                                             <a
                                                                 href={route('requisitions.print', req.id)}
                                                                 target="_blank"
                                                                 rel="noreferrer"
-                                                                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 active:scale-95 text-slate-600 px-2 py-1.5 text-xs font-bold shadow-2xs transition"
+                                                                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 active:scale-95 text-slate-600 px-2.5 py-1.5 text-xs font-bold shadow-sm transition"
                                                                 title="Cetak Dokumen Resmi"
                                                             >
-                                                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24-1.077-.32-2.14-.32-3.193 0-5.18 4.02-9.386 8.974-9.386 4.954 0 8.973 4.207 8.973 9.386 0 1.053-.08 2.116-.32 3.193M12 18v-4.5m0 0l-2.25 2.25M12 13.5l2.25 2.25M3.75 19.5h16.5" />
-                                                                </svg>
+                                                                <Printer className="h-3.5 w-3.5" strokeWidth={2} />
+                                                                Cetak
                                                             </a>
                                                         </>
                                                     )}

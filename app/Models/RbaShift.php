@@ -49,7 +49,7 @@ class RbaShift extends Model
             $this->update(['status' => 'Aktif']);
 
             // Sync with rba_accounts
-            $items = $this->expenseItems()->where('is_header', false)->get();
+            $items = $this->expenseItems()->get();
 
             foreach ($items as $item) {
                 // Find or create matching RbaAccount by account_code
@@ -61,6 +61,8 @@ class RbaShift extends Model
                         'total_budget' => $item->after_total,
                         'remaining_budget' => max(0, $item->after_total - $account->spent_budget),
                         'account_name' => $item->account_name,
+                        'period_year' => $this->year,
+                        'year' => $this->year,
                     ]);
                 } else {
                     $kategori = str_starts_with($item->account_code, '1.2') ? 'Modal' : 'Operasi';

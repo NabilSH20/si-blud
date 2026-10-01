@@ -128,40 +128,40 @@ export default function Dashboard({
                     </div>
                 )}
 
-                {/* 2. KPI Summary Cards Grid (Simplified Style) */}
+                {/* 2. KPI Summary Cards Grid (High Contrast Style) */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-2">
                     {/* Card 1: Total Pendapatan */}
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 shadow-sm">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Pendapatan</p>
+                    <div className="rounded-2xl border-2 border-slate-300 bg-white p-5 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg">
+                        <p className="text-xs font-black uppercase tracking-wider text-slate-500">Total Pendapatan</p>
                         <div className="mt-2 flex items-baseline gap-2">
-                            <span className="text-2xl font-bold text-slate-900">{formatRupiahShort(total_revenue)}</span>
+                            <span className="text-2xl font-black text-slate-900">{formatRupiahShort(total_revenue)}</span>
                         </div>
                     </div>
 
                     {/* Card 2: Realisasi Belanja */}
-                    <div className="rounded-2xl border border-rose-200 bg-rose-50/40 p-5 shadow-sm">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-rose-700">Realisasi Belanja</p>
+                    <div className="rounded-2xl border-2 border-rose-300 bg-white p-5 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg">
+                        <p className="text-xs font-black uppercase tracking-wider text-rose-600">Realisasi Belanja</p>
                         <div className="mt-2 flex items-baseline gap-2">
-                            <span className="text-2xl font-bold text-rose-800">{formatRupiahShort(total_spent)}</span>
+                            <span className="text-2xl font-black text-rose-700">{formatRupiahShort(total_spent)}</span>
                         </div>
                     </div>
 
                     {/* Card 3: Saldo Operasional */}
-                    <div className={`rounded-2xl border p-5 shadow-sm ${isSurplus ? 'border-emerald-200 bg-emerald-50/40' : 'border-amber-200 bg-amber-50/40'}`}>
-                        <p className={`text-xs font-semibold uppercase tracking-wider ${isSurplus ? 'text-emerald-700' : 'text-amber-700'}`}>
+                    <div className={`rounded-2xl border-2 p-5 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg bg-white ${isSurplus ? 'border-emerald-300' : 'border-amber-300'}`}>
+                        <p className={`text-xs font-black uppercase tracking-wider ${isSurplus ? 'text-emerald-600' : 'text-amber-600'}`}>
                             Saldo Operasional
                         </p>
                         <div className="mt-2 flex items-baseline gap-2">
-                            <span className={`text-2xl font-bold ${isSurplus ? 'text-emerald-800' : 'text-amber-800'}`}>{formatRupiahShort(surplusDeficit)}</span>
-                            <span className={`text-xs font-medium ${isSurplus ? 'text-emerald-700' : 'text-amber-700'}`}>{isSurplus ? '(Surplus)' : '(Defisit)'}</span>
+                            <span className={`text-2xl font-black ${isSurplus ? 'text-emerald-700' : 'text-amber-700'}`}>{formatRupiahShort(surplusDeficit)}</span>
+                            <span className={`text-xs font-bold ${isSurplus ? 'text-emerald-600' : 'text-amber-600'}`}>{isSurplus ? '(Surplus)' : '(Defisit)'}</span>
                         </div>
                     </div>
 
                     {/* Card 4: Sisa Pagu DPA */}
-                    <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-5 shadow-sm">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">Total Sisa Pagu DPA</p>
+                    <div className="rounded-2xl border-2 border-blue-300 bg-white p-5 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg">
+                        <p className="text-xs font-black uppercase tracking-wider text-blue-600">Total Sisa Pagu DPA</p>
                         <div className="mt-2 flex items-baseline gap-2">
-                            <span className="text-2xl font-bold text-blue-800">{formatRupiahShort(total_budget_remaining)}</span>
+                            <span className="text-2xl font-black text-blue-700">{formatRupiahShort(total_budget_remaining)}</span>
                         </div>
                     </div>
                 </div>

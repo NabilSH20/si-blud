@@ -784,6 +784,14 @@ class RbaController extends Controller
             ->orderByDesc('id')
             ->first();
 
+        if (!$template) {
+            $template = RbaShift::where('year', '<', $shift->year)
+                ->whereHas('expenseItems')
+                ->orderByDesc('year')
+                ->orderByDesc('id')
+                ->first();
+        }
+
         if (! $template) {
             return;
         }

@@ -161,7 +161,13 @@ export default function Index({ budgets = [], success, error }) {
                                         <td className="whitespace-nowrap px-5 py-4 font-mono text-xs font-bold text-slate-900">
                                             {budget.account_code}
                                         </td>
-                                        <td className="px-5 py-4 text-sm font-bold text-slate-800">
+                                        <td 
+                                            className={`px-5 py-4 text-sm text-slate-800 ${budget.account_code.split('.').length <= 4 ? 'font-bold' : 'font-medium'}`}
+                                            style={{ paddingLeft: `${Math.max(1, budget.account_code.split('.').length - 1) * 1.25}rem` }}
+                                        >
+                                            {budget.account_code.split('.').length <= 4 && (
+                                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-400 mr-2 -translate-y-px"></span>
+                                            )}
                                             {budget.account_name}
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-4 text-center">

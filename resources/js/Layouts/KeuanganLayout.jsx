@@ -49,6 +49,12 @@ const menuGroups = [
                 href: route('keuangan.requisitions.index'),
                 routeName: 'keuangan.requisitions.*',
                 icon: <ClipboardCheck className="h-5 w-5 shrink-0" strokeWidth={2} />,
+                subItems: [
+                    { name: 'Semua Status', href: route('keuangan.requisitions.index') },
+                    { name: 'Siap Validasi', href: route('keuangan.requisitions.index', { status: 'Diproses_Keuangan' }) },
+                    { name: 'Disetujui & Selesai', href: route('keuangan.requisitions.index', { status: 'Disetujui_Selesai' }) },
+                    { name: 'Ditolak', href: route('keuangan.requisitions.index', { status: 'Ditolak' }) },
+                ]
             },
         ],
     },
@@ -158,11 +164,18 @@ export default function KeuanganLayout({ children }) {
                                     const active = route().current(item.routeName);
                                     const isOpen = openDropdowns[item.name] ?? active;
                                     
-                                    // Extract category from URL to highlight sub-items
+                                    // Extract parameter from URL to highlight sub-items
                                     const url = usePage().url;
-                                    let currentCategory = 'Semua';
+                                    let currentActiveSub = '';
                                     if (url.includes('?category=')) {
-                                        currentCategory = decodeURIComponent(url.split('?category=')[1].split('&')[0]);
+                                        currentActiveSub = decodeURIComponent(url.split('?category=')[1].split('&')[0]);
+                                    } else if (url.includes('?status=')) {
+                                        const statusVal = decodeURIComponent(url.split('?status=')[1].split('&')[0]);
+                                        if (statusVal === 'Diproses_Keuangan') currentActiveSub = 'Siap Validasi';
+                                        else if (statusVal === 'Disetujui_Selesai') currentActiveSub = 'Disetujui & Selesai';
+                                        else if (statusVal === 'Ditolak') currentActiveSub = 'Ditolak';
+                                    } else {
+                                        currentActiveSub = item.name === 'Pendapatan BLUD' ? 'Semua' : 'Semua Status';
                                     }
                                     
                                     if (item.subItems) {
@@ -208,7 +221,7 @@ export default function KeuanganLayout({ children }) {
                                                 {isOpen && (
                                                     <div className="ml-4 space-y-1 border-l-2 border-slate-200 pl-3 pt-1">
                                                         {item.subItems.map((sub) => {
-                                                            const isSubActive = active && sub.name === currentCategory;
+                                                            const isSubActive = active && sub.name === currentActiveSub;
                                                             return (
                                                                 <Link
                                                                     key={sub.name}

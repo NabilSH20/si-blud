@@ -25,7 +25,7 @@ class BudgetController extends Controller
             'budgets' => Budget::where('period_year', $activeYear)
                 ->orderBy('account_code')
                 ->get([
-                    'id', 'account_code', 'account_name', 'period_year', 'total_budget', 'remaining_budget',
+                    'id', 'account_code', 'account_name', 'period_year', 'total_budget', 'remaining_budget', 'parent_code'
                 ]),
             'active_year' => $activeYear,
             'success' => session('success'),
