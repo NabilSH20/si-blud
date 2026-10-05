@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -92,7 +93,7 @@ class RevenueController extends Controller
             return 'Lain-lain BLUD Sah';
         }
 
-        return 'Jasa Layanan';
+        return 'Tidak Terklasifikasi';
     }
 
     /**
@@ -107,7 +108,8 @@ class RevenueController extends Controller
         });
 
         $now = Carbon::now();
-        $isCurrentYear = ((int) $now->year === $activeYear);
+        // Ciptakan 'simulasi hari ini' berdasarkan active_year agar sinkron dengan tahun yang dikerjakan user
+        $simulatedToday = Carbon::create($activeYear, $now->month, $now->day);
 
         $revenues = Revenue::whereYear('date', $activeYear)
             ->orderBy('date', 'desc')
@@ -119,13 +121,12 @@ class RevenueController extends Controller
             });
 
         $totalRevenue = (float) $revenues->sum('amount');
-        $monthlyRevenue = (float) $revenues->filter(function ($r) use ($now, $isCurrentYear) {
-            $d = Carbon::parse($r->date);
-            return $isCurrentYear ? ($d->month === $now->month) : ($d->month === 12);
+        $monthlyRevenue = (float) $revenues->filter(function ($r) use ($simulatedToday) {
+            return Carbon::parse($r->date)->month === $simulatedToday->month;
         })->sum('amount');
 
-        $todayRevenue = (float) $revenues->filter(function ($r) use ($now, $isCurrentYear) {
-            return $isCurrentYear && ($r->date === $now->toDateString());
+        $todayRevenue = (float) $revenues->filter(function ($r) use ($simulatedToday) {
+            return Carbon::parse($r->date)->toDateString() === $simulatedToday->toDateString();
         })->sum('amount');
 
         $jasaLayanan = (float) $revenues->where('category', 'Jasa Layanan')->sum('amount');
@@ -133,7 +134,7 @@ class RevenueController extends Controller
         $apbd = (float) $revenues->where('category', 'APBD')->sum('amount');
         $lainLainSah = (float) $revenues->where('category', 'Lain-lain BLUD Sah')->sum('amount');
 
-        $defaultDate = $isCurrentYear ? $now->toDateString() : sprintf('%d-12-31', $activeYear);
+        $defaultDate = $simulatedToday->toDateString();
 
         return Inertia::render('Keuangan/Revenues/Index', [
             'revenues' => $revenues,
@@ -166,7 +167,8 @@ class RevenueController extends Controller
                 : (int) date('Y');
         });
         $now = Carbon::now();
-        $defaultDate = ((int) $now->year === $activeYear) ? $now->toDateString() : sprintf('%d-01-01', $activeYear);
+        $simulatedToday = Carbon::create($activeYear, $now->month, $now->day);
+        $defaultDate = $simulatedToday->toDateString();
         $flat = $this->getFlatSources();
 
         return Inertia::render('Keuangan/Revenues/Create', [
@@ -182,8 +184,10 @@ class RevenueController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'keuangan', 403, 'Akses ditolak.');
+
         $validated = $request->validate([
-            'source' => ['required', 'string', 'max:255'],
+            'source' => ['required', 'string', 'max:255', Rule::in($this->getFlatSources())],
             'amount' => ['required', 'numeric', 'min:1'],
             'date' => ['required', 'date'],
             'description' => ['nullable', 'string', 'max:1000'],
@@ -219,6 +223,8 @@ class RevenueController extends Controller
      */
     public function destroy(Revenue $revenue): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'keuangan', 403, 'Akses ditolak.');
+
         DB::transaction(function () use ($revenue) {
             $revenue->delete();
         });

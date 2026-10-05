@@ -41,7 +41,7 @@ class EBludCoreExpansionTest extends TestCase
         $keuangan = User::factory()->create(['role' => 'keuangan']);
 
         $response = $this->actingAs($keuangan)->post(route('revenues.store'), [
-            'source' => 'Instalasi Farmasi & Apotek',
+            'source' => 'Pendapatan Pelayanan Farmasi',
             'amount' => 25000000,
             'date' => '2026-09-03',
             'description' => 'Penjualan obat rawat jalan',
@@ -49,7 +49,7 @@ class EBludCoreExpansionTest extends TestCase
 
         $response->assertRedirect(route('revenues.index'));
         $this->assertDatabaseHas('revenues', [
-            'source' => 'Instalasi Farmasi & Apotek',
+            'source' => 'Pendapatan Pelayanan Farmasi',
             'amount' => 25000000,
         ]);
     }
@@ -60,7 +60,7 @@ class EBludCoreExpansionTest extends TestCase
 
         $revenue = Revenue::create([
             'revenue_number' => 'REV-20260903-0001',
-            'source' => 'Poliklinik Jiwa Terpadu',
+            'source' => 'Pendapatan Pelayanan Rawat Jalan',
             'amount' => 5000000,
             'date' => '2026-09-03',
         ]);
@@ -112,6 +112,40 @@ class EBludCoreExpansionTest extends TestCase
             ->component('Shared/PrintSurplusDeficit')
             ->where('summary.surplus_deficit', 50000000)
             ->where('summary.has_discrepancy', true)
+        );
+    }
+
+    public function test_surplus_deficit_calculates_target_revenue_from_category_sums(): void
+    {
+        $keuangan = User::factory()->create(['role' => 'keuangan']);
+        
+        $shift = \App\Models\RbaShift::create([
+            'year' => 2026,
+            'shift_name' => 'Murni',
+            'status' => 'Aktif',
+            'doc_title' => 'DPA 2026',
+        ]);
+
+        // Instead of a single item_code=0, we mock categories
+        \App\Models\RbaRevenueItem::create([
+            'rba_shift_id' => $shift->id,
+            'item_code' => '4',
+            'item_name' => 'Pendapatan BLUD',
+            'after_amount' => 150000000,
+        ]);
+        
+        \App\Models\RbaRevenueItem::create([
+            'rba_shift_id' => $shift->id,
+            'item_code' => '5',
+            'item_name' => 'Pendapatan Lain-lain',
+            'after_amount' => 50000000,
+        ]);
+
+        $response = $this->actingAs($keuangan)->get(route('reports.surplus-deficit'));
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Keuangan/Reports/SurplusDeficit')
+            ->where('summary.target_revenue', 200000000)
         );
     }
 }
