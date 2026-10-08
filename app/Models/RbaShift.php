@@ -62,7 +62,6 @@ class RbaShift extends Model
                         'remaining_budget' => max(0, $item->after_total - $account->spent_budget),
                         'account_name' => $item->account_name,
                         'period_year' => $this->year,
-                        'year' => $this->year,
                     ]);
                 } else {
                     $kategori = str_starts_with($item->account_code, '1.2') ? 'Modal' : 'Operasi';

@@ -16,19 +16,42 @@ class ReportController extends Controller
     /**
      * Display the Budget Realization Report index.
      */
-    public function index(): Response
+    public function index(\Illuminate\Http\Request $request): Response
     {
-        $reportData = $this->getReportData();
+        $year = $request->input('year');
+        $search = $request->input('search');
+        $kategori = $request->input('kategori');
 
-        return Inertia::render('Keuangan/Reports/Index', $reportData);
+        $reportData = $this->getReportData($year, $search, $kategori);
+
+        $availableYears = Budget::select('period_year')
+            ->distinct()
+            ->orderByDesc('period_year')
+            ->pluck('period_year')
+            ->toArray();
+
+        return Inertia::render('Keuangan/Reports/Index', [
+            'budgets' => $reportData['budgets'],
+            'summary' => $reportData['summary'],
+            'filters' => [
+                'year' => $year ?: $reportData['active_year'],
+                'search' => $search,
+                'kategori' => $kategori,
+            ],
+            'availableYears' => empty($availableYears) ? [$reportData['active_year']] : $availableYears,
+        ]);
     }
 
     /**
      * Display the Printable Budget Realization Report.
      */
-    public function print(): Response
+    public function print(\Illuminate\Http\Request $request): Response
     {
-        $reportData = $this->getReportData();
+        $year = $request->input('year');
+        $search = $request->input('search');
+        $kategori = $request->input('kategori');
+
+        $reportData = $this->getReportData($year, $search, $kategori);
 
         return Inertia::render('Shared/PrintReport', $reportData);
     }
@@ -103,7 +126,19 @@ class ReportController extends Controller
                 ];
             });
 
-        $totalBudgetSpent = (float) $budgetExpenses->sum('spent');
+        // Robust dynamic root node algorithm for filtered data to prevent double-counting.
+        $budgetCodes = $budgetExpenses->pluck('account_code')->toArray();
+        $totalBudgetSpent = (float) $budgetExpenses->filter(function ($b) use ($budgetCodes) {
+            $parts = explode('.', $b['account_code']);
+            $prefix = '';
+            for ($i = 0; $i < count($parts) - 1; $i++) {
+                $prefix .= ($i == 0 ? '' : '.') . $parts[$i];
+                if (in_array($prefix, $budgetCodes)) {
+                    return false; // Found a parent in the current result set
+                }
+            }
+            return true;
+        })->sum('spent');
         
         // P0-2 FIX: Official expense must be exactly the sum of actual requisitions
         $totalExpense = $requisitionExpense;
@@ -164,17 +199,30 @@ class ReportController extends Controller
     /**
      * Get computed budget report data.
      */
-    protected function getReportData(): array
+    protected function getReportData($year = null, $search = null, $kategori = null): array
     {
-        $activeYear = (int) session('active_year', function () {
+        $activeYear = $year ?: (int) session('active_year', function () {
             return class_exists(\App\Models\FiscalYear::class)
                 ? \App\Models\FiscalYear::getDefaultYear()
                 : (int) date('Y');
         });
 
-        $budgets = Budget::where('period_year', $activeYear)
-            ->orderBy('account_code')
-            ->get()
+        $query = Budget::where('period_year', $activeYear);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('account_code', 'like', "%{$search}%")
+                  ->orWhere('account_name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($kategori) {
+            $query->where('kategori_belanja', $kategori);
+        }
+
+        $budgets = $query->get()
+            ->sortBy('account_code', SORT_NATURAL)
+            ->values()
             ->map(function ($budget) {
             $totalBudget = (float) $budget->total_budget;
             $remainingBudget = (float) $budget->remaining_budget;
@@ -193,13 +241,29 @@ class ReportController extends Controller
             ];
         });
 
-        $totalInitial = $budgets->sum('total_budget');
-        $totalSpent = $budgets->sum('total_spent');
-        $totalRemaining = $budgets->sum('remaining_budget');
+        // Robust dynamic root node algorithm for filtered data to prevent double-counting.
+        // A node is a "root of the result set" if no prefix (parent) of it exists in the result set.
+        $codes = $budgets->pluck('account_code')->toArray();
+        $rootBudgets = $budgets->filter(function ($b) use ($codes) {
+            $parts = explode('.', $b['account_code']);
+            $prefix = '';
+            for ($i = 0; $i < count($parts) - 1; $i++) {
+                $prefix .= ($i == 0 ? '' : '.') . $parts[$i];
+                if (in_array($prefix, $codes)) {
+                    return false; // Found a parent in the current result set
+                }
+            }
+            return true;
+        });
+
+        $totalInitial = $rootBudgets->sum('total_budget');
+        $totalSpent = $rootBudgets->sum('total_spent');
+        $totalRemaining = $rootBudgets->sum('remaining_budget');
         $overallPercentage = $totalInitial > 0 ? round(($totalSpent / $totalInitial) * 100, 2) : 0;
 
         return [
             'budgets' => $budgets,
+            'active_year' => $activeYear,
             'summary' => [
                 'total_initial' => $totalInitial,
                 'total_spent' => $totalSpent,

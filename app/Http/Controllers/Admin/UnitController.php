@@ -15,6 +15,9 @@ class UnitController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
+
+
         $validated = $request->validate([
             'division_id' => ['required', 'exists:divisions,id'],
             'unit_code' => ['required', 'string', 'max:255', Rule::unique('units', 'unit_code')],
@@ -42,6 +45,9 @@ class UnitController extends Controller
      */
     public function update(Request $request, Unit $unit): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
+
+
         $validated = $request->validate([
             'division_id' => ['required', 'exists:divisions,id'],
             'unit_code' => [
@@ -74,6 +80,9 @@ class UnitController extends Controller
      */
     public function destroy(Unit $unit): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
+
+
         if ($unit->users()->exists()) {
             return back()->with('error', 'Unit Kerja "'.$unit->name.'" tidak dapat dihapus karena masih memiliki pengguna/staf terdaftar.');
         }

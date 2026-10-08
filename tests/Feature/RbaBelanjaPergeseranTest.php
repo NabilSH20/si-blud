@@ -212,4 +212,46 @@ class RbaBelanjaPergeseranTest extends TestCase
             ->where('active_tab', 'SHIFTS')
         );
     }
+
+    public function test_activate_shift_updates_period_year_on_existing_account(): void
+    {
+        // 1. Buat RbaAccount dengan period_year = Tahun A (misal: 2027)
+        $account = RbaAccount::create([
+            'account_code' => '5.1.02.01.01.0002',
+            'account_name' => 'Belanja Bahan Medis Awal',
+            'period_year' => 2027,
+            'kategori_belanja' => 'Operasi',
+            'sumber_dana' => 'BLUD',
+            'total_budget' => 5000000,
+            'remaining_budget' => 5000000,
+            'spent_budget' => 0,
+        ]);
+
+        // 2. Buat RbaShift + RbaExpenseItem untuk Tahun B (2028)
+        $shift2028 = RbaShift::create([
+            'year' => 2028,
+            'shift_name' => 'Pergeseran I 2028',
+            'doc_title' => 'RBA 2028',
+            'period_month' => 'Januari 2028',
+            'status' => 'Draft',
+        ]);
+
+        RbaExpenseItem::create([
+            'rba_shift_id' => $shift2028->id,
+            'account_code' => '5.1.02.01.01.0002',
+            'account_name' => 'Belanja Bahan Medis Baru',
+            'before_total' => 0,
+            'after_total' => 10000000,
+        ]);
+
+        // 3. Panggil activate()
+        $shift2028->activate();
+
+        // 4. Assert period_year berubah menjadi 2028 dan budget terupdate
+        $account->refresh();
+        $this->assertEquals(2028, $account->period_year);
+        $this->assertEquals(10000000, (float) $account->total_budget);
+        $this->assertEquals('Belanja Bahan Medis Baru', $account->account_name);
+    }
 }
+

@@ -52,6 +52,9 @@ class DivisionController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
+
+
         $validated = $request->validate([
             'division_code' => ['required', 'string', 'max:255', Rule::unique('divisions', 'division_code')],
             'name' => ['required', 'string', 'max:255'],
@@ -86,6 +89,9 @@ class DivisionController extends Controller
      */
     public function update(Request $request, Division $division): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
+
+
         $validated = $request->validate([
             'division_code' => [
                 'required',
@@ -115,6 +121,9 @@ class DivisionController extends Controller
      */
     public function destroy(Division $division): RedirectResponse
     {
+        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
+
+
         if ($division->units()->exists()) {
             return back()->with('error', 'Divisi "'.$division->name.'" tidak dapat dihapus karena masih memiliki data Unit Kerja terkait. Hapus atau pindahkan unit kerja terlebih dahulu.');
         }

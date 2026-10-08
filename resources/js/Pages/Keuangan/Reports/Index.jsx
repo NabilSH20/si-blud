@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import KeuanganLayout from '@/Layouts/KeuanganLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -9,7 +10,20 @@ const formatRupiah = (value) =>
         maximumFractionDigits: 0,
     }).format(Number(value || 0));
 
-export default function Index({ budgets = [], summary = {} }) {
+export default function Index({ budgets = [], summary = {}, filters = {}, availableYears = [] }) {
+    const activeYear = filters.year || (budgets.length > 0 ? budgets[0].period_year : '');
+    const [search, setSearch] = useState(filters.search || '');
+
+    const handleFilter = (e, newSearch = search, newKategori = filters.kategori, newYear = filters.year) => {
+        if (e) e.preventDefault();
+        router.get(route('reports.index'), { search: newSearch, kategori: newKategori, year: newYear }, {
+            preserveState: true,
+            replace: true
+        });
+    };
+
+    const printUrl = route('reports.print', { search: filters.search, kategori: filters.kategori, year: filters.year });
+
     return (
         <KeuanganLayout>
             <Head title="Laporan Realisasi Anggaran E-BLUD - RSJ Tampan" />
@@ -27,172 +41,207 @@ export default function Index({ budgets = [], summary = {} }) {
 
                 <div className="flex items-center gap-3">
                     <a
-                        href={route('reports.print')}
+                        href={printUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all duration-200"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-sm transition cursor-pointer whitespace-nowrap"
                     >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24-1.077-.32-2.14-.32-3.193 0-5.18 4.02-9.386 8.974-9.386 4.954 0 8.973 4.207 8.973 9.386 0 1.053-.08 2.116-.32 3.193M12 18v-4.5m0 0l-2.25 2.25M12 13.5l2.25 2.25M3.75 19.5h16.5" />
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24-1.076-.64-2.115-1.182-3.088m12.924 0c-.542.973-.942 2.012-1.182 3.088m-10.56 0A9.004 9.004 0 0112 3a9.004 9.004 0 018.72 10.829m-17.44 0a8.96 8.96 0 003.58 5.761m10.28 0a8.96 8.96 0 003.58-5.761M12 18a6 6 0 100-12 6 6 0 000 12z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
                         </svg>
-                        Cetak Rekapitulasi
+                        <span>Cetak Rekapitulasi</span>
                     </a>
                 </div>
             </div>
 
             {/* Summary KPI Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 {/* Total Pagu Awal */}
-                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
-                    <div className="min-w-0 flex-1 mr-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Pagu DPA</p>
-                        <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1.5 truncate">
-                            {formatRupiah(summary.total_initial)}
-                        </h3>
-                        <p className="mt-1 text-[11px] font-bold text-slate-500">Alokasi Awal Rekening</p>
-                    </div>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-500/20">
-                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
-                        </svg>
-                    </div>
+                <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col justify-center">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Total Pagu DPA</p>
+                    <h3 className="text-xl font-black text-slate-900">
+                        {formatRupiah(summary.total_initial)}
+                    </h3>
                 </div>
 
-                {/* Total Terpakai (Realisasi) */}
-                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
-                    <div className="min-w-0 flex-1 mr-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Terpakai</p>
-                        <h3 className="text-xl sm:text-2xl font-black text-amber-600 mt-1.5 truncate">
-                            {formatRupiah(summary.total_spent)}
-                        </h3>
-                        <p className="mt-1 text-[11px] font-bold text-amber-700">Realisasi Belanja Pengadaan</p>
-                    </div>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 ring-1 ring-amber-500/20">
-                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
+                {/* Total Terpakai */}
+                <div className="bg-white rounded-xl border border-rose-300 p-4 flex flex-col justify-center">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-rose-600 mb-1">Realisasi Belanja</p>
+                    <h3 className="text-xl font-black text-rose-700">
+                        {formatRupiah(summary.total_spent)}
+                    </h3>
                 </div>
 
                 {/* Sisa Anggaran */}
-                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
-                    <div className="min-w-0 flex-1 mr-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Sisa Anggaran</p>
-                        <h3 className="text-xl sm:text-2xl font-black text-emerald-700 mt-1.5 truncate">
-                            {formatRupiah(summary.total_remaining)}
-                        </h3>
-                        <p className="mt-1 text-[11px] font-bold text-emerald-600">Saldo Rekening Tersedia</p>
-                    </div>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-500/20">
-                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
+                <div className="bg-white rounded-xl border border-emerald-300 p-4 flex flex-col justify-center">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 mb-1">Total Sisa Pagu DPA</p>
+                    <h3 className="text-xl font-black text-emerald-700">
+                        {formatRupiah(summary.total_remaining)}
+                    </h3>
                 </div>
 
                 {/* Persentase Realisasi */}
-                <div className="bg-white rounded-2xl shadow-md shadow-emerald-950/5 border border-emerald-100/90 p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-900/10">
-                    <div className="min-w-0 flex-1 mr-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">% Realisasi Fisik</p>
-                        <h3 className="text-xl sm:text-2xl font-black text-teal-700 mt-1.5">
-                            {summary.overall_percentage}%
-                        </h3>
-                        <div className="mt-1.5 h-2 w-32 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
-                            <div
-                                className="h-full bg-teal-600 rounded-full transition-all duration-500"
-                                style={{ width: `${Math.min(100, summary.overall_percentage)}%` }}
-                            />
-                        </div>
-                    </div>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 ring-1 ring-teal-500/20 font-black text-sm">
-                        %
-                    </div>
+                <div className="bg-white rounded-xl border border-blue-300 p-4 flex flex-col justify-center">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600 mb-1">Serapan Fisik</p>
+                    <h3 className="text-xl font-black text-blue-700">
+                        {summary.overall_percentage}%
+                    </h3>
                 </div>
             </div>
 
-            {/* Main Table: Standardized Unified Container */}
-            <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-shadow">
+            {/* Main Table Card */}
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+
+                {/* Filter Header inside the table card */}
+                <div className="flex flex-col sm:flex-row items-center gap-3 p-4 border-b border-slate-100 bg-white">
+                    {/* Search Input */}
+                    <div className="relative w-full sm:w-64">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleFilter(null, e.target.value, filters.kategori, filters.year)}
+                            placeholder="Cari kode atau nama rekening..."
+                            className="block w-full rounded-xl border border-slate-200 pl-9 py-2 text-xs font-bold text-slate-700 placeholder-slate-400 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
+                        />
+                    </div>
+
+                    {/* Kategori Select */}
+                    <select
+                        value={filters.kategori || ''}
+                        onChange={(e) => handleFilter(null, search, e.target.value, filters.year)}
+                        className="block w-full sm:w-48 rounded-xl border border-slate-200 py-2 px-3 text-xs font-bold text-slate-700 focus:border-teal-500 focus:ring-teal-500 shadow-sm cursor-pointer"
+                    >
+                        <option value="">Semua Jenis Belanja</option>
+                        <option value="Operasi">Belanja Operasi</option>
+                        <option value="Modal">Belanja Modal</option>
+                    </select>
+
+                    {/* Tahun Select */}
+                    <select
+                        value={filters.year || ''}
+                        onChange={(e) => handleFilter(null, search, filters.kategori, e.target.value)}
+                        className="block w-full sm:w-28 rounded-xl border border-slate-200 py-2 px-3 text-xs font-bold text-slate-700 focus:border-teal-500 focus:ring-teal-500 shadow-sm cursor-pointer"
+                    >
+                        {availableYears.map(y => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </select>
+
+                    {/* Data Count */}
+                    <div className="text-xs font-bold text-slate-500 sm:ml-auto">
+                        {budgets.length} dari {budgets.length} pengajuan
+                    </div>
+                </div>
+
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-slate-700 divide-y divide-emerald-100 border-collapse">
-                        <thead className="bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90 border-b border-emerald-100 text-xs font-bold uppercase tracking-wider text-emerald-950">
+                    <table className="w-full text-left text-sm text-slate-700 border-collapse">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase text-slate-800">
                             <tr>
-                                <th className="px-4 py-3.5 text-center w-12 text-emerald-950">No</th>
-                                <th className="px-5 py-3.5 text-emerald-950">Kode Rekening</th>
-                                <th className="px-5 py-3.5 text-emerald-950">Nama Rekening Belanja</th>
-                                <th className="px-4 py-3.5 text-center text-emerald-950">Tahun</th>
-                                <th className="px-5 py-3.5 text-right text-emerald-950">Total Pagu (Initial)</th>
-                                <th className="px-5 py-3.5 text-right text-emerald-950">Total Terpakai (Spent)</th>
-                                <th className="px-5 py-3.5 text-right text-emerald-950">Sisa Anggaran</th>
-                                <th className="px-4 py-3.5 text-center text-emerald-950">% Realisasi</th>
+                                <th className="px-5 py-4 whitespace-nowrap">Kode Rekening</th>
+                                <th className="px-5 py-4">Nama Rekening Anggaran</th>
+                                <th className="px-5 py-4 text-right whitespace-nowrap">Total Pagu</th>
+                                <th className="px-5 py-4 text-right whitespace-nowrap">Total Terpakai</th>
+                                <th className="px-5 py-4 text-right whitespace-nowrap">Sisa Pagu</th>
+                                <th className="px-5 py-4 text-center whitespace-nowrap">% Realisasi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
                             {budgets.length > 0 ? (
-                                budgets.map((budget, index) => (
-                                    <tr
-                                        key={budget.id}
-                                        className="hover:bg-emerald-50/40 transition-colors duration-150"
-                                    >
-                                        <td className="px-4 py-3.5 text-center font-mono text-xs font-semibold text-slate-400">
-                                            #{index + 1}
-                                        </td>
-                                        <td className="px-5 py-3.5 font-mono text-xs font-bold text-slate-900 whitespace-nowrap">
-                                            {budget.account_code}
-                                        </td>
-                                        <td className="px-5 py-3.5 font-semibold text-slate-800">
-                                            {budget.account_name}
-                                        </td>
-                                        <td className="px-4 py-3.5 text-center font-bold text-slate-700">
-                                            {budget.period_year}
-                                        </td>
-                                        <td className="px-5 py-3.5 text-right font-bold text-slate-900 whitespace-nowrap">
-                                            {formatRupiah(budget.total_budget)}
-                                        </td>
-                                        <td className="px-5 py-3.5 text-right font-bold text-amber-600 whitespace-nowrap">
-                                            {formatRupiah(budget.total_spent)}
-                                        </td>
-                                        <td className="px-5 py-3.5 text-right font-bold text-emerald-700 whitespace-nowrap">
-                                            {formatRupiah(budget.remaining_budget)}
-                                        </td>
-                                        <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                                            <span
-                                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                                                    budget.percentage > 80
+                                budgets.map((budget, index) => {
+                                    // Hitung kedalaman berdasarkan jumlah titik
+                                    const levelCount = (budget.account_code.match(/\./g) || []).length;
+                                    const isParent = levelCount <= 3; // Misal level 0, 1, 2, 3 dianggap punya anak/header
+
+                                    // Indentasi kiri berdasarkan level
+                                    const indentClass =
+                                        levelCount === 0 ? '' :
+                                            levelCount === 1 ? 'ml-4' :
+                                                levelCount === 2 ? 'ml-8' :
+                                                    levelCount === 3 ? 'ml-12' :
+                                                        'ml-16';
+
+                                    const isRoot = levelCount === 0;
+
+                                    return (
+                                        <tr key={budget.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-5 py-4 whitespace-nowrap">
+                                                <span className="text-xs font-bold text-slate-800">
+                                                    {budget.account_code}
+                                                </span>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <div className={`flex items-center gap-2 ${indentClass}`}>
+                                                    {isParent && (
+                                                        <span className="text-slate-400 text-[10px] leading-none">•</span>
+                                                    )}
+                                                    <span className={`text-xs ${isParent ? 'font-bold text-slate-800' : 'font-semibold text-slate-700'} ${isRoot || levelCount === 1 ? 'uppercase' : ''}`}>
+                                                        {budget.account_name}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-4 text-right whitespace-nowrap">
+                                                <span className="text-xs font-bold text-slate-900">
+                                                    {formatRupiah(budget.total_budget)}
+                                                </span>
+                                            </td>
+                                            <td className="px-5 py-4 text-right whitespace-nowrap">
+                                                <span className="text-xs font-bold text-rose-700">
+                                                    {formatRupiah(budget.total_spent)}
+                                                </span>
+                                            </td>
+                                            <td className="px-5 py-4 text-right whitespace-nowrap">
+                                                <span className="text-xs font-bold text-emerald-700">
+                                                    {formatRupiah(budget.remaining_budget)}
+                                                </span>
+                                            </td>
+                                            <td className="px-5 py-4 text-center whitespace-nowrap">
+                                                <span
+                                                    className={`inline-flex items-center justify-center rounded px-2 py-0.5 text-[11px] font-bold min-w-[3rem] ${budget.percentage > 80
                                                         ? 'bg-rose-100 text-rose-800'
                                                         : budget.percentage > 50
-                                                        ? 'bg-amber-100 text-amber-800'
-                                                        : 'bg-emerald-100 text-emerald-800'
-                                                }`}
-                                            >
-                                                {budget.percentage}%
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))
+                                                            ? 'bg-amber-100 text-amber-800'
+                                                            : budget.percentage > 0
+                                                                ? 'bg-emerald-100 text-emerald-800'
+                                                                : 'bg-slate-100 text-slate-600'
+                                                        }`}
+                                                >
+                                                    {budget.percentage}%
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             ) : (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-10 text-center text-slate-400 font-medium">
-                                        Belum ada data pagu anggaran yang terdaftar.
+                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-medium">
+                                        Belum ada data pagu anggaran yang terdaftar untuk filter ini.
                                     </td>
                                 </tr>
                             )}
                         </tbody>
                         {budgets.length > 0 && (
-                            <tfoot className="border-t-2 border-emerald-200 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-emerald-50/90 font-bold text-slate-900">
+                            <tfoot className="border-t border-slate-200 bg-white">
                                 <tr>
-                                    <td colSpan={4} className="px-5 py-4 text-right uppercase tracking-wider text-xs text-emerald-950 font-bold">
-                                        TOTAL REKAPITULASI ANGGARAN:
+                                    <td colSpan={2} className="px-5 py-4 text-right uppercase tracking-wider text-[11px] font-black text-slate-500">
+                                        TOTAL REKAPITULASI
                                     </td>
-                                    <td className="px-5 py-4 text-right text-slate-900 whitespace-nowrap font-black">
+                                    <td className="px-5 py-4 text-right text-sm font-black text-slate-900 whitespace-nowrap">
                                         {formatRupiah(summary.total_initial)}
                                     </td>
-                                    <td className="px-5 py-4 text-right text-amber-700 whitespace-nowrap font-black">
+                                    <td className="px-5 py-4 text-right text-sm font-black text-rose-700 whitespace-nowrap">
                                         {formatRupiah(summary.total_spent)}
                                     </td>
-                                    <td className="px-5 py-4 text-right text-emerald-800 whitespace-nowrap font-black">
+                                    <td className="px-5 py-4 text-right text-sm font-black text-emerald-700 whitespace-nowrap">
                                         {formatRupiah(summary.total_remaining)}
                                     </td>
-                                    <td className="px-4 py-4 text-center text-teal-800 whitespace-nowrap font-black">
+                                    <td className="px-5 py-4 text-center text-sm font-black text-blue-700 whitespace-nowrap">
                                         {summary.overall_percentage}%
                                     </td>
                                 </tr>
@@ -204,4 +253,5 @@ export default function Index({ budgets = [], summary = {} }) {
         </KeuanganLayout>
     );
 }
+
 

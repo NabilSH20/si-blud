@@ -371,7 +371,15 @@ export default function Index({ fiscalYears = [], success, error }) {
 
                                         {/* Status Akses (Persis Button Status di Kelola Pengguna) */}
                                         <td className="whitespace-nowrap px-4 py-4 text-center">
-                                            {fy.is_active ? (
+                                            {fy.is_default ? (
+                                                <span
+                                                    className="inline-flex items-center gap-1 rounded-full bg-emerald-50/70 px-2.5 py-0.5 text-xs font-bold text-emerald-700/70 border border-emerald-200/70 cursor-not-allowed"
+                                                    title="Tahun anggaran default tidak dapat dinonaktifkan"
+                                                >
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                                                    Aktif
+                                                </span>
+                                            ) : fy.is_active ? (
                                                 <button
                                                     type="button"
                                                     onClick={() => handleToggleStatus(fy)}

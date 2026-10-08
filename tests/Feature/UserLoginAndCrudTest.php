@@ -154,4 +154,43 @@ class UserLoginAndCrudTest extends TestCase
         $response = $this->actingAs($admin)->patch("/admin/users/{$target->id}/toggle-status");
         $this->assertTrue((bool)$target->fresh()->is_active);
     }
+
+    public function test_admin_can_create_requester_user_for_new_pelayanan_division(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        // Buat divisi baru dengan group Pelayanan_Keperawatan tapi kode belum pernah ada
+        $newDiv = Division::create([
+            'division_code' => 'KODE_BARU_123',
+            'name' => 'Divisi Pelayanan Keperawatan Baru',
+            'group' => 'Pelayanan_Keperawatan',
+        ]);
+
+        $newUnit = Unit::create([
+            'division_id' => $newDiv->id,
+            'unit_code' => 'UNIT_BARU_123',
+            'name' => 'Unit Pelayanan Baru',
+        ]);
+
+        $response = $this->actingAs($admin)->post('/admin/users', [
+            'name' => 'Staf Baru',
+            'email' => 'staf.baru@rsj.com',
+            'password' => 'password123',
+            'role' => 'divisi',
+            'division_id' => $newDiv->id,
+            'unit_id' => $newUnit->id,
+            'is_active' => true,
+        ]);
+
+        $response->assertRedirect('/admin/users');
+        $this->assertDatabaseHas('users', [
+            'email' => 'staf.baru@rsj.com',
+            'division_id' => $newDiv->id,
+            'unit_id' => $newUnit->id,
+        ]);
+    }
 }
+

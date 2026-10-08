@@ -23,8 +23,22 @@ class DashboardController extends Controller
                 : (int) date('Y');
         });
 
-        $totalInitial = (float) Budget::where('period_year', $activeYear)->sum('total_budget');
-        $totalRemaining = (float) Budget::where('period_year', $activeYear)->sum('remaining_budget');
+        $allBudgets = Budget::where('period_year', $activeYear)->get();
+        $budgetCodes = $allBudgets->pluck('account_code')->toArray();
+        $rootBudgets = $allBudgets->filter(function ($b) use ($budgetCodes) {
+            $parts = explode('.', $b->account_code);
+            $prefix = '';
+            for ($i = 0; $i < count($parts) - 1; $i++) {
+                $prefix .= ($i == 0 ? '' : '.') . $parts[$i];
+                if (in_array($prefix, $budgetCodes)) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        $totalInitial = (float) $rootBudgets->sum('total_budget');
+        $totalRemaining = (float) $rootBudgets->sum('remaining_budget');
         
         // P0-2 FIX: Official expense is the sum of approved requisitions, not the ledger difference
         $totalSpent = (float) RequisitionDetail::whereHas('requisition', function ($q) use ($activeYear) {

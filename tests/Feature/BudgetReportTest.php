@@ -17,7 +17,7 @@ class BudgetReportTest extends TestCase
         $keuangan = User::factory()->create(['role' => 'keuangan']);
 
         Budget::create([
-            'account_code' => '5.1.02.01.01.0001',
+            'account_code' => '5',
             'account_name' => 'Belanja Bahan Medis Habis Pakai',
             'period_year' => 2026,
             'total_budget' => 50000000,
@@ -46,7 +46,7 @@ class BudgetReportTest extends TestCase
         $keuangan = User::factory()->create(['role' => 'keuangan']);
 
         Budget::create([
-            'account_code' => '5.1.02.01.01.0002',
+            'account_code' => '5',
             'account_name' => 'Belanja Alat Tulis Kantor',
             'period_year' => 2026,
             'total_budget' => 20000000,

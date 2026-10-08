@@ -83,7 +83,7 @@ class EBludCoreExpansionTest extends TestCase
         ]);
 
         Budget::create([
-            'account_code' => '5.1.02.01.01.0024',
+            'account_code' => '5',
             'account_name' => 'Belanja ATK',
             'period_year' => 2026,
             'total_budget' => 20000000,

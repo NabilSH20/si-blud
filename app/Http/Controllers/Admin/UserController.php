@@ -88,7 +88,7 @@ class UserController extends Controller
         ]);
 
         if ($validated['role'] === 'divisi') {
-            $allowedDivisions = Division::whereIn('division_code', ['MEDIK', 'RAWAT', 'PENUNJANG_DIKLIT', 'YAN', 'PENUNJANG'])
+            $allowedDivisions = Division::where('group', 'Pelayanan_Keperawatan')
                 ->pluck('id')
                 ->toArray();
 
@@ -182,7 +182,7 @@ class UserController extends Controller
         }
 
         if ($validated['role'] === 'divisi') {
-            $allowedDivisions = Division::whereIn('division_code', ['MEDIK', 'RAWAT', 'PENUNJANG_DIKLIT', 'YAN', 'PENUNJANG'])
+            $allowedDivisions = Division::where('group', 'Pelayanan_Keperawatan')
                 ->pluck('id')
                 ->toArray();
 
