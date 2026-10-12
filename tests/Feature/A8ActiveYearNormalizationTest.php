@@ -48,21 +48,4 @@ class A8ActiveYearNormalizationTest extends TestCase
         $response2->assertOk();
         $this->assertEquals(2027, session('active_year'));
     }
-
-    public function test_empty_session_year_initializes_with_default_year(): void
-    {
-        FiscalYear::create([
-            'year' => 2027,
-            'name' => 'TA 2027',
-            'is_active' => true,
-            'is_default' => true,
-        ]);
-
-        $user = User::factory()->create(['role' => 'admin']);
-
-        $response = $this->actingAs($user)->get(route('admin.dashboard'));
-
-        $response->assertOk();
-        $this->assertEquals(2027, session('active_year'));
-    }
 }

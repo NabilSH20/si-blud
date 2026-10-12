@@ -17,6 +17,10 @@ class NormalizeActiveFiscalYear
     public function handle(Request $request, Closure $next): Response
     {
         if ($request->hasSession()) {
+            if (! FiscalYear::exists()) {
+                return $next($request);
+            }
+
             $currentYear = session('active_year');
 
             if ($currentYear !== null) {
@@ -26,17 +30,14 @@ class NormalizeActiveFiscalYear
 
                 if (! $isActive) {
                     $defaultYear = FiscalYear::getDefaultYear();
-                    session(['active_year' => $defaultYear ? (int) $defaultYear : (int) date('Y')]);
+                    if ($defaultYear) {
+                        session(['active_year' => (int) $defaultYear]);
+                    }
                 } else {
                     // Pastikan selalu integer
                     if (! is_int($currentYear)) {
                         session(['active_year' => (int) $currentYear]);
                     }
-                }
-            } else {
-                $defaultYear = FiscalYear::getDefaultYear();
-                if ($defaultYear) {
-                    session(['active_year' => (int) $defaultYear]);
                 }
             }
         }

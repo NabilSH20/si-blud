@@ -142,6 +142,9 @@ class FiscalYearManagementAndLoginTest extends TestCase
 
     public function test_requisitions_are_isolated_by_active_year(): void
     {
+        FiscalYear::create(['year' => 2025, 'name' => 'TA 2025', 'is_active' => true]);
+        FiscalYear::create(['year' => 2026, 'name' => 'TA 2026', 'is_active' => true]);
+
         // Requisition for 2025
         $req2025 = Requisition::create([
             'requisition_number' => 'REQ-2025-001',
@@ -201,6 +204,9 @@ class FiscalYearManagementAndLoginTest extends TestCase
 
     public function test_revenues_are_isolated_by_active_year(): void
     {
+        FiscalYear::create(['year' => 2025, 'name' => 'TA 2025', 'is_active' => true]);
+        FiscalYear::create(['year' => 2026, 'name' => 'TA 2026', 'is_active' => true]);
+
         $keuanganUser = User::factory()->create([
             'email' => 'keuangan.test@rsj.com',
             'role' => 'keuangan',
