@@ -108,7 +108,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::match(['patch', 'post'], '/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/set-year', [RootController::class, 'setYear'])->name('set-year');
-    Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
 });
 
 require __DIR__.'/auth.php';
