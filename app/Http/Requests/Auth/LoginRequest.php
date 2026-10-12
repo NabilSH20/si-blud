@@ -80,16 +80,6 @@ class LoginRequest extends FormRequest
         $loginInput = trim((string) $this->input('email'));
         $isEmail = filter_var($loginInput, FILTER_VALIDATE_EMAIL);
 
-        // Pre-check for inactive user
-        $user = \App\Models\User::where($isEmail ? 'email' : 'nip', $loginInput)->first();
-        if ($user && ! $user->is_active) {
-            RateLimiter::hit($this->throttleKey());
-            session(['login_captcha' => AuthenticatedSessionController::generateCaptchaCode()]);
-            throw ValidationException::withMessages([
-                'email' => 'Akun Anda sedang dinonaktifkan. Silakan hubungi Administrator SIM-RS / Bagian Tata Usaha.',
-            ]);
-        }
-
         $credentials = [
             'password' => $this->input('password'),
         ];
