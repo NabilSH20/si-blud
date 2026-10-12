@@ -45,8 +45,8 @@ class FiscalYearManagementAndLoginTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Auth/Login')
-            ->has('fiscalYears', 4)
-            ->where('defaultYear', 2026)
+            ->has('fiscalYears', 1)
+            ->where('defaultYear', 2027)
         );
     }
 
@@ -55,11 +55,25 @@ class FiscalYearManagementAndLoginTest extends TestCase
         $response = $this->post('/login', [
             'email' => $this->divisiUser->email,
             'password' => 'password',
-            'fiscal_year' => 2025,
+            'fiscal_year' => 2027,
         ]);
 
         $this->assertAuthenticatedAs($this->divisiUser);
-        $this->assertEquals(2025, session('active_year'));
+        $this->assertEquals(2027, session('active_year'));
+    }
+
+    public function test_user_can_login_when_no_fiscal_years_exist_in_database(): void
+    {
+        FiscalYear::query()->delete();
+
+        $response = $this->post('/login', [
+            'email' => $this->divisiUser->email,
+            'password' => 'password',
+            'fiscal_year' => '',
+        ]);
+
+        $this->assertAuthenticatedAs($this->divisiUser);
+        $this->assertNotNull(session('active_year'));
     }
 
     public function test_admin_can_view_fiscal_years_management_page(): void
@@ -95,7 +109,12 @@ class FiscalYearManagementAndLoginTest extends TestCase
 
     public function test_admin_can_toggle_fiscal_year_status(): void
     {
-        $fy2028 = FiscalYear::where('year', 2028)->first();
+        $fy2028 = FiscalYear::create([
+            'year' => 2028,
+            'name' => 'Tahun Anggaran 2028',
+            'is_active' => true,
+            'is_default' => false,
+        ]);
 
         $response = $this->actingAs($this->adminUser)
             ->patch(route('fiscal-years.toggle-status', $fy2028->id));
@@ -106,14 +125,19 @@ class FiscalYearManagementAndLoginTest extends TestCase
 
     public function test_admin_can_set_default_fiscal_year(): void
     {
-        $fy2027 = FiscalYear::where('year', 2027)->first();
+        $fy2028 = FiscalYear::create([
+            'year' => 2028,
+            'name' => 'Tahun Anggaran 2028',
+            'is_active' => true,
+            'is_default' => false,
+        ]);
 
         $response = $this->actingAs($this->adminUser)
-            ->patch(route('fiscal-years.set-default', $fy2027->id));
+            ->patch(route('fiscal-years.set-default', $fy2028->id));
 
         $response->assertRedirect(route('fiscal-years.index'));
-        $this->assertTrue((bool) $fy2027->fresh()->is_default);
-        $this->assertFalse((bool) FiscalYear::where('year', 2026)->first()->is_default);
+        $this->assertTrue((bool) $fy2028->fresh()->is_default);
+        $this->assertFalse((bool) FiscalYear::where('year', 2027)->first()->is_default);
     }
 
     public function test_requisitions_are_isolated_by_active_year(): void

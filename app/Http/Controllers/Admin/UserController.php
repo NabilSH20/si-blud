@@ -59,7 +59,7 @@ class UserController extends Controller
             'position' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'is_active' => ['nullable', 'boolean'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', \Illuminate\Validation\Rules\Password::defaults()],
             'role' => ['required', 'string', 'in:admin,divisi,perencanaan,keuangan'],
             'division_id' => [
                 'nullable',
@@ -78,7 +78,6 @@ class UserController extends Controller
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email ini sudah terdaftar di sistem.',
             'password.required' => 'Kata sandi wajib diisi.',
-            'password.min' => 'Kata sandi minimal 8 karakter.',
             'role.required' => 'Peran (role) pengguna wajib dipilih.',
             'role.in' => 'Peran pengguna tidak valid.',
             'division_id.required' => 'Pengguna dengan peran Divisi / Pemohon wajib memilih Bidang Pengusul.',
@@ -150,7 +149,7 @@ class UserController extends Controller
             'position' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'is_active' => ['nullable', 'boolean'],
-            'password' => ['nullable', 'string', 'min:8'],
+            'password' => ['nullable', \Illuminate\Validation\Rules\Password::defaults()],
             'role' => ['required', 'string', 'in:admin,divisi,perencanaan,keuangan'],
             'division_id' => [
                 'nullable',
@@ -168,7 +167,6 @@ class UserController extends Controller
             'email.required' => 'Alamat email wajib diisi.',
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email ini sudah digunakan oleh akun lain.',
-            'password.min' => 'Kata sandi baru minimal 8 karakter.',
             'role.required' => 'Peran (role) pengguna wajib dipilih.',
             'role.in' => 'Peran pengguna tidak valid.',
             'division_id.required' => 'Pengguna dengan peran Divisi / Pemohon wajib memilih Bidang Pengusul.',

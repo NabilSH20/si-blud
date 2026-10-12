@@ -19,20 +19,9 @@ use App\Http\Controllers\Perencanaan\RequisitionController as PerencanaanRequisi
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    $user = auth()->user();
+use App\Http\Controllers\RootController;
 
-    if ($user) {
-        return redirect($user->dashboardPath());
-    }
-
-    return redirect('/login');
-});
-
-Route::post('/set-year', function (\Illuminate\Http\Request $request) {
-    session(['active_year' => $request->year]);
-    return back();
-})->name('set-year');
+Route::get('/', [RootController::class, 'index']);
 
 Route::prefix('divisi')->middleware(['auth', 'role:divisi'])->group(function () {
     Route::get('/dashboard', [DivisiDashboardController::class, 'index'])
@@ -118,6 +107,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/requisitions/{id}/print', [DivisiRequisitionController::class, 'print'])->name('requisitions.print');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::match(['patch', 'post'], '/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/set-year', [RootController::class, 'setYear'])->name('set-year');
     Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });

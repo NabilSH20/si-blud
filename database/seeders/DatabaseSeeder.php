@@ -15,12 +15,12 @@ class DatabaseSeeder extends Seeder
             FiscalYearSeeder::class,
             DivisionSeeder::class,
             UnitSeeder::class,
-            UserSeeder::class,
             RbaAccountSeeder::class,
             ItemSeeder::class,
-            RevenueSeeder::class,
-            RequisitionSeeder::class,
-            RbaPergeseran3Seeder::class,
         ]);
+
+        if (!app()->environment('production')) {
+            $this->call(UserSeeder::class);
+        }
     }
 }

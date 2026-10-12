@@ -26,14 +26,14 @@ class UserLoginAndCrudTest extends TestCase
         $user = User::factory()->create([
             'email' => 'farmasi.test@rsj.com',
             'nip' => '198501152010012099',
-            'password' => Hash::make('password123'),
+            'password' => Hash::make('Rahasia2026Aman'),
             'role' => 'divisi',
             'is_active' => true,
         ]);
 
         $response = $this->post('/login', [
             'email' => 'farmasi.test@rsj.com',
-            'password' => 'password123',
+            'password' => 'Rahasia2026Aman',
         ]);
 
         $this->assertAuthenticatedAs($user);
@@ -45,14 +45,14 @@ class UserLoginAndCrudTest extends TestCase
         $user = User::factory()->create([
             'email' => 'upip.test@rsj.com',
             'nip' => '198607142011012088',
-            'password' => Hash::make('password123'),
+            'password' => Hash::make('Rahasia2026Aman'),
             'role' => 'divisi',
             'is_active' => true,
         ]);
 
         $response = $this->post('/login', [
             'email' => '198607142011012088',
-            'password' => 'password123',
+            'password' => 'Rahasia2026Aman',
         ]);
 
         $this->assertAuthenticatedAs($user);
@@ -64,13 +64,13 @@ class UserLoginAndCrudTest extends TestCase
         $user = User::factory()->create([
             'email' => 'inactive@rsj.com',
             'nip' => '199999999999999999',
-            'password' => Hash::make('password123'),
+            'password' => Hash::make('Rahasia2026Aman'),
             'is_active' => false,
         ]);
 
         $response = $this->post('/login', [
             'email' => 'inactive@rsj.com',
-            'password' => 'password123',
+            'password' => 'Rahasia2026Aman',
         ]);
 
         $this->assertGuest();
@@ -93,7 +93,7 @@ class UserLoginAndCrudTest extends TestCase
             'email' => 'staf.diklit@rsj.com',
             'position' => 'Staf Pelaksana Diklit',
             'phone' => '081234567899',
-            'password' => 'password123',
+            'password' => 'Rahasia2026Aman',
             'role' => 'divisi',
             'division_id' => $diklitDiv->id,
             'unit_id' => $diklitUnit->id,
@@ -124,7 +124,7 @@ class UserLoginAndCrudTest extends TestCase
         $response = $this->actingAs($admin)->from('/admin/users')->post('/admin/users', [
             'name' => 'Salah Divisi',
             'email' => 'salah@rsj.com',
-            'password' => 'password123',
+            'password' => 'Rahasia2026Aman',
             'role' => 'divisi',
             'division_id' => $renDiv->id,
             'unit_id' => $renUnit->id,
@@ -178,7 +178,7 @@ class UserLoginAndCrudTest extends TestCase
         $response = $this->actingAs($admin)->post('/admin/users', [
             'name' => 'Staf Baru',
             'email' => 'staf.baru@rsj.com',
-            'password' => 'password123',
+            'password' => 'Rahasia2026Aman',
             'role' => 'divisi',
             'division_id' => $newDiv->id,
             'unit_id' => $newUnit->id,

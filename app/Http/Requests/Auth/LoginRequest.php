@@ -31,7 +31,7 @@ class LoginRequest extends FormRequest
         $rules = [
             'email' => ['required', 'string'],
             'password' => ['required', 'string'],
-            'fiscal_year' => ['nullable', 'integer'],
+            'fiscal_year' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('fiscal_years', 'year')->where('is_active', true)],
         ];
 
         if (!app()->environment('testing') || $this->has('captcha') || session()->has('login_captcha')) {

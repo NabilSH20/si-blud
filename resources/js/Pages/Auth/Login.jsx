@@ -5,14 +5,19 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
-export default function Login({ status, canResetPassword, captchaSvg, fiscalYears = [], defaultYear = 2026 }) {
+export default function Login({ status, canResetPassword, captchaSvg, fiscalYears = [], defaultYear = null }) {
     const [showPassword, setShowPassword] = useState(false);
     const [currentCaptchaSvg, setCurrentCaptchaSvg] = useState(captchaSvg);
     const [isRefreshingCaptcha, setIsRefreshingCaptcha] = useState(false);
     const [showHelpModal, setShowHelpModal] = useState(false);
 
+    const hasFiscalYears = Array.isArray(fiscalYears) && fiscalYears.length > 0;
+    const initialFiscalYear = hasFiscalYears
+        ? (fiscalYears.some((fy) => fy.year === defaultYear) ? defaultYear : fiscalYears[0].year)
+        : '';
+
     const { data, setData, post, processing, errors, reset } = useForm({
-        fiscal_year: defaultYear || 2026,
+        fiscal_year: initialFiscalYear,
         email: '',
         password: '',
         captcha: '',
@@ -88,21 +93,21 @@ export default function Login({ status, canResetPassword, captchaSvg, fiscalYear
                                 name="fiscal_year"
                                 value={data.fiscal_year}
                                 onChange={(e) => setData('fiscal_year', e.target.value)}
-                                className="block w-full appearance-none rounded-xl border border-slate-200 bg-[#edf4fc] px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition cursor-pointer"
+                                disabled={!hasFiscalYears}
+                                className={`block w-full appearance-none rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-semibold transition ${
+                                    !hasFiscalYears
+                                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                        : 'bg-[#edf4fc] text-slate-900 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 cursor-pointer'
+                                }`}
                             >
-                                {fiscalYears && fiscalYears.length > 0 ? (
+                                {hasFiscalYears ? (
                                     fiscalYears.map((fy) => (
                                         <option key={fy.year} value={fy.year}>
                                             Tahun Anggaran {fy.year} {fy.is_default ? '★ (Default)' : ''}
                                         </option>
                                     ))
                                 ) : (
-                                    <>
-                                        <option value="2025">Tahun Anggaran 2025</option>
-                                        <option value="2026">Tahun Anggaran 2026 ★ (Default)</option>
-                                        <option value="2027">Tahun Anggaran 2027</option>
-                                        <option value="2028">Tahun Anggaran 2028</option>
-                                    </>
+                                    <option value="">-- Tidak ada tahun anggaran aktif --</option>
                                 )}
                             </select>
                             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400">
@@ -111,6 +116,11 @@ export default function Login({ status, canResetPassword, captchaSvg, fiscalYear
                                 </svg>
                             </div>
                         </div>
+                        {!hasFiscalYears && (
+                            <p className="mt-1.5 text-[11px] font-medium text-amber-600">
+                                Belum ada Tahun Anggaran aktif di sistem. Silakan login sebagai Admin untuk mengonfigurasi atau jalankan seeder.
+                            </p>
+                        )}
                         <InputError message={errors.fiscal_year} className="mt-1.5" />
                     </div>
 

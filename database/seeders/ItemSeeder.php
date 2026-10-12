@@ -240,26 +240,27 @@ class ItemSeeder extends Seeder
                 ['name' => 'Belanja Cetak Stampel Dokter DPJP', 'unit' => 'Pcs', 'price' => 65000, 'spec' => 'Stempel otomatis nama & SIP dokter spesialis'],
             ],
 
-            // 1.2.02.05.01 Belanja Modal Peralatan Medis & Keperawatan
-            '1.2.02.05.01' => [
+            // 1.2.1.2.1 Belanja Alat Kesehatan RS
+            '1.2.1.2.1' => [
                 ['name' => 'Defibrillator Biphasic Portable', 'unit' => 'Unit', 'price' => 65000000, 'spec' => 'Alat pacu jantung defibrillator dengan monitor dan AED'],
                 ['name' => 'Patient Monitor 5 Parameter', 'unit' => 'Unit', 'price' => 28000000, 'spec' => 'Monitor tanda vital ECG, NIBP, SpO2, Temp, Resp'],
                 ['name' => 'Suction Pump Medis Mobile', 'unit' => 'Unit', 'price' => 8500000, 'spec' => 'Alat penyedot dahak/cairan pasien daya hisap ganda'],
                 ['name' => 'Electrocardiograph (EKG 12 Channel)', 'unit' => 'Unit', 'price' => 32000000, 'spec' => 'Mesin rekam jantung 12 lead layar sentuh dan printer'],
             ],
 
-            // 1.2.02.10.01 Belanja Modal Komputer & Jaringan
-            '1.2.02.10.01' => [
+            // 1.2.1.2.2 Belanja peralatan dan perlengkapan rumah sakit (Komputer & IT)
+            '1.2.1.2.2' => [
                 ['name' => 'PC Komputer Staf Poliklinik Core i5', 'unit' => 'Unit', 'price' => 9500000, 'spec' => 'PC All-in-One Core i5, RAM 16GB, SSD 512GB, Windows 11'],
                 ['name' => 'Printer Laser Rekam Medis', 'unit' => 'Unit', 'price' => 3800000, 'spec' => 'Printer monokrom kecepatan tinggi duplex network'],
                 ['name' => 'Switch Hub 24 Port Gigabit', 'unit' => 'Unit', 'price' => 2400000, 'spec' => 'Managed switch 24 port 10/100/1000 Mbps'],
             ],
 
-            // 5.1.02.01.01.0024 Belanja ATK
-            '5.1.02.01.01.0024' => [
+            // 1.1.2.1.36 Belanja Alat Tulis Kantor (ATK)
+            '1.1.2.1.36' => [
                 ['name' => 'Kertas HVS A4 80gr PaperOne', 'unit' => 'Rim', 'price' => 55000, 'spec' => 'Ukuran 210 x 297 mm, 80 gsm, isi 500 lembar'],
                 ['name' => 'Tinta Printer Hitam Canon GI-790', 'unit' => 'Botol', 'price' => 120000, 'spec' => 'Tinta original hitam 135 ml'],
                 ['name' => 'Spidol Whiteboard Snowman Hitam', 'unit' => 'Pcs', 'price' => 10000, 'spec' => 'Spidol papan tulis non-permanent'],
+                ['name' => 'Buku Ekspedisi Surat Masuk', 'unit' => 'Buku', 'price' => 22000, 'spec' => 'Hard cover batik isi 100 lembar folio berkolom tanda terima'],
                 ['name' => 'Map Snellhecter Kertas Kuning', 'unit' => 'Pak', 'price' => 45000, 'spec' => 'Kertas buffalo kuning jepit acco isi 50'],
             ],
         ];

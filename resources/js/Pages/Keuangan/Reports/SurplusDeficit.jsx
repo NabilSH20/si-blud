@@ -312,13 +312,13 @@ export default function SurplusDeficit({
                                 {paginatedRevenues.length > 0 ? (
                                     paginatedRevenues.map((item, idx) => (
                                         <tr key={idx} className="hover:bg-slate-50/50 transition-colors duration-150">
-                                            <td className="px-5 py-4 font-bold text-slate-800 text-[11px]">
+                                            <td className="px-5 py-3 font-bold text-slate-800 text-[11px]">
                                                 {item.source}
                                             </td>
-                                            <td className="px-5 py-4 text-center font-bold text-[11px] text-slate-600">
+                                            <td className="px-5 py-3 text-center font-bold text-[11px] text-slate-600">
                                                 {item.count}
                                             </td>
-                                            <td className="px-5 py-4 text-right font-black text-xs text-emerald-600">
+                                            <td className="px-5 py-3 text-right font-black text-xs text-emerald-600">
                                                 {formatRupiah(item.total_amount)}
                                             </td>
                                         </tr>
@@ -368,23 +368,19 @@ export default function SurplusDeficit({
                                     paginatedExpenses.map((cat, idx) => {
                                         const levelCount = (cat.account_code.match(/\./g) || []).length;
                                         const isRoot = levelCount === 0;
-                                        const isParent = levelCount <= 3;
-                                        const indentClass = levelCount === 0 ? '' : levelCount === 1 ? 'ml-4' : levelCount === 2 ? 'ml-8' : levelCount === 3 ? 'ml-12' : 'ml-16';
+                                        const indentClass = levelCount === 0 ? '' : levelCount === 1 ? 'ml-3' : levelCount === 2 ? 'ml-6' : levelCount === 3 ? 'ml-9' : 'ml-12';
 
                                         return (
                                         <tr key={idx} className="hover:bg-slate-50/50 transition-colors duration-150">
-                                            <td className="px-5 py-3.5">
-                                                <div className={`flex items-start gap-2.5 ${indentClass}`}>
-                                                    <span className="text-slate-400 text-[10px] leading-none mt-[3px]">•</span>
-                                                    <div className="flex flex-col">
-                                                        <span className="font-mono text-[9px] font-bold text-slate-400 leading-tight">{cat.account_code}</span>
-                                                        <span className={`mt-0.5 ${isRoot || levelCount === 1 ? 'font-black text-[11px] text-slate-800 uppercase' : 'font-bold text-[11px] text-slate-700'}`}>
-                                                            {cat.account_name}
-                                                        </span>
-                                                    </div>
+                                            <td className="px-5 py-2.5">
+                                                <div className={`flex items-center gap-3 ${indentClass}`}>
+                                                    <span className="font-mono text-[10px] font-bold text-slate-400 w-12 shrink-0">{cat.account_code}</span>
+                                                    <span className={`${isRoot || levelCount === 1 ? 'font-black text-[11px] text-slate-800 uppercase' : 'font-semibold text-[11px] text-slate-700'}`}>
+                                                        {cat.account_name}
+                                                    </span>
                                                 </div>
                                             </td>
-                                            <td className="px-5 py-3.5 text-right font-black text-xs text-[#c25e1a]">
+                                            <td className="px-5 py-2.5 text-right font-black text-xs text-[#c25e1a]">
                                                 {formatRupiah(cat.spent)}
                                             </td>
                                         </tr>

@@ -14,32 +14,11 @@ class FiscalYearSeeder extends Seeder
     {
         $years = [
             [
-                'year' => 2025,
-                'name' => 'Tahun Anggaran 2025',
-                'is_active' => true,
-                'is_default' => false,
-                'description' => 'Tahun Anggaran BLUD RSJ Tampan 2025',
-            ],
-            [
-                'year' => 2026,
-                'name' => 'Tahun Anggaran 2026',
-                'is_active' => true,
-                'is_default' => true,
-                'description' => 'Tahun Anggaran BLUD RSJ Tampan 2026 (Aktif Berjalan)',
-            ],
-            [
                 'year' => 2027,
                 'name' => 'Tahun Anggaran 2027',
                 'is_active' => true,
-                'is_default' => false,
-                'description' => 'Penyusunan RBA & Perencanaan Belanja TA 2027',
-            ],
-            [
-                'year' => 2028,
-                'name' => 'Tahun Anggaran 2028',
-                'is_active' => true,
-                'is_default' => false,
-                'description' => 'Proyeksi Rencana Jangka Menengah TA 2028',
+                'is_default' => true,
+                'description' => 'Tahun Anggaran BLUD RSJ Tampan 2027 (Aktif & Berjalan)',
             ],
         ];
 

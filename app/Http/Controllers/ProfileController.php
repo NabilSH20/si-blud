@@ -42,7 +42,7 @@ class ProfileController extends Controller
                 'max:255',
                 Rule::unique(User::class)->ignore($user->id),
             ],
-            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg,webp', 'max:2048'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
         ]);
 
         if ($request->hasFile('avatar')) {

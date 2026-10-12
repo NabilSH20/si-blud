@@ -34,15 +34,24 @@ class UserSeeder extends Seeder
         $unitRen = Unit::where('unit_code', 'BAG_REN')->first();
         $unitKeu = Unit::where('unit_code', 'BAG_KEU')->first();
 
+                $defaultPassword = app()->environment(['local', 'testing'])
+            ? 'password'
+            : env('SEED_DEFAULT_PASSWORD', \Illuminate\Support\Str::random(12));
+        $passwordHash = Hash::make($defaultPassword);
+
+        if (!app()->environment(['local', 'testing']) && !env('SEED_DEFAULT_PASSWORD')) {
+            $this->command->info("Demo user passwords set to: " . $defaultPassword);
+        }
+
         $users = [
             // ==========================================
             // 1. PENGUSUL: BIDANG PELAYANAN MEDIK
             // ==========================================
             [
-                'name' => 'dr. Hendra Setiawan, Sp.KJ',
-                'nip' => '198203202008011005',
+                'name' => 'dr. Demo IGD, Sp.KJ',
+                'nip' => '199001012020011001',
                 'email' => 'igd@rsj.com',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'divisi',
                 'position' => 'Kepala Instalasi Gawat Darurat (IGD)',
                 'phone' => '081234567801',
@@ -51,10 +60,10 @@ class UserSeeder extends Seeder
                 'unit_id' => $unitIgd?->id,
             ],
             [
-                'name' => 'Admin Bidang Pelayanan (IGD)',
-                'nip' => '198905152014022003',
+                'name' => 'Admin Demo IGD',
+                'nip' => '199001012020011002',
                 'email' => 'pelayanan@rsj.com',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'divisi',
                 'position' => 'Pengadministrasi Pelayanan Medik',
                 'phone' => '081234567802',
@@ -63,10 +72,10 @@ class UserSeeder extends Seeder
                 'unit_id' => $unitIgd?->id,
             ],
             [
-                'name' => 'dr. Maya Anggraini, Sp.KJ',
-                'nip' => '198709112012012004',
+                'name' => 'dr. Demo Poli',
+                'nip' => '199001012020011003',
                 'email' => 'poliklinik@rsj.com',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'divisi',
                 'position' => 'Kepala Instalasi Rawat Jalan',
                 'phone' => '081234567803',
@@ -79,10 +88,10 @@ class UserSeeder extends Seeder
             // 2. PENGUSUL: BIDANG KEPERAWATAN
             // ==========================================
             [
-                'name' => 'Ns. Rahmat Hidayat, S.Kep',
-                'nip' => '198607142011012009',
+                'name' => 'Ns. Demo UPIP',
+                'nip' => '199001012020011004',
                 'email' => 'upip@rsj.com',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'divisi',
                 'position' => 'Kepala Ruangan UPIP / ICU Psikiatri',
                 'phone' => '081234567804',
@@ -91,10 +100,10 @@ class UserSeeder extends Seeder
                 'unit_id' => $unitUpip?->id,
             ],
             [
-                'name' => 'Admin Bidang Keperawatan (UPIP)',
-                'nip' => '199104082015031002',
+                'name' => 'Admin Demo UPIP',
+                'nip' => '199001012020011005',
                 'email' => 'keperawatan@rsj.com',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'divisi',
                 'position' => 'Pengadministrasi Keperawatan',
                 'phone' => '081234567805',
@@ -103,10 +112,10 @@ class UserSeeder extends Seeder
                 'unit_id' => $unitUpip?->id,
             ],
             [
-                'name' => 'Ns. Budi Santoso, S.Kep',
-                'nip' => '198402182009021006',
+                'name' => 'Ns. Demo Ranap',
+                'nip' => '199001012020011006',
                 'email' => 'ranappria@rsj.com',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'divisi',
                 'position' => 'Kepala Ruangan Rawat Inap Pria',
                 'phone' => '081234567806',
@@ -119,10 +128,10 @@ class UserSeeder extends Seeder
             // 3. PENGUSUL: BIDANG PENUNJANG MEDIK & DIKLIT
             // ==========================================
             [
-                'name' => 'apt. Siti Nurhaliza, S.Farm',
-                'nip' => '198501152010012015',
+                'name' => 'apt. Demo Farmasi',
+                'nip' => '199001012020011007',
                 'email' => 'farmasi@rsj.com',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'divisi',
                 'position' => 'Kepala Instalasi Farmasi',
                 'phone' => '081234567807',
@@ -131,10 +140,10 @@ class UserSeeder extends Seeder
                 'unit_id' => $unitFarmasi?->id,
             ],
             [
-                'name' => 'Admin Bidang Penunjang (Farmasi)',
-                'nip' => '199208252016012003',
+                'name' => 'Admin Demo Penunjang',
+                'nip' => '199001012020011008',
                 'email' => 'penunjang@rsj.com',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'divisi',
                 'position' => 'Pengadministrasi Penunjang Medik',
                 'phone' => '081234567808',
@@ -143,10 +152,10 @@ class UserSeeder extends Seeder
                 'unit_id' => $unitFarmasi?->id,
             ],
             [
-                'name' => 'dr. Ratna Dewi, Sp.PK',
-                'nip' => '198311052009032007',
+                'name' => 'dr. Demo Lab',
+                'nip' => '199001012020011009',
                 'email' => 'lab@rsj.com',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'divisi',
                 'position' => 'Kepala Instalasi Laboratorium',
                 'phone' => '081234567809',
@@ -155,10 +164,10 @@ class UserSeeder extends Seeder
                 'unit_id' => $unitLab?->id,
             ],
             [
-                'name' => 'Ir. Doni Prasetya, ST',
-                'nip' => '198006122006041011',
+                'name' => 'Ir. Demo IPSRS',
+                'nip' => '199001012020011010',
                 'email' => 'ipsrs@rsj.com',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'divisi',
                 'position' => 'Kepala IPSRS',
                 'phone' => '081234567810',
@@ -167,10 +176,10 @@ class UserSeeder extends Seeder
                 'unit_id' => $unitIpsrs?->id,
             ],
             [
-                'name' => 'Drs. Zulfikar, M.Pd',
-                'nip' => '197903172005021004',
+                'name' => 'Drs. Demo Diklit',
+                'nip' => '199001012020011011',
                 'email' => 'diklit@rsj.com',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'divisi',
                 'position' => 'Kepala Unit Diklit (Diklat & Litbang)',
                 'phone' => '081234567811',
@@ -183,10 +192,10 @@ class UserSeeder extends Seeder
             // 4. PENGELOLA / VERIFIKATOR (PERENCANAAN, KEUANGAN, ADMIN)
             // ==========================================
             [
-                'name' => 'Hawari Dinal, S.Sos, M.Si',
-                'nip' => '197002111997031005',
+                'name' => 'Pegawai Demo Perencanaan',
+                'nip' => '199001012020011012',
                 'email' => 'perencanaan@rsj.com',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'perencanaan',
                 'position' => 'Kepala Bagian Perencanaan',
                 'phone' => '081234567820',
@@ -195,10 +204,10 @@ class UserSeeder extends Seeder
                 'unit_id' => $unitRen?->id,
             ],
             [
-                'name' => 'Ns. Widodo, S.Kep, SH',
-                'nip' => '197410031993121001',
+                'name' => 'Pegawai Demo Keuangan',
+                'nip' => '199001012020011013',
                 'email' => 'keuangan@rsj.com',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'keuangan',
                 'position' => 'Pejabat Keuangan / Wadir Keuangan',
                 'phone' => '081234567821',
@@ -207,10 +216,10 @@ class UserSeeder extends Seeder
                 'unit_id' => $unitKeu?->id,
             ],
             [
-                'name' => 'Administrator SIM-RS & E-BLUD',
-                'nip' => '199001012015011001',
+                'name' => 'Admin Demo IT',
+                'nip' => '199001012020011014',
                 'email' => 'admin@rsj.com',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'admin',
                 'position' => 'Pranata Komputer / IT SIM-RS',
                 'phone' => '081234567822',
@@ -222,9 +231,9 @@ class UserSeeder extends Seeder
             // Legacy support
             [
                 'name' => 'Admin RSJ Tampan',
-                'nip' => '199001012015011099',
+                'nip' => '199001012020011015',
                 'email' => 'admin@rsjtampan.riau.go.id',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'admin',
                 'position' => 'Administrator Sistem',
                 'phone' => '081234567823',
@@ -234,9 +243,9 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'Tim Perencanaan RSJ',
-                'nip' => '197002111997031099',
+                'nip' => '199001012020011016',
                 'email' => 'perencanaan@rsjtampan.riau.go.id',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'perencanaan',
                 'position' => 'Tim Perencanaan Program',
                 'phone' => '081234567824',
@@ -246,9 +255,9 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'Bendahara Keuangan RSJ',
-                'nip' => '197410031993121099',
+                'nip' => '199001012020011017',
                 'email' => 'keuangan@rsjtampan.riau.go.id',
-                'password' => Hash::make('password'),
+                'password' => $passwordHash,
                 'role' => 'keuangan',
                 'position' => 'Bendahara Pengeluaran BLUD',
                 'phone' => '081234567825',
@@ -259,7 +268,7 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $userData) {
-            User::updateOrCreate(
+            User::firstOrCreate(
                 ['email' => $userData['email']],
                 $userData
             );

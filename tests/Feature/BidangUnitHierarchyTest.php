@@ -102,7 +102,7 @@ class BidangUnitHierarchyTest extends TestCase
         $userData = [
             'name' => 'Ns. Budi Santoso',
             'email' => 'budi.igd@rsj.com',
-            'password' => 'password123',
+            'password' => 'Rahasia2026Aman',
             'role' => 'divisi',
             'division_id' => $this->pelayanan->id,
             'unit_id' => $this->igd->id,
@@ -125,7 +125,7 @@ class BidangUnitHierarchyTest extends TestCase
         $userData = [
             'name' => 'Staf Tanpa Unit',
             'email' => 'tanpaunit@rsj.com',
-            'password' => 'password123',
+            'password' => 'Rahasia2026Aman',
             'role' => 'divisi',
             'division_id' => '',
             'unit_id' => '',
@@ -142,7 +142,7 @@ class BidangUnitHierarchyTest extends TestCase
         $userData = [
             'name' => 'Mismatch Unit User',
             'email' => 'mismatch@rsj.com',
-            'password' => 'password123',
+            'password' => 'Rahasia2026Aman',
             'role' => 'divisi',
             'division_id' => $this->pelayanan->id,
             'unit_id' => $this->upip->id,

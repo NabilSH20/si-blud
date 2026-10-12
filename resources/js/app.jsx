@@ -1,9 +1,16 @@
 import '../css/app.css';
 import './boostrap';
 
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
+
+router.on('invalid', (event) => {
+    if (event.detail.response.status === 419) {
+        event.preventDefault();
+        window.location.reload();
+    }
+});
 
 const appName = import.meta.env.VITE_APP_NAME || 'E-BLUD RSJ Tampan';
 

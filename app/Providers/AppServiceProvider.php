@@ -21,5 +21,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+        \Carbon\Carbon::setLocale(config('app.locale'));
+        \Illuminate\Validation\Rules\Password::defaults(function () {
+            return \Illuminate\Validation\Rules\Password::min(10)->letters()->mixedCase()->numbers();
+        });
     }
 }

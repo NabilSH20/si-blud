@@ -96,15 +96,15 @@ class UserProfileTest extends TestCase
 
         $response = $this->actingAs($user)->put(route('password.update'), [
             'current_password' => 'old-password-123',
-            'password' => 'new-secure-password-456',
-            'password_confirmation' => 'new-secure-password-456',
+            'password' => 'RahasiaBaru2026',
+            'password_confirmation' => 'RahasiaBaru2026',
         ]);
 
         $response->assertSessionHasNoErrors();
         $response->assertRedirect();
 
         $user->refresh();
-        $this->assertTrue(Hash::check('new-secure-password-456', $user->password));
+        $this->assertTrue(Hash::check('RahasiaBaru2026', $user->password));
     }
 
     public function test_password_update_fails_with_invalid_current_password(): void
@@ -115,8 +115,8 @@ class UserProfileTest extends TestCase
 
         $response = $this->actingAs($user)->put(route('password.update'), [
             'current_password' => 'wrong-password',
-            'password' => 'new-password-789',
-            'password_confirmation' => 'new-password-789',
+            'password' => 'RahasiaGagal2026',
+            'password_confirmation' => 'RahasiaGagal2026',
         ]);
 
         $response->assertSessionHasErrors('current_password');
