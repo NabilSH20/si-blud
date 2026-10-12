@@ -15,6 +15,7 @@ class DashboardController extends Controller
     public function index(): Response
     {
         $user = auth()->user()->load(['division', 'unit']);
+        $userId = $user->id;
         $activeYear = (int) session('active_year', function () {
             return \App\Models\FiscalYear::getDefaultYear() ?? date('Y');
         });
