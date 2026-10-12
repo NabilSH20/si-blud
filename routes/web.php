@@ -109,7 +109,6 @@ Route::middleware('auth')->group(function () {
     Route::match(['patch', 'post'], '/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/set-year', [RootController::class, 'setYear'])->name('set-year');
     Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 require __DIR__.'/auth.php';

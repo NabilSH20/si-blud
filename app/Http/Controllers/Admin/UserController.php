@@ -251,6 +251,15 @@ class UserController extends Controller
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri saat sedang aktif login.');
         }
 
+        $hasRequisitions = \App\Models\Requisition::where('user_id', $user->id)
+            ->orWhere('verified_by_perencanaan_id', $user->id)
+            ->orWhere('approved_by_keuangan_id', $user->id)
+            ->exists();
+
+        if ($hasRequisitions) {
+            return back()->with('error', 'Tidak dapat menghapus akun pengguna karena memiliki riwayat usulan belanja atau jejak verifikasi audit. Silakan nonaktifkan akun sebagai gantinya.');
+        }
+
         $name = $user->name;
         $user->delete();
 
