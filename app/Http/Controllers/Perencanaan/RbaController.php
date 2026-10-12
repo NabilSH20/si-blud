@@ -793,6 +793,91 @@ class RbaController extends Controller
         }
 
         if (! $template) {
+            // Inisialisasi struktur baku awal (0 rupiah) langsung dari master RbaAccount dan rincian Pendapatan BLUD
+            DB::transaction(function () use ($shift) {
+                if ($shift->expenseItems()->count() === 0) {
+                    $accounts = RbaAccount::orderBy('account_code')->get();
+                    $parentCodes = RbaAccount::pluck('parent_code')->filter()->unique()->toArray();
+                    $order = 1;
+                    foreach ($accounts as $acc) {
+                        $isHeader = in_array($acc->account_code, $parentCodes);
+                        $level = substr_count($acc->account_code, '.') + 1;
+                        RbaExpenseItem::create([
+                            'rba_shift_id' => $shift->id,
+                            'rba_account_id' => $acc->id,
+                            'account_code' => $acc->account_code,
+                            'account_name' => $acc->account_name,
+                            'parent_code' => $acc->parent_code,
+                            'level' => $level,
+                            'is_header' => $isHeader,
+                            'before_jasa_layanan' => 0,
+                            'before_hasil_kerjasama' => 0,
+                            'before_lain_lain_sah' => 0,
+                            'before_silpa' => 0,
+                            'before_apbd' => 0,
+                            'before_total' => 0,
+                            'after_jasa_layanan' => 0,
+                            'after_hasil_kerjasama' => 0,
+                            'after_lain_lain_sah' => 0,
+                            'after_silpa' => 0,
+                            'after_apbd' => 0,
+                            'after_total' => 0,
+                            'difference' => 0,
+                            'keterangan' => null,
+                            'order_index' => $order++,
+                        ]);
+                    }
+                }
+
+                if ($shift->revenueItems()->count() === 0) {
+                    $rawRevenues = [
+                        ['code' => '0', 'name' => 'PENDAPATAN', 'parent' => null, 'level' => 1, 'is_header' => true],
+                        ['code' => '1', 'name' => 'JASA LAYANAN', 'parent' => '0', 'level' => 1, 'is_header' => true],
+                        ['code' => 'a', 'name' => 'Pendapatan Pelayanan Gawat Darurat', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => 'b', 'name' => 'Pendapatan Pelayanan Intensif/UPIP', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => 'c', 'name' => 'Pendapatan Pelayanan Rawat Jalan', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => 'd', 'name' => 'Pendapatan Pelayanan Rawat Inap', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => 'e', 'name' => 'Pendapatan Pelayanan Rawat Inap-Napza', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => 'f', 'name' => 'Pendapatan Pelayanan Rehabilitasi Psikososial', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => 'g', 'name' => 'Pendapatan Pelayanan Psikologi & Psikometri', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => 'h', 'name' => 'Pendapatan Pelayanan Konseling Keperawatan Jiwa', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => 'i', 'name' => 'Pendapatan Pelayanan Forensik Psikiatri', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => 'j', 'name' => 'Pendapatan Pelayanan Laboratorium', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => 'k', 'name' => 'Pendapatan Pelayanan Radiologi', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => 'l', 'name' => 'Pendapatan Pelayanan Gizi', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => 'm', 'name' => 'Pendapatan Pelayanan Farmasi', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => 'n', 'name' => 'Pendapatan Pelayanan Rekam Medik', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => 'o', 'name' => 'Pendapatan Pelayanan Ambulance/Kereta Jenazah', 'parent' => '1', 'level' => 2, 'is_header' => false],
+                        ['code' => '2', 'name' => 'HIBAH', 'parent' => '0', 'level' => 1, 'is_header' => true],
+                        ['code' => '3', 'name' => 'HASIL KERJA SAMA', 'parent' => '0', 'level' => 1, 'is_header' => true],
+                        ['code' => 'a', 'name' => 'Hasil Kerjasama Diklat', 'parent' => '3', 'level' => 2, 'is_header' => false],
+                        ['code' => 'b', 'name' => 'Pendapatan Hasil Kerja Sama Fasilitas ( Parkir )', 'parent' => '3', 'level' => 2, 'is_header' => false],
+                        ['code' => 'c', 'name' => 'Hasil Kerjasama Penggunaan Fasilitas RSJ Tampan', 'parent' => '3', 'level' => 2, 'is_header' => false],
+                        ['code' => '4', 'name' => 'ANGGARAN PENDAPATAN BELANJA DAERAH', 'parent' => '0', 'level' => 1, 'is_header' => true],
+                        ['code' => '-', 'name' => 'APBD', 'parent' => '4', 'level' => 2, 'is_header' => false],
+                        ['code' => '5', 'name' => 'LAIN-LAIN PENDAPATAN BADAN LAYANAN UMUM DAERAH YANG SAH', 'parent' => '0', 'level' => 1, 'is_header' => true],
+                        ['code' => '-', 'name' => 'Jasa Giro', 'parent' => '5', 'level' => 2, 'is_header' => false],
+                        ['code' => '-', 'name' => 'Pendapatan Bunga', 'parent' => '5', 'level' => 2, 'is_header' => false],
+                    ];
+
+                    $revOrder = 1;
+                    foreach ($rawRevenues as $rev) {
+                        RbaRevenueItem::create([
+                            'rba_shift_id' => $shift->id,
+                            'item_code' => $rev['code'],
+                            'item_name' => $rev['name'],
+                            'parent_code' => $rev['parent'],
+                            'level' => $rev['level'],
+                            'is_header' => $rev['is_header'],
+                            'before_amount' => 0,
+                            'after_amount' => 0,
+                            'difference' => 0,
+                            'order_index' => $revOrder++,
+                        ]);
+                    }
+                }
+            });
+
             return;
         }
 

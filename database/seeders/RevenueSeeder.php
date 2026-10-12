@@ -9,75 +9,128 @@ use Illuminate\Database\Seeder;
 class RevenueSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Run the database seeds for Realisasi Kas Pendapatan BLUD TA 2027.
      */
     public function run(): void
     {
+        $year = 2027;
+
         $entries = [
+            // Bulan Januari 2027
             [
                 'source' => 'Instalasi Farmasi & Apotek',
-                'amount' => 32500000,
-                'days_ago' => 28,
-                'description' => 'Penerimaan retribusi penjualan obat generik dan resep rawat jalan periode akhir bulan lalu.',
+                'amount' => 485000000,
+                'date' => "{$year}-01-10",
+                'description' => 'Penerimaan retribusi penjualan obat generik dan resep rawat jalan periode minggu ke-1 Januari 2027.',
             ],
             [
                 'source' => 'Instalasi Rawat Inap Jiwa',
-                'amount' => 24000000,
-                'days_ago' => 24,
-                'description' => 'Pembayaran akomodasi dan asuhan keperawatan pasien umum ruang rawat inap.',
+                'amount' => 1250000000,
+                'date' => "{$year}-01-15",
+                'description' => 'Penerimaan klaim asuhan keperawatan dan akomodasi pasien rawat inap psikiatri periode awal tahun 2027.',
             ],
             [
                 'source' => 'Poliklinik Jiwa Terpadu',
-                'amount' => 14800000,
-                'days_ago' => 20,
-                'description' => 'Pendapatan jasa konsultasi psikiater, psikolog klinis, dan konseling adiksi narkoba.',
+                'amount' => 380000000,
+                'date' => "{$year}-01-20",
+                'description' => 'Pendapatan jasa konsultasi dokter spesialis kedokteran jiwa, psikologi klinis, dan konseling adiksi.',
             ],
             [
                 'source' => 'Instalasi Gawat Darurat (IGD)',
-                'amount' => 18500000,
-                'days_ago' => 16,
-                'description' => 'Tarif penanganan kegawatdaruratan psikiatri dan tindakan stabilisasi medis intensif.',
+                'amount' => 28500000,
+                'date' => "{$year}-01-25",
+                'description' => 'Tarif penanganan kegawatdaruratan psikiatri dan tindakan stabilisasi medis intensif IGD.',
             ],
             [
                 'source' => 'Instalasi Laboratorium',
-                'amount' => 9600000,
-                'days_ago' => 12,
-                'description' => 'Biaya pemeriksaan tes narkoba 6 parameter, hematologi rutin, dan kimia darah.',
+                'amount' => 145000000,
+                'date' => "{$year}-01-28",
+                'description' => 'Biaya pemeriksaan tes narkoba 6 parameter, hematologi rutin, dan kimia darah pasien.',
             ],
             [
-                'source' => 'Pelayanan Visum & Mediko-Legal',
-                'amount' => 7500000,
-                'days_ago' => 8,
-                'description' => 'Penerimaan layanan visum et repertum psikiatrikum atas permohonan instansi penegak hukum.',
+                'source' => 'Hasil Kerja Sama Fasilitas & Parkir',
+                'amount' => 45000000,
+                'date' => "{$year}-01-31",
+                'description' => 'Penerimaan bagi hasil sewa kantin, ATM center, dan parkir rumah sakit bulan Januari 2027.',
             ],
+
+            // Bulan Februari 2027
             [
                 'source' => 'Instalasi Farmasi & Apotek',
-                'amount' => 28700000,
-                'days_ago' => 4,
-                'description' => 'Penerimaan tebus obat paten dan cairan infus unit pelayanan intensif.',
+                'amount' => 520000000,
+                'date' => "{$year}-02-08",
+                'description' => 'Penerimaan resep obat generik dan obat paten ruang rawat inap dan rawat jalan.',
+            ],
+            [
+                'source' => 'Instalasi Rawat Inap Jiwa',
+                'amount' => 1420000000,
+                'date' => "{$year}-02-14",
+                'description' => 'Pembayaran klaim layanan rawat inap jiwa dan ruang pemulihan intensif.',
             ],
             [
                 'source' => 'Poliklinik Jiwa Terpadu',
-                'amount' => 12200000,
-                'days_ago' => 1,
-                'description' => 'Penerimaan harian karcis registrasi poli spesialis dan terapi okupasi.',
+                'amount' => 410000000,
+                'date' => "{$year}-02-20",
+                'description' => 'Penerimaan karcis pendaftaran dan jasa medis poliklinik rawat jalan Februari 2027.',
+            ],
+            [
+                'source' => 'Pelayanan Visum & Mediko-Legal',
+                'amount' => 35000000,
+                'date' => "{$year}-02-24",
+                'description' => 'Penerimaan layanan pemeriksaan visum et repertum psikiatrikum dari kepolisian dan pengadilan.',
+            ],
+            [
+                'source' => 'Instalasi Laboratorium',
+                'amount' => 165000000,
+                'date' => "{$year}-02-27",
+                'description' => 'Pendapatan jasa pemeriksaan skrining laboratorium dan tes urin bebas narkoba.',
+            ],
+
+            // Bulan Maret 2027
+            [
+                'source' => 'Instalasi Farmasi & Apotek',
+                'amount' => 590000000,
+                'date' => "{$year}-03-05",
+                'description' => 'Penerimaan penjualan obat-obatan psikofarmaka dan BHP medis Maret 2027.',
+            ],
+            [
+                'source' => 'Instalasi Rawat Inap Jiwa',
+                'amount' => 1650000000,
+                'date' => "{$year}-03-12",
+                'description' => 'Pendapatan jasa rawat inap bangsal psikiatri pria, wanita, dan instalasi napza.',
+            ],
+            [
+                'source' => 'Poliklinik Jiwa Terpadu',
+                'amount' => 470000000,
+                'date' => "{$year}-03-18",
+                'description' => 'Penerimaan harian karcis registrasi poli psikiatri anak & remaja serta fisioterapi.',
+            ],
+            [
+                'source' => 'Hasil Kerja Sama Diklat',
+                'amount' => 85000000,
+                'date' => "{$year}-03-25",
+                'description' => 'Penerimaan biaya praktik klinik keperawatan jiwa mahasiswa Poltekkes dan universitas mitra.',
+            ],
+            [
+                'source' => 'Jasa Giro Operasional BLUD',
+                'amount' => 62500000,
+                'date' => "{$year}-03-31",
+                'description' => 'Penerimaan bunga jasa giro rekening kas operasional BLUD RS Jiwa Tampan di Bank Riau Kepri Syariah.',
             ],
         ];
 
         foreach ($entries as $index => $item) {
-            $date = Carbon::now()->subDays($item['days_ago'])->toDateString();
-            $revNumber = sprintf('REV-%s-%04d', Carbon::parse($date)->format('Ymd'), $index + 1);
+            $revNumber = sprintf('REV-%s-%04d', Carbon::parse($item['date'])->format('Ymd'), $index + 1);
 
             Revenue::updateOrCreate(
                 ['revenue_number' => $revNumber],
                 [
                     'source' => $item['source'],
                     'amount' => $item['amount'],
-                    'date' => $date,
+                    'date' => $item['date'],
                     'description' => $item['description'],
                 ]
             );
         }
     }
 }
-

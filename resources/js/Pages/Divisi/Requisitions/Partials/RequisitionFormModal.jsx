@@ -2,7 +2,7 @@ import Modal from '@/Components/Modal';
 import { useForm, usePage } from '@inertiajs/react';
 import { useState, useEffect, useMemo, useRef } from 'react';
 
-import { ClipboardList, AlertTriangle, X } from 'lucide-react';
+import { ClipboardList, AlertTriangle, X, Search, Plus, Trash2, ShoppingBag } from 'lucide-react';
 
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -42,7 +42,7 @@ const COMMON_UNITS = [
 
 export default function RequisitionFormModal({
     show = false,
-    onClose = () => {},
+    onClose = () => { },
     requisition = null,
     initialJenis = 'Operasi',
     rbaAccounts = [],
@@ -98,125 +98,87 @@ export default function RequisitionFormModal({
     });
 
     // -------------------------------------------------------------
-    // 3. KLASIFIKASI KODE REKENING (5-LEVEL CASCADING DROPDOWNS)
+    // 3. KLASIFIKASI KODE REKENING (100% DINAMIS DARI DATABASE)
     // -------------------------------------------------------------
-    const [selectedAkunUtama, setSelectedAkunUtama] = useState('1');
-    const [selectedKelompok, setSelectedKelompok] = useState(initialJenis === 'Modal' ? '1.2' : '1.1');
-    const [selectedJenis, setSelectedJenis] = useState(initialJenis === 'Modal' ? '1.2.1' : '1.1.2');
-    const [selectedObjek, setSelectedObjek] = useState(initialJenis === 'Modal' ? '1.2.1.2' : '1.1.2.1');
+    const [selectedKategori, setSelectedKategori] = useState(
+        initialJenis === 'Modal' ? 'Modal' : 'Operasi'
+    );
+    const [accountSearchQuery, setAccountSearchQuery] = useState('');
     const [selectedRincianObjekId, setSelectedRincianObjekId] = useState('');
 
-    // Level 1: Akun Utama
-    const akunUtamaList = useMemo(() => [
-        { code: '1', name: '1. BELANJA' },
-    ], []);
+    // Identifikasi akun yang memiliki child (header/induk) vs akun daun (leaf/transaksi)
+    const parentCodeSet = useMemo(() => {
+        return new Set(rbaAccounts.map((a) => a.parent_code).filter(Boolean));
+    }, [rbaAccounts]);
 
-    // Level 2: Kelompok
-    const kelompokList = useMemo(() => [
-        { code: '1.1', name: '1.1. Belanja Operasi' },
-        { code: '1.2', name: '1.2. Belanja Modal' },
-    ], []);
-
-    // Level 3: Jenis
-    const jenisList = useMemo(() => {
-        if (selectedKelompok === '1.2') {
-            return [
-                { code: '1.2.1', name: '1.2.1. Belanja Modal BLUD' },
-            ];
-        }
-        return [
-            { code: '1.1.2', name: '1.1.2. Belanja Barang dan Jasa' },
-            { code: '1.1.1', name: '1.1.1. Belanja Pegawai' },
-        ];
-    }, [selectedKelompok]);
-
-    // Level 4: Objek
-    const objekList = useMemo(() => {
-        if (selectedJenis === '1.1.2') {
-            return [
-                { code: '1.1.2.1', name: '1.1.2.1. Belanja Barang & Jasa BLUD' },
-            ];
-        }
-        if (selectedJenis === '1.1.1') {
-            return [
-                { code: '1.1.1.1', name: '1.1.1.1. Belanja Pegawai BLUD' },
-            ];
-        }
-        if (selectedJenis === '1.2.1') {
-            return [
-                { code: '1.2.1.2', name: '1.2.1.2. Belanja Peralatan dan Mesin' },
-                { code: '1.2.1.3', name: '1.2.1.3. Belanja Gedung dan Bangunan' },
-                { code: '1.2.1.1', name: '1.2.1.1. Belanja Tanah' },
-                { code: '1.2.1.4', name: '1.2.1.4. Belanja Jalan/ Irigasi Dan jaringan' },
-                { code: '1.2.1.5', name: '1.2.1.5. Belanja Aset tetap lainnya' },
-                { code: '1.2.1.6', name: '1.2.1.6. Belanja Aset lainnya' },
-            ];
-        }
-        return [];
-    }, [selectedJenis]);
-
-    // Level 5: Rincian Objek (Leaf Accounts)
-    const rincianObjekList = useMemo(() => {
-        if (!selectedObjek) return [];
-        const list = rbaAccounts.filter((acc) => {
-            const code = acc.account_code || '';
-            if (code.startsWith(selectedObjek + '.')) return true;
-            if (acc.parent_code === selectedObjek) return true;
-            if (code === selectedObjek) return true;
-            if (selectedObjek === '1.2.1.2' && code.startsWith('1.2.02')) return true;
-            if (selectedObjek === '1.2.1.3' && code.startsWith('1.2.03')) return true;
-            return false;
+    // Map account_code ke objek akun untuk lookup nama induk (parent) secara cepat
+    const accountByCodeMap = useMemo(() => {
+        const map = new Map();
+        rbaAccounts.forEach((a) => {
+            if (a.account_code) map.set(a.account_code, a);
         });
+        return map;
+    }, [rbaAccounts]);
 
-        if (list.length === 0) {
-            const exact = rbaAccounts.find((a) => a.account_code === selectedObjek);
-            if (exact) return [exact];
-        }
+    // Akun transaksi (Leaf): Akun yang tidak menjadi parent dari akun lain di database
+    const leafAccounts = useMemo(() => {
+        return rbaAccounts.filter((a) => !parentCodeSet.has(a.account_code));
+    }, [rbaAccounts, parentCodeSet]);
 
-        return list;
-    }, [selectedObjek, rbaAccounts]);
+    // Filter akun transaksi berdasarkan Kategori Belanja ('Operasi' vs 'Modal')
+    const categoryLeafAccounts = useMemo(() => {
+        return leafAccounts.filter((a) => {
+            if (selectedKategori === 'Modal') {
+                return a.kategori_belanja === 'Modal' || a.account_code?.startsWith('1.2');
+            }
+            return a.kategori_belanja !== 'Modal' && !a.account_code?.startsWith('1.2');
+        });
+    }, [leafAccounts, selectedKategori]);
 
-    // Handlers for Cascading Changes
-    const handleKelompokChange = (val) => {
-        setSelectedKelompok(val);
-        if (val === '1.2') {
-            setSelectedJenis('1.2.1');
-            setSelectedObjek('1.2.1.2');
-        } else {
-            setSelectedJenis('1.1.2');
-            setSelectedObjek('1.1.2.1');
-        }
-    };
+    // Filter pencarian cepat (Quick Search) berdasarkan nama akun, kode rekening, atau nama induknya
+    const filteredLeafAccounts = useMemo(() => {
+        if (!accountSearchQuery.trim()) return categoryLeafAccounts;
+        const q = accountSearchQuery.toLowerCase();
+        return categoryLeafAccounts.filter((a) => {
+            const parentAcc = a.parent_code ? accountByCodeMap.get(a.parent_code) : null;
+            return (
+                a.account_name?.toLowerCase().includes(q) ||
+                a.account_code?.toLowerCase().includes(q) ||
+                parentAcc?.account_name?.toLowerCase().includes(q)
+            );
+        });
+    }, [categoryLeafAccounts, accountSearchQuery, accountByCodeMap]);
 
-    const handleJenisChange = (val) => {
-        setSelectedJenis(val);
-        if (val === '1.1.2') {
-            setSelectedObjek('1.1.2.1');
-        } else if (val === '1.1.1') {
-            setSelectedObjek('1.1.1.1');
-        } else if (val === '1.2.1') {
-            setSelectedObjek('1.2.1.2');
-        }
-    };
+    // Pengelompokan akun per Objek / Induk agar tampilan dropdown rapi dan terstruktur
+    const groupedAccounts = useMemo(() => {
+        const groups = {};
+        filteredLeafAccounts.forEach((acc) => {
+            const parent = acc.parent_code ? accountByCodeMap.get(acc.parent_code) : null;
+            const groupKey = parent
+                ? `${parent.account_code} ${parent.account_name}`
+                : (acc.kategori_belanja === 'Modal' ? '1.2 Belanja Modal BLUD' : '1.1 Belanja Operasi BLUD');
+            if (!groups[groupKey]) {
+                groups[groupKey] = [];
+            }
+            groups[groupKey].push(acc);
+        });
+        return groups;
+    }, [filteredLeafAccounts, accountByCodeMap]);
 
-    const handleObjekChange = (val) => {
-        setSelectedObjek(val);
-    };
-
-    // Auto-select first Rincian Objek when list updates or if not in list
+    // Otomatis pilih akun pertama pada kategori aktif jika belum ada yang terpilih
     useEffect(() => {
-        if (rincianObjekList.length > 0) {
-            const exists = rincianObjekList.some((ro) => String(ro.id) === String(selectedRincianObjekId));
+        if (categoryLeafAccounts.length > 0) {
+            const exists = categoryLeafAccounts.some((ro) => String(ro.id) === String(selectedRincianObjekId));
             if (!exists) {
-                setSelectedRincianObjekId(String(rincianObjekList[0].id));
+                setSelectedRincianObjekId(String(categoryLeafAccounts[0].id));
             }
         }
-    }, [rincianObjekList, selectedRincianObjekId]);
+    }, [categoryLeafAccounts, selectedRincianObjekId]);
 
-    // Active Selected RBA Account
+    // Active Selected RBA Account dari database
     const activeAccount = useMemo(() => {
-        return rbaAccounts.find((a) => String(a.id) === String(selectedRincianObjekId)) || rincianObjekList[0] || null;
-    }, [rbaAccounts, selectedRincianObjekId, rincianObjekList]);
+        return rbaAccounts.find((a) => String(a.id) === String(selectedRincianObjekId)) || categoryLeafAccounts[0] || null;
+    }, [rbaAccounts, selectedRincianObjekId, categoryLeafAccounts]);
 
     // -------------------------------------------------------------
     // 4. INPUT RINCIAN BARANG STATE
@@ -308,7 +270,7 @@ export default function RequisitionFormModal({
         }
 
         const isModalAccount =
-            selectedKelompok === '1.2' ||
+            selectedKategori === 'Modal' ||
             activeAccount.account_code?.startsWith('1.2') ||
             activeAccount.kategori_belanja === 'Modal';
 
@@ -406,11 +368,18 @@ export default function RequisitionFormModal({
                 items: loadedItems,
             });
 
-            if (requisition.jenis_belanja === 'Modal') {
-                handleKelompokChange('1.2');
+            if (requisition.rba_account_id) {
+                setSelectedRincianObjekId(String(requisition.rba_account_id));
+                const targetAcc = rbaAccounts.find((a) => a.id === requisition.rba_account_id);
+                if (targetAcc) {
+                    const isModal = targetAcc.kategori_belanja === 'Modal' || targetAcc.account_code?.startsWith('1.2');
+                    setSelectedKategori(isModal ? 'Modal' : 'Operasi');
+                }
+            } else if (requisition.jenis_belanja === 'Modal') {
+                setSelectedKategori('Modal');
             }
         }
-    }, [isEdit, requisition]);
+    }, [isEdit, requisition, rbaAccounts]);
 
     // Form Submission
     const handleSubmit = (e) => {
@@ -504,7 +473,7 @@ export default function RequisitionFormModal({
     return (
         <Modal show={show} onClose={onClose} maxWidth="6xl">
             <div className="flex flex-col max-h-[92vh] bg-white rounded-2xl shadow-xl overflow-hidden">
-                
+
                 {/* 1. Header Dialog */}
                 <div className="flex items-center justify-between border-b border-slate-200/80 bg-white px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -540,7 +509,7 @@ export default function RequisitionFormModal({
 
                 {/* 2. Body Dialog (Scrollable) */}
                 <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5 bg-white">
-                    
+
                     {/* Error Notice */}
                     {submitError && (
                         <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-800 animate-fade-in">
@@ -572,9 +541,9 @@ export default function RequisitionFormModal({
                             </div>
                         </div>
 
-                        {/* Baris 1: Program, Kegiatan & Sub Kegiatan (Sesuai RBA Fisik) */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div>
+                        {/* Baris 1: Program, Kegiatan & Sub Kegiatan */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                            <div className="md:col-span-4">
                                 <label className="block text-xs font-bold text-slate-700 mb-1">
                                     Program Rumah Sakit <span className="text-rose-500">*</span>
                                 </label>
@@ -582,12 +551,13 @@ export default function RequisitionFormModal({
                                     type="text"
                                     value={data.program}
                                     onChange={(e) => setData('program', e.target.value)}
+                                    title={data.program}
                                     placeholder="Program Peningkatan Pelayanan Kesehatan Pada BLUD"
-                                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-2xs"
+                                    className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-2xs"
                                 />
                             </div>
 
-                            <div>
+                            <div className="md:col-span-3">
                                 <label className="block text-xs font-bold text-slate-700 mb-1">
                                     Kegiatan Rumah Sakit <span className="text-rose-500">*</span>
                                 </label>
@@ -595,26 +565,37 @@ export default function RequisitionFormModal({
                                     type="text"
                                     value={data.kegiatan}
                                     onChange={(e) => setData('kegiatan', e.target.value)}
+                                    title={data.kegiatan}
                                     placeholder="Contoh: 1. Pelayanan Kesehatan"
-                                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-2xs"
+                                    className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-2xs"
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">
-                                    Sub Kegiatan Rumah Sakit <span className="text-rose-500">*</span>
-                                </label>
+                            <div className="md:col-span-5">
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-xs font-bold text-slate-700">
+                                        Sub Kegiatan Rumah Sakit <span className="text-rose-500">*</span>
+                                    </label>
+                                    <span className="text-[10px] text-slate-400 font-normal">Pilih saran / ketik manual</span>
+                                </div>
                                 <input
                                     type="text"
+                                    list="subKegiatanOptionsList"
                                     value={data.sub_kegiatan}
                                     onChange={(e) => setData('sub_kegiatan', e.target.value)}
-                                    placeholder="Contoh: PELAYANAN LABORATORIUM 2026"
-                                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-2xs"
+                                    placeholder={`Contoh: PELAYANAN ${unitDisplayName.toUpperCase()} ${resolvedYear}`}
+                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-2xs"
                                 />
+                                <datalist id="subKegiatanOptionsList">
+                                    {smartDefaultSub && <option value={smartDefaultSub} />}
+                                    {subKegiatanOptions.map((opt, idx) => (
+                                        <option key={idx} value={opt} />
+                                    ))}
+                                </datalist>
                             </div>
                         </div>
 
-                        {/* Baris 2: No. Nota Dinas & Catatan / Alasan Urgensi (Ringkas & Bersih) */}
+                        {/* Baris 2: No. Nota Dinas & Catatan / Alasan Urgensi */}
                         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-0.5">
                             <div className="sm:col-span-4">
                                 <label className="block text-xs font-semibold text-slate-600 mb-1">
@@ -624,8 +605,8 @@ export default function RequisitionFormModal({
                                     type="text"
                                     value={data.nomor_surat_unit}
                                     onChange={(e) => setData('nomor_surat_unit', e.target.value)}
-                                    placeholder="Contoh: 020/IGD/2026"
-                                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+                                    placeholder={`Contoh: 020/${(unit?.name || 'UNIT').split(' ')[0].toUpperCase()}/${resolvedYear}`}
+                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-2xs"
                                 />
                             </div>
 
@@ -638,7 +619,7 @@ export default function RequisitionFormModal({
                                     value={data.urgency_reason}
                                     onChange={(e) => setData('urgency_reason', e.target.value)}
                                     placeholder="Contoh: Kebutuhan operasional dan kelancaran pelayanan pasien..."
-                                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-2xs"
                                 />
                             </div>
                         </div>
@@ -655,33 +636,35 @@ export default function RequisitionFormModal({
                                     Format resmi tolok ukur capaian kegiatan. Bawaan standar telah disediakan, Anda dapat mengubahnya langsung jika diperlukan.
                                 </p>
                             </div>
-                            <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
+                            <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200">
                                 Otomatis Tercetak di Dokumen RBA
                             </span>
                         </div>
 
-                        <div className="overflow-hidden rounded-lg border border-slate-200">
+                        <div className="overflow-hidden rounded-xl border border-slate-200">
                             <table className="w-full text-left text-xs border-collapse">
                                 <thead>
-                                    <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                                        <th className="py-2 px-3 w-28 text-center border-r border-slate-200">INDIKATOR</th>
-                                        <th className="py-2 px-3 border-r border-slate-200">TOLOK UKUR KINERJA</th>
-                                        <th className="py-2 px-3 w-32 text-center">TARGET KINERJA</th>
+                                    <tr className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 text-[11px] uppercase tracking-wider">
+                                        <th className="py-2.5 px-4 w-32 text-center border-r border-slate-200">INDIKATOR</th>
+                                        <th className="py-2.5 px-4 border-r border-slate-200">TOLOK UKUR KINERJA</th>
+                                        <th className="py-2.5 px-4 w-36 text-center">TARGET KINERJA</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-200">
                                     {/* 1. INPUT */}
-                                    <tr className="bg-slate-50/60">
-                                        <td className="py-2.5 px-3 font-bold text-slate-700 text-center border-r border-slate-200 bg-slate-100/70 align-middle">
-                                            INPUT
-                                            <span className="block text-[10px] font-normal text-slate-500">(Masukan)</span>
+                                    <tr className="bg-slate-50/40">
+                                        <td className="py-3 px-4 font-bold text-slate-700 text-center border-r border-slate-200 bg-slate-50/70 align-middle">
+                                            <span className="inline-block px-2.5 py-0.5 rounded-md bg-slate-200/80 text-slate-800 text-[11px] font-bold">
+                                                INPUT
+                                            </span>
+                                            <span className="block text-[10px] font-medium text-slate-500 mt-0.5">(Masukan)</span>
                                         </td>
-                                        <td className="py-2.5 px-3 text-slate-600 border-r border-slate-200">
+                                        <td className="py-3 px-4 text-slate-600 border-r border-slate-200">
                                             <span className="font-semibold text-slate-800">Anggaran Biaya Belanja</span>
-                                            <p className="text-[11px] text-slate-400">Total estimasi biaya dihitung otomatis dari rincian belanja di bawah.</p>
+                                            <p className="text-[11px] text-slate-400 mt-0.5">Total estimasi biaya dihitung otomatis dari rincian belanja di bawah.</p>
                                         </td>
-                                        <td className="py-2.5 px-3 text-center align-middle">
-                                            <span className="inline-block px-2.5 py-1 rounded bg-emerald-50 text-emerald-800 font-mono font-bold text-xs border border-emerald-200">
+                                        <td className="py-3 px-4 text-center align-middle">
+                                            <span className="inline-block px-3 py-1 rounded-lg bg-teal-50 text-teal-800 font-mono font-bold text-xs border border-teal-200 shadow-2xs">
                                                 {formatRupiah(grandTotal)}
                                             </span>
                                         </td>
@@ -689,27 +672,29 @@ export default function RequisitionFormModal({
 
                                     {/* 2. OUTPUT */}
                                     <tr>
-                                        <td className="py-2.5 px-3 font-bold text-slate-700 text-center border-r border-slate-200 bg-slate-100/70 align-middle">
-                                            OUTPUT
-                                            <span className="block text-[10px] font-normal text-slate-500">(Keluaran)</span>
+                                        <td className="py-3 px-4 font-bold text-slate-700 text-center border-r border-slate-200 bg-slate-50/70 align-middle">
+                                            <span className="inline-block px-2.5 py-0.5 rounded-md bg-teal-100/70 text-teal-800 text-[11px] font-bold">
+                                                OUTPUT
+                                            </span>
+                                            <span className="block text-[10px] font-medium text-slate-500 mt-0.5">(Keluaran)</span>
                                         </td>
-                                        <td className="py-2.5 px-3 border-r border-slate-200">
+                                        <td className="py-3 px-4 border-r border-slate-200">
                                             <textarea
                                                 rows={2}
                                                 value={data.tolok_ukur_output}
                                                 onChange={(e) => setData('tolok_ukur_output', e.target.value)}
                                                 placeholder="Contoh: Tersedianya kebutuhan bahan dan sarana operasional pelayanan..."
-                                                className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition leading-relaxed resize-none shadow-2xs"
+                                                className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-800 placeholder-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition leading-relaxed resize-none shadow-2xs"
                                             />
                                         </td>
-                                        <td className="py-2.5 px-3 align-middle text-center">
+                                        <td className="py-3 px-4 align-middle text-center">
                                             <div className="flex flex-col items-center justify-center gap-1">
                                                 <input
                                                     type="text"
                                                     value={data.target_output}
                                                     onChange={(e) => setData('target_output', e.target.value)}
                                                     placeholder="100%"
-                                                    className="w-20 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-center font-bold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-2xs"
+                                                    className="w-24 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-center font-bold text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-2xs"
                                                 />
                                                 <span className="text-[10px] text-slate-400 font-medium">Target Capaian</span>
                                             </div>
@@ -718,27 +703,29 @@ export default function RequisitionFormModal({
 
                                     {/* 3. OUTCOME */}
                                     <tr>
-                                        <td className="py-2.5 px-3 font-bold text-slate-700 text-center border-r border-slate-200 bg-slate-100/70 align-middle">
-                                            OUTCOME
-                                            <span className="block text-[10px] font-normal text-slate-500">(Hasil)</span>
+                                        <td className="py-3 px-4 font-bold text-slate-700 text-center border-r border-slate-200 bg-slate-50/70 align-middle">
+                                            <span className="inline-block px-2.5 py-0.5 rounded-md bg-indigo-100/70 text-indigo-800 text-[11px] font-bold">
+                                                OUTCOME
+                                            </span>
+                                            <span className="block text-[10px] font-medium text-slate-500 mt-0.5">(Hasil)</span>
                                         </td>
-                                        <td className="py-2.5 px-3 border-r border-slate-200">
+                                        <td className="py-3 px-4 border-r border-slate-200">
                                             <textarea
                                                 rows={2}
                                                 value={data.tolok_ukur_outcome}
                                                 onChange={(e) => setData('tolok_ukur_outcome', e.target.value)}
                                                 placeholder="Contoh: Meningkatnya mutu pelayanan dan kepuasan pasien sesuai standar SPM..."
-                                                className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition leading-relaxed resize-none shadow-2xs"
+                                                className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-800 placeholder-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition leading-relaxed resize-none shadow-2xs"
                                             />
                                         </td>
-                                        <td className="py-2.5 px-3 align-middle text-center">
+                                        <td className="py-3 px-4 align-middle text-center">
                                             <div className="flex flex-col items-center justify-center gap-1">
                                                 <input
                                                     type="text"
                                                     value={data.target_outcome}
                                                     onChange={(e) => setData('target_outcome', e.target.value)}
                                                     placeholder="100%"
-                                                    className="w-20 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-center font-bold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-2xs"
+                                                    className="w-24 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-center font-bold text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-2xs"
                                                 />
                                                 <span className="text-[10px] text-slate-400 font-medium">Target Capaian</span>
                                             </div>
@@ -749,119 +736,131 @@ export default function RequisitionFormModal({
                         </div>
                     </div>
 
-                    {/* SECTION 3: Klasifikasi Kode Rekening BLUD */}
-                    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
-                        <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-2 gap-2">
-                            <h3 className="text-sm font-bold text-slate-900 border-b-2 border-emerald-500 pb-0.5 inline-block">
-                                3. Klasifikasi Kode Rekening (RBA BLUD)
-                            </h3>
+                    {/* SECTION 3: Klasifikasi Kode Rekening BLUD (100% Dinamis dari Database) */}
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3.5">
+                        <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-2.5 gap-2">
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-900 border-b-2 border-emerald-500 pb-0.5 inline-block">
+                                    3. Klasifikasi Kode Rekening (RBA BLUD)
+                                </h3>
+                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                    Pilih pos rekening belanja yang sesuai dari anggaran RBA BLUD Rumah Sakit.
+                                </p>
+                            </div>
+                            <span className="text-[11px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">
+                                {categoryLeafAccounts.length} Rekening Aktif
+                            </span>
                         </div>
 
-                        {/* Dropdown Bertingkat: 2 Baris agar Seluruh Nama Rekening Terbaca Jelas */}
-                        <div className="space-y-4 pt-2">
-                            {/* Baris 1: Akun Utama, Kelompok, dan Jenis */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-[11px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                                        1. Akun Utama
-                                    </label>
-                                    <select
-                                        value={selectedAkunUtama}
-                                        onChange={(e) => setSelectedAkunUtama(e.target.value)}
-                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors shadow-sm"
-                                    >
-                                        {akunUtamaList.map((au) => (
-                                            <option key={au.code} value={au.code}>
-                                                {au.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                        {/* Tab Kategori Belanja (Operasi vs Modal) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-1 bg-slate-100/80 rounded-xl border border-slate-200/80">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSelectedKategori('Operasi');
+                                    setAccountSearchQuery('');
+                                }}
+                                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${selectedKategori === 'Operasi'
+                                    ? 'bg-white text-emerald-700 shadow-xs border border-slate-200/60'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                                    }`}
+                            >
+                                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                Belanja Operasi (Barang & Jasa BLUD)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSelectedKategori('Modal');
+                                    setAccountSearchQuery('');
+                                }}
+                                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${selectedKategori === 'Modal'
+                                    ? 'bg-white text-teal-700 shadow-xs border border-slate-200/60'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                                    }`}
+                            >
+                                <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                                Belanja Modal (Peralatan, Mesin & Gedung BLUD)
+                            </button>
+                        </div>
 
-                                <div>
-                                    <label className="block text-[11px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                                        2. Kelompok Belanja
-                                    </label>
+                        {/* Baris Pilihan Rekening & Pencarian Cepat */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                            {/* Dropdown Rekening Dinamis Berdasarkan Database */}
+                            <div className="md:col-span-8">
+                                <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                                    Pos Rekening Belanja Terpilih <span className="text-rose-500">*</span>
+                                </label>
+                                <div className="relative">
                                     <select
-                                        value={selectedKelompok}
-                                        onChange={(e) => handleKelompokChange(e.target.value)}
-                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer transition-colors shadow-sm"
+                                        value={selectedRincianObjekId}
+                                        onChange={(e) => setSelectedRincianObjekId(e.target.value)}
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer transition-colors shadow-2xs"
                                     >
-                                        {kelompokList.map((k) => (
-                                            <option key={k.code} value={k.code}>
-                                                {k.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-[11px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                                        3. Jenis Belanja
-                                    </label>
-                                    <select
-                                        value={selectedJenis}
-                                        onChange={(e) => handleJenisChange(e.target.value)}
-                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer transition-colors shadow-sm"
-                                    >
-                                        {jenisList.map((j) => (
-                                            <option key={j.code} value={j.code}>
-                                                {j.name}
-                                            </option>
-                                        ))}
+                                        {filteredLeafAccounts.length === 0 ? (
+                                            <option value="">Tidak ada rekening yang cocok dengan pencarian</option>
+                                        ) : (
+                                            Object.entries(groupedAccounts).map(([groupTitle, accList]) => (
+                                                <optgroup key={groupTitle} label={groupTitle} className="font-bold text-slate-600 bg-slate-50">
+                                                    {accList.map((acc) => (
+                                                        <option key={acc.id} value={acc.id} className="font-normal text-slate-800 bg-white py-1">
+                                                            {acc.account_code} - {acc.account_name}
+                                                        </option>
+                                                    ))}
+                                                </optgroup>
+                                            ))
+                                        )}
                                     </select>
                                 </div>
                             </div>
 
-                            {/* Baris 2: Objek & Rincian Objek */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[11px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                                        4. Objek Belanja
-                                    </label>
-                                    <select
-                                        value={selectedObjek}
-                                        onChange={(e) => handleObjekChange(e.target.value)}
-                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer transition-colors shadow-sm"
-                                    >
-                                        {objekList.map((o) => (
-                                            <option key={o.code} value={o.code}>
-                                                {o.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-[11px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                                        5. Rincian Objek (Rekening Belanja Aktif)
-                                    </label>
-                                    <select
-                                        value={selectedRincianObjekId}
-                                        onChange={(e) => setSelectedRincianObjekId(e.target.value)}
-                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer transition-colors shadow-sm"
-                                    >
-                                        {rincianObjekList.map((ro) => (
-                                            <option key={ro.id} value={ro.id}>
-                                                {ro.account_code} - {ro.account_name}
-                                            </option>
-                                        ))}
-                                    </select>
+                            {/* Kolom Pencarian Cepat Rekening */}
+                            <div className="md:col-span-4">
+                                <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                                    Cari Cepat Rekening
+                                </label>
+                                <div className="relative">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                        <Search size={14} />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={accountSearchQuery}
+                                        onChange={(e) => setAccountSearchQuery(e.target.value)}
+                                        placeholder="Ketik nama atau kode..."
+                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-8 pr-7 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-2xs"
+                                    />
+                                    {accountSearchQuery && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setAccountSearchQuery('')}
+                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
 
                         {/* Bar Info Rekening Aktif */}
                         {activeAccount && (
-                            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-xs">
+                            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-teal-50/60 border border-teal-100 p-2.5 text-xs text-teal-900">
                                 <div className="flex items-center gap-2">
-                                    <span className="font-bold text-slate-500">Pos Rekening Terpilih:</span>
-                                    <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                    <span className="font-bold text-teal-700">Pos Rekening Terpilih:</span>
+                                    <span className="font-mono font-bold text-teal-900 bg-white px-2 py-0.5 rounded border border-teal-200">
                                         [{activeAccount.account_code}]
                                     </span>
-                                    <span className="font-medium text-slate-800">
+                                    <span className="font-semibold text-slate-800">
                                         {activeAccount.account_name}
                                     </span>
+                                </div>
+                                <div className="text-[11px] text-teal-700 font-medium">
+                                    {activeCatalogItems.length > 0 ? (
+                                        <span>{activeCatalogItems.length} item tersedia di katalog</span>
+                                    ) : (
+                                        <span className="text-amber-700">Belum ada item katalog (bisa input manual)</span>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -874,14 +873,14 @@ export default function RequisitionFormModal({
                                 4. Input Rincian Barang
                             </h3>
                             <span className="text-[11px] text-slate-400">
-                                Pilih dari katalog atau ketik manual, lalu klik <strong>+ Tambah ke Daftar Usulan</strong>
+                                Pilih dari katalog atau ketik manual, lalu klik <strong>Tambah ke Daftar Usulan</strong>
                             </span>
                         </div>
 
-                        <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-end">
+                        <div className="bg-slate-50/60 p-4 rounded-2xl border border-slate-200/70 space-y-3.5">
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
                                 {/* Nama Barang / Uraian */}
-                                <div className="lg:col-span-4 relative">
+                                <div className="sm:col-span-4 relative">
                                     <label className="block text-xs font-bold text-slate-700 mb-1.5">
                                         Nama Barang / Uraian <span className="text-rose-500">*</span>
                                     </label>
@@ -893,8 +892,14 @@ export default function RequisitionFormModal({
                                             setIsCatalogDropdownOpen(true);
                                         }}
                                         onFocus={() => setIsCatalogDropdownOpen(true)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                qtyInputRef.current?.focus();
+                                            }
+                                        }}
                                         placeholder="Ketik nama barang / pilih katalog..."
-                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-sm"
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-2xs"
                                     />
 
                                     {/* Floating Autocomplete Dropdown dari Master Katalog */}
@@ -928,7 +933,7 @@ export default function RequisitionFormModal({
                                 </div>
 
                                 {/* Volume */}
-                                <div className="lg:col-span-2">
+                                <div className="col-span-6 sm:col-span-2">
                                     <label className="block text-xs font-bold text-slate-700 mb-1.5">
                                         Volume <span className="text-rose-500">*</span>
                                     </label>
@@ -938,19 +943,19 @@ export default function RequisitionFormModal({
                                         min="1"
                                         value={inputQty}
                                         onChange={(e) => setInputQty(Math.max(1, parseInt(e.target.value) || 1))}
-                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-center font-bold shadow-sm"
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-center font-bold shadow-2xs"
                                     />
                                 </div>
 
                                 {/* Satuan */}
-                                <div className="lg:col-span-2">
+                                <div className="col-span-6 sm:col-span-2">
                                     <label className="block text-xs font-bold text-slate-700 mb-1.5">
                                         Satuan <span className="text-rose-500">*</span>
                                     </label>
                                     <select
                                         value={inputUnit}
                                         onChange={(e) => setInputUnit(e.target.value)}
-                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer text-center font-medium shadow-sm"
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer text-center font-medium shadow-2xs"
                                     >
                                         {COMMON_UNITS.map((u) => (
                                             <option key={u} value={u}>
@@ -961,7 +966,7 @@ export default function RequisitionFormModal({
                                 </div>
 
                                 {/* Harga Satuan (Rp) */}
-                                <div className="lg:col-span-2">
+                                <div className="col-span-6 sm:col-span-2">
                                     <label className="block text-xs font-bold text-slate-700 mb-1.5">
                                         Harga Satuan (Rp) <span className="text-rose-500">*</span>
                                     </label>
@@ -970,38 +975,49 @@ export default function RequisitionFormModal({
                                         min="0"
                                         value={inputPrice}
                                         onChange={(e) => setInputPrice(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleAddItem();
+                                            }
+                                        }}
                                         placeholder="0"
-                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-900 font-mono text-right font-medium focus:border-teal-500 focus:ring-1 focus:ring-teal-500 shadow-sm"
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 font-mono text-right font-medium focus:border-teal-500 focus:ring-1 focus:ring-teal-500 shadow-2xs"
                                     />
                                 </div>
 
                                 {/* Total Biaya (Rp) */}
-                                <div className="lg:col-span-2">
+                                <div className="col-span-6 sm:col-span-2">
                                     <label className="block text-xs font-bold text-slate-700 mb-1.5">
                                         Total Biaya (Rp)
                                     </label>
-                                    <div className="rounded-xl border border-teal-200 bg-teal-50 px-3 py-2.5 text-xs font-bold text-teal-900 font-mono text-right flex items-center justify-end h-[38px] shadow-sm">
+                                    <div className="rounded-xl border border-teal-200 bg-teal-50/90 px-3 py-2 text-xs font-bold text-teal-900 font-mono text-right flex items-center justify-end h-[36px] shadow-2xs">
                                         <span>{formatRupiah(Number(inputQty || 0) * Number(inputPrice || 0))}</span>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {quickAddError && (
-                            <p className="mt-2 text-xs font-semibold text-rose-600 animate-fade-in">
-                                <AlertTriangle size={18} className="inline mr-1 text-amber-500" /> {quickAddError}
-                            </p>
-                        )}
+                            {quickAddError && (
+                                <p className="text-xs font-semibold text-rose-600 animate-fade-in flex items-center gap-1">
+                                    <AlertTriangle size={15} className="text-rose-500 shrink-0" /> {quickAddError}
+                                </p>
+                            )}
 
-                        {/* Tombol + Tambah ke Daftar Usulan */}
-                        <div className="flex justify-end mt-3">
-                            <button
-                                type="button"
-                                onClick={handleAddItem}
-                                className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-4 py-2 rounded-lg transition shadow-xs flex items-center gap-1.5 cursor-pointer"
-                            >
-                                <span>+ Tambah ke Daftar Usulan</span>
-                            </button>
+                            {/* Action Bar Terpadu: Tombol Tambah Barang Sesuai Gaya Aplikasi */}
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-2.5 border-t border-slate-200/70 gap-2.5">
+                                <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                                    <span className="inline-block w-2 h-2 rounded-full bg-teal-500 shrink-0"></span>
+                                    <span>Pilih dari katalog atau ketik manual, lalu klik tombol untuk memasukkan ke daftar.</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleAddItem}
+                                    className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer whitespace-nowrap self-end sm:self-auto"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    <span>Tambah ke Daftar Usulan</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -1012,11 +1028,11 @@ export default function RequisitionFormModal({
                                 5. Daftar Barang yang Diusulkan
                             </h3>
                             <span className="text-xs font-semibold text-slate-600">
-                                Total: <strong className="text-slate-900">{data.items.length}</strong> item belanja
+                                Total: <strong className="text-slate-900 font-bold bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">{data.items.length}</strong> item belanja
                             </span>
                         </div>
 
-                        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+                        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
                             <table className="min-w-full divide-y divide-slate-200 text-xs">
                                 <thead className="bg-slate-50 font-bold text-slate-700 uppercase tracking-wider text-[11px]">
                                     <tr>
@@ -1032,8 +1048,16 @@ export default function RequisitionFormModal({
                                 <tbody className="divide-y divide-slate-100 bg-white">
                                     {data.items.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="px-6 py-10 text-center text-slate-400 italic">
-                                                Belum ada barang di daftar usulan. Pilih klasifikasi rekening di atas dan masukkan rincian barang.
+                                            <td colSpan={7} className="px-6 py-12 text-center">
+                                                <div className="flex flex-col items-center justify-center max-w-sm mx-auto text-center">
+                                                    <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3 border border-slate-200">
+                                                        <ShoppingBag className="w-6 h-6 text-slate-400" />
+                                                    </div>
+                                                    <p className="text-xs font-bold text-slate-700">Belum Ada Barang di Daftar Usulan</p>
+                                                    <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                                                        Pilih klasifikasi rekening di atas, lalu masukkan rincian barang untuk menambahkan ke daftar usulan belanja.
+                                                    </p>
+                                                </div>
                                             </td>
                                         </tr>
                                     ) : (
@@ -1064,9 +1088,11 @@ export default function RequisitionFormModal({
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemoveItem(idx)}
-                                                        className="text-rose-600 hover:text-rose-800 font-bold text-xs transition cursor-pointer"
+                                                        title="Hapus barang ini"
+                                                        className="inline-flex items-center justify-center p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer"
                                                     >
-                                                        Hapus
+                                                        <Trash2 className="w-4 h-4" />
+                                                        <span className="sr-only">Hapus</span>
                                                     </button>
                                                 </td>
                                             </tr>
@@ -1077,24 +1103,28 @@ export default function RequisitionFormModal({
                         </div>
 
                         {/* Summary Bar di Bawah Tabel */}
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-2 border-t border-slate-100">
-                            <div className="text-xs text-slate-500 font-medium">
-                                {data.items.length > 0 && (
-                                    <span>
-                                        Total <strong>{data.items.length}</strong> item usulan belanja
-                                        {totalOperasional > 0 && totalModal > 0 && (
-                                            <span className="ml-2 text-indigo-700 font-semibold">
-                                                (Operasional: {formatRupiah(totalOperasional)} &bull; Modal: {formatRupiah(totalModal)})
-                                            </span>
-                                        )}
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-3 border-t border-slate-100">
+                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-semibold border border-slate-200 text-[11px]">
+                                    Total Item: <strong className="text-slate-900">{data.items.length}</strong>
+                                </span>
+                                {totalOperasional > 0 && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800 font-medium border border-teal-200 text-[11px]">
+                                        Operasi: <strong className="font-mono font-semibold">{formatRupiah(totalOperasional)}</strong>
+                                    </span>
+                                )}
+                                {totalModal > 0 && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-50 text-purple-800 font-medium border border-purple-200 text-[11px]">
+                                        Modal: <strong className="font-mono font-semibold">{formatRupiah(totalModal)}</strong>
                                     </span>
                                 )}
                             </div>
-                            <div className="flex items-center gap-2.5 self-end">
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+
+                            <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
                                     TOTAL ESTIMASI USULAN:
                                 </span>
-                                <span className="text-base sm:text-lg font-black text-emerald-700 font-mono bg-emerald-50 px-3 py-0.5 rounded-lg border border-emerald-200">
+                                <span className="text-base sm:text-lg font-black text-teal-900 font-mono bg-teal-50 px-3.5 py-1 rounded-xl border border-teal-200 shadow-2xs">
                                     {formatRupiah(grandTotal)}
                                 </span>
                             </div>
@@ -1116,11 +1146,10 @@ export default function RequisitionFormModal({
                         type="button"
                         onClick={handleSubmit}
                         disabled={processing || data.items.length === 0}
-                        className={`rounded-xl px-5 py-2 text-xs font-bold text-white shadow-xs transition cursor-pointer active:scale-95 ${
-                            processing || data.items.length === 0
-                                ? 'bg-slate-300 cursor-not-allowed'
-                                : 'bg-teal-600 hover:bg-teal-700'
-                        }`}
+                        className={`rounded-xl px-5 py-2 text-xs font-bold text-white shadow-xs transition cursor-pointer active:scale-95 ${processing || data.items.length === 0
+                            ? 'bg-slate-300 cursor-not-allowed'
+                            : 'bg-teal-600 hover:bg-teal-700'
+                            }`}
                     >
                         {processing ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Kirim Usulan Belanja'}
                     </button>
@@ -1129,3 +1158,4 @@ export default function RequisitionFormModal({
         </Modal>
     );
 }
+

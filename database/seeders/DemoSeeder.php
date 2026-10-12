@@ -18,8 +18,9 @@ class DemoSeeder extends Seeder
 
         $this->call([
             UserSeeder::class,
+            RbaMurni2027Seeder::class,
             RevenueSeeder::class,
-            RequisitionSeeder::class,
+            RequisitionWorkflowSeeder::class,
         ]);
     }
 }
