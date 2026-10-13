@@ -192,5 +192,52 @@ class UserLoginAndCrudTest extends TestCase
             'unit_id' => $newUnit->id,
         ]);
     }
+
+    public function test_admin_can_reset_password_for_other_user_and_user_can_login_with_new_password(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        $user = User::factory()->create([
+            'email' => 'staff.reset@rsj.com',
+            'password' => Hash::make('PasswordLama123'),
+            'role' => 'perencanaan',
+            'is_active' => true,
+        ]);
+
+        // Admin updates user password via UserController::update
+        $response = $this->actingAs($admin)->put(route('users.update', $user), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
+            'password' => 'PasswordBaru123',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(route('users.index'));
+
+        // Logout admin
+        $this->post('/logout');
+
+        // User fails login with old password
+        $failLogin = $this->post('/login', [
+            'email' => 'staff.reset@rsj.com',
+            'password' => 'PasswordLama123',
+        ]);
+        $failLogin->assertSessionHasErrors('email');
+        $this->assertGuest();
+
+        // User successfully logs in with new password
+        $captcha = session('login_captcha');
+        $successLogin = $this->post('/login', [
+            'email' => 'staff.reset@rsj.com',
+            'password' => 'PasswordBaru123',
+            'captcha' => $captcha,
+        ]);
+        $this->assertAuthenticatedAs($user);
+        $successLogin->assertRedirect('/perencanaan/dashboard');
+    }
 }
 

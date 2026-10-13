@@ -231,7 +231,7 @@ export default function Login({ status, canResetPassword, captchaSvg, fiscalYear
                     </div>
 
                     {/* Ingat Saya & Lupa Kata Sandi */}
-                    <div className="flex items-center justify-between text-xs pt-0.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs pt-0.5">
                         <label className="flex items-center gap-2 cursor-pointer select-none text-slate-600 hover:text-slate-800">
                             <Checkbox
                                 name="remember"
@@ -242,14 +242,9 @@ export default function Login({ status, canResetPassword, captchaSvg, fiscalYear
                             <span>Ingat saya</span>
                         </label>
 
-                        {canResetPassword && (
-                            <Link
-                                href={route('password.request')}
-                                className="font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
-                            >
-                                Lupa sandi?
-                            </Link>
-                        )}
+                        <span className="text-[11px] sm:text-xs text-slate-500">
+                            Lupa kata sandi? Hubungi Administrator SIM-RS.
+                        </span>
                     </div>
 
                     {/* Submit Button (Masuk) */}
