@@ -120,8 +120,7 @@ class AuthenticatedSessionController extends Controller
         }
 
         return "<svg xmlns='http://www.w3.org/2000/svg' width='{$width}' height='{$height}' viewBox='0 0 {$width} {$height}' class='w-full h-full select-none'>
-            <rect width='100%' height='100%' fill='#f8fafc' rx='8'/>
-            <rect width='100%' height='100%' fill='none' stroke='#cbd5e1' stroke-width='1' rx='8'/>
+            <rect width='100%' height='100%' fill='#f8fafc'/>
             {$lines}
             {$letters}
         </svg>";

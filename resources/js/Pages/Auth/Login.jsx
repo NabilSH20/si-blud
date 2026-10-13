@@ -94,7 +94,7 @@ export default function Login({ status, canResetPassword, captchaSvg, fiscalYear
                                 value={data.fiscal_year}
                                 onChange={(e) => setData('fiscal_year', e.target.value)}
                                 disabled={!hasFiscalYears}
-                                className={`block w-full appearance-none rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-semibold transition ${!hasFiscalYears
+                                className={`block w-full appearance-none bg-none [background-image:none] rounded-xl border border-slate-200 pl-3.5 pr-9 py-2.5 text-sm font-semibold transition ${!hasFiscalYears
                                         ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                         : 'bg-[#edf4fc] text-slate-900 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 cursor-pointer'
                                     }`}
