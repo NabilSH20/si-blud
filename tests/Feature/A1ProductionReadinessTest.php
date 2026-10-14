@@ -91,10 +91,10 @@ class A1ProductionReadinessTest extends TestCase
         $this->assertEquals(0, \App\Models\RbaAccount::where('period_year', '!=', 2027)->count());
         $this->assertEquals(0, \App\Models\RbaAccount::where('total_budget', '>', 0)->count());
 
-        // Master barang dan pengguna tersedia, semua item terikat ke kode rekening RBA
+        // Master barang tersedia, semua item terikat ke kode rekening RBA, dan tidak menabur user default
         $this->assertGreaterThan(0, \App\Models\Item::count());
         $this->assertEquals(0, \App\Models\Item::whereNull('rba_account_id')->count());
-        $this->assertEquals(17, User::count());
+        $this->assertEquals(0, User::count());
 
         // Struktur kode rekening rapi dan hierarkis
         $this->assertDatabaseHas('rba_accounts', ['account_code' => '1', 'parent_code' => null]);

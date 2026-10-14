@@ -18,9 +18,5 @@ class DatabaseSeeder extends Seeder
             RbaAccountSeeder::class,
             ItemSeeder::class,
         ]);
-
-        if (!app()->environment('production')) {
-            $this->call(UserSeeder::class);
-        }
     }
 }
