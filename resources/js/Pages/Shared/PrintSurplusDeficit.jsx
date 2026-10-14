@@ -63,7 +63,7 @@ export default function PrintSurplusDeficit({
             <div className="border-b-4 border-double border-black pb-4 mb-6">
                 <div className="flex items-center gap-6">
                     <img
-                        src="/image/logo-vertikal-rsj.png"
+                        src="/images/logo-vertikal-rsj.png"
                         alt="Logo RSJ Tampan"
                         className="h-24 w-auto object-contain shrink-0"
                     />

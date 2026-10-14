@@ -1,5 +1,4 @@
 import AdminLayout from '@/Layouts/AdminLayout';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import DivisiLayout from '@/Layouts/DivisiLayout';
 import KeuanganLayout from '@/Layouts/KeuanganLayout';
 import PerencanaanLayout from '@/Layouts/PerencanaanLayout';
@@ -38,7 +37,7 @@ function getLayoutComponent(role) {
         case 'keuangan':
             return KeuanganLayout;
         default:
-            return AuthenticatedLayout;
+            return DivisiLayout;
     }
 }
 

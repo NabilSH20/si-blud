@@ -197,7 +197,7 @@ export default function PerencanaanLayout({ children }) {
                     {/* Centered Logo & Brand Info */}
                     <div className="flex flex-col items-center justify-center text-center">
                         <img
-                            src="/image/logo-vertikal-rsj.png"
+                            src="/images/logo-vertikal-rsj.png"
                             alt="Logo RSJ Tampan"
                             className="max-h-14 sm:max-h-16 max-w-[190px] w-auto h-auto object-contain drop-shadow-2xs"
                         />

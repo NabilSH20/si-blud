@@ -55,7 +55,7 @@ export default function PrintReport({ budgets = [], summary = {} }) {
             <div className="flex items-center gap-6 border-b-4 border-black pb-4 mb-6">
                 <div className="shrink-0">
                     <img
-                        src="/image/logo-vertikal-rsj.png"
+                        src="/images/logo-vertikal-rsj.png"
                         alt="Logo RSJ Tampan"
                         className="h-24 w-auto object-contain"
                     />
