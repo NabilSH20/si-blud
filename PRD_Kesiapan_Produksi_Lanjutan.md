@@ -67,7 +67,7 @@
 
 ## 6. Definition of Done
 
-- [ ] A11: route lupa-password hilang, tidak ada sisa referensi frontend, build sukses
-- [ ] A12: kolom, middleware, dan test selesai; migration sudah disetujui
-- [ ] A13: hasil verifikasi dilaporkan, `DatabaseSeeder` tidak memanggil seeder demo otomatis
-- [ ] Jumlah test tidak turun dari hasil `php artisan test` terakhir yang valid
+- [x] A11: route lupa-password hilang, tidak ada sisa referensi frontend, build sukses
+- [x] A12: Dibatalkan atas keputusan pemilik produk (tidak diperlukan agar staf tidak bingung)
+- [x] A13: hasil verifikasi dilaporkan, `DatabaseSeeder` tidak memanggil seeder demo otomatis
+- [x] Jumlah test tidak turun dari hasil `php artisan test` terakhir yang valid (160 test, 1244 assertions)
