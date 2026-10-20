@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Keuangan;
 
 use App\Http\Controllers\Controller;
 use App\Models\Budget;
+use App\Models\FiscalYear;
 use App\Models\Requisition;
 use App\Models\RequisitionDetail;
 use App\Models\Revenue;
@@ -18,8 +19,8 @@ class DashboardController extends Controller
     public function index(): Response
     {
         $activeYear = (int) session('active_year', function () {
-            return class_exists(\App\Models\FiscalYear::class)
-                ? \App\Models\FiscalYear::getDefaultYear()
+            return class_exists(FiscalYear::class)
+                ? FiscalYear::getDefaultYear()
                 : (int) date('Y');
         });
 
@@ -29,28 +30,29 @@ class DashboardController extends Controller
             $parts = explode('.', $b->account_code);
             $prefix = '';
             for ($i = 0; $i < count($parts) - 1; $i++) {
-                $prefix .= ($i == 0 ? '' : '.') . $parts[$i];
+                $prefix .= ($i == 0 ? '' : '.').$parts[$i];
                 if (in_array($prefix, $budgetCodes)) {
                     return false;
                 }
             }
+
             return true;
         });
 
         $totalInitial = (float) $rootBudgets->sum('total_budget');
         $totalRemaining = (float) $rootBudgets->sum('remaining_budget');
-        
+
         // P0-2 FIX: Official expense is the sum of approved requisitions, not the ledger difference
         $totalSpent = (float) RequisitionDetail::whereHas('requisition', function ($q) use ($activeYear) {
             $q->where('status', 'Disetujui_Selesai')
-              ->where(function ($sq) use ($activeYear) {
-                  $sq->where('budget_year', $activeYear)
-                     ->orWhere(function ($ssq) use ($activeYear) {
-                         $ssq->whereNull('budget_year')->where('fiscal_year', $activeYear);
-                     });
-              });
+                ->where(function ($sq) use ($activeYear) {
+                    $sq->where('budget_year', $activeYear)
+                        ->orWhere(function ($ssq) use ($activeYear) {
+                            $ssq->whereNull('budget_year')->where('fiscal_year', $activeYear);
+                        });
+                });
         })->sum('subtotal');
-        
+
         $totalRevenue = (float) Revenue::whereYear('date', $activeYear)->sum('amount');
 
         $totalLedgerSpent = max(0, $totalInitial - $totalRemaining);
@@ -79,7 +81,7 @@ class DashboardController extends Controller
                 $spent = max(0, $initial - $remaining);
 
                 return [
-                    'name' => strlen($b->account_name) > 20 ? substr($b->account_name, 0, 18) . '...' : $b->account_name,
+                    'name' => strlen($b->account_name) > 20 ? substr($b->account_name, 0, 18).'...' : $b->account_name,
                     'full_name' => $b->account_name,
                     'terpakai' => $spent,
                     'sisa' => $remaining,
@@ -95,7 +97,7 @@ class DashboardController extends Controller
             $monthIndex = (int) $rev->date->format('n') - 1;
             $monthlyData[$months[$monthIndex]] += (float) $rev->amount;
         }
-        
+
         $revenueTrend = [];
         foreach ($monthlyData as $m => $val) {
             $revenueTrend[] = [
@@ -107,11 +109,15 @@ class DashboardController extends Controller
         $totalProcessed = Requisition::where('status', 'Disetujui_Selesai')
             ->where(function ($q) use ($activeYear) {
                 $q->where('budget_year', $activeYear)
-                  ->orWhere(function ($sq) use ($activeYear) {
-                      $sq->whereNull('budget_year')->where('fiscal_year', $activeYear);
-                  });
+                    ->orWhere(function ($sq) use ($activeYear) {
+                        $sq->whereNull('budget_year')->where('fiscal_year', $activeYear);
+                    });
             })
             ->count();
+
+        $currentInputYear = (int) date('Y');
+        $ongoingYearRevenue = (float) Revenue::whereYear('date', $currentInputYear)->sum('amount');
+        $isFuturePlanning = $activeYear > $currentInputYear;
 
         return Inertia::render('Keuangan/Dashboard', [
             'total_budgets' => Budget::where('period_year', $activeYear)->count(),
@@ -123,6 +129,9 @@ class DashboardController extends Controller
             'revenue_trend' => $revenueTrend,
             'total_spent' => $totalSpent,
             'active_year' => $activeYear,
+            'current_input_year' => $currentInputYear,
+            'ongoing_year_revenue' => $ongoingYearRevenue,
+            'is_future_planning' => $isFuturePlanning,
         ]);
     }
 }

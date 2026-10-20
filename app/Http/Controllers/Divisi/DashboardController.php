@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Divisi;
 
 use App\Http\Controllers\Controller;
+use App\Models\FiscalYear;
 use App\Models\Requisition;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,10 +17,12 @@ class DashboardController extends Controller
      */
     public function index(): Response
     {
-        $user = auth()->user()->load(['division', 'unit']);
+        /** @var User $user */
+        $user = Auth::user();
+        $user->load(['division', 'unit']);
         $userId = $user->id;
         $activeYear = (int) session('active_year', function () {
-            return \App\Models\FiscalYear::getDefaultYear() ?? date('Y');
+            return FiscalYear::getDefaultYear() ?? date('Y');
         });
 
         $baseQuery = Requisition::query();
@@ -33,9 +38,9 @@ class DashboardController extends Controller
 
         $baseQuery->where(function ($q) use ($activeYear) {
             $q->where('budget_year', $activeYear)
-              ->orWhere(function ($sq) use ($activeYear) {
-                  $sq->whereNull('budget_year')->where('fiscal_year', $activeYear);
-              });
+                ->orWhere(function ($sq) use ($activeYear) {
+                    $sq->whereNull('budget_year')->where('fiscal_year', $activeYear);
+                });
         });
 
         $recentRequisitions = (clone $baseQuery)

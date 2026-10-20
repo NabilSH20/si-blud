@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Keuangan;
 
 use App\Http\Controllers\Controller;
+use App\Models\FiscalYear;
 use App\Models\RbaAccount;
 use App\Models\Requisition;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -21,21 +23,31 @@ class RequisitionController extends Controller
     public function index(Request $request): Response
     {
         $activeYear = (int) session('active_year', function () {
-            return class_exists(\App\Models\FiscalYear::class)
-                ? \App\Models\FiscalYear::getDefaultYear()
+            return class_exists(FiscalYear::class)
+                ? FiscalYear::getDefaultYear()
                 : (int) date('Y');
         });
 
-        $selectedYear = $request->filled('fiscal_year')
-            ? $request->fiscal_year
-            : ($request->filled('budget_year') ? $request->budget_year : $activeYear);
+        $selectedYear = $request->filled('budget_year')
+            ? $request->budget_year
+            : ($request->filled('fiscal_year') ? $request->fiscal_year : $activeYear);
 
         $query = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])
-            ->where(function ($q) use ($selectedYear) {
-                $q->where('budget_year', $selectedYear)
-                  ->orWhere(function ($sq) use ($selectedYear) {
-                      $sq->whereNull('budget_year')->where('fiscal_year', $selectedYear);
-                  });
+            ->where(function ($q) use ($selectedYear, $request) {
+                if ($request->filled('budget_year')) {
+                    $q->where('budget_year', (int) $request->budget_year)
+                        ->orWhere(function ($sq) use ($request) {
+                            $sq->whereNull('budget_year')->where('fiscal_year', (int) $request->budget_year);
+                        });
+                } elseif ($request->filled('fiscal_year')) {
+                    $q->where('budget_year', (int) $request->fiscal_year)
+                        ->orWhere('fiscal_year', (int) $request->fiscal_year);
+                } else {
+                    $q->where('budget_year', $selectedYear)
+                        ->orWhere(function ($sq) use ($selectedYear) {
+                            $sq->whereNull('budget_year')->where('fiscal_year', $selectedYear);
+                        });
+                }
             });
 
         $requisitions = $query
@@ -51,7 +63,22 @@ class RequisitionController extends Controller
             ->latest('id')
             ->get();
 
-        $budgets = RbaAccount::orderBy('account_code')->get();
+        foreach ($requisitions as $req) {
+            $rYear = (int) ($req->budget_year ?? $req->fiscal_year ?? $selectedYear);
+            $rAccId = $req->rba_account_id ?: $req->requisitionDetails->first(fn ($d) => ! empty($d->item?->rba_account_id))?->item?->rba_account_id;
+            if ($rAccId) {
+                $resAcc = RbaAccount::resolveForYear($rAccId, $rYear);
+                if ($resAcc) {
+                    $req->setRelation('rbaAccount', $resAcc);
+                    $req->rba_account_id = $resAcc->id;
+                }
+            }
+        }
+
+        $budgets = RbaAccount::where('period_year', $selectedYear)->orderBy('account_code')->get();
+        if ($budgets->isEmpty()) {
+            $budgets = RbaAccount::orderBy('account_code')->get();
+        }
 
         return Inertia::render('Keuangan/Requisitions/Index', [
             'requisitions' => $requisitions,
@@ -71,7 +98,20 @@ class RequisitionController extends Controller
         $requisition = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])
             ->findOrFail($id);
 
-        $budgets = RbaAccount::orderBy('account_code')->get();
+        $reqYear = (int) ($requisition->budget_year ?? $requisition->fiscal_year ?? session('active_year', date('Y')));
+        $budgets = RbaAccount::where('period_year', $reqYear)->orderBy('account_code')->get();
+        if ($budgets->isEmpty()) {
+            $budgets = RbaAccount::orderBy('account_code')->get();
+        }
+
+        $rawAccountId = $requisition->rba_account_id ?: $requisition->requisitionDetails->first(fn ($d) => ! empty($d->item?->rba_account_id))?->item?->rba_account_id;
+        if ($rawAccountId) {
+            $resolvedAcc = RbaAccount::resolveForYear($rawAccountId, $reqYear);
+            if ($resolvedAcc) {
+                $requisition->setRelation('rbaAccount', $resolvedAcc);
+                $requisition->rba_account_id = $resolvedAcc->id;
+            }
+        }
 
         return Inertia::render('Keuangan/Requisitions/Show', [
             'requisition' => $requisition,
@@ -84,7 +124,7 @@ class RequisitionController extends Controller
      */
     public function update(Request $request, string $id): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'keuangan', 403, 'Akses ditolak.');
+        abort_unless(Auth::user()?->role === 'keuangan', 403, 'Akses ditolak.');
 
         $requisition = Requisition::with(['requisitionDetails.item', 'rbaAccount'])->findOrFail($id);
 
@@ -102,7 +142,9 @@ class RequisitionController extends Controller
 
         if ($validated['status'] === 'Disetujui_Selesai') {
             DB::transaction(function () use ($requisition, $validated) {
-                // Group approved costs by rba_account_id
+                $reqYear = (int) ($requisition->budget_year ?? $requisition->fiscal_year ?? date('Y'));
+
+                // Group approved costs by rba_account_id (resolved for $reqYear)
                 $accountTotals = [];
                 $grandTotal = 0;
 
@@ -114,15 +156,24 @@ class RequisitionController extends Controller
                     $subtotal = $qty * $price;
                     $grandTotal += $subtotal;
 
-                    $accId = $validated['rba_account_id'] ?? $requisition->rba_account_id;
+                    $rawAccId = $validated['rba_account_id']
+                        ?? $requisition->rba_account_id
+                        ?? $detail->item?->rba_account_id;
+
+                    $resolvedAcc = RbaAccount::resolveForYear($rawAccId, $reqYear);
+                    $accId = $resolvedAcc?->id;
+
                     if ($accId) {
                         $accountTotals[$accId] = ($accountTotals[$accId] ?? 0) + $subtotal;
                     }
                 }
 
                 if (empty($accountTotals)) {
-                    $budgetId = $validated['rba_account_id'] ?? $requisition->rba_account_id;
-                    if (!$budgetId) {
+                    $rawBudgetId = $validated['rba_account_id'] ?? $requisition->rba_account_id;
+                    $resolvedBudget = RbaAccount::resolveForYear($rawBudgetId, $reqYear);
+                    $budgetId = $resolvedBudget?->id;
+
+                    if (! $budgetId) {
                         throw ValidationException::withMessages([
                             'rba_account_id' => 'Rekening pagu anggaran belum ditentukan untuk pengajuan ini.',
                         ]);
@@ -134,8 +185,8 @@ class RequisitionController extends Controller
                 foreach ($accountTotals as $accId => $cost) {
                     $budget = RbaAccount::lockForUpdate()->findOrFail($accId);
                     if ((float) $budget->remaining_budget < (float) $cost) {
-                        $formattedRemaining = 'Rp ' . number_format($budget->remaining_budget, 0, ',', '.');
-                        $formattedCost = 'Rp ' . number_format($cost, 0, ',', '.');
+                        $formattedRemaining = 'Rp '.number_format($budget->remaining_budget, 0, ',', '.');
+                        $formattedCost = 'Rp '.number_format($cost, 0, ',', '.');
 
                         throw ValidationException::withMessages([
                             'rba_account_id' => "Sisa pagu anggaran pada rekening {$budget->account_name} ({$formattedRemaining}) tidak mencukupi untuk membiayai item sebesar {$formattedCost}.",
@@ -144,13 +195,15 @@ class RequisitionController extends Controller
                 }
 
                 // Deduct budgets
-                $primaryBudgetId = $validated['rba_account_id'] ?? $requisition->rba_account_id;
+                $rawPrimaryId = $validated['rba_account_id'] ?? $requisition->rba_account_id ?? array_key_first($accountTotals);
+                $primaryBudgetId = RbaAccount::resolveForYear($rawPrimaryId, $reqYear)?->id ?? array_key_first($accountTotals);
+
                 foreach ($accountTotals as $accId => $cost) {
                     $budget = RbaAccount::lockForUpdate()->findOrFail($accId);
                     $budget->remaining_budget = (float) $budget->remaining_budget - (float) $cost;
                     $budget->spent_budget = (float) $budget->spent_budget + (float) $cost;
                     $budget->save();
-                    if (!$primaryBudgetId) {
+                    if (! $primaryBudgetId) {
                         $primaryBudgetId = $accId;
                     }
                 }
@@ -163,7 +216,7 @@ class RequisitionController extends Controller
                     'sp2d_number' => $validated['sp2d_number'] ?? null,
                     'receipt_number' => $validated['receipt_number'] ?? null,
                     'notes_keuangan' => $validated['notes_keuangan'] ?? null,
-                    'approved_by_keuangan_id' => auth()->id(),
+                    'approved_by_keuangan_id' => Auth::id(),
                     'approved_keuangan_at' => now(),
                 ]);
             });
@@ -175,7 +228,7 @@ class RequisitionController extends Controller
             $requisition->update([
                 'status' => 'Ditolak',
                 'notes_keuangan' => $validated['notes_keuangan'] ?? null,
-                'approved_by_keuangan_id' => auth()->id(),
+                'approved_by_keuangan_id' => Auth::id(),
                 'approved_keuangan_at' => now(),
             ]);
 

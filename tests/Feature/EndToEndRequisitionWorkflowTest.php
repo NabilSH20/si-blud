@@ -6,7 +6,6 @@ use App\Models\Division;
 use App\Models\Item;
 use App\Models\RbaAccount;
 use App\Models\Requisition;
-use App\Models\RequisitionDetail;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,10 +17,15 @@ class EndToEndRequisitionWorkflowTest extends TestCase
     use RefreshDatabase;
 
     private User $divisiUser;
+
     private User $perencanaanUser;
+
     private User $keuanganUser;
+
     private Division $medikDivision;
+
     private Unit $igdUnit;
+
     private RbaAccount $rbaAccount;
 
     protected function setUp(): void

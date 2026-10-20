@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Perencanaan;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Keuangan\RevenueController;
 use App\Models\FiscalYear;
+use App\Models\Item;
 use App\Models\RbaAccount;
 use App\Models\RbaExpenseItem;
 use App\Models\RbaRevenueItem;
@@ -16,6 +17,7 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,7 +32,7 @@ class RbaController extends Controller
         $activeFiscalYears = FiscalYear::where('is_active', true)->orderBy('year')->pluck('year')->toArray();
         if (empty($activeFiscalYears)) {
             $shiftYears = RbaShift::distinct()->pluck('year')->filter()->toArray();
-            $reqYears = \App\Models\Requisition::distinct()->pluck('budget_year')->filter()->toArray();
+            $reqYears = Requisition::distinct()->pluck('budget_year')->filter()->toArray();
             $activeFiscalYears = array_values(array_unique(array_merge($shiftYears, $reqYears)));
         }
 
@@ -38,7 +40,7 @@ class RbaController extends Controller
         $activeSessionYear = (int) session('active_year', $defaultYear);
         $selectedYear = (int) $request->query('year', $activeSessionYear);
 
-        if (!in_array($selectedYear, $activeFiscalYears)) {
+        if (! in_array($selectedYear, $activeFiscalYears)) {
             $activeFiscalYears[] = $selectedYear;
         }
         $availableYears = array_values(array_unique($activeFiscalYears));
@@ -55,63 +57,68 @@ class RbaController extends Controller
                 ?? RbaShift::latest('id')->first();
 
             $newShift = DB::transaction(function () use ($selectedYear, $templateShift) {
-                    $shift = RbaShift::create([
-                        'year' => $selectedYear,
-                        'shift_name' => 'Murni',
-                        'doc_title' => "RENCANA BISNIS DAN ANGGARAN MURNI T.A. {$selectedYear}",
-                        'period_month' => "Januari {$selectedYear}",
-                        'status' => 'Aktif',
-                        'notes' => "RBA Definitif Murni Tahun Anggaran {$selectedYear} RS Jiwa Tampan.",
-                    ]);
+                $shift = RbaShift::create([
+                    'year' => $selectedYear,
+                    'shift_name' => 'Murni',
+                    'doc_title' => "RENCANA BISNIS DAN ANGGARAN MURNI T.A. {$selectedYear}",
+                    'period_month' => "Januari {$selectedYear}",
+                    'status' => 'Aktif',
+                    'notes' => "RBA Definitif Murni Tahun Anggaran {$selectedYear} RS Jiwa Tampan.",
+                    'penerimaan_silpa' => $templateShift ? (float) $templateShift->penerimaan_silpa : 0,
+                    'penerimaan_divestasi' => $templateShift ? (float) $templateShift->penerimaan_divestasi : 0,
+                    'penerimaan_pinjaman' => $templateShift ? (float) $templateShift->penerimaan_pinjaman : 0,
+                    'pengeluaran_investasi' => $templateShift ? (float) $templateShift->pengeluaran_investasi : 0,
+                    'pengeluaran_pokok_utang' => $templateShift ? (float) $templateShift->pengeluaran_pokok_utang : 0,
+                ]);
 
-                    if ($templateShift) {
-                        foreach ($templateShift->expenseItems as $item) {
-                            RbaExpenseItem::create([
-                                'rba_shift_id' => $shift->id,
-                                'rba_account_id' => $item->rba_account_id,
-                                'account_code' => $item->account_code,
-                                'account_name' => $item->account_name,
-                                'parent_code' => $item->parent_code,
-                                'level' => $item->level,
-                                'is_header' => $item->is_header,
-                                'before_jasa_layanan' => $item->after_jasa_layanan,
-                                'before_hasil_kerjasama' => $item->after_hasil_kerjasama,
-                                'before_lain_lain_sah' => $item->after_lain_lain_sah,
-                                'before_silpa' => $item->after_silpa,
-                                'before_apbd' => $item->after_apbd,
-                                'before_total' => $item->after_total,
-                                'after_jasa_layanan' => $item->after_jasa_layanan,
-                                'after_hasil_kerjasama' => $item->after_hasil_kerjasama,
-                                'after_lain_lain_sah' => $item->after_lain_lain_sah,
-                                'after_silpa' => $item->after_silpa,
-                                'after_apbd' => $item->after_apbd,
-                                'after_total' => $item->after_total,
-                                'difference' => 0,
-                                'keterangan' => null,
-                                'order_index' => $item->order_index,
-                            ]);
-                        }
-
-                        foreach ($templateShift->revenueItems as $rev) {
-                            RbaRevenueItem::create([
-                                'rba_shift_id' => $shift->id,
-                                'item_code' => $rev->item_code,
-                                'item_name' => $rev->item_name,
-                                'parent_code' => $rev->parent_code,
-                                'level' => $rev->level,
-                                'is_header' => $rev->is_header,
-                                'before_amount' => $rev->after_amount,
-                                'after_amount' => $rev->after_amount,
-                                'difference' => 0,
-                                'order_index' => $rev->order_index,
-                            ]);
-                        }
+                if ($templateShift) {
+                    foreach ($templateShift->expenseItems as $item) {
+                        RbaExpenseItem::create([
+                            'rba_shift_id' => $shift->id,
+                            'rba_account_id' => $item->rba_account_id,
+                            'account_code' => $item->account_code,
+                            'account_name' => $item->account_name,
+                            'parent_code' => $item->parent_code,
+                            'level' => $item->level,
+                            'is_header' => $item->is_header,
+                            'before_jasa_layanan' => $item->after_jasa_layanan,
+                            'before_hasil_kerjasama' => $item->after_hasil_kerjasama,
+                            'before_lain_lain_sah' => $item->after_lain_lain_sah,
+                            'before_silpa' => $item->after_silpa,
+                            'before_apbd' => $item->after_apbd,
+                            'before_total' => $item->after_total,
+                            'after_jasa_layanan' => $item->after_jasa_layanan,
+                            'after_hasil_kerjasama' => $item->after_hasil_kerjasama,
+                            'after_lain_lain_sah' => $item->after_lain_lain_sah,
+                            'after_silpa' => $item->after_silpa,
+                            'after_apbd' => $item->after_apbd,
+                            'after_total' => $item->after_total,
+                            'difference' => 0,
+                            'keterangan' => null,
+                            'order_index' => $item->order_index,
+                        ]);
                     }
 
-                    return $shift;
-                });
+                    foreach ($templateShift->revenueItems as $rev) {
+                        RbaRevenueItem::create([
+                            'rba_shift_id' => $shift->id,
+                            'item_code' => $rev->item_code,
+                            'item_name' => $rev->item_name,
+                            'parent_code' => $rev->parent_code,
+                            'level' => $rev->level,
+                            'is_header' => $rev->is_header,
+                            'before_amount' => $rev->after_amount,
+                            'after_amount' => $rev->after_amount,
+                            'difference' => 0,
+                            'order_index' => $rev->order_index,
+                        ]);
+                    }
+                }
 
-                $shifts = collect([$newShift]);
+                return $shift;
+            });
+
+            $shifts = collect([$newShift]);
         }
 
         $selectedShiftId = $request->query('shift_id');
@@ -130,6 +137,7 @@ class RbaController extends Controller
             $rootRev = $s->revenueItems()->where('item_code', '0')->first();
             $s->total_expense = $rootExp ? (float) $rootExp->after_total : (float) $s->expenseItems()->where('is_header', false)->sum('after_total');
             $s->total_revenue = $rootRev ? (float) $rootRev->after_amount : (float) $s->revenueItems()->where('is_header', false)->sum('after_amount');
+
             return $s;
         });
 
@@ -168,17 +176,7 @@ class RbaController extends Controller
         $revenuesOfYear = Revenue::whereYear('date', $currentShift ? $currentShift->year : $selectedYear)->get();
         $realizedByPos = [];
         foreach ($revenuesOfYear as $rev) {
-            $normalized = match ($rev->source) {
-                'Instalasi Gawat Darurat (IGD)' => 'Pendapatan Pelayanan Gawat Darurat',
-                'Instalasi Farmasi & Apotek' => 'Pendapatan Pelayanan Farmasi',
-                'Poliklinik Jiwa Terpadu' => 'Pendapatan Pelayanan Rawat Jalan',
-                'Instalasi Laboratorium' => 'Pendapatan Pelayanan Laboratorium',
-                'Instalasi Rawat Inap Jiwa' => 'Pendapatan Pelayanan Rawat Inap',
-                'Instalasi Radiologi' => 'Pendapatan Pelayanan Radiologi',
-                'Pelayanan Visum & Mediko-Legal' => 'Pendapatan Pelayanan Forensik Psikiatri',
-                'Pendapatan Jasa Giro & Non-Operasional' => 'Jasa Giro',
-                default => $rev->source,
-            };
+            $normalized = Revenue::normalizeSourceToPosName($rev->source);
             $realizedByPos[$normalized] = ($realizedByPos[$normalized] ?? 0) + (float) $rev->amount;
         }
 
@@ -187,6 +185,7 @@ class RbaController extends Controller
             $item->realized_amount = ! $item->is_header
                 ? (float) ($realizedByPos[$item->item_name] ?? 0)
                 : 0;
+
             return $item;
         });
 
@@ -208,6 +207,7 @@ class RbaController extends Controller
             $target = (float) $item->after_amount;
             $realized = (float) ($item->realized_amount ?? 0);
             $item->achievement_rate = $target > 0 ? round(($realized / $target) * 100, 2) : 0;
+
             return $item;
         });
 
@@ -233,6 +233,9 @@ class RbaController extends Controller
             'achievement_rate' => $rootRevenue && (float) $rootRevenue->after_amount > 0
                 ? round(((float) $realizedTotal / (float) $rootRevenue->after_amount) * 100, 2)
                 : 0,
+            'current_input_year' => (int) date('Y'),
+            'ongoing_year_realized' => (float) Revenue::whereYear('date', date('Y'))->sum('amount'),
+            'is_future_planning' => $selectedYear > (int) date('Y'),
         ];
 
         // 3. Approved Requisitions by Unit & Ringkasan RBA
@@ -249,7 +252,7 @@ class RbaController extends Controller
         $ringkasanRba = $this->buildRingkasanData($currentShift, $selectedYear, $approvedReqs);
 
         // 4. Master RBA Accounts & Requisition Items Proposed by Units for the Selected Year (Approved by Keuangan)
-        $catalogItems = \App\Models\Item::with('rbaAccount')
+        $catalogItems = Item::with('rbaAccount')
             ->orderBy('rba_account_id')
             ->orderBy('name')
             ->get();
@@ -355,8 +358,6 @@ class RbaController extends Controller
         ]);
     }
 
-
-
     /**
      * Activate a budget shift version and synchronize to active budgets.
      */
@@ -394,6 +395,11 @@ class RbaController extends Controller
                 'period_month' => $validated['period_month'],
                 'status' => 'Draft',
                 'notes' => $validated['notes'] ?? null,
+                'penerimaan_silpa' => $sourceShift ? (float) $sourceShift->penerimaan_silpa : 0,
+                'penerimaan_divestasi' => $sourceShift ? (float) $sourceShift->penerimaan_divestasi : 0,
+                'penerimaan_pinjaman' => $sourceShift ? (float) $sourceShift->penerimaan_pinjaman : 0,
+                'pengeluaran_investasi' => $sourceShift ? (float) $sourceShift->pengeluaran_investasi : 0,
+                'pengeluaran_pokok_utang' => $sourceShift ? (float) $sourceShift->pengeluaran_pokok_utang : 0,
             ]);
 
             if ($sourceShift) {
@@ -501,13 +507,38 @@ class RbaController extends Controller
             'keterangan' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        DB::transaction(function () use ($item, $shift, $validated) {
-            $afterTotal = $validated['after_jasa_layanan']
-                + $validated['after_hasil_kerjasama']
-                + $validated['after_lain_lain_sah']
-                + $validated['after_silpa']
-                + $validated['after_apbd'];
+        $afterTotal = (float) $validated['after_jasa_layanan']
+            + (float) $validated['after_hasil_kerjasama']
+            + (float) $validated['after_lain_lain_sah']
+            + (float) $validated['after_silpa']
+            + (float) $validated['after_apbd'];
 
+        // Proteksi Defisit Pagu: pastikan pagu setelah pergeseran tidak di bawah realisasi belanja (spent_budget) + komitmen pengajuan (Diproses_Keuangan)
+        if (! $item->is_header) {
+            $account = RbaAccount::where('account_code', $item->account_code)
+                ->where('period_year', $shift->year)
+                ->first();
+
+            if ($account) {
+                $committedBudget = (float) Requisition::where('rba_account_id', $account->id)
+                    ->where('status', 'Diproses_Keuangan')
+                    ->sum('total_approved');
+
+                $minRequiredBudget = (float) $account->spent_budget + $committedBudget;
+
+                if ($afterTotal < $minRequiredBudget) {
+                    $formattedSpent = 'Rp '.number_format($account->spent_budget, 0, ',', '.');
+                    $formattedCommitted = 'Rp '.number_format($committedBudget, 0, ',', '.');
+                    $formattedMin = 'Rp '.number_format($minRequiredBudget, 0, ',', '.');
+
+                    throw ValidationException::withMessages([
+                        'after_total' => "Pagu setelah pergeseran pada rekening [{$item->account_code} - {$item->account_name}] tidak boleh lebih kecil dari batas minimum pagu yang dibutuhkan ({$formattedMin}), terdiri dari realisasi belanja dicairkan ({$formattedSpent}) dan komitmen pengajuan yang sedang diproses Keuangan ({$formattedCommitted}).",
+                    ]);
+                }
+            }
+        }
+
+        DB::transaction(function () use ($item, $shift, $validated, $afterTotal) {
             $isMurni = (! $shift || $shift->shift_name === 'Murni');
 
             if ($isMurni) {
@@ -544,11 +575,13 @@ class RbaController extends Controller
             $this->recalculateHeaders($shift->id);
 
             if ($shift->status === 'Aktif' && ! $item->is_header) {
-                $account = RbaAccount::where('account_code', $item->account_code)->first();
+                $account = RbaAccount::where('account_code', $item->account_code)
+                    ->where('period_year', $shift->year)
+                    ->first();
                 if ($account) {
                     $account->update([
                         'total_budget' => $afterTotal,
-                        'remaining_budget' => max(0, $afterTotal - $account->spent_budget),
+                        'remaining_budget' => max(0, $afterTotal - (float) $account->spent_budget),
                     ]);
                 }
             }
@@ -784,7 +817,7 @@ class RbaController extends Controller
             ->orderByDesc('id')
             ->first();
 
-        if (!$template) {
+        if (! $template) {
             $template = RbaShift::where('year', '<', $shift->year)
                 ->whereHas('expenseItems')
                 ->orderByDesc('year')
@@ -796,8 +829,15 @@ class RbaController extends Controller
             // Inisialisasi struktur baku awal (0 rupiah) langsung dari master RbaAccount dan rincian Pendapatan BLUD
             DB::transaction(function () use ($shift) {
                 if ($shift->expenseItems()->count() === 0) {
-                    $accounts = RbaAccount::orderBy('account_code')->get();
-                    $parentCodes = RbaAccount::pluck('parent_code')->filter()->unique()->toArray();
+                    $accounts = RbaAccount::where('period_year', $shift->year)->orderBy('account_code')->get();
+                    if ($accounts->isEmpty()) {
+                        $latestYear = RbaAccount::max('period_year');
+                        $accounts = RbaAccount::where('period_year', $latestYear)->orderBy('account_code')->get();
+                        if ($accounts->isEmpty()) {
+                            $accounts = RbaAccount::orderBy('account_code')->get()->unique('account_code');
+                        }
+                    }
+                    $parentCodes = $accounts->pluck('parent_code')->filter()->unique()->toArray();
                     $order = 1;
                     foreach ($accounts as $acc) {
                         $isHeader = in_array($acc->account_code, $parentCodes);
@@ -884,9 +924,13 @@ class RbaController extends Controller
         DB::transaction(function () use ($shift, $template) {
             if ($shift->expenseItems()->count() === 0) {
                 foreach ($template->expenseItems as $item) {
+                    $matchingAccount = RbaAccount::where('account_code', $item->account_code)
+                        ->where('period_year', $shift->year)
+                        ->first();
+
                     RbaExpenseItem::create([
                         'rba_shift_id' => $shift->id,
-                        'rba_account_id' => $item->rba_account_id,
+                        'rba_account_id' => $matchingAccount?->id ?? $item->rba_account_id,
                         'account_code' => $item->account_code,
                         'account_name' => $item->account_name,
                         'parent_code' => $item->parent_code,
@@ -928,7 +972,6 @@ class RbaController extends Controller
                 }
             }
 
-
         });
     }
 
@@ -938,10 +981,10 @@ class RbaController extends Controller
     public function getAccountsWithProposed(int $selectedYear)
     {
         $rbaAccounts = RbaAccount::where(function ($q) use ($selectedYear) {
-                $q->where('year', $selectedYear)
-                  ->orWhere('period_year', $selectedYear)
-                  ->orWhereNull('year');
-            })
+            $q->where('year', $selectedYear)
+                ->orWhere('period_year', $selectedYear)
+                ->orWhereNull('year');
+        })
             ->orderBy('account_code')
             ->get();
 
@@ -949,25 +992,25 @@ class RbaController extends Controller
             $rbaAccounts = RbaAccount::orderBy('account_code')->get();
         }
 
-        $proposedDetails = \App\Models\RequisitionDetail::whereHas('requisition', function ($q) use ($selectedYear) {
-                $q->where(function ($yq) use ($selectedYear) {
-                    $yq->where('budget_year', $selectedYear)
-                       ->orWhere(function ($sq) use ($selectedYear) {
-                           $sq->whereNull('budget_year')->where('fiscal_year', $selectedYear);
-                       });
-                })->whereNotIn('status', ['Ditolak', 'Dibatalkan']);
-            })
+        $proposedDetails = RequisitionDetail::whereHas('requisition', function ($q) use ($selectedYear) {
+            $q->where(function ($yq) use ($selectedYear) {
+                $yq->where('budget_year', $selectedYear)
+                    ->orWhere(function ($sq) use ($selectedYear) {
+                        $sq->whereNull('budget_year')->where('fiscal_year', $selectedYear);
+                    });
+            })->whereNotIn('status', ['Ditolak', 'Dibatalkan']);
+        })
             ->with([
-                'requisition:id,requisition_number,rba_account_id,unit_id,fiscal_year,budget_year,status,user_id,nomor_surat_unit',
-                'requisition.unit:id,name,unit_code',
-                'requisition.user:id,name,nip',
-                'item:id,item_code,name,specification,unit_type,standard_price,rba_account_id',
-            ])
+            'requisition:id,requisition_number,rba_account_id,unit_id,fiscal_year,budget_year,status,user_id,nomor_surat_unit',
+            'requisition.unit:id,name,unit_code',
+            'requisition.user:id,name,nip',
+            'item:id,item_code,name,specification,unit_type,standard_price,rba_account_id',
+        ])
             ->get();
 
         $groupedDetails = $proposedDetails->groupBy(function ($d) {
-            return $d->rba_account_id 
-                ?? $d->item?->rba_account_id 
+            return $d->rba_account_id
+                ?? $d->item?->rba_account_id
                 ?? $d->requisition?->rba_account_id;
         });
 
@@ -982,6 +1025,7 @@ class RbaController extends Controller
                 $it->resolved_quantity = $qty;
                 $it->resolved_subtotal = $subtotal;
                 $it->status = $it->requisition?->status;
+
                 return $it;
             });
 
@@ -1013,6 +1057,7 @@ class RbaController extends Controller
                     $desc = array_merge($desc, $getDescendantCodes($c));
                 }
             }
+
             return $desc;
         };
 
@@ -1036,6 +1081,7 @@ class RbaController extends Controller
             $acc['rollup_count'] = (int) $totCount;
             $acc['rollup_approved_total'] = (float) $apprNominal;
             $acc['rollup_approved_count'] = (int) $apprCount;
+
             return $acc;
         });
 
@@ -1083,6 +1129,7 @@ class RbaController extends Controller
 
             if ($sumberDana === 'APBD') {
                 $reqBelanja['apbd'] += $amount;
+
                 continue;
             }
 
@@ -1186,14 +1233,38 @@ class RbaController extends Controller
             $expGedungRow = $expenseItems->firstWhere('account_code', '1.2.1.3');
             $expTanahRow = $expenseItems->firstWhere('account_code', '1.2.1.1');
 
-            if (!$expOperasiRow) { $missing_accounts[] = '1.1'; $data_incomplete = true; }
-            if (!$expBarangJasaRow) { $missing_accounts[] = '1.1.2.1'; $data_incomplete = true; }
-            if (!$expPegawaiRow) { $missing_accounts[] = '1.1.1'; $data_incomplete = true; }
-            if (!$expModalRow) { $missing_accounts[] = '1.2'; $data_incomplete = true; }
-            if (!$expPeralatanRow) { $missing_accounts[] = '1.2.1.2'; $data_incomplete = true; }
-            if (!$expGedungRow) { $missing_accounts[] = '1.2.1.3'; $data_incomplete = true; }
-            if (!$expTanahRow) { $missing_accounts[] = '1.2.1.1'; $data_incomplete = true; }
-            if (!$rootExpense) { $missing_accounts[] = '1'; $data_incomplete = true; }
+            if (! $expOperasiRow) {
+                $missing_accounts[] = '1.1';
+                $data_incomplete = true;
+            }
+            if (! $expBarangJasaRow) {
+                $missing_accounts[] = '1.1.2.1';
+                $data_incomplete = true;
+            }
+            if (! $expPegawaiRow) {
+                $missing_accounts[] = '1.1.1';
+                $data_incomplete = true;
+            }
+            if (! $expModalRow) {
+                $missing_accounts[] = '1.2';
+                $data_incomplete = true;
+            }
+            if (! $expPeralatanRow) {
+                $missing_accounts[] = '1.2.1.2';
+                $data_incomplete = true;
+            }
+            if (! $expGedungRow) {
+                $missing_accounts[] = '1.2.1.3';
+                $data_incomplete = true;
+            }
+            if (! $expTanahRow) {
+                $missing_accounts[] = '1.2.1.1';
+                $data_incomplete = true;
+            }
+            if (! $rootExpense) {
+                $missing_accounts[] = '1';
+                $data_incomplete = true;
+            }
 
             $bApbdBefore = 0;
             $bApbdAfter = 0;
@@ -1268,9 +1339,23 @@ class RbaController extends Controller
         $pembiayaanNetto = $totPenerimaan - $totPengeluaran;
         $silpaTahunBerkenaan = $surplusAfter + $pembiayaanNetto;
 
+        // Perhitungan Selisih Keseimbangan Anggaran (Pendapatan + Penerimaan vs Belanja + Pengeluaran)
+        $totalPendapatanDanPenerimaan = $totRevAfter + $totPenerimaan;
+        $totalBelanjaDanPengeluaran = $totExpAfter + $totPengeluaran;
+        $selisihKeseimbangan = $totalPendapatanDanPenerimaan - $totalBelanjaDanPengeluaran;
+        $isBalanced = $selisihKeseimbangan >= 0;
+
         return [
             'data_incomplete' => $data_incomplete ?? false,
             'missing_accounts' => $missing_accounts ?? [],
+            'keseimbangan' => [
+                'total_pendapatan_dan_penerimaan' => $totalPendapatanDanPenerimaan,
+                'total_belanja_dan_pengeluaran' => $totalBelanjaDanPengeluaran,
+                'selisih' => $selisihKeseimbangan,
+                'is_balanced' => $isBalanced,
+                'status' => $isBalanced ? 'Berimbang' : 'Defisit Tanpa Pembiayaan',
+                'silpa_tahun_berkenaan' => $silpaTahunBerkenaan,
+            ],
             'pendapatan' => [
                 'jasa_layanan' => [
                     'before' => $isMurni ? $jasaAfter : ($catJasaLayanan ? (float) $catJasaLayanan->before_amount : $jasaAfter),

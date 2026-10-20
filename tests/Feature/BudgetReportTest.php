@@ -70,4 +70,3 @@ class BudgetReportTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 }
-

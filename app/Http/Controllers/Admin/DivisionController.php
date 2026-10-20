@@ -7,6 +7,7 @@ use App\Models\Division;
 use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -19,8 +20,8 @@ class DivisionController extends Controller
     public function index(Request $request): Response
     {
         $divisions = Division::with(['units' => function ($q) {
-                $q->orderBy('name');
-            }])
+            $q->orderBy('name');
+        }])
             ->withCount(['units', 'users', 'requisitions'])
             ->orderBy('division_code')
             ->get();
@@ -40,20 +41,11 @@ class DivisionController extends Controller
     }
 
     /**
-     * Show the form for creating a new division.
-     */
-    public function create(): Response
-    {
-        return Inertia::render('Admin/Divisions/Create');
-    }
-
-    /**
      * Store a newly created division in storage.
      */
     public function store(Request $request): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
-
+        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
 
         $validated = $request->validate([
             'division_code' => ['required', 'string', 'max:255', Rule::unique('divisions', 'division_code')],
@@ -75,22 +67,11 @@ class DivisionController extends Controller
     }
 
     /**
-     * Show the form for editing the specified division.
-     */
-    public function edit(Division $division): Response
-    {
-        return Inertia::render('Admin/Divisions/Edit', [
-            'division' => $division->only(['id', 'division_code', 'name', 'group']),
-        ]);
-    }
-
-    /**
      * Update the specified division in storage.
      */
     public function update(Request $request, Division $division): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
-
+        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
 
         $validated = $request->validate([
             'division_code' => [
@@ -121,8 +102,7 @@ class DivisionController extends Controller
      */
     public function destroy(Division $division): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
-
+        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
 
         if ($division->units()->exists()) {
             return back()->with('error', 'Divisi "'.$division->name.'" tidak dapat dihapus karena masih memiliki data Unit Kerja terkait. Hapus atau pindahkan unit kerja terlebih dahulu.');

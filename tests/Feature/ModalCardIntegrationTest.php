@@ -2,11 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Budget;
 use App\Models\Division;
 use App\Models\RbaAccount;
 use App\Models\Requisition;
-use App\Models\Revenue;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,9 +16,13 @@ class ModalCardIntegrationTest extends TestCase
     use RefreshDatabase;
 
     private User $perencanaanUser;
+
     private User $keuanganUser;
+
     private Division $division;
+
     private Unit $unit;
+
     private RbaAccount $rbaAccount;
 
     protected function setUp(): void

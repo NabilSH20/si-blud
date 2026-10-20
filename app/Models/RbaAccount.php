@@ -11,7 +11,7 @@ class RbaAccount extends Model
     use HasFactory;
 
     protected $table = 'rba_accounts';
-    
+
     protected $fillable = [
         'account_code',
         'parent_code',
@@ -58,5 +58,33 @@ class RbaAccount extends Model
     public function getUraianRekeningAttribute(): string
     {
         return $this->account_name;
+    }
+
+    /**
+     * Resolve the RbaAccount for a specific target year based on an account ID or account instance.
+     * If the account's period_year matches $targetYear, it returns that account.
+     * If not, it looks for an RbaAccount with the same account_code and period_year = $targetYear.
+     * If none exists for the target year, falls back to the original account.
+     */
+    public static function resolveForYear(int|string|RbaAccount|null $accountOrId, int $targetYear): ?RbaAccount
+    {
+        if (! $accountOrId) {
+            return null;
+        }
+
+        $account = $accountOrId instanceof RbaAccount ? $accountOrId : static::find($accountOrId);
+        if (! $account) {
+            return null;
+        }
+
+        if ((int) $account->period_year === (int) $targetYear) {
+            return $account;
+        }
+
+        $matchingYearAccount = static::where('account_code', $account->account_code)
+            ->where('period_year', $targetYear)
+            ->first();
+
+        return $matchingYearAccount ?: $account;
     }
 }

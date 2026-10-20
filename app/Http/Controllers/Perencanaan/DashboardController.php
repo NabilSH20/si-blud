@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Perencanaan;
 
 use App\Http\Controllers\Controller;
 use App\Models\Item;
+use App\Models\RbaShift;
 use App\Models\Requisition;
+use App\Models\Revenue;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,9 +22,9 @@ class DashboardController extends Controller
 
         $baseQuery = Requisition::where(function ($q) use ($activeYear) {
             $q->where('budget_year', $activeYear)
-              ->orWhere(function ($sq) use ($activeYear) {
-                  $sq->whereNull('budget_year')->where('fiscal_year', $activeYear);
-              });
+                ->orWhere(function ($sq) use ($activeYear) {
+                    $sq->whereNull('budget_year')->where('fiscal_year', $activeYear);
+                });
         });
 
         $pendingRequisitions = (clone $baseQuery)
@@ -47,7 +50,7 @@ class DashboardController extends Controller
         ];
 
         // Data for Target vs Realisasi Chart
-        $rba = \App\Models\RbaShift::where('year', $activeYear)
+        $rba = RbaShift::where('year', $activeYear)
             ->where('status', 'Aktif')
             ->first();
 
@@ -63,19 +66,26 @@ class DashboardController extends Controller
         }
 
         // Realisasi Pendapatan (from Revenue model)
-        $realisasiPendapatan = (float) \App\Models\Revenue::whereYear('date', $activeYear)->sum('amount');
-        
+        $realisasiPendapatan = (float) Revenue::whereYear('date', $activeYear)->sum('amount');
+
         // Serapan Belanja (from Requisition model)
         // We consider Disetujui_Selesai as absorbed budget.
         $serapanBelanja = (float) (clone $baseQuery)
             ->where('status', 'Disetujui_Selesai')
-            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(NULLIF(total_approved, 0), total_estimated)'));
+            ->sum(DB::raw('COALESCE(NULLIF(total_approved, 0), total_estimated)'));
+
+        $currentInputYear = (int) date('Y');
+        $baselineRevenue = (float) Revenue::whereYear('date', $currentInputYear)->sum('amount');
+        $isFuturePlanning = (int) $activeYear > $currentInputYear;
 
         $chartData = [
             'target_revenue' => $targetRevenue,
             'realisasi_revenue' => $realisasiPendapatan,
             'planned_expense' => $plannedExpense,
             'serapan_expense' => $serapanBelanja,
+            'baseline_revenue' => $baselineRevenue,
+            'current_input_year' => $currentInputYear,
+            'is_future_planning' => $isFuturePlanning,
         ];
 
         return Inertia::render('Perencanaan/Dashboard', [

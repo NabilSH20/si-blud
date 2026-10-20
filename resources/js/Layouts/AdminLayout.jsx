@@ -156,8 +156,17 @@ export default function AdminLayout({ children }) {
     const user = auth?.user || {};
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-    const [showNotification, setShowNotification] = useState(false);
     const [profileModalOpen, setProfileModalOpen] = useState(false);
+    const [showNotification, setShowNotification] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('profile')) {
+                setProfileModalOpen(true);
+            }
+        }
+    }, [url]);
 
     // Track active sections
     const isDivisionsActive = route().current('divisions.*');

@@ -17,9 +17,8 @@ use App\Http\Controllers\Perencanaan\ItemController;
 use App\Http\Controllers\Perencanaan\RbaController as PerencanaanRbaController;
 use App\Http\Controllers\Perencanaan\RequisitionController as PerencanaanRequisitionController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\RootController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', [RootController::class, 'index']);
 
@@ -27,14 +26,14 @@ Route::prefix('divisi')->middleware(['auth', 'role:divisi'])->group(function () 
     Route::get('/dashboard', [DivisiDashboardController::class, 'index'])
         ->name('divisi.dashboard');
 
-    Route::resource('requisitions', DivisiRequisitionController::class);
+    Route::resource('requisitions', DivisiRequisitionController::class)->except(['create', 'edit']);
 });
 
 Route::prefix('perencanaan')->middleware(['auth', 'role:perencanaan'])->group(function () {
     Route::get('/dashboard', [PerencanaanDashboardController::class, 'index'])
         ->name('perencanaan.dashboard');
 
-    Route::resource('items', ItemController::class)->except(['show']);
+    Route::resource('items', ItemController::class)->except(['show', 'create', 'edit']);
     Route::patch('/items/{item}/verify-standard', [ItemController::class, 'verifyStandard'])
         ->name('items.verify-standard');
     Route::resource('requisitions', PerencanaanRequisitionController::class)
@@ -74,7 +73,7 @@ Route::prefix('keuangan')->middleware(['auth', 'role:keuangan'])->group(function
         ->name('keuangan.dashboard');
 
     Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
-    Route::resource('revenues', KeuanganRevenueController::class)->except(['edit', 'update', 'show']);
+    Route::resource('revenues', KeuanganRevenueController::class)->except(['create', 'edit', 'update', 'show']);
     Route::resource('requisitions', KeuanganRequisitionController::class)
         ->only(['index', 'show', 'update'])
         ->names('keuangan.requisitions');
@@ -91,7 +90,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])
         ->name('admin.dashboard');
 
-    Route::resource('divisions', DivisionController::class)->except(['show']);
+    Route::resource('divisions', DivisionController::class)->except(['show', 'create', 'edit']);
     Route::resource('units', AdminUnitController::class)->only(['store', 'update', 'destroy']);
     Route::patch('fiscal-years/{fiscal_year}/toggle-status', [FiscalYearController::class, 'toggleStatus'])
         ->name('fiscal-years.toggle-status');
@@ -100,7 +99,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('fiscal-years', FiscalYearController::class)->except(['create', 'show', 'edit']);
     Route::patch('users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])
         ->name('users.toggle-status');
-    Route::resource('users', AdminUserController::class)->except(['show']);
+    Route::resource('users', AdminUserController::class)->except(['show', 'create', 'edit']);
 });
 
 Route::middleware('auth')->group(function () {

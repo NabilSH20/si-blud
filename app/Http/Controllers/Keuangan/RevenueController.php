@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Keuangan;
 
 use App\Http\Controllers\Controller;
+use App\Models\FiscalYear;
+use App\Models\RbaShift;
 use App\Models\Revenue;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -60,63 +64,44 @@ class RevenueController extends Controller
                 $all[] = $item;
             }
         }
+
         return $all;
     }
 
     /**
-     * Resolve category for a given revenue source.
+     * Resolve category for a given revenue source using centralized Revenue model logic.
      */
     public static function resolveCategory(string $source): string
     {
-        $normalized = match ($source) {
-            'Instalasi Gawat Darurat (IGD)' => 'Pendapatan Pelayanan Gawat Darurat',
-            'Instalasi Farmasi & Apotek' => 'Pendapatan Pelayanan Farmasi',
-            'Poliklinik Jiwa Terpadu' => 'Pendapatan Pelayanan Rawat Jalan',
-            'Instalasi Laboratorium' => 'Pendapatan Pelayanan Laboratorium',
-            'Instalasi Rawat Inap Jiwa' => 'Pendapatan Pelayanan Rawat Inap',
-            'Instalasi Radiologi' => 'Pendapatan Pelayanan Radiologi',
-            'Pelayanan Visum & Mediko-Legal' => 'Pendapatan Pelayanan Forensik Psikiatri',
-            'Pendapatan Jasa Giro & Non-Operasional' => 'Jasa Giro',
-            default => $source,
-        };
-
-        if (str_contains($normalized, 'Pelayanan') || str_contains($normalized, 'Instalasi')) {
-            return 'Jasa Layanan';
-        }
-        if (str_contains($normalized, 'Kerjasama') || str_contains($normalized, 'Parkir') || str_contains($normalized, 'Fasilitas')) {
-            return 'Hasil Kerja Sama';
-        }
-        if (str_contains($normalized, 'APBD')) {
-            return 'APBD';
-        }
-        if (str_contains($normalized, 'Giro') || str_contains($normalized, 'Bunga') || str_contains($normalized, 'Lain')) {
-            return 'Lain-lain BLUD Sah';
-        }
-
-        return 'Tidak Terklasifikasi';
+        return Revenue::resolveCategory($source);
     }
 
     /**
      * Display a listing of revenues.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $activeYear = (int) session('active_year', function () {
-            return class_exists(\App\Models\FiscalYear::class)
-                ? \App\Models\FiscalYear::getDefaultYear()
+            return class_exists(FiscalYear::class)
+                ? FiscalYear::getDefaultYear()
                 : (int) date('Y');
         });
 
-        $now = Carbon::now();
-        // Ciptakan 'simulasi hari ini' berdasarkan active_year agar sinkron dengan tahun yang dikerjakan user
-        $simulatedToday = Carbon::create($activeYear, $now->month, $now->day);
+        $selectedYear = $request->filled('year')
+            ? (int) $request->year
+            : ($request->filled('fiscal_year') ? (int) $request->fiscal_year : $activeYear);
 
-        $revenues = Revenue::whereYear('date', $activeYear)
+        $now = Carbon::now();
+        // Ciptakan 'simulasi hari ini' berdasarkan selectedYear agar sinkron dengan tahun yang dikerjakan user
+        $simulatedToday = Carbon::create($selectedYear, $now->month, $now->day);
+
+        $revenues = Revenue::whereYear('date', $selectedYear)
             ->orderBy('date', 'desc')
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($rev) {
                 $rev->category = self::resolveCategory($rev->source);
+
                 return $rev;
             });
 
@@ -134,6 +119,38 @@ class RevenueController extends Controller
         $apbd = (float) $revenues->where('category', 'APBD')->sum('amount');
         $lainLainSah = (float) $revenues->where('category', 'Lain-lain BLUD Sah')->sum('amount');
 
+        // Hubungkan dengan Target Pendapatan RBA Aktif untuk tahun yang bersangkutan
+        $activeShift = RbaShift::where('year', $selectedYear)
+            ->where('status', 'Aktif')
+            ->first();
+
+        $targetTotal = 0;
+        $targetJasaLayanan = 0;
+        $targetHasilKerjasama = 0;
+        $targetApbd = 0;
+        $targetLainLainSah = 0;
+
+        if ($activeShift) {
+            $rootRev = $activeShift->revenueItems()->where('item_code', '0')->first();
+            $cat1 = $activeShift->revenueItems()->where('item_code', '1')->first();
+            $cat3 = $activeShift->revenueItems()->where('item_code', '3')->first();
+            $cat4 = $activeShift->revenueItems()->where('item_code', '4')->first();
+            $cat5 = $activeShift->revenueItems()->where('item_code', '5')->first();
+
+            $targetTotal = $rootRev ? (float) $rootRev->after_amount : (float) $activeShift->revenueItems()->where('is_header', false)->sum('after_amount');
+            $targetJasaLayanan = $cat1 ? (float) $cat1->after_amount : 0;
+            $targetHasilKerjasama = $cat3 ? (float) $cat3->after_amount : 0;
+            $targetApbd = $cat4 ? (float) $cat4->after_amount : 0;
+            $targetLainLainSah = $cat5 ? (float) $cat5->after_amount : 0;
+        }
+
+        $achievementRate = $targetTotal > 0 ? round(($totalRevenue / $targetTotal) * 100, 2) : 0;
+
+        // Baseline acuan realisasi kas tahun penginputan berjalan (misal tahun berjalan saat ini)
+        $currentInputYear = (int) date('Y');
+        $ongoingYearRealized = (float) Revenue::whereYear('date', $currentInputYear)->sum('amount');
+        $isFuturePlanning = $selectedYear > $currentInputYear;
+
         $defaultDate = $simulatedToday->toDateString();
 
         return Inertia::render('Keuangan/Revenues/Index', [
@@ -147,35 +164,22 @@ class RevenueController extends Controller
                 'hasil_kerjasama' => $hasilKerjasama,
                 'apbd' => $apbd,
                 'lain_lain_sah' => $lainLainSah,
+                'target_rba' => $targetTotal,
+                'achievement_rate' => $achievementRate,
+                'target_jasa_layanan' => $targetJasaLayanan,
+                'target_hasil_kerjasama' => $targetHasilKerjasama,
+                'target_apbd' => $targetApbd,
+                'target_lain_lain_sah' => $targetLainLainSah,
+                'current_input_year' => $currentInputYear,
+                'ongoing_year_realized' => $ongoingYearRealized,
+                'is_future_planning' => $isFuturePlanning,
             ],
             'categories' => ['Semua', 'Jasa Layanan', 'Hasil Kerja Sama', 'APBD', 'Lain-lain BLUD Sah'],
             'grouped_sources' => $this->groupedSources,
             'sources' => $this->getFlatSources(),
             'default_date' => $defaultDate,
             'active_year' => $activeYear,
-        ]);
-    }
-
-    /**
-     * Show the form for creating a new revenue record.
-     */
-    public function create(): Response
-    {
-        $activeYear = (int) session('active_year', function () {
-            return class_exists(\App\Models\FiscalYear::class)
-                ? \App\Models\FiscalYear::getDefaultYear()
-                : (int) date('Y');
-        });
-        $now = Carbon::now();
-        $simulatedToday = Carbon::create($activeYear, $now->month, $now->day);
-        $defaultDate = $simulatedToday->toDateString();
-        $flat = $this->getFlatSources();
-
-        return Inertia::render('Keuangan/Revenues/Create', [
-            'grouped_sources' => $this->groupedSources,
-            'sources' => $flat,
-            'default_date' => $defaultDate,
-            'active_year' => $activeYear,
+            'selected_year' => $selectedYear,
         ]);
     }
 
@@ -184,7 +188,9 @@ class RevenueController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'keuangan', 403, 'Akses ditolak.');
+        /** @var User $user */
+        $user = $request->user();
+        abort_unless($user && $user->role === 'keuangan', 403, 'Akses ditolak.');
 
         $validated = $request->validate([
             'source' => ['required', 'string', 'max:255', Rule::in($this->getFlatSources())],
@@ -195,7 +201,7 @@ class RevenueController extends Controller
 
         DB::transaction(function () use ($validated) {
             $date = Carbon::parse($validated['date']);
-            $datePrefix = 'REV-' . $date->format('Ymd');
+            $datePrefix = 'REV-'.$date->format('Ymd');
 
             // Generate sequential revenue number safely
             $countToday = Revenue::whereDate('date', $validated['date'])->count();
@@ -223,7 +229,9 @@ class RevenueController extends Controller
      */
     public function destroy(Revenue $revenue): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'keuangan', 403, 'Akses ditolak.');
+        /** @var User $user */
+        $user = Auth::user();
+        abort_unless($user && $user->role === 'keuangan', 403, 'Akses ditolak.');
 
         DB::transaction(function () use ($revenue) {
             $revenue->delete();
@@ -233,4 +241,3 @@ class RevenueController extends Controller
             ->with('success', 'Catatan pendapatan berhasil dihapus.');
     }
 }
-

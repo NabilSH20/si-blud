@@ -1,5 +1,6 @@
 import AuditTrailTimeline from '@/Components/AuditTrailTimeline';
 import Modal from '@/Components/Modal';
+import { Pen } from 'lucide-react';
 
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -403,7 +404,7 @@ export default function RequisitionDetailModal({
                     </button>
 
                     <div className="flex items-center gap-2.5">
-                        {requisition.status === 'Pending_Perencanaan' && onEdit && (
+                        {(requisition.status === 'Pending_Perencanaan' || requisition.status === 'Ditolak') && onEdit && (
                             <button
                                 type="button"
                                 onClick={() => {
@@ -412,7 +413,8 @@ export default function RequisitionDetailModal({
                                 }}
                                 className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 px-5 py-2.5 text-xs font-bold text-amber-900 transition cursor-pointer"
                             >
-                                Ubah Usulan
+                                <Pen size={14} className="inline mr-1" />
+                                <span>{requisition.status === 'Ditolak' ? 'Revisi & Ajukan Ulang' : 'Ubah Usulan'}</span>
                             </button>
                         )}
 

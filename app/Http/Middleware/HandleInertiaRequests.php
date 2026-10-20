@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\FiscalYear;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -39,12 +40,12 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
             ],
             'active_year' => (int) session('active_year', function () {
-                return class_exists(\App\Models\FiscalYear::class)
-                    ? \App\Models\FiscalYear::getDefaultYear()
+                return class_exists(FiscalYear::class)
+                    ? FiscalYear::getDefaultYear()
                     : (int) date('Y');
             }),
-            'available_fiscal_years' => fn () => class_exists(\App\Models\FiscalYear::class)
-                ? \App\Models\FiscalYear::getActiveYears()
+            'available_fiscal_years' => fn () => class_exists(FiscalYear::class)
+                ? FiscalYear::getActiveYears()
                 : [],
         ];
     }

@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,9 +23,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
-        \Carbon\Carbon::setLocale(config('app.locale'));
-        \Illuminate\Validation\Rules\Password::defaults(function () {
-            return \Illuminate\Validation\Rules\Password::min(10)->letters()->mixedCase()->numbers();
+        Carbon::setLocale(config('app.locale'));
+        Password::defaults(function () {
+            return Password::min(10)->letters()->mixedCase()->numbers();
         });
     }
 }

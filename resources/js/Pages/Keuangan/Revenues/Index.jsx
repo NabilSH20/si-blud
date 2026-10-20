@@ -31,17 +31,22 @@ export default function Index({
     grouped_sources = null,
     sources = [],
     default_date = '',
+    active_year = 2026,
+    selected_year = null,
 }) {
     const { url } = usePage();
     const [selectedCategory, setSelectedCategory] = useState('Semua');
 
-    // Sync selectedCategory from URL
+    // Sync selectedCategory and create modal from URL
     useEffect(() => {
         let currentCategory = 'Semua';
         if (url.includes('?category=')) {
             currentCategory = decodeURIComponent(url.split('?category=')[1].split('&')[0]);
         }
         setSelectedCategory(currentCategory);
+        if (url.includes('create=true') || url.includes('create=1')) {
+            setIsCreateModalOpen(true);
+        }
     }, [url]);
 
     const [selectedRevenue, setSelectedRevenue] = useState(null);
@@ -112,6 +117,47 @@ export default function Index({
                     </button>
                 </div>
             </div>
+
+            {/* Baseline Alert for Future Planning Years */}
+            {stats.is_future_planning && (
+                <div className="mb-6 rounded-2xl border border-blue-200 bg-blue-50/80 p-4 shadow-2xs flex items-start gap-3.5 text-blue-950">
+                    <div className="rounded-xl bg-blue-100 p-2 text-blue-700 shrink-0 mt-0.5">
+                        <Wallet className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 text-xs">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-bold text-blue-900">
+                                Tahun Perencanaan Anggaran ({selected_year || active_year})
+                            </p>
+                            <span className="rounded-md bg-blue-200 px-2 py-0.5 text-[10px] font-bold text-blue-800">
+                                Tahun Penginputan {stats.current_input_year}
+                            </span>
+                        </div>
+                        <p className="mt-1 text-blue-800 leading-relaxed font-medium">
+                            Realisasi kas tahun {selected_year || active_year} masih Rp 0 karena periode tahun anggaran belum berjalan. Sebagai acuan dasar kinerja, total realisasi pendapatan kas tahun berjalan ({stats.current_input_year}) saat ini tercatat sebesar <strong className="font-black text-blue-950">{formatRupiah(stats.ongoing_year_realized)}</strong>.
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Target RBA & Capaian Banner */}
+            {stats.target_rba > 0 && (
+                <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-teal-50 border border-teal-200 p-3.5 mb-6 text-xs text-teal-950 shadow-2xs">
+                    <div className="flex items-center gap-2">
+                        <span className="font-bold text-teal-800">Target RBA Definitif ({selected_year || active_year}):</span>
+                        <span className="font-black text-slate-900">{formatRupiah(stats.target_rba)}</span>
+                    </div>
+                    <span className="text-teal-300">•</span>
+                    <div className="flex items-center gap-2">
+                        <span className="font-bold text-teal-800">Tingkat Capaian:</span>
+                        <span className="rounded-md bg-teal-600 px-2 py-0.5 font-black text-white text-[11px]">{stats.achievement_rate}%</span>
+                    </div>
+                    <span className="text-teal-300">•</span>
+                    <span className="text-slate-600 font-medium">
+                        Jasa Layanan: <strong>{formatRupiah(stats.jasa_layanan)}</strong> / {formatRupiah(stats.target_jasa_layanan)}
+                    </span>
+                </div>
+            )}
 
             {/* KPI Cards Grid (High Contrast Style) */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">

@@ -10,6 +10,7 @@ use App\Models\RequisitionDetail;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -18,15 +19,25 @@ class RequesterRequisitionTest extends TestCase
     use RefreshDatabase;
 
     private Division $medikDivision;
+
     private Division $penunjangDivision;
+
     private Unit $farmasiUnit;
+
     private Unit $radiologiUnit;
+
     private User $farmasiUser;
+
     private User $radiologiUser;
+
     private RbaAccount $rbaOperasiBlud;
+
     private RbaAccount $rbaModalBlud;
+
     private RbaAccount $rbaApbd;
+
     private Item $itemObat;
+
     private Item $itemAlkesModal;
 
     protected function setUp(): void
@@ -132,20 +143,21 @@ class RequesterRequisitionTest extends TestCase
         ]);
     }
 
-    public function test_create_page_only_provides_blud_accounts_and_planning_options(): void
+    public function test_index_page_provides_modal_blud_accounts_and_planning_options(): void
     {
-        $response = $this->actingAs($this->farmasiUser)->get(route('requisitions.create', ['jenis' => 'Operasi']));
+        $response = $this->actingAs($this->farmasiUser)->get(route('requisitions.index'));
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Divisi/Requisitions/Create')
+            ->component('Divisi/Requisitions/Index')
             ->where('defaultFiscalYear', 2027)
-            ->where('initialJenis', 'Operasi')
             ->has('subKegiatanOptions')
             ->has('rbaAccounts', 2) // only BLUD (Operasi & Modal), APBD is excluded
             ->where('userUnit.unit_code', 'FAR')
             ->where('userDivision.division_code', 'MEDIK')
         );
+
+        $this->assertFalse(Route::has('requisitions.create'));
     }
 
     public function test_unit_can_submit_belanja_operasi_blud_for_fiscal_year_2027(): void
@@ -729,7 +741,7 @@ class RequesterRequisitionTest extends TestCase
             'total_estimated' => 300750000,
         ]);
 
-        $requisition = \App\Models\Requisition::where('nomor_surat_unit', '099/FAR/CAMPURAN/2026')->first();
+        $requisition = Requisition::where('nomor_surat_unit', '099/FAR/CAMPURAN/2026')->first();
         $this->assertNotNull($requisition);
         $this->assertCount(2, $requisition->requisitionDetails);
     }
@@ -779,6 +791,75 @@ class RequesterRequisitionTest extends TestCase
         $printResponse = $this->actingAs($this->farmasiUser)->get(route('requisitions.print', $requisition->id));
         $printResponse->assertOk();
     }
+
+    public function test_requester_can_edit_and_resubmit_rejected_requisition(): void
+    {
+        $requisition = Requisition::create([
+            'requisition_number' => 'REQ-REJECT-001',
+            'nomor_surat_unit' => '099/FAR/REJ/2026',
+            'division_id' => $this->medikDivision->id,
+            'unit_id' => $this->farmasiUnit->id,
+            'user_id' => $this->farmasiUser->id,
+            'rba_account_id' => $this->rbaOperasiBlud->id,
+            'jenis_belanja' => 'Operasi',
+            'sumber_dana' => 'BLUD',
+            'sub_kegiatan' => 'Pelayanan dan Penunjang Pelayanan BLUD RS Jiwa Tampan',
+            'fiscal_year' => 2027,
+            'budget_year' => 2028,
+            'status' => 'Ditolak',
+            'submission_date' => today(),
+            'total_estimated' => 750000,
+            'total_approved' => 500000,
+            'notes_perencanaan' => 'Harap perbaiki spesifikasi dan kuantitas barang.',
+        ]);
+
+        RequisitionDetail::create([
+            'requisition_id' => $requisition->id,
+            'item_id' => $this->itemObat->id,
+            'item_name' => $this->itemObat->name,
+            'unit_type' => $this->itemObat->unit_type,
+            'specification' => $this->itemObat->specification,
+            'quantity_requested' => 10,
+            'quantity_approved' => null,
+            'unit_price' => 75000,
+            'subtotal' => 750000,
+        ]);
+
+        // 1. Requisitions edit route is closed, modal handled on index
+        $this->assertFalse(Route::has('requisitions.edit'));
+        $indexResponse = $this->actingAs($this->farmasiUser)->get(route('requisitions.index', ['edit' => $requisition->id]));
+        $indexResponse->assertOk();
+
+        // 2. Resubmit updated requisition
+        $resubmitPayload = [
+            'sub_kegiatan' => 'Pelayanan dan Penunjang Pelayanan BLUD RS Jiwa Tampan - Revisi',
+            'nomor_surat_unit' => '099/FAR/REJ/2026/REV',
+            'urgency_reason' => 'Telah diperbaiki sesuai catatan perencana.',
+            'fiscal_year' => 2027,
+            'budget_year' => 2028,
+            'items' => [
+                [
+                    'item_id' => $this->itemObat->id,
+                    'quantity' => 20,
+                    'unit_price' => 75000,
+                    'is_new' => false,
+                ],
+            ],
+        ];
+
+        $updateResponse = $this->actingAs($this->farmasiUser)->put(
+            route('requisitions.update', $requisition->id),
+            $resubmitPayload
+        );
+
+        $updateResponse->assertRedirect(route('requisitions.index'));
+        $updateResponse->assertSessionHas('success');
+
+        $freshReq = $requisition->fresh();
+        $this->assertEquals('Pending_Perencanaan', $freshReq->status);
+        $this->assertEquals(0, $freshReq->total_approved);
+        $this->assertEquals(1500000, $freshReq->total_estimated);
+        $this->assertEquals('099/FAR/REJ/2026/REV', $freshReq->nomor_surat_unit);
+        $this->assertEquals('Pelayanan dan Penunjang Pelayanan BLUD RS Jiwa Tampan - Revisi', $freshReq->sub_kegiatan);
+    }
 }
-
-

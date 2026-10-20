@@ -4,11 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Division;
+use App\Models\Requisition;
+use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -34,23 +38,11 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for creating a new user.
-     */
-    public function create(): Response
-    {
-        $divisions = Division::with('units')->orderBy('name')->get();
-
-        return Inertia::render('Admin/Users/Create', [
-            'divisions' => $divisions,
-        ]);
-    }
-
-    /**
      * Store a newly created user in storage.
      */
     public function store(Request $request): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
+        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -59,7 +51,7 @@ class UserController extends Controller
             'position' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'is_active' => ['nullable', 'boolean'],
-            'password' => ['required', \Illuminate\Validation\Rules\Password::defaults()],
+            'password' => ['required', Password::defaults()],
             'role' => ['required', 'string', 'in:admin,divisi,perencanaan,keuangan'],
             'division_id' => [
                 'nullable',
@@ -91,15 +83,15 @@ class UserController extends Controller
                 ->pluck('id')
                 ->toArray();
 
-            if (!in_array((int)$validated['division_id'], $allowedDivisions)) {
+            if (! in_array((int) $validated['division_id'], $allowedDivisions)) {
                 return back()->withErrors(['division_id' => 'Bidang pengusul pengadaan harus berasal dari Pelayanan Medik, Keperawatan, atau Penunjang Medik & Diklit.'])->withInput();
             }
 
-            if (!empty($validated['unit_id'])) {
-                $unitBelongs = \App\Models\Unit::where('id', $validated['unit_id'])
+            if (! empty($validated['unit_id'])) {
+                $unitBelongs = Unit::where('id', $validated['unit_id'])
                     ->where('division_id', $validated['division_id'])
                     ->exists();
-                if (!$unitBelongs) {
+                if (! $unitBelongs) {
                     return back()->withErrors(['unit_id' => 'Unit kerja yang dipilih tidak sesuai dengan bidang yang dipilih.'])->withInput();
                 }
             }
@@ -111,7 +103,7 @@ class UserController extends Controller
             'email' => $validated['email'],
             'position' => $validated['position'] ?? null,
             'phone' => $validated['phone'] ?? null,
-            'is_active' => $request->has('is_active') ? (bool)$request->is_active : true,
+            'is_active' => $request->has('is_active') ? (bool) $request->is_active : true,
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
             'division_id' => $validated['role'] === 'divisi' ? $validated['division_id'] : ($validated['division_id'] ?? null),
@@ -123,24 +115,11 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for editing the specified user.
-     */
-    public function edit(User $user): Response
-    {
-        $divisions = Division::with('units')->orderBy('name')->get();
-
-        return Inertia::render('Admin/Users/Edit', [
-            'user' => $user->load(['division', 'unit']),
-            'divisions' => $divisions,
-        ]);
-    }
-
-    /**
      * Update the specified user in storage.
      */
     public function update(Request $request, User $user): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
+        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -149,7 +128,7 @@ class UserController extends Controller
             'position' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'is_active' => ['nullable', 'boolean'],
-            'password' => ['nullable', \Illuminate\Validation\Rules\Password::defaults()],
+            'password' => ['nullable', Password::defaults()],
             'role' => ['required', 'string', 'in:admin,divisi,perencanaan,keuangan'],
             'division_id' => [
                 'nullable',
@@ -175,7 +154,7 @@ class UserController extends Controller
             'unit_id.exists' => 'Unit kerja yang dipilih tidak valid.',
         ]);
 
-        if ($user->id === auth()->id() && $validated['role'] !== $user->role) {
+        if ($user->id === Auth::id() && $validated['role'] !== $user->role) {
             return back()->with('error', 'Anda tidak dapat mengubah role akun Anda sendiri.')->withInput();
         }
 
@@ -184,15 +163,15 @@ class UserController extends Controller
                 ->pluck('id')
                 ->toArray();
 
-            if (!in_array((int)$validated['division_id'], $allowedDivisions)) {
+            if (! in_array((int) $validated['division_id'], $allowedDivisions)) {
                 return back()->withErrors(['division_id' => 'Bidang pengusul pengadaan harus berasal dari Pelayanan Medik, Keperawatan, atau Penunjang Medik & Diklit.'])->withInput();
             }
 
-            if (!empty($validated['unit_id'])) {
-                $unitBelongs = \App\Models\Unit::where('id', $validated['unit_id'])
+            if (! empty($validated['unit_id'])) {
+                $unitBelongs = Unit::where('id', $validated['unit_id'])
                     ->where('division_id', $validated['division_id'])
                     ->exists();
-                if (!$unitBelongs) {
+                if (! $unitBelongs) {
                     return back()->withErrors(['unit_id' => 'Unit kerja yang dipilih tidak sesuai dengan bidang yang dipilih.'])->withInput();
                 }
             }
@@ -204,13 +183,13 @@ class UserController extends Controller
             'email' => $validated['email'],
             'position' => $validated['position'] ?? null,
             'phone' => $validated['phone'] ?? null,
-            'is_active' => $request->has('is_active') ? (bool)$request->is_active : $user->is_active,
+            'is_active' => $request->has('is_active') ? (bool) $request->is_active : $user->is_active,
             'role' => $validated['role'],
             'division_id' => $validated['role'] === 'divisi' ? $validated['division_id'] : ($validated['division_id'] ?? null),
             'unit_id' => $validated['role'] === 'divisi' ? $validated['unit_id'] : ($validated['unit_id'] ?? null),
         ];
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $userData['password'] = Hash::make($validated['password']);
         }
 
@@ -225,14 +204,14 @@ class UserController extends Controller
      */
     public function toggleStatus(User $user): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
+        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
 
-        if ($user->id === auth()->id()) {
+        if ($user->id === Auth::id()) {
             return back()->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
         }
 
         $user->update([
-            'is_active' => !$user->is_active,
+            'is_active' => ! $user->is_active,
         ]);
 
         $statusLabel = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
@@ -245,13 +224,13 @@ class UserController extends Controller
      */
     public function destroy(User $user): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
+        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
 
-        if ($user->id === auth()->id()) {
+        if ($user->id === Auth::id()) {
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri saat sedang aktif login.');
         }
 
-        $hasRequisitions = \App\Models\Requisition::where('user_id', $user->id)
+        $hasRequisitions = Requisition::where('user_id', $user->id)
             ->orWhere('verified_by_perencanaan_id', $user->id)
             ->orWhere('approved_by_keuangan_id', $user->id)
             ->exists();
@@ -267,4 +246,3 @@ class UserController extends Controller
             ->with('success', "Akun pengguna {$name} telah berhasil dihapus.");
     }
 }
-

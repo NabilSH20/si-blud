@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\RbaAccount;
 use App\Models\Requisition;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Schema;
 
 class RbaAccountSeeder extends Seeder
 {
@@ -415,14 +416,16 @@ class RbaAccountSeeder extends Seeder
 
         foreach ($accounts as $acc) {
             RbaAccount::updateOrCreate(
-                ['account_code' => $acc['account_code']],
+                [
+                    'account_code' => $acc['account_code'],
+                    'period_year' => 2027,
+                ],
                 [
                     'parent_code' => $acc['parent_code'],
                     'account_name' => $acc['account_name'],
                     'kategori_belanja' => $acc['kategori_belanja'],
                     'sumber_dana' => 'BLUD',
                     'funding_source' => 'BLUD',
-                    'period_year' => 2027,
                     'year' => 2027,
                     'budget_after_revision' => 0,
                     'total_budget' => 0,
@@ -442,12 +445,12 @@ class RbaAccountSeeder extends Seeder
         ];
 
         foreach ($mapping as $oldCode => $newCode) {
-            $oldAcc = RbaAccount::where('account_code', $oldCode)->first();
-            $newAcc = RbaAccount::where('account_code', $newCode)->first();
+            $oldAcc = RbaAccount::where('account_code', $oldCode)->where('period_year', 2027)->first() ?? RbaAccount::where('account_code', $oldCode)->first();
+            $newAcc = RbaAccount::where('account_code', $newCode)->where('period_year', 2027)->first() ?? RbaAccount::where('account_code', $newCode)->first();
             if ($oldAcc && $newAcc && $oldAcc->id !== $newAcc->id) {
                 Item::where('rba_account_id', $oldAcc->id)->update(['rba_account_id' => $newAcc->id]);
                 Requisition::where('rba_account_id', $oldAcc->id)->update(['rba_account_id' => $newAcc->id]);
-                if (\Illuminate\Support\Facades\Schema::hasColumn('requisitions', 'budget_id')) {
+                if (Schema::hasColumn('requisitions', 'budget_id')) {
                     Requisition::where('budget_id', $oldAcc->id)->update(['budget_id' => $newAcc->id]);
                 }
                 $oldAcc->delete();

@@ -14,19 +14,19 @@ return new class extends Migration
         Schema::table('requisitions', function (Blueprint $table) {
             $table->unsignedBigInteger('rba_account_id')->nullable()->change();
             $table->string('jenis_belanja', 30)->default('Operasi')->change();
-            if (!Schema::hasColumn('requisitions', 'total_operasional')) {
+            if (! Schema::hasColumn('requisitions', 'total_operasional')) {
                 $table->decimal('total_operasional', 18, 2)->default(0)->after('total_estimated');
             }
-            if (!Schema::hasColumn('requisitions', 'total_modal')) {
+            if (! Schema::hasColumn('requisitions', 'total_modal')) {
                 $table->decimal('total_modal', 18, 2)->default(0)->after('total_operasional');
             }
         });
 
         Schema::table('requisition_details', function (Blueprint $table) {
-            if (!Schema::hasColumn('requisition_details', 'rba_account_id')) {
+            if (! Schema::hasColumn('requisition_details', 'rba_account_id')) {
                 $table->foreignId('rba_account_id')->nullable()->after('requisition_id')->constrained('rba_accounts')->nullOnDelete();
             }
-            if (!Schema::hasColumn('requisition_details', 'jenis_belanja')) {
+            if (! Schema::hasColumn('requisition_details', 'jenis_belanja')) {
                 $table->string('jenis_belanja', 30)->default('Operasi')->after('rba_account_id');
             }
         });

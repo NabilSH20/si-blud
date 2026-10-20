@@ -21,10 +21,10 @@ export default function PrintRincianBelanja({
     };
 
     // 1. Process active approved items for print
-    const withActive = accounts_with_proposed.map((acc) => {
-        const rawItems = acc.proposed_items || [];
-        const activeItems = rawItems.filter((it) => it.status === 'Disetujui_Selesai' || !it.status);
-        const directNominal = activeItems.reduce((s, it) => s + (it.resolved_subtotal || it.subtotal || 0), 0);
+    const withActive = (accounts_with_proposed || []).map((acc) => {
+        const rawItems = acc?.proposed_items || [];
+        const activeItems = rawItems.filter((it) => it && (it.status === 'Disetujui_Selesai' || !it.status));
+        const directNominal = activeItems.reduce((s, it) => s + Number(it?.resolved_subtotal || it?.subtotal || 0), 0);
         const directCount = activeItems.length;
 
         return {

@@ -20,6 +20,9 @@ export default function AuditTrailTimeline({ requisition }) {
         requisition.status === 'Diproses_Keuangan' || requisition.status === 'Disetujui_Selesai';
     const isKeuanganDone = requisition.status === 'Disetujui_Selesai';
     const isRejected = requisition.status === 'Ditolak';
+    const isRevision =
+        requisition.status === 'Pending_Perencanaan' &&
+        Boolean(requisition.notes_perencanaan || requisition.notes_keuangan);
 
     return (
         <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-all duration-200">
@@ -35,9 +38,16 @@ export default function AuditTrailTimeline({ requisition }) {
                         Jejak Audit & Riwayat Persetujuan (Audit Trail)
                     </h3>
                 </div>
-                <span className="inline-flex items-center rounded-full bg-emerald-100/70 px-3 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200">
-                    Transparansi E-BLUD RSJ
-                </span>
+                <div className="flex items-center gap-2">
+                    {isRevision && (
+                        <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-0.5 text-[11px] font-bold text-amber-900 border border-amber-300">
+                            Berkas Hasil Revisi Unit
+                        </span>
+                    )}
+                    <span className="inline-flex items-center rounded-full bg-emerald-100/70 px-3 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200">
+                        Transparansi E-BLUD RSJ
+                    </span>
+                </div>
             </div>
 
             {/* Timeline Body */}
@@ -105,8 +115,32 @@ export default function AuditTrailTimeline({ requisition }) {
                                     ? 'Kuantitas disetujui telah diverifikasi dan spesifikasi barang sesuai standar katalog acuan rumah sakit. Dokumen diteruskan ke Bagian Keuangan.'
                                     : isRejected
                                     ? 'Pengajuan ditolak oleh Tim Penelaah karena ketidaksesuaian spesifikasi atau anggaran.'
+                                    : isRevision
+                                    ? 'Pengajuan usulan telah diperbaiki & diajukan ulang oleh Unit pengusul. Saat ini menunggu penelaahan ulang oleh Tim Perencanaan.'
                                     : 'Sedang dalam penelaahan kuantitas barang dan spesifikasi kebutuhan instalasi.'}
                             </p>
+                            {isRevision && (requisition.notes_perencanaan || requisition.notes_keuangan) && (
+                                <div className="mt-2.5 rounded-lg bg-amber-50 border border-amber-200/90 p-2.5 text-xs text-amber-900">
+                                    <div className="flex items-center gap-1.5 font-bold">
+                                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-white text-[10px]">!</span>
+                                        <span>Catatan Evaluasi / Arahan Revisi Sebelumnya:</span>
+                                    </div>
+                                    <p className="mt-1 pl-5.5 italic text-slate-700">
+                                        "{requisition.notes_perencanaan || requisition.notes_keuangan}"
+                                    </p>
+                                </div>
+                            )}
+                            {isRejected && (requisition.notes_perencanaan || requisition.notes_keuangan) && (
+                                <div className="mt-2.5 rounded-lg bg-rose-50 border border-rose-200 p-2.5 text-xs text-rose-900">
+                                    <div className="flex items-center gap-1.5 font-bold">
+                                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-white text-[10px]">✕</span>
+                                        <span>Alasan Penolakan:</span>
+                                    </div>
+                                    <p className="mt-1 pl-5.5 italic text-slate-700">
+                                        "{requisition.notes_perencanaan || requisition.notes_keuangan}"
+                                    </p>
+                                </div>
+                            )}
                             {verifikatorPerencanaan && (
                                 <div className="mt-2.5 rounded-lg bg-emerald-50 border border-emerald-200/80 p-2.5 text-xs text-emerald-900 flex items-center gap-2">
                                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-[10px] font-bold">✓</span>

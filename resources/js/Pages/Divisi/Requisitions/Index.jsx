@@ -1,7 +1,7 @@
 import DivisiLayout from '@/Layouts/DivisiLayout';
 import Pagination from '@/Components/Pagination';
 import RequisitionFormModal from './Partials/RequisitionFormModal';
-import RequisitionDetailModal from './Partials/RequisitionDetailModal';
+import RequisitionDetailModal from '@/Pages/Shared/RequisitionDetailModal';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
@@ -80,7 +80,7 @@ export default function Index({
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    // Baca parameter status dari URL jika ada
+    // Baca parameter status, edit, dan create dari URL jika ada
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
@@ -88,12 +88,23 @@ export default function Index({
             if (s) {
                 setStatusFilter(s);
             }
+            const createParam = params.get('create');
+            if (createParam) {
+                const jenisParam = params.get('jenis') || 'Operasi';
+                handleOpenCreateModal(jenisParam);
+            }
+            const editId = params.get('edit');
+            if (editId && requisitions && requisitions.length > 0) {
+                const found = requisitions.find((r) => String(r.id) === String(editId));
+                if (found && (found.status === 'Pending_Perencanaan' || found.status === 'Ditolak')) {
+                    handleOpenEditModal(found);
+                }
+            }
         }
-    }, []);
+    }, [requisitions]);
 
     // Pop-Up Modal States (Create & Edit)
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalMode, setModalMode] = useState('create');
     const [selectedRequisition, setSelectedRequisition] = useState(null);
     const [modalInitialJenis, setModalInitialJenis] = useState('Operasi');
 
@@ -106,14 +117,12 @@ export default function Index({
 
     const handleOpenCreateModal = (jenis = 'Operasi') => {
         setSelectedRequisition(null);
-        setModalMode('create');
         setModalInitialJenis(jenis);
         setIsModalOpen(true);
     };
 
     const handleOpenEditModal = (req) => {
         setSelectedRequisition(req);
-        setModalMode('edit');
         setModalInitialJenis(req.jenis_belanja || 'Operasi');
         setIsModalOpen(true);
     };
@@ -445,18 +454,22 @@ export default function Index({
                                                         Detail
                                                     </button>
 
-                                                    {/* Edit Amber Button (Hanya jika Pending) */}
-                                                    {req.status === 'Pending_Perencanaan' && (
+                                                    {/* Edit / Ajukan Ulang Button (Pending atau Ditolak) */}
+                                                    {['Pending_Perencanaan', 'Ditolak'].includes(req.status) && (
                                                         <button
                                                             type="button"
                                                             onClick={() => handleOpenEditModal(req)}
-                                                            className="inline-flex items-center gap-1 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 hover:text-amber-900 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-amber-800 shadow-2xs transition cursor-pointer"
-                                                            title="Ubah Usulan Belanja"
+                                                            className={`inline-flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer active:scale-95 ${
+                                                                req.status === 'Ditolak'
+                                                                    ? 'border-amber-400 bg-amber-100/90 text-amber-950 hover:bg-amber-200'
+                                                                    : 'border-amber-300 bg-amber-50 hover:bg-amber-100 hover:text-amber-900 text-amber-800'
+                                                            }`}
+                                                            title={req.status === 'Ditolak' ? 'Revisi dan Ajukan Ulang Usulan yang Ditolak' : 'Ubah Usulan Belanja'}
                                                         >
                                                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
                                                             </svg>
-                                                            Edit
+                                                            <span>{req.status === 'Ditolak' ? 'Revisi / Ajukan Ulang' : 'Edit'}</span>
                                                         </button>
                                                     )}
 
@@ -528,6 +541,7 @@ export default function Index({
                 show={isDetailModalOpen}
                 onClose={handleCloseDetailModal}
                 requisition={detailRequisition}
+                onEdit={(req) => handleOpenEditModal(req)}
             />
 
             {/* Modal Konfirmasi Hapus Usulan (Seragam dengan Kelola Pengguna) */}

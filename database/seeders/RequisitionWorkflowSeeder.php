@@ -32,11 +32,11 @@ class RequisitionWorkflowSeeder extends Seeder
             $userKeuangan = User::where('role', 'keuangan')->first();
 
             // Ambil akun rekening belanja
-            $accBhpMedis = RbaAccount::where('account_code', '1.1.2.1.1')->first();
-            $accObat = RbaAccount::where('account_code', '1.1.2.1.2')->first() ?? $accBhpMedis;
-            $accLab = RbaAccount::where('account_code', '1.1.2.1.3')->first() ?? $accBhpMedis;
-            $accPemeliharaan = RbaAccount::where('account_code', '1.1.2.1.8')->first() ?? $accBhpMedis;
-            $accAlkes = RbaAccount::where('account_code', '1.2.1.2.1')->first() ?? $accBhpMedis;
+            $accBhpMedis = RbaAccount::where('account_code', '1.1.2.1.1')->where('period_year', 2027)->first() ?? RbaAccount::where('account_code', '1.1.2.1.1')->first();
+            $accObat = RbaAccount::where('account_code', '1.1.2.1.2')->where('period_year', 2027)->first() ?? $accBhpMedis;
+            $accLab = RbaAccount::where('account_code', '1.1.2.1.3')->where('period_year', 2027)->first() ?? $accBhpMedis;
+            $accPemeliharaan = RbaAccount::where('account_code', '1.1.2.1.8')->where('period_year', 2027)->first() ?? $accBhpMedis;
+            $accAlkes = RbaAccount::where('account_code', '1.2.1.2.1')->where('period_year', 2027)->first() ?? $accBhpMedis;
 
             // Reset serapan belanja pada rba_accounts sebelum memulai seeding transaksi
             RbaAccount::query()->update([

@@ -27,10 +27,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('requisition_details', function (Blueprint $table) {
-            if (!Schema::hasColumn('requisition_details', 'rba_account_id')) {
+            if (! Schema::hasColumn('requisition_details', 'rba_account_id')) {
                 $table->foreignId('rba_account_id')->nullable()->constrained('rba_accounts')->nullOnDelete();
             }
-            if (!Schema::hasColumn('requisition_details', 'jenis_belanja')) {
+            if (! Schema::hasColumn('requisition_details', 'jenis_belanja')) {
                 $table->string('jenis_belanja', 30)->default('Operasi');
             }
         });

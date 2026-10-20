@@ -66,4 +66,3 @@ class ExecutiveAnalyticsAndTimelineTest extends TestCase
         );
     }
 }
-

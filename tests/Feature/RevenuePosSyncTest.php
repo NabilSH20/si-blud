@@ -6,6 +6,7 @@ use App\Models\Revenue;
 use App\Models\User;
 use Database\Seeders\RbaPergeseran3Seeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -19,19 +20,21 @@ class RevenuePosSyncTest extends TestCase
         $this->seed(RbaPergeseran3Seeder::class);
     }
 
-    public function test_keuangan_can_view_revenue_create_form_with_grouped_sources(): void
+    public function test_keuangan_can_view_revenue_index_with_modal_grouped_sources(): void
     {
         $keuangan = User::factory()->create(['role' => 'keuangan']);
 
-        $response = $this->actingAs($keuangan)->get(route('revenues.create'));
+        $response = $this->actingAs($keuangan)->get(route('revenues.index'));
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Keuangan/Revenues/Create')
+            ->component('Keuangan/Revenues/Index')
             ->has('grouped_sources')
             ->has('sources')
             ->where('sources.0', 'Pendapatan Pelayanan Gawat Darurat')
         );
+
+        $this->assertFalse(Route::has('revenues.create'));
     }
 
     public function test_keuangan_can_record_revenue_and_see_category_in_index(): void

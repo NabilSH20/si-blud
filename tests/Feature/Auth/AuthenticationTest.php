@@ -125,4 +125,3 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect('/divisi/dashboard');
     }
 }
-

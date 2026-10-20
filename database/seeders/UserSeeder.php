@@ -7,6 +7,7 @@ use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
@@ -34,13 +35,13 @@ class UserSeeder extends Seeder
         $unitRen = Unit::where('unit_code', 'BAG_REN')->first();
         $unitKeu = Unit::where('unit_code', 'BAG_KEU')->first();
 
-                $defaultPassword = app()->environment(['local', 'testing'])
+        $defaultPassword = app()->environment(['local', 'testing'])
             ? 'password'
-            : env('SEED_DEFAULT_PASSWORD', \Illuminate\Support\Str::random(12));
+            : env('SEED_DEFAULT_PASSWORD', Str::random(12));
         $passwordHash = Hash::make($defaultPassword);
 
-        if (!app()->environment(['local', 'testing']) && !env('SEED_DEFAULT_PASSWORD')) {
-            $this->command->info("Demo user passwords set to: " . $defaultPassword);
+        if (! app()->environment(['local', 'testing']) && ! env('SEED_DEFAULT_PASSWORD')) {
+            $this->command->info('Demo user passwords set to: '.$defaultPassword);
         }
 
         $users = [

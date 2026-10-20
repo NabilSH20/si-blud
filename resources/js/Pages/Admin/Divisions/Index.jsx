@@ -29,6 +29,24 @@ export default function Index({ divisions = [], units = [], initial_tab = 'divis
         }
     }, [initial_tab]);
 
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('create')) {
+                setEditingDivision(null);
+                setIsDivisionModalOpen(true);
+            }
+            const editId = params.get('edit');
+            if (editId && divisions && divisions.length > 0) {
+                const found = divisions.find((d) => String(d.id) === String(editId));
+                if (found) {
+                    setEditingDivision(found);
+                    setIsDivisionModalOpen(true);
+                }
+            }
+        }
+    }, [divisions]);
+
     const switchTab = (tab) => {
         setActiveTab(tab);
         setSearch('');

@@ -272,7 +272,7 @@ class ItemSeeder extends Seeder
             $accId = $account?->id;
 
             foreach ($itemsList as $it) {
-                $code = 'ITM-' . str_pad($itemIndex++, 4, '0', STR_PAD_LEFT);
+                $code = 'ITM-'.str_pad($itemIndex++, 4, '0', STR_PAD_LEFT);
 
                 Item::updateOrCreate(
                     ['name' => $it['name']],

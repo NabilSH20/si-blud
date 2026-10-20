@@ -9,19 +9,23 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Redirect to the user's role dashboard to open ProfileSettingsModal.
      */
-    public function edit(Request $request): Response
+    public function edit(Request $request): RedirectResponse
     {
-        return Inertia::render('Profile/Edit', [
-            'status' => session('status'),
-        ]);
+        $role = $request->user()?->role;
+        $dashboardRoute = match ($role) {
+            'admin' => 'admin.dashboard',
+            'perencanaan' => 'perencanaan.dashboard',
+            'keuangan' => 'keuangan.dashboard',
+            default => 'divisi.dashboard',
+        };
+
+        return redirect()->route($dashboardRoute, ['profile' => 'true']);
     }
 
     /**
@@ -29,6 +33,7 @@ class ProfileController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        /** @var User $user */
         $user = $request->user();
 
         $validated = $request->validate([

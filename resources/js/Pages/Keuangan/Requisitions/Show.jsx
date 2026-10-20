@@ -363,11 +363,21 @@ export default function Show({ requisition, budgets = [] }) {
                         </div>
                     </div>
 
-                    {/* Note from Perencanaan if present */}
-                    {requisition.notes_perencanaan && (
-                        <div className="border-t border-slate-100 bg-amber-50/40 p-5">
-                            <span className="text-xs font-bold text-amber-900">Catatan dari Bagian Perencanaan:</span>
-                            <p className="mt-1 text-xs text-amber-800 font-medium">{requisition.notes_perencanaan}</p>
+                    {/* Note from Perencanaan / Keuangan if present */}
+                    {(requisition.notes_perencanaan || requisition.notes_keuangan) && (
+                        <div className="border-t border-slate-100 bg-amber-50/40 p-5 space-y-2">
+                            {requisition.notes_perencanaan && (
+                                <div>
+                                    <span className="text-xs font-bold text-amber-900">Catatan dari Bagian Perencanaan:</span>
+                                    <p className="mt-0.5 text-xs text-amber-800 font-medium">{requisition.notes_perencanaan}</p>
+                                </div>
+                            )}
+                            {requisition.notes_keuangan && (
+                                <div className="pt-2 border-t border-amber-200/50">
+                                    <span className="text-xs font-bold text-blue-900">Catatan dari Bagian Keuangan:</span>
+                                    <p className="mt-0.5 text-xs text-blue-800 font-medium">{requisition.notes_keuangan}</p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

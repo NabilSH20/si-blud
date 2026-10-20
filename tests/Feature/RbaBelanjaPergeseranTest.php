@@ -216,10 +216,11 @@ class RbaBelanjaPergeseranTest extends TestCase
     public function test_activate_shift_updates_period_year_on_existing_account(): void
     {
         // 1. Buat RbaAccount dengan period_year = Tahun A (misal: 2027)
-        $account = RbaAccount::create([
+        $account2027 = RbaAccount::create([
             'account_code' => '5.1.02.01.01.0002',
             'account_name' => 'Belanja Bahan Medis Awal',
             'period_year' => 2027,
+            'year' => 2027,
             'kategori_belanja' => 'Operasi',
             'sumber_dana' => 'BLUD',
             'total_budget' => 5000000,
@@ -247,11 +248,17 @@ class RbaBelanjaPergeseranTest extends TestCase
         // 3. Panggil activate()
         $shift2028->activate();
 
-        // 4. Assert period_year berubah menjadi 2028 dan budget terupdate
-        $account->refresh();
-        $this->assertEquals(2028, $account->period_year);
-        $this->assertEquals(10000000, (float) $account->total_budget);
-        $this->assertEquals('Belanja Bahan Medis Baru', $account->account_name);
+        // 4. Assert akun 2027 tidak ditimpa (tetap 2027) dan akun 2028 baru dibuat
+        $account2027->refresh();
+        $this->assertEquals(2027, $account2027->period_year);
+        $this->assertEquals(5000000, (float) $account2027->total_budget);
+
+        $account2028 = RbaAccount::where('account_code', '5.1.02.01.01.0002')
+            ->where('period_year', 2028)
+            ->first();
+        $this->assertNotNull($account2028);
+        $this->assertEquals(2028, $account2028->period_year);
+        $this->assertEquals(10000000, (float) $account2028->total_budget);
+        $this->assertEquals('Belanja Bahan Medis Baru', $account2028->account_name);
     }
 }
-

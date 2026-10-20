@@ -46,7 +46,7 @@ class RbaMurni2027Seeder extends Seeder
             $revenues = [
                 // Root
                 ['code' => '0', 'name' => 'PENDAPATAN', 'parent' => null, 'level' => 1, 'is_header' => true, 'amount' => 45000000000],
-                
+
                 // 1. Jasa Layanan BLUD (Total: Rp 25.500.000.000)
                 ['code' => '1', 'name' => 'JASA LAYANAN', 'parent' => '0', 'level' => 1, 'is_header' => true, 'amount' => 25500000000],
                 ['code' => 'a', 'name' => 'Pendapatan Pelayanan Gawat Darurat (IGD)', 'parent' => '1', 'level' => 2, 'is_header' => false, 'amount' => 120000000],
@@ -134,12 +134,12 @@ class RbaMurni2027Seeder extends Seeder
                 '1.1.2.1.20' => 1700000000, // Belanja Operasional Pelayanan Lainnya
 
                 // 1.2.1 Belanja Modal BLUD (Total Rp 3.000.000.000)
-                '1.2.1.1'   => 0,          // Belanja Modal Tanah
+                '1.2.1.1' => 0,          // Belanja Modal Tanah
                 '1.2.1.2.1' => 1800000000, // Belanja Modal Alat Kedokteran & Kesehatan (Alkes)
                 '1.2.1.2.2' => 450000000,  // Belanja Modal Komputer, Server & Jaringan SIMRS
                 '1.2.1.2.3' => 250000000,  // Belanja Modal Kendaraan Operasional / Ambulance
                 '1.2.1.2.4' => 200000000,  // Belanja Modal Mebel & Peralatan Kantor Ruangan
-                '1.2.1.3'   => 300000000,  // Belanja Modal Renovasi Gedung & Bangunan Pelayanan
+                '1.2.1.3' => 300000000,  // Belanja Modal Renovasi Gedung & Bangunan Pelayanan
             ];
 
             // Muat master RBA accounts
@@ -188,7 +188,7 @@ class RbaMurni2027Seeder extends Seeder
             // Sinkronisasi data ke master rba_accounts
             $shiftExpenseItems = RbaExpenseItem::where('rba_shift_id', $shift->id)->get();
             foreach ($shiftExpenseItems as $item) {
-                $acc = RbaAccount::where('account_code', $item->account_code)->first();
+                $acc = RbaAccount::where('account_code', $item->account_code)->where('period_year', 2027)->first();
                 if ($acc) {
                     $acc->update([
                         'total_budget' => $item->after_total,
@@ -244,7 +244,9 @@ class RbaMurni2027Seeder extends Seeder
 
     protected function updateSingleHeader($header, $children): void
     {
-        if ($children->isEmpty()) return;
+        if ($children->isEmpty()) {
+            return;
+        }
 
         $bJl = $children->sum('before_jasa_layanan');
         $bKs = $children->sum('before_hasil_kerjasama');

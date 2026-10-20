@@ -39,6 +39,7 @@ class CreateAdminCommand extends Command
 
         if ($password !== $passwordConfirmation) {
             $this->error('Passwords do not match.');
+
             return 1;
         }
 
@@ -58,6 +59,7 @@ class CreateAdminCommand extends Command
             foreach ($validator->errors()->all() as $error) {
                 $this->error($error);
             }
+
             return 1;
         }
 
@@ -71,6 +73,7 @@ class CreateAdminCommand extends Command
         ]);
 
         $this->info('Admin account created successfully.');
+
         return 0;
     }
 }

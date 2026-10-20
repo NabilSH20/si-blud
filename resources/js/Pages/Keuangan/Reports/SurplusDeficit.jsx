@@ -295,7 +295,7 @@ export default function SurplusDeficit({
                         <h4 className="text-[13px] font-bold text-slate-800">
                             Rincian Penerimaan Kas per Sumber
                         </h4>
-                        <Link href={route('revenues.create')} className="text-xs font-bold text-teal-600 hover:text-teal-700 transition hover:underline">
+                        <Link href={route('revenues.index', { create: true })} className="text-xs font-bold text-teal-600 hover:text-teal-700 transition hover:underline">
                             + Catat Kas
                         </Link>
                     </div>

@@ -1,7 +1,7 @@
 import ToastListener from '@/Components/ToastListener';
 import ProfileSettingsModal from '@/Components/ProfileSettingsModal';
 import { Link, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Hand } from 'lucide-react';
 
@@ -133,8 +133,17 @@ export default function PerencanaanLayout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [openDropdowns, setOpenDropdowns] = useState({});
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-    const [showNotification, setShowNotification] = useState(false);
     const [profileModalOpen, setProfileModalOpen] = useState(false);
+    const [showNotification, setShowNotification] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('profile')) {
+                setProfileModalOpen(true);
+            }
+        }
+    }, [url]);
 
     const isRbaRoute = route().current('perencanaan.rba.*');
     const currentRbaTab = (() => {

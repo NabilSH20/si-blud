@@ -20,8 +20,17 @@ export default function DivisiLayout({ children }) {
     const user = auth?.user || {};
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-    const [showNotification, setShowNotification] = useState(false);
     const [profileModalOpen, setProfileModalOpen] = useState(false);
+    const [showNotification, setShowNotification] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('profile')) {
+                setProfileModalOpen(true);
+            }
+        }
+    }, [url]);
 
     const isRequisitionsActive = route().current('requisitions.*');
     const currentParams = getUrlParams(url);
@@ -243,7 +252,7 @@ export default function DivisiLayout({ children }) {
                             {/* Shortcut: Buat Pengajuan Baru */}
                             <div className="pt-2">
                                 <Link
-                                    href={route('requisitions.create')}
+                                    href={route('requisitions.index', { create: true })}
                                     onClick={() => setSidebarOpen(false)}
                                     className="flex items-center justify-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 text-white py-2.5 px-3 text-xs font-bold shadow-sm hover:shadow transition"
                                 >

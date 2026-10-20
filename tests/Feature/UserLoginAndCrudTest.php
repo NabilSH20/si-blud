@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Division;
 use App\Models\Unit;
 use App\Models\User;
+use Database\Seeders\DivisionSeeder;
+use Database\Seeders\UnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -17,8 +19,8 @@ class UserLoginAndCrudTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\DivisionSeeder::class);
-        $this->seed(\Database\Seeders\UnitSeeder::class);
+        $this->seed(DivisionSeeder::class);
+        $this->seed(UnitSeeder::class);
     }
 
     public function test_user_can_login_with_email(): void
@@ -148,11 +150,11 @@ class UserLoginAndCrudTest extends TestCase
         $response = $this->actingAs($admin)->patch("/admin/users/{$target->id}/toggle-status");
         $response->assertSessionHas('success');
 
-        $this->assertFalse((bool)$target->fresh()->is_active);
+        $this->assertFalse((bool) $target->fresh()->is_active);
 
         // Toggle back to active
         $response = $this->actingAs($admin)->patch("/admin/users/{$target->id}/toggle-status");
-        $this->assertTrue((bool)$target->fresh()->is_active);
+        $this->assertTrue((bool) $target->fresh()->is_active);
     }
 
     public function test_admin_can_create_requester_user_for_new_pelayanan_division(): void
@@ -240,4 +242,3 @@ class UserLoginAndCrudTest extends TestCase
         $successLogin->assertRedirect('/perencanaan/dashboard');
     }
 }
-

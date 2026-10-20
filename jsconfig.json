@@ -4,7 +4,10 @@
         "paths": {
             "@/*": ["resources/js/*"],
             "ziggy-js": ["./vendor/tightenco/ziggy"]
-        }
+        },
+        "jsx": "react-jsx",
+        "lib": ["dom", "dom.iterable", "esnext"]
     },
+    "include": ["resources/js/**/*"],
     "exclude": ["node_modules", "public"]
 }

@@ -68,11 +68,11 @@ class Item extends Model
         }
 
         $nextNumber = $maxNumber + 1;
-        $candidate = 'ITM-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+        $candidate = 'ITM-'.str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
 
         while (self::where('item_code', $candidate)->exists()) {
             $nextNumber++;
-            $candidate = 'ITM-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            $candidate = 'ITM-'.str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
         }
 
         return $candidate;

@@ -85,6 +85,7 @@ class AuthenticatedSessionController extends Controller
         for ($i = 0; $i < $length; $i++) {
             $code .= $chars[random_int(0, strlen($chars) - 1)];
         }
+
         return $code;
     }
 

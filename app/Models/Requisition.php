@@ -61,13 +61,13 @@ class Requisition extends Model
     protected static function booted(): void
     {
         static::saving(function ($requisition) {
-            if (!$requisition->budget_year && $requisition->fiscal_year) {
+            if (! $requisition->budget_year && $requisition->fiscal_year) {
                 $requisition->budget_year = (int) $requisition->fiscal_year;
             }
-            if (!$requisition->fiscal_year && $requisition->budget_year) {
+            if (! $requisition->fiscal_year && $requisition->budget_year) {
                 $requisition->fiscal_year = (int) $requisition->budget_year;
             }
-            if (!$requisition->budget_year && !$requisition->fiscal_year) {
+            if (! $requisition->budget_year && ! $requisition->fiscal_year) {
                 $year = $requisition->submission_date
                     ? (int) date('Y', strtotime($requisition->submission_date))
                     : (int) date('Y');

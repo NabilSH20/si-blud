@@ -18,17 +18,18 @@ const formatTanggal = (dateString) => {
     }).format(date);
 };
 
-export default function PrintReport({ budgets = [], summary = {} }) {
+export default function PrintReport({ budgets = [], summary = {}, active_year }) {
     const currentDate = formatTanggal(new Date());
+    const displayYear = active_year || budgets[0]?.period_year || new Date().getFullYear();
 
     return (
         <div className="bg-white text-black min-h-screen p-8 max-w-5xl mx-auto font-sans print:p-0 print:max-w-none">
-            <Head title="Cetak Laporan Realisasi Anggaran E-BLUD" />
+            <Head title={`Cetak Laporan Realisasi Anggaran TA ${displayYear} - E-BLUD`} />
 
             {/* Print Action Bar (Hidden during Print) */}
             <div className="print:hidden flex items-center justify-between bg-slate-100 p-4 rounded-xl mb-6 border border-slate-200">
                 <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-slate-700">Dokumen Rekapitulasi Realisasi Anggaran E-BLUD</span>
+                    <span className="text-sm font-bold text-slate-700">Dokumen Rekapitulasi Realisasi Anggaran E-BLUD (TA {displayYear})</span>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
@@ -75,7 +76,7 @@ export default function PrintReport({ budgets = [], summary = {} }) {
                             LAPORAN REALISASI ANGGARAN E-BLUD
                         </h3>
                         <p className="text-xs font-bold tracking-wider">
-                            TAHUN ANGGARAN {new Date().getFullYear()}
+                            TAHUN ANGGARAN {displayYear}
                         </p>
                     </div>
                 </div>

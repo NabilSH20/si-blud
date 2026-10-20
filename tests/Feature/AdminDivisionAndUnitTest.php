@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Division;
-use App\Models\Item;
 use App\Models\RbaAccount;
 use App\Models\Requisition;
 use App\Models\Unit;
@@ -17,6 +16,7 @@ class AdminDivisionAndUnitTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $regularUser;
 
     protected function setUp(): void

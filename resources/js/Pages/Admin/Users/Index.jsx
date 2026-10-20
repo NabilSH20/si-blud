@@ -112,7 +112,19 @@ export default function Index({ users = [], divisions = [], success, error }) {
         } else {
             setDivisionFilter('ALL');
         }
-    }, [url, divisions]);
+
+        const createParam = params.get('create');
+        if (createParam) {
+            setIsCreateOpen(true);
+        }
+        const editId = params.get('edit');
+        if (editId && users && users.length > 0) {
+            const found = users.find((u) => String(u.id) === String(editId));
+            if (found) {
+                setEditingUser(found);
+            }
+        }
+    }, [url, divisions, users]);
 
     const filteredUsers = useMemo(() => {
         return users.filter((u) => {

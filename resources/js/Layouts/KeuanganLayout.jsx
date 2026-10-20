@@ -1,7 +1,7 @@
 import ToastListener from '@/Components/ToastListener';
 import ProfileSettingsModal from '@/Components/ProfileSettingsModal';
 import { Link, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { LayoutDashboard, Wallet, PiggyBank, ClipboardCheck, FileText, TrendingDown } from 'lucide-react';
 
@@ -83,8 +83,17 @@ export default function KeuanganLayout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [openDropdowns, setOpenDropdowns] = useState({});
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-    const [showNotification, setShowNotification] = useState(false);
     const [profileModalOpen, setProfileModalOpen] = useState(false);
+    const [showNotification, setShowNotification] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('profile')) {
+                setProfileModalOpen(true);
+            }
+        }
+    }, []);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-100/90 via-slate-50 to-emerald-50/50 bg-fixed font-sans text-slate-800 antialiased">

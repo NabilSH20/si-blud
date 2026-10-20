@@ -107,6 +107,22 @@ export default function Show({ requisition }) {
                     </div>
 
                     <div className="flex items-center gap-2.5">
+                        {['Pending_Perencanaan', 'Ditolak'].includes(requisition.status) && (
+                            <Link
+                                href={route('requisitions.index', { edit: requisition.id })}
+                                className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2 text-xs font-bold shadow-2xs transition cursor-pointer active:scale-95 ${
+                                    requisition.status === 'Ditolak'
+                                        ? 'border-amber-400 bg-amber-100/90 text-amber-950 hover:bg-amber-200'
+                                        : 'border-amber-300 bg-amber-50 hover:bg-amber-100 hover:text-amber-900 text-amber-800'
+                                }`}
+                                title={requisition.status === 'Ditolak' ? 'Revisi dan Ajukan Ulang Usulan Belanja' : 'Ubah Usulan Belanja'}
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                                </svg>
+                                <span>{requisition.status === 'Ditolak' ? 'Revisi & Ajukan Ulang' : 'Edit Usulan'}</span>
+                            </Link>
+                        )}
                         <a
                             href={route('requisitions.print', requisition.id)}
                             target="_blank"
@@ -119,7 +135,7 @@ export default function Show({ requisition }) {
                             Cetak Nota Dinas
                         </a>
                         <Link
-                            href={route('requisitions.create', { jenis: requisition.jenis_belanja || 'Operasi' })}
+                            href={route('requisitions.index', { create: true, jenis: requisition.jenis_belanja || 'Operasi' })}
                             className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer"
                         >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
@@ -142,6 +158,30 @@ export default function Show({ requisition }) {
                         </div>
                     </div>
                 </div>
+
+                {/* Banner Berkas Hasil Revisi Unit */}
+                {requisition.status === 'Pending_Perencanaan' && (requisition.notes_perencanaan || requisition.notes_keuangan) && (
+                    <div className="rounded-2xl border border-teal-300 bg-teal-50/90 p-4 shadow-xs">
+                        <div className="flex items-start gap-3">
+                            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white text-xs font-black">
+                                ✓
+                            </span>
+                            <div className="space-y-1 flex-1">
+                                <div className="flex items-center gap-2">
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-teal-950">
+                                        Usulan Belanja Telah Berhasil Diajukan Ulang (Revisi)
+                                    </h4>
+                                    <span className="rounded-md bg-teal-200/80 px-2 py-0.5 text-[10px] font-bold text-teal-900 border border-teal-300">
+                                        Menunggu Telaah Ulang
+                                    </span>
+                                </div>
+                                <p className="text-xs text-teal-800 leading-relaxed">
+                                    Berkas usulan belanja perbaikan ini telah terkirim ke antrean Bagian Perencanaan untuk diverifikasi kembali.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Requisition Header Info Card */}
                 <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4">

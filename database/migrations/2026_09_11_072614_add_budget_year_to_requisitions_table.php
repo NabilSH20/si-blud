@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -17,7 +18,7 @@ return new class extends Migration
 
         // Initialize existing records with fiscal_year if available
         if (Schema::hasColumn('requisitions', 'fiscal_year')) {
-            \Illuminate\Support\Facades\DB::statement('UPDATE requisitions SET budget_year = fiscal_year WHERE budget_year IS NULL');
+            DB::statement('UPDATE requisitions SET budget_year = fiscal_year WHERE budget_year IS NULL');
         }
     }
 

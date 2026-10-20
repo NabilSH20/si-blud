@@ -9,6 +9,7 @@ use App\Models\Requisition;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -17,10 +18,15 @@ class BidangUnitHierarchyTest extends TestCase
     use RefreshDatabase;
 
     private Division $pelayanan;
+
     private Division $keperawatan;
+
     private Unit $igd;
+
     private Unit $rawatJalan;
+
     private Unit $upip;
+
     private User $admin;
 
     protected function setUp(): void
@@ -85,16 +91,18 @@ class BidangUnitHierarchyTest extends TestCase
         );
     }
 
-    public function test_admin_can_view_create_user_page_with_divisions_and_units(): void
+    public function test_admin_can_view_users_index_with_modal_divisions_and_units(): void
     {
-        $response = $this->actingAs($this->admin)->get(route('users.create'));
+        $response = $this->actingAs($this->admin)->get(route('users.index'));
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Admin/Users/Create')
+            ->component('Admin/Users/Index')
             ->has('divisions', 2)
             ->has('divisions.0.units')
         );
+
+        $this->assertFalse(Route::has('users.create'));
     }
 
     public function test_admin_can_create_divisi_user_with_bidang_and_unit(): void

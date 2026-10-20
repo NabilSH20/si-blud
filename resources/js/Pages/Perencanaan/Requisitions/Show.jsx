@@ -307,6 +307,36 @@ export default function Show({ requisition, rbaList = [] }) {
                     </div>
                 </div>
 
+                {/* Banner Berkas Hasil Revisi & Pengajuan Ulang Unit */}
+                {requisition.status === 'Pending_Perencanaan' && (requisition.notes_perencanaan || requisition.notes_keuangan) && (
+                    <div className="rounded-2xl border border-amber-300 bg-amber-50/90 p-4 shadow-xs">
+                        <div className="flex items-start gap-3">
+                            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white text-xs font-black">
+                                !
+                            </span>
+                            <div className="space-y-1.5 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-amber-950">
+                                        Berkas Hasil Revisi & Pengajuan Ulang Unit (Resubmitted)
+                                    </h4>
+                                    <span className="rounded-md bg-amber-200/80 px-2 py-0.5 text-[10px] font-bold text-amber-900 border border-amber-300">
+                                        Perbaikan Unit
+                                    </span>
+                                </div>
+                                <p className="text-xs text-amber-900 leading-relaxed">
+                                    Dokumen usulan ini sebelumnya sempat ditolak/dikembalikan untuk perbaikan. Unit pengusul telah memperbarui rincian usulan belanja dan mengajukannya kembali untuk ditelaah ulang.
+                                </p>
+                                <div className="mt-2 rounded-xl bg-white/95 border border-amber-200 p-3 text-xs shadow-2xs">
+                                    <span className="font-bold text-slate-800">Catatan Evaluasi / Arahan Penolakan Sebelumnya:</span>
+                                    <p className="mt-1 italic text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                        "{requisition.notes_perencanaan || requisition.notes_keuangan}"
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* 2. Informasi Berkas Usulan (Divisi Style) */}
                 <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4">
                     <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -405,19 +435,27 @@ export default function Show({ requisition, rbaList = [] }) {
                                         [{activeRbaAccount.account_code}] {activeRbaAccount.account_name}
                                     </span>
                                     {activeRbaAccount.remaining_budget !== null && activeRbaAccount.remaining_budget !== undefined && (
-                                        <div className="flex flex-col sm:flex-row gap-2 mt-1 w-full sm:w-auto">
+                                        <div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-1 w-full sm:w-auto">
                                             <div className="text-[11px] bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg flex items-center justify-between gap-4">
                                                 <span className="text-slate-500 font-medium">Sisa Pagu Rekening:</span>
                                                 <span className="font-mono font-bold text-slate-800">{formatRupiah(activeRbaAccount.remaining_budget)}</span>
                                             </div>
+                                            {activeRbaAccount.committed_budget > 0 && (
+                                                <div className="text-[11px] bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg flex items-center justify-between gap-4">
+                                                    <span className="text-amber-700 font-medium">Komitmen (Diproses):</span>
+                                                    <span className="font-mono font-bold text-amber-800">{formatRupiah(activeRbaAccount.committed_budget)}</span>
+                                                </div>
+                                            )}
                                             <div className={`text-[11px] border px-3 py-1.5 rounded-lg flex items-center justify-between gap-4 ${
-                                                activeRbaAccount.remaining_budget - totalEstimatedApproved < 0 
+                                                (activeRbaAccount.available_budget ?? activeRbaAccount.remaining_budget) - totalEstimatedApproved < 0 
                                                 ? 'bg-rose-50 border-rose-300' 
                                                 : 'bg-emerald-50 border-emerald-200'
                                             }`}>
-                                                <span className={`${activeRbaAccount.remaining_budget - totalEstimatedApproved < 0 ? 'text-rose-700' : 'text-emerald-700'} font-medium`}>Estimasi Sisa Akhir:</span>
-                                                <span className={`font-mono font-bold ${activeRbaAccount.remaining_budget - totalEstimatedApproved < 0 ? 'text-rose-700' : 'text-emerald-800'}`}>
-                                                    {formatRupiah(activeRbaAccount.remaining_budget - totalEstimatedApproved)}
+                                                <span className={`${(activeRbaAccount.available_budget ?? activeRbaAccount.remaining_budget) - totalEstimatedApproved < 0 ? 'text-rose-700' : 'text-emerald-700'} font-medium`}>
+                                                    Sisa Tersedia:
+                                                </span>
+                                                <span className={`font-mono font-bold ${(activeRbaAccount.available_budget ?? activeRbaAccount.remaining_budget) - totalEstimatedApproved < 0 ? 'text-rose-700' : 'text-emerald-800'}`}>
+                                                    {formatRupiah((activeRbaAccount.available_budget ?? activeRbaAccount.remaining_budget) - totalEstimatedApproved)}
                                                 </span>
                                             </div>
                                         </div>
@@ -441,7 +479,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                     <option value="" disabled>-- Pilih Pos Rekening Belanja RBA --</option>
                                     {leafAccounts.map((acc) => (
                                         <option key={acc.id} value={acc.id}>
-                                            [{acc.account_code}] {acc.account_name} &bull; Belanja {acc.kategori_belanja || 'Operasi'}
+                                            [{acc.account_code}] {acc.account_name} &bull; Sisa Tersedia: {formatRupiah(acc.available_budget ?? acc.remaining_budget)}
                                         </option>
                                     ))}
                                 </select>

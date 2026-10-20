@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Perencanaan;
 
 use App\Http\Controllers\Controller;
+use App\Models\FiscalYear;
 use App\Models\Item;
 use App\Models\RbaAccount;
 use Illuminate\Http\RedirectResponse;
@@ -14,22 +15,47 @@ use Inertia\Response;
 class ItemController extends Controller
 {
     /**
+     * Helper to get RBA accounts scoped to active fiscal year.
+     */
+    private function getScopedRbaAccounts()
+    {
+        $activeYear = (int) session('active_year', function () {
+            return class_exists(FiscalYear::class)
+                ? FiscalYear::getDefaultYear()
+                : (int) date('Y');
+        });
+
+        $accounts = RbaAccount::where('period_year', $activeYear)
+            ->where('sumber_dana', 'BLUD')
+            ->orderBy('account_code')
+            ->get(['id', 'account_code', 'account_name', 'sumber_dana']);
+
+        if ($accounts->isEmpty()) {
+            $accounts = RbaAccount::where('sumber_dana', 'BLUD')
+                ->orderBy('account_code')
+                ->get(['id', 'account_code', 'account_name', 'sumber_dana'])
+                ->unique('account_code')
+                ->values();
+        }
+
+        return $accounts;
+    }
+
+    /**
      * Display a listing of the items.
      */
     public function index(Request $request): Response
     {
         return Inertia::render('Perencanaan/Items/Index', [
             'items' => Item::with([
-                    'rbaAccount:id,account_code,account_name',
-                    'originUnit:id,name,unit_code',
-                ])
+                'rbaAccount:id,account_code,account_name',
+                'originUnit:id,name,unit_code',
+            ])
                 ->orderBy('item_code')
                 ->get([
                     'id', 'rba_account_id', 'item_code', 'name', 'specification', 'unit_type', 'standard_price', 'source', 'origin_unit_id',
                 ]),
-            'rbaAccounts' => RbaAccount::where('sumber_dana', 'BLUD')
-                ->orderBy('account_code')
-                ->get(['id', 'account_code', 'account_name', 'sumber_dana']),
+            'rbaAccounts' => $this->getScopedRbaAccounts(),
             'nextItemCode' => Item::generateNextItemCode(),
             'success' => session('success'),
             'error' => session('error'),
@@ -38,24 +64,11 @@ class ItemController extends Controller
     }
 
     /**
-     * Show the form for creating a new item.
-     */
-    public function create(): Response
-    {
-        return Inertia::render('Perencanaan/Items/Create', [
-            'rbaAccounts' => RbaAccount::where('sumber_dana', 'BLUD')
-                ->orderBy('account_code')
-                ->get(['id', 'account_code', 'account_name']),
-            'nextItemCode' => Item::generateNextItemCode(),
-        ]);
-    }
-
-    /**
      * Store a newly created item in storage.
      */
     public function store(Request $request): RedirectResponse
     {
-        if (!$request->filled('item_code')) {
+        if (! $request->filled('item_code')) {
             $request->merge(['item_code' => Item::generateNextItemCode()]);
         } else {
             $request->merge(['item_code' => strtoupper(trim($request->item_code))]);
@@ -78,21 +91,6 @@ class ItemController extends Controller
         return redirect()
             ->route('items.index')
             ->with('success', 'Barang "'.$validated['name'].'" ('.$validated['item_code'].') berhasil ditambahkan ke katalog.');
-    }
-
-    /**
-     * Show the form for editing the specified item.
-     */
-    public function edit(Item $item): Response
-    {
-        return Inertia::render('Perencanaan/Items/Edit', [
-            'item' => $item->only([
-                'id', 'rba_account_id', 'item_code', 'name', 'specification', 'unit_type', 'standard_price',
-            ]),
-            'rbaAccounts' => RbaAccount::where('sumber_dana', 'BLUD')
-                ->orderBy('account_code')
-                ->get(['id', 'account_code', 'account_name']),
-        ]);
     }
 
     /**
@@ -155,6 +153,6 @@ class ItemController extends Controller
 
         return redirect()
             ->route('items.index')
-            ->with('success', 'Barang "' . $item->name . '" (' . $item->item_code . ') berhasil disahkan menjadi Standar Baku Rumah Sakit.');
+            ->with('success', 'Barang "'.$item->name.'" ('.$item->item_code.') berhasil disahkan menjadi Standar Baku Rumah Sakit.');
     }
 }

@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class RootController extends Controller
 {
     public function index()
     {
-        $user = auth()->user();
+        /** @var User|null $user */
+        $user = Auth::user();
 
         if ($user) {
             return redirect($user->dashboardPath());
@@ -29,6 +32,7 @@ class RootController extends Controller
         ]);
 
         session(['active_year' => (int) $request->year]);
+
         return back();
     }
 }

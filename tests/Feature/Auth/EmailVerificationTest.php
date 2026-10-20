@@ -23,7 +23,7 @@ class EmailVerificationTest extends TestCase
     {
         $user = User::factory()->unverified()->create();
 
-        $response = $this->actingAs($user)->get('/verify-email/' . $user->id . '/' . sha1($user->email));
+        $response = $this->actingAs($user)->get('/verify-email/'.$user->id.'/'.sha1($user->email));
 
         $response->assertStatus(404);
     }

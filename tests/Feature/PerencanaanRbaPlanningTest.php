@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Division;
 use App\Models\Item;
 use App\Models\RbaAccount;
-use App\Models\RbaExpenseItem;
 use App\Models\RbaRevenueItem;
 use App\Models\RbaShift;
 use App\Models\Requisition;
@@ -22,7 +21,9 @@ class PerencanaanRbaPlanningTest extends TestCase
     use RefreshDatabase;
 
     private User $perencanaanUser;
+
     private Division $perencanaanDivision;
+
     private RbaShift $activeShift;
 
     protected function setUp(): void
@@ -348,4 +349,3 @@ class PerencanaanRbaPlanningTest extends TestCase
         );
     }
 }
-

@@ -3,11 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class UserProfileTest extends TestCase
@@ -20,10 +20,7 @@ class UserProfileTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('profile.edit'));
 
-        $response->assertOk();
-        $response->assertInertia(fn (Assert $page) => $page
-            ->component('Profile/Edit')
-        );
+        $response->assertRedirect(route('divisi.dashboard', ['profile' => 'true']));
     }
 
     public function test_user_can_update_profile_information(): void
@@ -66,8 +63,11 @@ class UserProfileTest extends TestCase
         $response->assertSessionHasNoErrors();
         $user->refresh();
 
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
+
         $this->assertNotNull($user->avatar);
-        Storage::disk('public')->assertExists($user->avatar);
+        $disk->assertExists($user->avatar);
         $oldAvatar = $user->avatar;
 
         // 2. Upload replacement avatar -> old avatar must be deleted
@@ -84,8 +84,8 @@ class UserProfileTest extends TestCase
         $user->refresh();
 
         $this->assertNotSame($oldAvatar, $user->avatar);
-        Storage::disk('public')->assertExists($user->avatar);
-        Storage::disk('public')->assertMissing($oldAvatar);
+        $disk->assertExists($user->avatar);
+        $disk->assertMissing($oldAvatar);
     }
 
     public function test_user_can_update_password_with_valid_current_password(): void
@@ -122,4 +122,3 @@ class UserProfileTest extends TestCase
         $response->assertSessionHasErrors('current_password');
     }
 }
-

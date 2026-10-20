@@ -84,7 +84,7 @@ export default function RequisitionFormModal({
         jenis_belanja: 'Operasi',
         rba_account_id: '',
         budget_year: resolvedYear,
-        fiscal_year: resolvedYear,
+        fiscal_year: new Date().getFullYear(),
         program: 'Program Peningkatan Pelayanan Kesehatan Pada BLUD',
         kegiatan: '1. Pelayanan Kesehatan',
         sub_kegiatan: smartDefaultSub,
@@ -355,7 +355,7 @@ export default function RequisitionFormModal({
                 jenis_belanja: requisition.jenis_belanja || 'Campuran',
                 rba_account_id: requisition.rba_account_id || '',
                 budget_year: requisition.budget_year || requisition.fiscal_year || resolvedYear,
-                fiscal_year: requisition.fiscal_year || requisition.budget_year || resolvedYear,
+                fiscal_year: requisition.fiscal_year || new Date().getFullYear(),
                 program: requisition.program || 'Program Peningkatan Pelayanan Kesehatan Pada BLUD',
                 kegiatan: requisition.kegiatan || '1. Pelayanan Kesehatan',
                 sub_kegiatan: requisition.sub_kegiatan || smartDefaultSub,
@@ -483,10 +483,13 @@ export default function RequisitionFormModal({
                         <div>
                             <div className="flex items-center gap-2">
                                 <h2 className="text-base font-bold text-slate-900">
-                                    {isEdit ? 'Ubah Usulan Belanja E-BLUD' : 'Formulir Usulan Belanja E-BLUD RS Jiwa Tampan'}
+                                    {isEdit ? (requisition?.status === 'Ditolak' ? 'Revisi & Ajukan Ulang Usulan Belanja' : 'Ubah Usulan Belanja E-BLUD') : 'Formulir Usulan Belanja E-BLUD RS Jiwa Tampan'}
                                 </h2>
-                                <span className="inline-flex items-center rounded-md bg-teal-50 px-2 py-0.5 text-[11px] font-bold text-teal-700 border border-teal-200">
-                                    TA {resolvedYear}
+                                <span className="inline-flex items-center rounded-md bg-teal-50 px-2 py-0.5 text-[11px] font-bold text-teal-700 border border-teal-200" title="Tahun Anggaran Target Pembebanan RBA">
+                                    TA {resolvedYear} (Target RBA)
+                                </span>
+                                <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 border border-slate-200" title="Tahun Penginputan Berjalan">
+                                    Input {data.fiscal_year || new Date().getFullYear()}
                                 </span>
                             </div>
                             <p className="text-xs text-slate-500">
@@ -509,6 +512,29 @@ export default function RequisitionFormModal({
 
                 {/* 2. Body Dialog (Scrollable) */}
                 <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5 bg-white">
+
+                    {/* Notice for Rejected Requisition */}
+                    {isEdit && requisition?.status === 'Ditolak' && (requisition?.notes_perencanaan || requisition?.notes_keuangan) && (
+                        <div className="rounded-xl border border-amber-300 bg-amber-50/90 p-4 text-xs text-amber-950 shadow-2xs space-y-1.5 animate-fade-in">
+                            <div className="flex items-center gap-2 font-bold text-amber-900">
+                                <AlertTriangle size={17} className="text-amber-600 shrink-0" />
+                                <span>Catatan Evaluasi Verifikator (Alasan Usulan Ditolak Sebelumnya):</span>
+                            </div>
+                            {requisition.notes_perencanaan && (
+                                <p className="text-amber-900 pl-6">
+                                    <strong className="text-amber-950">Tim Perencanaan:</strong> {requisition.notes_perencanaan}
+                                </p>
+                            )}
+                            {requisition.notes_keuangan && (
+                                <p className="text-amber-900 pl-6">
+                                    <strong className="text-amber-950">Bagian Keuangan:</strong> {requisition.notes_keuangan}
+                                </p>
+                            )}
+                            <p className="text-[11px] text-amber-700 italic pl-6 pt-0.5">
+                                * Lakukan revisi pada item atau informasi di bawah ini, lalu klik &quot;Simpan &amp; Ajukan Ulang&quot; untuk mengirim kembali ke Tim Perencanaan.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Error Notice */}
                     {submitError && (
@@ -1151,7 +1177,7 @@ export default function RequisitionFormModal({
                             : 'bg-teal-600 hover:bg-teal-700'
                             }`}
                     >
-                        {processing ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Kirim Usulan Belanja'}
+                        {processing ? 'Menyimpan...' : isEdit ? (requisition?.status === 'Ditolak' ? 'Simpan & Ajukan Ulang' : 'Simpan Perubahan') : 'Kirim Usulan Belanja'}
                     </button>
                 </div>
             </div>

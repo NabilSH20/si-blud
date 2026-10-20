@@ -6,6 +6,9 @@ use App\Models\FiscalYear;
 use App\Models\Requisition;
 use App\Models\Revenue;
 use App\Models\User;
+use Database\Seeders\DivisionSeeder;
+use Database\Seeders\FiscalYearSeeder;
+use Database\Seeders\UnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -15,15 +18,16 @@ class FiscalYearManagementAndLoginTest extends TestCase
     use RefreshDatabase;
 
     protected User $adminUser;
+
     protected User $divisiUser;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\DivisionSeeder::class);
-        $this->seed(\Database\Seeders\UnitSeeder::class);
-        $this->seed(\Database\Seeders\FiscalYearSeeder::class);
+        $this->seed(DivisionSeeder::class);
+        $this->seed(UnitSeeder::class);
+        $this->seed(FiscalYearSeeder::class);
 
         $this->adminUser = User::factory()->create([
             'email' => 'admin.test@rsj.com',

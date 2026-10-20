@@ -3,7 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Budget;
-
+use App\Models\RbaRevenueItem;
+use App\Models\RbaShift;
 use App\Models\Revenue;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -89,8 +90,8 @@ class EBludCoreExpansionTest extends TestCase
             'total_budget' => 20000000,
             'remaining_budget' => 15000000, // spent = 5.000.000
         ]);
-        
-        // RequisitionDetail is empty in this test, so total_expense should be 0, 
+
+        // RequisitionDetail is empty in this test, so total_expense should be 0,
         // while budget_ledger_expense is 5000000, triggering discrepancy flag.
 
         $response = $this->actingAs($keuangan)->get(route('reports.surplus-deficit'));
@@ -118,8 +119,8 @@ class EBludCoreExpansionTest extends TestCase
     public function test_surplus_deficit_calculates_target_revenue_from_category_sums(): void
     {
         $keuangan = User::factory()->create(['role' => 'keuangan']);
-        
-        $shift = \App\Models\RbaShift::create([
+
+        $shift = RbaShift::create([
             'year' => 2026,
             'shift_name' => 'Murni',
             'status' => 'Aktif',
@@ -127,14 +128,14 @@ class EBludCoreExpansionTest extends TestCase
         ]);
 
         // Instead of a single item_code=0, we mock categories
-        \App\Models\RbaRevenueItem::create([
+        RbaRevenueItem::create([
             'rba_shift_id' => $shift->id,
             'item_code' => '4',
             'item_name' => 'Pendapatan BLUD',
             'after_amount' => 150000000,
         ]);
-        
-        \App\Models\RbaRevenueItem::create([
+
+        RbaRevenueItem::create([
             'rba_shift_id' => $shift->id,
             'item_code' => '5',
             'item_name' => 'Pendapatan Lain-lain',
@@ -149,4 +150,3 @@ class EBludCoreExpansionTest extends TestCase
         );
     }
 }
-

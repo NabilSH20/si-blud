@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use Exception;
+use Illuminate\Database\Seeder;
 
 class DemoSeeder extends Seeder
 {
@@ -13,7 +13,7 @@ class DemoSeeder extends Seeder
     public function run(): void
     {
         if (app()->environment('production')) {
-            throw new Exception("DemoSeeder cannot be run in production.");
+            throw new Exception('DemoSeeder cannot be run in production.');
         }
 
         $this->call([

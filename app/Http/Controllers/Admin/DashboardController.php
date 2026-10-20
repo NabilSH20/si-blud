@@ -8,6 +8,7 @@ use App\Models\Item;
 use App\Models\Requisition;
 use App\Models\Unit;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,7 +21,9 @@ class DashboardController extends Controller
     public function index(): Response
     {
         $activeYear = (int) session('active_year', date('Y'));
-        $authUser = auth()->user()->load(['division', 'unit']);
+        /** @var User $authUser */
+        $authUser = Auth::user();
+        $authUser->load(['division', 'unit']);
 
         $roleMap = [
             'admin' => 'Admin Sistem',
@@ -39,6 +42,7 @@ class DashboardController extends Controller
             ->map(function ($item) use ($roleMap, $totalUsers) {
                 $count = (int) $item->total;
                 $pct = $totalUsers > 0 ? round(($count / $totalUsers) * 100, 1) : 0;
+
                 return [
                     'role_key' => $item->role,
                     'name' => $roleMap[$item->role] ?? ucfirst($item->role),
@@ -50,7 +54,7 @@ class DashboardController extends Controller
         // Requisitions in active budget year
         $reqQuery = Requisition::where(function ($q) use ($activeYear) {
             $q->where('budget_year', $activeYear)
-              ->orWhere('fiscal_year', $activeYear);
+                ->orWhere('fiscal_year', $activeYear);
         });
 
         $totalRequisitions = (clone $reqQuery)->count();
@@ -132,16 +136,16 @@ class DashboardController extends Controller
             $search = request('search');
             $usersQuery->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('nip', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('position', 'like', "%{$search}%");
+                    ->orWhere('nip', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('position', 'like', "%{$search}%");
             });
         }
 
         // Unpaginated filtered users for charts
         $chartUsers = clone $usersQuery;
         $chartUsers = $chartUsers->get([
-            'id', 'name', 'email', 'nip', 'role', 'position', 'division_id', 'unit_id', 'is_active', 'created_at'
+            'id', 'name', 'email', 'nip', 'role', 'position', 'division_id', 'unit_id', 'is_active', 'created_at',
         ]);
 
         // Paginated users for the table

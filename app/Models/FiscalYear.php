@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class FiscalYear extends Model
 {
@@ -29,7 +30,7 @@ class FiscalYear extends Model
     public static function getActiveYears()
     {
         try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('fiscal_years')) {
+            if (Schema::hasTable('fiscal_years')) {
                 return static::where('is_active', true)
                     ->orderByDesc('year')
                     ->get();
@@ -47,7 +48,7 @@ class FiscalYear extends Model
     public static function getDefaultYear(): int
     {
         try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('fiscal_years')) {
+            if (Schema::hasTable('fiscal_years')) {
                 $default = static::where('is_default', true)->where('is_active', true)->first();
                 if ($default) {
                     return (int) $default->year;

@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Keuangan;
 
 use App\Http\Controllers\Controller;
 use App\Models\Budget;
+use App\Models\FiscalYear;
 use App\Models\RbaShift;
 use App\Models\RequisitionDetail;
 use App\Models\Revenue;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,7 +18,7 @@ class ReportController extends Controller
     /**
      * Display the Budget Realization Report index.
      */
-    public function index(\Illuminate\Http\Request $request): Response
+    public function index(Request $request): Response
     {
         $year = $request->input('year');
         $search = $request->input('search');
@@ -45,7 +47,7 @@ class ReportController extends Controller
     /**
      * Display the Printable Budget Realization Report.
      */
-    public function print(\Illuminate\Http\Request $request): Response
+    public function print(Request $request): Response
     {
         $year = $request->input('year');
         $search = $request->input('search');
@@ -82,8 +84,8 @@ class ReportController extends Controller
     protected function getSurplusDeficitData(): array
     {
         $activeYear = (int) session('active_year', function () {
-            return class_exists(\App\Models\FiscalYear::class)
-                ? \App\Models\FiscalYear::getDefaultYear()
+            return class_exists(FiscalYear::class)
+                ? FiscalYear::getDefaultYear()
                 : (int) date('Y');
         });
 
@@ -103,12 +105,12 @@ class ReportController extends Controller
         // Realisasi Belanja pada Tahun Anggaran Aktif
         $requisitionExpense = (float) RequisitionDetail::whereHas('requisition', function ($q) use ($activeYear) {
             $q->where('status', 'Disetujui_Selesai')
-              ->where(function ($sq) use ($activeYear) {
-                  $sq->where('budget_year', $activeYear)
-                     ->orWhere(function ($ssq) use ($activeYear) {
-                         $ssq->whereNull('budget_year')->where('fiscal_year', $activeYear);
-                     });
-              });
+                ->where(function ($sq) use ($activeYear) {
+                    $sq->where('budget_year', $activeYear)
+                        ->orWhere(function ($ssq) use ($activeYear) {
+                            $ssq->whereNull('budget_year')->where('fiscal_year', $activeYear);
+                        });
+                });
         })->sum('subtotal');
 
         $budgetExpenses = Budget::where('period_year', $activeYear)
@@ -132,17 +134,18 @@ class ReportController extends Controller
             $parts = explode('.', $b['account_code']);
             $prefix = '';
             for ($i = 0; $i < count($parts) - 1; $i++) {
-                $prefix .= ($i == 0 ? '' : '.') . $parts[$i];
+                $prefix .= ($i == 0 ? '' : '.').$parts[$i];
                 if (in_array($prefix, $budgetCodes)) {
                     return false; // Found a parent in the current result set
                 }
             }
+
             return true;
         })->sum('spent');
-        
+
         // P0-2 FIX: Official expense must be exactly the sum of actual requisitions
         $totalExpense = $requisitionExpense;
-        
+
         // Calculate discrepancy between ledger and actual transactions
         $discrepancyAmount = abs($requisitionExpense - $totalBudgetSpent);
         $hasDiscrepancy = $discrepancyAmount > 1000; // Tolerance for small rounding issues
@@ -188,6 +191,9 @@ class ReportController extends Controller
                 'revenue_achievement' => $revenueAchievement,
                 'expense_absorption' => $expenseAbsorption,
                 'rba_status' => $rba ? $rba->status : 'Belum Disusun',
+                'current_input_year' => (int) date('Y'),
+                'ongoing_year_realized' => (float) Revenue::whereYear('date', date('Y'))->sum('amount'),
+                'is_future_planning' => (int) $activeYear > (int) date('Y'),
             ],
             'revenue_sources' => $revenueSources,
             'expense_categories' => $budgetExpenses,
@@ -202,8 +208,8 @@ class ReportController extends Controller
     protected function getReportData($year = null, $search = null, $kategori = null): array
     {
         $activeYear = $year ?: (int) session('active_year', function () {
-            return class_exists(\App\Models\FiscalYear::class)
-                ? \App\Models\FiscalYear::getDefaultYear()
+            return class_exists(FiscalYear::class)
+                ? FiscalYear::getDefaultYear()
                 : (int) date('Y');
         });
 
@@ -212,7 +218,7 @@ class ReportController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('account_code', 'like', "%{$search}%")
-                  ->orWhere('account_name', 'like', "%{$search}%");
+                    ->orWhere('account_name', 'like', "%{$search}%");
             });
         }
 
@@ -224,22 +230,22 @@ class ReportController extends Controller
             ->sortBy('account_code', SORT_NATURAL)
             ->values()
             ->map(function ($budget) {
-            $totalBudget = (float) $budget->total_budget;
-            $remainingBudget = (float) $budget->remaining_budget;
-            $spent = max(0, $totalBudget - $remainingBudget);
-            $percentage = $totalBudget > 0 ? round(($spent / $totalBudget) * 100, 2) : 0;
+                $totalBudget = (float) $budget->total_budget;
+                $remainingBudget = (float) $budget->remaining_budget;
+                $spent = max(0, $totalBudget - $remainingBudget);
+                $percentage = $totalBudget > 0 ? round(($spent / $totalBudget) * 100, 2) : 0;
 
-            return [
-                'id' => $budget->id,
-                'account_code' => $budget->account_code,
-                'account_name' => $budget->account_name,
-                'period_year' => $budget->period_year,
-                'total_budget' => $totalBudget,
-                'total_spent' => $spent,
-                'remaining_budget' => $remainingBudget,
-                'percentage' => $percentage,
-            ];
-        });
+                return [
+                    'id' => $budget->id,
+                    'account_code' => $budget->account_code,
+                    'account_name' => $budget->account_name,
+                    'period_year' => $budget->period_year,
+                    'total_budget' => $totalBudget,
+                    'total_spent' => $spent,
+                    'remaining_budget' => $remainingBudget,
+                    'percentage' => $percentage,
+                ];
+            });
 
         // Robust dynamic root node algorithm for filtered data to prevent double-counting.
         // A node is a "root of the result set" if no prefix (parent) of it exists in the result set.
@@ -248,11 +254,12 @@ class ReportController extends Controller
             $parts = explode('.', $b['account_code']);
             $prefix = '';
             for ($i = 0; $i < count($parts) - 1; $i++) {
-                $prefix .= ($i == 0 ? '' : '.') . $parts[$i];
+                $prefix .= ($i == 0 ? '' : '.').$parts[$i];
                 if (in_array($prefix, $codes)) {
                     return false; // Found a parent in the current result set
                 }
             }
+
             return true;
         });
 

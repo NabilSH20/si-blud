@@ -18,7 +18,9 @@ class PerencanaanItemManagementTest extends TestCase
     use RefreshDatabase;
 
     private User $perencanaanUser;
+
     private Division $perencanaanDivision;
+
     private RbaAccount $rbaAccount;
 
     protected function setUp(): void

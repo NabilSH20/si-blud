@@ -116,7 +116,7 @@ export default function Dashboard({
                         </div>
 
                         <Link
-                            href={route('requisitions.create')}
+                            href={route('requisitions.index', { create: true })}
                             className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer"
                         >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
@@ -317,7 +317,7 @@ export default function Dashboard({
                                             <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
                                                 <p className="text-xs font-semibold text-slate-700">Belum ada pengajuan belanja pada tahun anggaran ini.</p>
                                                 <Link
-                                                    href={route('requisitions.create')}
+                                                    href={route('requisitions.index', { create: true })}
                                                     className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 hover:text-teal-800"
                                                 >
                                                     + Klik di sini untuk membuat usulan baru

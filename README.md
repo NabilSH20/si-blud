@@ -1,58 +1,108 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SI-BLUD RS Jiwa Tampan Provinsi Riau
+**Sistem Informasi Pengadaan Barang/Jasa & Pengelolaan Anggaran RBA (Pola Pengelolaan Keuangan BLUD)**
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi web modern berbasis **Laravel 11**, **Inertia.js (React)**, dan **Tailwind CSS** untuk mendigitalisasi alur pengajuan kebutuhan barang instalasi medis/penunjang, telaah rencana bisnis dan anggaran (RBA), serta pencairan SP2D di Rumah Sakit Jiwa Tampan Provinsi Riau.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Arsitektur Alur Bisnis (4 Peran Pengguna)
+1. **Admin Master Data**: Konfigurasi Tahun Anggaran aktif, Master Bidang & Unit Kerja, Katalog SSH (Standar Satuan Harga), serta Manajemen Akun Pengguna.
+2. **Divisi / Unit Pengusul**: Input usulan belanja barang/jasa, cetak Nota Dinas, serta fitur *Revisi & Ajukan Ulang* jika berkas dikembalikan/ditolak.
+3. **Bagian Perencanaan & Pengadaan**: Verifikasi kelayakan usulan, telaah kesesuaian harga terhadap SSH, pemetaan kode rekening belanja RBA, penyesuaian volume disetujui, dan penyusunan RBA Pergeseran.
+4. **Bagian Keuangan**: Validasi pagu rekening DPA-BLUD, validasi ketersediaan saldo, pembebanan anggaran otomatis, penerbitan SP2D/Kuitansi, serta laporan surplus/defisit operasional.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Panduan Perintah Terminal (Command Guide)
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### (a) Setup Local / Demo Environment (Pengembangan & Demo)
+Gunakan urutan perintah berikut untuk setup awal di komputer lokal dengan data contoh:
 
 ```bash
-composer require laravel/boost --dev
+# 1. Install dependensi backend & frontend
+composer install
+npm install
 
-php artisan boost:install
+# 2. Salin environment lokal dan buat App Key
+cp .env.example .env
+php artisan key:generate
+
+# 3. Jalankan migrasi dan seeder data awal
+php artisan migrate:fresh --seed
+
+# 4. (Opsional) Suntikkan data akun demo & alur transaksi simulasi
+php artisan db:seed --class=DemoSeeder
+
+# 5. Jalankan server lokal
+npm run dev
+php artisan serve
+```
+> **Catatan Pengguna Windows PowerShell**: Jalankan perintah per baris atau gunakan tanda titik koma (`;`) sebagai pemisah perintah.
+> **Akun Default Demo**: `admin@rsj.com`, `perencanaan@rsj.com`, `keuangan@rsj.com`, `igd@rsj.com` (Password: `password`).
+
+---
+
+### (b) Setup Server Production Bersih (Fresh Go-Live)
+Gunakan urutan perintah berikut untuk deployment resmi hari-H di server produksi RSJ Tampan tanpa data transaksi tiruan:
+
+```bash
+# 1. Install dependensi mode produksi (tanpa paket dev)
+composer install --no-dev --optimize-autoloader
+npm install
+npm run build
+
+# 2. Salin konfigurasi keamanan produksi
+cp .env.production.example .env
+
+# 3. Sesuaikan koneksi database & kredensial non-root di .env
+# nano .env
+
+# 4. Generate Application Key produksi
+php artisan key:generate --force
+
+# 5. Eksekusi migrasi tabel & database indexing
+php artisan migrate --force
+
+# 6. Suntikkan Master Data Resmi (Tahun Anggaran 2027, Bidang, Unit, RBA, & SSH)
+php artisan db:seed --class=ProductionMasterSeeder --force
+
+# 7. Buat akun Super Admin utama melalui CLI terminal server
+php artisan app:create-admin
+
+# 8. Optimasi performa caching Laravel
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+### (c) Menjalankan Automated Testing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+#### 1. Backend Unit & Feature Test (PHPUnit)
+Menguji 173 skenario logika bisnis, validasi pagu anggaran, otorisasi role, dan integritas database:
+```bash
+php artisan test --compact
+```
 
-## Code of Conduct
+#### 2. End-to-End (E2E) Browser Test (Playwright)
+Menguji simulasi navigasi nyata browser Chromium untuk alur lengkap:
+*(Login Divisi -> Buat Usulan -> Login Perencanaan -> Verifikasi -> Login Keuangan -> Cairkan SP2D & Cek Laporan)*
+```bash
+# Jalankan E2E test headless
+npx playwright test
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Tampilkan visualisasi laporan hasil test
+npx playwright show-report
+```
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Standar Keamanan Produksi
+- **Session Hardening**: Cookie terenkripsi dengan flag `Secure`, `HttpOnly`, dan `SameSite=Lax`.
+- **Database Indexing**: Indeks komposit pada `requisitions(budget_year, status)`, `rba_accounts(period_year)`, dan `revenues(date)`.
+- **Audit Trail**: Jejak waktu dan identitas verifikator tercatat permanen pada tiap tahap persetujuan.
+- **Master Data Guard**: `DemoSeeder` dicegah secara otomatis untuk dieksekusi di environment `production`.
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+*Pemerintah Provinsi Riau - Rumah Sakit Jiwa Tampan &copy; 2026*

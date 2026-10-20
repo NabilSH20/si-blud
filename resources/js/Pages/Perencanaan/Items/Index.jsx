@@ -40,6 +40,24 @@ export default function Index({
     const [confirmingDelete, setConfirmingDelete] = useState(null);
     const deleteForm = useForm();
 
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('create')) {
+                setEditingItem(null);
+                setIsFormModalOpen(true);
+            }
+            const editId = params.get('edit');
+            if (editId && items && items.length > 0) {
+                const found = items.find((i) => String(i.id) === String(editId));
+                if (found) {
+                    setEditingItem(found);
+                    setIsFormModalOpen(true);
+                }
+            }
+        }
+    }, [items]);
+
     const sourceCounts = useMemo(() => {
         const standar = items.filter((i) => (i.source || 'STANDAR') === 'STANDAR').length;
         const usulan = items.filter((i) => i.source === 'USULAN_UNIT').length;

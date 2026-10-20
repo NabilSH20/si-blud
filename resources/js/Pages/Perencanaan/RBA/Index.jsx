@@ -162,34 +162,55 @@ export default function Index({
         });
     };
 
-    const handleOpenCreateShift = () => {
-        // Detect existing shifts for selected year to suggest next sequence
-        const existingNames = shifts.map((s) => (s.shift_name || '').toLowerCase());
-        let nextName = 'Pergeseran I';
-        let nextPeriod = `April ${selected_year}`;
-
-        if (existingNames.some((n) => n.includes('pergeseran iv') || n.includes('pergeseran 4'))) {
-            nextName = 'Pergeseran V';
-            nextPeriod = `November ${selected_year}`;
-        } else if (existingNames.some((n) => n.includes('pergeseran iii') || n.includes('pergeseran 3'))) {
-            nextName = 'Pergeseran IV';
-            nextPeriod = `Oktober ${selected_year}`;
-        } else if (existingNames.some((n) => n.includes('pergeseran ii') || n.includes('pergeseran 2'))) {
-            nextName = 'Pergeseran III';
-            nextPeriod = `Juli ${selected_year}`;
-        } else if (existingNames.some((n) => n.includes('pergeseran i') || n.includes('pergeseran 1'))) {
-            nextName = 'Pergeseran II';
-            nextPeriod = `Juni ${selected_year}`;
-        } else if (existingNames.some((n) => n.includes('murni'))) {
-            nextName = 'Pergeseran I';
-            nextPeriod = `April ${selected_year}`;
+    const toRomanNumeral = (num) => {
+        const lookup = [
+            ['M', 1000], ['CM', 900], ['D', 500], ['CD', 400],
+            ['C', 100], ['XC', 90], ['L', 50], ['XL', 40],
+            ['X', 10], ['IX', 9], ['V', 5], ['IV', 4], ['I', 1]
+        ];
+        let roman = '';
+        let n = num;
+        for (const [letter, value] of lookup) {
+            while (n >= value) {
+                roman += letter;
+                n -= value;
+            }
         }
+        return roman || 'I';
+    };
+
+    const handleOpenCreateShift = () => {
+        // Detect existing shifts for selected year to suggest next dynamic sequence (1..N)
+        const existingNames = shifts.map((s) => (s.shift_name || '').toLowerCase());
+        const romanMap = {
+            i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9, x: 10,
+            xi: 11, xii: 12, xiii: 13, xiv: 14, xv: 15, xvi: 16, xvii: 17, xviii: 18, xix: 19, xx: 20
+        };
+        let highestShiftNum = 0;
+        existingNames.forEach((n) => {
+            const romanMatch = n.match(/pergeseran\s+([ivxlcdm]+)/i);
+            if (romanMatch && romanMap[romanMatch[1].toLowerCase()]) {
+                highestShiftNum = Math.max(highestShiftNum, romanMap[romanMatch[1].toLowerCase()]);
+            }
+            const arabicMatch = n.match(/pergeseran\s+(\d+)/i);
+            if (arabicMatch) {
+                highestShiftNum = Math.max(highestShiftNum, parseInt(arabicMatch[1], 10));
+            }
+        });
+
+        const nextNum = highestShiftNum > 0 ? highestShiftNum + 1 : (existingNames.some(n => n.includes('murni')) ? 1 : 1);
+        const nextRoman = toRomanNumeral(nextNum);
+        const nextName = `Pergeseran ${nextRoman}`;
+
+        // Default period months based on shift iteration
+        const monthNames = ['Maret', 'Juni', 'September', 'Oktober', 'November', 'Desember'];
+        const periodMonth = `${monthNames[(nextNum - 1) % monthNames.length]} ${selected_year}`;
 
         shiftForm.setData({
             year: selected_year,
             shift_name: nextName,
             doc_title: `PERUBAHAN RENCANA BISNIS DAN ANGGARAN BLUD (${nextName.toUpperCase()}) T.A. ${selected_year}`,
-            period_month: nextPeriod,
+            period_month: periodMonth,
             notes: '',
         });
         setShowShiftModal(true);
@@ -436,6 +457,7 @@ export default function Index({
     const b = ringkasan_rba.belanja || {};
     const sd = ringkasan_rba.surplus_defisit || {};
     const c = ringkasan_rba.pembiayaan || {};
+    const k = ringkasan_rba.keseimbangan || {};
 
     return (
         <PerencanaanLayout>
@@ -610,7 +632,69 @@ export default function Index({
                 </div>
             </div>
 
-
+            {/* Horizontal Tabs Navigation Bar */}
+            <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200">
+                <button
+                    type="button"
+                    onClick={() => { setActiveTab('RINGKASAN'); router.get(route('perencanaan.rba.index'), { year: selected_year, shift_id: current_shift?.id, tab: 'RINGKASAN' }, { preserveState: true, preserveScroll: true, replace: true }); }}
+                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                        activeTab === 'RINGKASAN'
+                            ? 'bg-teal-700 text-white shadow-sm'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                >
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Ringkasan & SiLPA</span>
+                </button>
+                <button
+                    type="button"
+                    onClick={() => { setActiveTab('PENDAPATAN'); router.get(route('perencanaan.rba.index'), { year: selected_year, shift_id: current_shift?.id, tab: 'PENDAPATAN' }, { preserveState: true, preserveScroll: true, replace: true }); }}
+                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                        activeTab === 'PENDAPATAN'
+                            ? 'bg-teal-700 text-white shadow-sm'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                >
+                    <CircleDollarSign className="h-4 w-4" />
+                    <span>Target Pendapatan ({revenue_items.filter(r => !r.is_header && r.item_code !== '0').length} Pos)</span>
+                </button>
+                <button
+                    type="button"
+                    onClick={() => { setActiveTab('BELANJA'); router.get(route('perencanaan.rba.index'), { year: selected_year, shift_id: current_shift?.id, tab: 'BELANJA' }, { preserveState: true, preserveScroll: true, replace: true }); }}
+                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                        activeTab === 'BELANJA'
+                            ? 'bg-teal-700 text-white shadow-sm'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                >
+                    <Zap className="h-4 w-4" />
+                    <span>Anggaran Belanja BLUD</span>
+                </button>
+                <button
+                    type="button"
+                    onClick={() => { setActiveTab('RINCIAN_BARANG'); router.get(route('perencanaan.rba.index'), { year: selected_year, shift_id: current_shift?.id, tab: 'RINCIAN_BARANG' }, { preserveState: true, preserveScroll: true, replace: true }); }}
+                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                        activeTab === 'RINCIAN_BARANG'
+                            ? 'bg-teal-700 text-white shadow-sm'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                >
+                    <ClipboardList className="h-4 w-4" />
+                    <span>Rincian Usulan Belanja ({totalUsulanCount} Barang)</span>
+                </button>
+                <button
+                    type="button"
+                    onClick={() => { setActiveTab('SHIFTS'); router.get(route('perencanaan.rba.index'), { year: selected_year, shift_id: current_shift?.id, tab: 'SHIFTS' }, { preserveState: true, preserveScroll: true, replace: true }); }}
+                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                        activeTab === 'SHIFTS'
+                            ? 'bg-teal-700 text-white shadow-sm'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                >
+                    <Settings className="h-4 w-4" />
+                    <span>Kelola Versi & Pergeseran ({shifts.length})</span>
+                </button>
+            </div>
 
             {/* TAB 1: RINGKASAN RBA & SURPLUS/DEFISIT */}
             {activeTab === 'RINGKASAN' && (
@@ -660,7 +744,45 @@ export default function Index({
                             </p>
                         </div>
                     </div>
-                    {/* Official 5-Column Ringkasan Table matching PDF */}
+
+                    {/* Equilibrium / Budget Balance Status & Alert */}
+                    {k.is_balanced === false && (
+                        <div className="rounded-2xl border-2 border-rose-300 bg-rose-50 p-4 shadow-sm flex items-start gap-3.5 text-rose-950">
+                            <div className="rounded-xl bg-rose-100 p-2 text-rose-700 shrink-0 mt-0.5">
+                                <AlertTriangle className="h-6 w-6" strokeWidth={2.5} />
+                            </div>
+                            <div className="flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <h4 className="text-sm font-black text-rose-900">
+                                        Peringatan Keseimbangan Anggaran: Terjadi Defisit Terbuka Tanpa Sumber Pembiayaan
+                                    </h4>
+                                    <span className="rounded-md bg-rose-200 px-2 py-0.5 text-[10px] font-black uppercase text-rose-800">
+                                        Tidak Berimbang
+                                    </span>
+                                </div>
+                                <p className="mt-1 text-xs font-semibold text-rose-800 leading-relaxed">
+                                    Total Pagu Belanja & Pengeluaran Pembiayaan ({formatRupiah(k.total_belanja_dan_pengeluaran)}) melebihi Total Proyeksi Pendapatan & Penerimaan SiLPA ({formatRupiah(k.total_pendapatan_dan_penerimaan)}) dengan selisih defisit netto sebesar <span className="underline font-black">{formatRupiah(Math.abs(k.selisih))}</span>.
+                                    Sesuai aturan pengelolaan keuangan BLUD RSJ Tampan, RBA tidak boleh berstatus defisit tanpa penopang pembiayaan. Harap sesuaikan target pendapatan, optimalkan alokasi SiLPA, atau kurangi pagu belanja sebelum mengaktifkan pergeseran ini.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {k.is_balanced === true && (
+                        <div className="rounded-2xl border border-teal-200 bg-teal-50/70 p-3.5 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-teal-950">
+                            <div className="flex items-center gap-2.5">
+                                <div className="rounded-lg bg-teal-100 p-1.5 text-teal-700">
+                                    <Sparkles className="h-4 w-4" />
+                                </div>
+                                <span className="text-xs font-bold text-teal-900">
+                                    Status Keseimbangan Anggaran: <strong className="font-black text-teal-800">Berimbang / Terpenuhi</strong> (SiLPA Bersih Akhir: {formatRupiah(k.silpa_tahun_berkenaan || c.silpa_tahun_berkenaan)})
+                                </span>
+                            </div>
+                            <span className="text-[11px] font-semibold text-teal-700">
+                                Total Sumber Dana ({formatRupiah(k.total_pendapatan_dan_penerimaan)}) mencukupi seluruh pagu & pembiayaan
+                            </span>
+                        </div>
+                    )}
                     <div className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-md">
                         <div className="border-b border-slate-200 bg-slate-100/80 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div>
@@ -992,6 +1114,28 @@ export default function Index({
             {/* TAB 2: TARGET PENDAPATAN BLUD */}
             {activeTab === 'PENDAPATAN' && (
                 <div className="space-y-6">
+                    {/* Baseline Reference Banner for Future Planning Years */}
+                    {revenue_summary.is_future_planning && (
+                        <div className="rounded-2xl border border-blue-200 bg-blue-50/80 p-4 shadow-2xs flex items-start gap-3.5 text-blue-950">
+                            <div className="rounded-xl bg-blue-100 p-2 text-blue-700 shrink-0 mt-0.5">
+                                <CircleDollarSign className="h-5 w-5" />
+                            </div>
+                            <div className="flex-1 text-xs">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <p className="font-bold text-blue-900">
+                                        Penyusunan Target Anggaran Masa Depan (T.A. {selected_year})
+                                    </p>
+                                    <span className="rounded-md bg-blue-200 px-2 py-0.5 text-[10px] font-bold text-blue-800">
+                                        Tahun Penginputan {revenue_summary.current_input_year}
+                                    </span>
+                                </div>
+                                <p className="mt-1 text-blue-800 leading-relaxed font-medium">
+                                    Realisasi kas tahun {selected_year} masih Rp 0 karena periode pelaksanaan anggaran belum berjalan. Sebagai acuan dasar perencanaan, total realisasi pendapatan riil tahun penginputan berjalan ({revenue_summary.current_input_year}) saat ini tercatat sebesar <strong className="font-black text-blue-950">{formatRupiah(revenue_summary.ongoing_year_realized)}</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Single-Row Toolbar & Category Filter */}
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
                         <div className="flex flex-1 flex-wrap items-center gap-2.5">
@@ -2724,6 +2868,12 @@ export default function Index({
                                 <div className="mt-3 rounded-xl bg-amber-50 p-3 text-xs font-semibold text-amber-900 border border-amber-200">
                                     <Pin size={18} className="inline mr-1 text-rose-500" /> Seluruh pagu rekening operasional unit (Daftar Akun RBA) akan otomatis diperbarui mengikuti angka pada dokumen <strong>{activatingShift.shift_name}</strong>, dan versi sebelumnya akan diarsipkan.
                                 </div>
+                                {k.is_balanced === false && (
+                                    <div className="mt-3 rounded-xl bg-rose-50 p-3 text-xs font-semibold text-rose-900 border border-rose-300">
+                                        <AlertTriangle size={18} className="inline mr-1 text-rose-600" />
+                                        <strong>Peringatan Defisit Anggaran:</strong> Dokumen ini berstatus <u>Defisit Terbuka ({formatRupiah(Math.abs(k.selisih))})</u> tanpa kecukupan SiLPA/pembiayaan. Pastikan rencana pembiayaan telah ditinjau sebelum disahkan.
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <div className="mt-6 flex justify-end gap-2.5 border-t border-slate-100 pt-4">

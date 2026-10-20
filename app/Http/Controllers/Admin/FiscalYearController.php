@@ -8,7 +8,7 @@ use App\Models\Requisition;
 use App\Models\Revenue;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -53,8 +53,7 @@ class FiscalYearController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
-
+        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
 
         $validated = $request->validate([
             'year' => ['required', 'integer', 'digits:4', 'min:2020', 'max:2050', 'unique:fiscal_years,year'],
@@ -94,8 +93,7 @@ class FiscalYearController extends Controller
      */
     public function update(Request $request, FiscalYear $fiscalYear): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
-
+        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -109,7 +107,7 @@ class FiscalYearController extends Controller
         $isDefault = (bool) ($validated['is_default'] ?? false);
         $isActive = isset($validated['is_active']) ? (bool) $validated['is_active'] : $fiscalYear->is_active;
 
-        if ($isDefault && !$fiscalYear->is_default) {
+        if ($isDefault && ! $fiscalYear->is_default) {
             FiscalYear::query()->update(['is_default' => false]);
             $isActive = true;
         }
@@ -130,15 +128,14 @@ class FiscalYearController extends Controller
      */
     public function toggleStatus(FiscalYear $fiscalYear): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
-
+        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
 
         if ($fiscalYear->is_default && $fiscalYear->is_active) {
             return redirect()->route('fiscal-years.index')
                 ->with('error', 'Tahun anggaran default tidak dapat dinonaktifkan. Tetapkan tahun default lain terlebih dahulu.');
         }
 
-        $fiscalYear->is_active = !$fiscalYear->is_active;
+        $fiscalYear->is_active = ! $fiscalYear->is_active;
         $fiscalYear->save();
 
         $statusLabel = $fiscalYear->is_active ? 'diaktifkan' : 'dinonaktifkan / ditutup';
@@ -152,8 +149,7 @@ class FiscalYearController extends Controller
      */
     public function setDefault(FiscalYear $fiscalYear): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
-
+        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
 
         FiscalYear::query()->update(['is_default' => false]);
 
@@ -170,8 +166,7 @@ class FiscalYearController extends Controller
      */
     public function destroy(FiscalYear $fiscalYear): RedirectResponse
     {
-        abort_unless(auth()->user()->role === 'admin', 403, 'Akses ditolak.');
-
+        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
 
         if ($fiscalYear->is_default) {
             return redirect()->route('fiscal-years.index')
