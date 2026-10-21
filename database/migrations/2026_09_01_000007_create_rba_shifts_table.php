@@ -14,9 +14,14 @@ return new class extends Migration
         Schema::create('rba_shifts', function (Blueprint $table) {
             $table->id();
             $table->year('year')->default(2026);
-            $table->string('shift_name'); // e.g. 'Murni', 'Pergeseran I', 'Pergeseran II', 'Pergeseran III', 'Pergeseran IV'
-            $table->string('doc_title')->default('RENCANA BISNIS DAN ANGGARAN PERGESERAN III');
+            $table->string('shift_name');
+            $table->string('doc_title')->nullable()->default(null);
             $table->string('period_month')->default('Juli 2026');
+            $table->decimal('penerimaan_silpa', 18, 2)->default(0);
+            $table->decimal('penerimaan_divestasi', 18, 2)->default(0);
+            $table->decimal('penerimaan_pinjaman', 18, 2)->default(0);
+            $table->decimal('pengeluaran_investasi', 18, 2)->default(0);
+            $table->decimal('pengeluaran_pokok_utang', 18, 2)->default(0);
             $table->enum('status', ['Draft', 'Aktif', 'Arsip'])->default('Aktif');
             $table->text('notes')->nullable();
             $table->timestamps();

@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('rba_revenue_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('rba_shift_id')->constrained('rba_shifts')->cascadeOnDelete();
-            $table->string('item_code'); // e.g. '1', '1.a', '1.b', ..., '2', '3', '3.a', '4', '5'
-            $table->string('item_name'); // e.g. 'JASA LAYANAN', 'Pendapatan Pelayanan Rawat Jalan'
+            $table->string('item_code');
+            $table->string('item_name');
             $table->string('parent_code')->nullable();
-            $table->unsignedTinyInteger('level')->default(1); // 1 = Main Category / Header, 2 = Sub item
+            $table->unsignedTinyInteger('level')->default(1);
             $table->boolean('is_header')->default(false);
             $table->decimal('before_amount', 18, 2)->default(0);
             $table->decimal('after_amount', 18, 2)->default(0);

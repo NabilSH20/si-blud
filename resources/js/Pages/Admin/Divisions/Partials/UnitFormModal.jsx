@@ -156,16 +156,16 @@ export default function UnitFormModal({
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     {/* Field 1: Bagian / Bidang Induk */}
                     <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                            Bagian / Bidang Induk <span className="text-rose-600">*</span>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                            Bidang / Bagian Induk <span className="text-rose-600">*</span>
                         </label>
                         <select
                             value={data.division_id}
                             onChange={(e) => setData('division_id', e.target.value)}
-                            className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition"
+                            className="block w-full h-10 rounded-xl border border-slate-300 bg-white pl-3.5 pr-9 py-2 text-xs sm:text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition truncate"
                             required
                         >
-                            <option value="">-- Pilih Bagian / Bidang Induk --</option>
+                            <option value="">-- Pilih Bidang / Bagian Induk --</option>
                             {divisions.map((div) => (
                                 <option key={div.id} value={div.id}>
                                     [{div.division_code}] {div.name}
@@ -173,67 +173,73 @@ export default function UnitFormModal({
                             ))}
                         </select>
                         <p className="mt-1 text-[11px] text-slate-500">
-                            Bagian atau bidang yang membawahi unit kerja ini secara struktural.
+                            Bidang struktural atau bagian pengampu yang membawahi unit kerja/instalasi ini.
                         </p>
                         <InputError message={errors.division_id} className="mt-1.5" />
                     </div>
 
-                    {/* Field 2: Nama Unit Kerja / Ruangan */}
+                    {/* Field 2: Nama Unit / Instalasi */}
                     <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                            Nama Unit Kerja / Ruangan <span className="text-rose-600">*</span>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                            Nama Unit / Instalasi <span className="text-rose-600">*</span>
                         </label>
                         <input
                             type="text"
                             value={data.name}
                             onChange={handleNameChange}
-                            placeholder="Contoh: Instalasi Farmasi atau IGD"
+                            placeholder="Contoh: Instalasi Gawat Darurat (IGD)"
                             className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition"
                             autoFocus
                             required
                         />
+                        <p className="mt-1 text-[11px] text-slate-500">
+                            Nama lengkap ruangan, instalasi, laboratorium, poli, atau seksi kerja.
+                        </p>
                         <InputError message={errors.name} className="mt-1.5" />
                     </div>
 
-                    {/* Field 3: Kode Singkatan Unit */}
+                    {/* Field 3: Kode Unit */}
                     <div>
                         <div className="flex items-center justify-between mb-1.5">
-                            <label className="block text-xs font-medium text-slate-700">
-                                Kode Singkatan <span className="text-rose-600">*</span>
+                            <label className="block text-xs font-semibold text-slate-700">
+                                Kode Unit / Singkatan <span className="text-rose-600">*</span>
                             </label>
-                            <span className="text-[11px] text-slate-400">
-                                Huruf kapital (maks. 10 karakter)
+                            <span className="text-[11px] font-mono text-slate-400">
+                                Maks. 20 Karakter
                             </span>
                         </div>
                         <input
                             type="text"
                             value={data.unit_code}
                             onChange={handleCodeChange}
-                            maxLength={15}
-                            placeholder="Misal: FARMASI"
-                            className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-bold text-teal-800 uppercase placeholder-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition"
+                            maxLength={20}
+                            placeholder="Contoh: INST-IGD, INST-FARMASI, R-INAP-01"
+                            className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-bold font-mono text-teal-800 uppercase placeholder-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition tracking-wider"
                             required
                         />
                         <p className="mt-1 text-[11px] text-slate-500">
-                            Singkatan untuk identitas berkas (otomatis terisi saat mengetik nama, tetap bisa diedit).
+                            Gunakan singkatan atau kode unik unit/instalasi tanpa spasi (otomatis kapital). Digunakan untuk pengelompokan usulan dan pelaporan barang.
                         </p>
                         <InputError message={errors.unit_code} className="mt-1.5" />
                     </div>
 
-                    {/* Field 4: Keterangan / Layanan (Opsional) */}
+                    {/* Field 4: Deskripsi / Keterangan (Opsional) */}
                     <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                            Keterangan / Layanan <span className="text-slate-400 font-normal">(Opsional)</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-xs font-semibold text-slate-700">
+                                Deskripsi / Keterangan <span className="text-slate-400 font-normal">(Opsional)</span>
+                            </label>
+                            <span className="text-[11px] text-slate-400">Boleh dikosongkan</span>
+                        </div>
                         <textarea
                             rows={2}
                             value={data.description}
                             onChange={(e) => setData('description', e.target.value)}
-                            placeholder="Catatan tambahan mengenai unit ini (boleh dikosongkan jika tidak ada)..."
+                            placeholder="Catatan fungsi unit atau ruang lingkup layanan (boleh dikosongkan jika tidak ada)..."
                             className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition resize-none"
                         />
                         <p className="mt-1 text-[11px] text-slate-400">
-                            Boleh dikosongkan jika tidak ada catatan khusus.
+                            Catatan lingkup layanan, lokasi ruangan, atau keterangan operasional unit.
                         </p>
                         <InputError message={errors.description} className="mt-1.5" />
                     </div>

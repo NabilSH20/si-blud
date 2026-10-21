@@ -15,10 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('rba_shift_id')->constrained('rba_shifts')->cascadeOnDelete();
             $table->foreignId('rba_account_id')->nullable()->constrained('rba_accounts')->nullOnDelete();
-            $table->string('account_code'); // e.g. '1', '1.1', '1.1.2.1.1'
-            $table->string('account_name'); // e.g. 'Belanja obat-obatan'
+            $table->string('account_code');
+            $table->string('account_name');
             $table->string('parent_code')->nullable();
-            $table->unsignedTinyInteger('level')->default(1); // 1 to 5
+            $table->unsignedTinyInteger('level')->default(1);
             $table->boolean('is_header')->default(false);
 
             // Sumber Dana Sebelum Pergeseran

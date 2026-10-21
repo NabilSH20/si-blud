@@ -13,15 +13,23 @@ return new class extends Migration
     {
         Schema::create('rba_accounts', function (Blueprint $table) {
             $table->id();
-            $table->string('account_code')->unique(); // e.g. '1.1.2.1.1', '1.1.2.1.2.1', '1.2.02.05.01'
-            $table->string('account_name');           // e.g. 'Belanja bahan habis pakai material kesehatan'
-            $table->enum('kategori_belanja', ['Operasi', 'Modal'])->default('Operasi');
-            $table->string('sumber_dana')->default('BLUD'); // BLUD, APBD
+            $table->string('account_code');
+            $table->string('parent_code')->nullable()->index();
+            $table->string('account_name');
+            $table->string('kategori_belanja', 50)->default('Operasi');
+            $table->string('sumber_dana')->default('BLUD');
+            $table->string('funding_source')->nullable();
             $table->year('period_year')->default(2026);
+            $table->integer('year')->nullable();
             $table->decimal('total_budget', 18, 2)->default(0);
+            $table->decimal('budget_after_revision', 18, 2)->nullable();
             $table->decimal('remaining_budget', 18, 2)->default(0);
             $table->decimal('spent_budget', 18, 2)->default(0);
             $table->timestamps();
+
+            $table->unique(['account_code', 'period_year']);
+            $table->index('period_year', 'rba_accounts_period_year_idx');
+            $table->index(['period_year', 'kategori_belanja'], 'rba_accounts_period_year_kategori_idx');
         });
     }
 

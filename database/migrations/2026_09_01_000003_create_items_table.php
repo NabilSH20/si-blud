@@ -17,7 +17,9 @@ return new class extends Migration
             $table->string('item_code')->unique();
             $table->string('name');
             $table->text('specification')->nullable();
-            $table->string('unit_type'); // e.g. 'Pcs', 'Box', 'Botol', 'Tablet', 'Ampul', 'Unit', 'Rim'
+            $table->string('unit_type');
+            $table->string('source')->default('STANDAR');
+            $table->foreignId('origin_unit_id')->nullable()->constrained('units')->nullOnDelete();
             $table->decimal('standard_price', 18, 2)->default(0);
             $table->timestamps();
         });

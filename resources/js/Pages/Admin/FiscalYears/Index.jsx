@@ -251,7 +251,7 @@ export default function Index({ fiscalYears = [], success, error }) {
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition cursor-pointer"
+                            className="rounded-xl border border-slate-300 bg-white pl-3 pr-9 py-2 text-xs font-semibold text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition cursor-pointer truncate"
                         >
                             <option value="ALL">Semua Status</option>
                             <option value="ACTIVE">Aktif (Buka Akses)</option>
@@ -481,7 +481,7 @@ export default function Index({ fiscalYears = [], success, error }) {
                         {/* Input Tahun (Hanya di mode create) */}
                         {modalMode === 'create' ? (
                             <div>
-                                <label className="mb-1 block font-bold text-slate-700">
+                                <label className="mb-1.5 block font-semibold text-slate-700">
                                     Tahun Anggaran (4 Digit) <span className="text-rose-500">*</span>
                                 </label>
                                 <input
@@ -497,73 +497,100 @@ export default function Index({ fiscalYears = [], success, error }) {
                                             name: val ? `Tahun Anggaran ${val}` : prev.name,
                                         }));
                                     }}
-                                    placeholder="Contoh: 2028"
-                                    className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                    placeholder="Contoh: 2027"
+                                    className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-mono font-bold text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                    required
                                 />
+                                <p className="mt-1 text-[11px] text-slate-500">
+                                    Angka tahun kalender 4 digit (misal: 2027). Digunakan untuk pengelompokan usulan belanja, pembukuan RBA, dan penomoran dokumen.
+                                </p>
                                 {errors.year && <p className="mt-1 text-rose-600 font-semibold">{errors.year}</p>}
                             </div>
                         ) : (
-                            <div>
-                                <span className="text-slate-500 font-medium">Tahun Anggaran</span>
-                                <p className="text-lg font-black font-mono text-slate-900">
-                                    {selectedYear?.year}
+                            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                                <span className="text-[11px] text-slate-500 font-medium block">Tahun Anggaran Kalender</span>
+                                <p className="text-xl font-black font-mono text-teal-900 mt-0.5">
+                                    TA {selectedYear?.year}
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-slate-400">
+                                    Angka tahun tidak dapat diubah setelah terdaftar untuk menjaga integritas relasi data transaksi.
                                 </p>
                             </div>
                         )}
 
                         {/* Input Nama/Label */}
                         <div>
-                            <label className="mb-1 block font-bold text-slate-700">
-                                Nama / Label Tahun <span className="text-rose-500">*</span>
+                            <label className="mb-1.5 block font-semibold text-slate-700">
+                                Nama / Label Resmi Tahun Anggaran <span className="text-rose-500">*</span>
                             </label>
                             <input
                                 type="text"
                                 value={data.name}
                                 onChange={(e) => setData('name', e.target.value)}
-                                placeholder="Contoh: Tahun Anggaran 2028"
-                                className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                placeholder="Contoh: Tahun Anggaran 2027"
+                                className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                required
                             />
+                            <p className="mt-1 text-[11px] text-slate-500">
+                                Nama lengkap deskriptif yang akan ditampilkan pada header sistem, kartu dashboard, dan kop cetak laporan resmi.
+                            </p>
                             {errors.name && <p className="mt-1 text-rose-600 font-semibold">{errors.name}</p>}
                         </div>
 
                         {/* Input Keterangan */}
                         <div>
-                            <label className="mb-1 block font-bold text-slate-700">
-                                Deskripsi / Catatan <span className="text-slate-400 font-normal">(Opsional)</span>
-                            </label>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="block font-semibold text-slate-700">
+                                    Deskripsi / Catatan Kebijakan
+                                </label>
+                                <span className="text-[11px] text-slate-400 font-normal">(Opsional)</span>
+                            </div>
                             <textarea
                                 rows={2}
                                 value={data.description}
                                 onChange={(e) => setData('description', e.target.value)}
-                                placeholder="Keterangan singkat tentang tahun anggaran ini..."
-                                className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                placeholder="Contoh: APBD Murni RSJ Tampan TA 2027 / Dokumen RBA Awal..."
+                                className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 resize-none"
                             />
+                            <p className="mt-1 text-[11px] text-slate-400">
+                                Catatan tambahan mengenai dasar penetapan atau status khusus tahun anggaran ini.
+                            </p>
                         </div>
 
-                        {/* Checkbox Status Aktif & Default */}
-                        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 space-y-2.5">
-                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                        {/* Checkbox Status Aktif & Default dengan Microcopy Jelas */}
+                        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-3.5">
+                            <label className="flex items-start gap-3 cursor-pointer select-none">
                                 <input
                                     type="checkbox"
                                     checked={data.is_active}
                                     onChange={(e) => setData('is_active', e.target.checked)}
-                                    className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 h-4 w-4"
+                                    className="rounded-md border-slate-300 text-teal-600 focus:ring-teal-500 h-4 w-4 mt-0.5"
                                 />
-                                <span className="font-semibold text-slate-800">
-                                    Status Aktif (Tersedia untuk login & transaksi)
-                                </span>
+                                <div>
+                                    <span className="font-bold text-slate-900 block text-xs">
+                                        Status Aktif (Buka Akses Sesi & Transaksi)
+                                    </span>
+                                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                                        Jika dicentang, tahun ini akan muncul pada menu pilihan sesi tahun di halaman login dan navigasi pengguna untuk penginputan usulan & transaksi data.
+                                    </p>
+                                </div>
                             </label>
 
-                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                            <label className="flex items-start gap-3 cursor-pointer select-none border-t border-slate-200/80 pt-3">
                                 <input
                                     type="checkbox"
                                     checked={data.is_default}
                                     onChange={(e) => setData('is_default', e.target.checked)}
-                                    className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 h-4 w-4"
+                                    className="rounded-md border-slate-300 text-teal-600 focus:ring-teal-500 h-4 w-4 mt-0.5"
                                 />
-                                <span className="font-semibold text-slate-800">
-                                    Jadikan Tahun Default saat login
-                                </span>
+                                <div>
+                                    <span className="font-bold text-slate-900 block text-xs">
+                                        Jadikan Tahun Anggaran Default Sistem
+                                    </span>
+                                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                                        Jika dipilih, tahun anggaran ini akan otomatis terpilih secara bawaan saat pengguna membuka sistem E-BLUD tanpa harus memilih tahun secara manual.
+                                    </p>
+                                </div>
                             </label>
                         </div>
 

@@ -14,11 +14,14 @@ return new class extends Migration
         Schema::create('revenues', function (Blueprint $table) {
             $table->id();
             $table->string('revenue_number')->unique();
-            $table->string('source'); // e.g. IGD, Farmasi, Poliklinik Jiwa, Laboratorium, Rawat Inap
+            $table->string('source');
             $table->decimal('amount', 15, 2);
             $table->date('date');
             $table->text('description')->nullable();
             $table->timestamps();
+
+            $table->index('date', 'revenues_date_idx');
+            $table->index(['date', 'source'], 'revenues_date_source_idx');
         });
     }
 

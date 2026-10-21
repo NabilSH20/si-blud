@@ -21,6 +21,7 @@ return new class extends Migration
             $table->integer('quantity_requested');
             $table->integer('quantity_approved')->nullable();
             $table->decimal('unit_price', 18, 2)->default(0);
+            $table->boolean('exceeds_ssh')->default(false);
             $table->decimal('subtotal', 18, 2)->default(0);
             $table->timestamps();
         });
