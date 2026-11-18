@@ -259,4 +259,24 @@ class RequisitionController extends Controller
         return redirect()->route('perencanaan.requisitions.index')
             ->with('success', $message);
     }
+
+    /**
+     * Print the specified requisition.
+     */
+    public function print(int|string $id): Response
+    {
+        $requisition = Requisition::with([
+            'division',
+            'unit',
+            'user',
+            'requisitionDetails.item',
+            'rbaAccount',
+            'verifiedByPerencanaan',
+            'approvedByKeuangan',
+        ])->findOrFail($id);
+
+        return Inertia::render('Shared/PrintRequisition', [
+            'requisition' => $requisition,
+        ]);
+    }
 }

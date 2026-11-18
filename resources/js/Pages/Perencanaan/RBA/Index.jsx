@@ -544,7 +544,7 @@ export default function Index({
                                     </div>
                                     <div className="py-1 space-y-0.5">
                                         <a
-                                            href={route('perencanaan.rba.print-ringkasan', { shift_id: current_shift?.id })}
+                                            href={route('perencanaan.rba.print-ringkasan', current_shift?.id ? { shift_id: current_shift.id } : {})}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             onClick={() => setPrintDropdownOpen(false)}
@@ -559,7 +559,7 @@ export default function Index({
                                             </div>
                                         </a>
                                         <a
-                                            href={route('perencanaan.rba.print-pendapatan', { shift_id: current_shift?.id })}
+                                            href={route('perencanaan.rba.print-pendapatan', current_shift?.id ? { shift_id: current_shift.id } : {})}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             onClick={() => setPrintDropdownOpen(false)}
@@ -574,7 +574,7 @@ export default function Index({
                                             </div>
                                         </a>
                                         <a
-                                            href={route('perencanaan.rba.print-belanja', { shift_id: current_shift?.id })}
+                                            href={route('perencanaan.rba.print-belanja', current_shift?.id ? { shift_id: current_shift.id } : {})}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             onClick={() => setPrintDropdownOpen(false)}
@@ -589,7 +589,7 @@ export default function Index({
                                             </div>
                                         </a>
                                         <a
-                                            href={route('perencanaan.rba.print-rincian-belanja', { year: selected_year, shift_id: current_shift?.id })}
+                                            href={route('perencanaan.rba.print-rincian-belanja', current_shift?.id ? { year: selected_year, shift_id: current_shift.id } : { year: selected_year })}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             onClick={() => setPrintDropdownOpen(false)}
@@ -1875,7 +1875,7 @@ export default function Index({
 
                         <div className="flex items-center gap-2 shrink-0">
                             <a
-                                href={route('perencanaan.rba.print-rincian-belanja', { year: selected_year, shift_id: current_shift?.id })}
+                                href={route('perencanaan.rba.print-rincian-belanja', current_shift?.id ? { year: selected_year, shift_id: current_shift.id } : { year: selected_year })}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs transition active:scale-95 cursor-pointer"

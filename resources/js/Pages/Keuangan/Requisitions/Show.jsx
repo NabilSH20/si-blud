@@ -228,7 +228,7 @@ export default function Show({ requisition, budgets = [] }) {
 
                     <div className="flex items-center gap-3">
                         <a
-                            href={route('requisitions.print', requisition.id)}
+                            href={route('keuangan.requisitions.print', requisition.id)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs transition"

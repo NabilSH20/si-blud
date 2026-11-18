@@ -280,7 +280,7 @@ export default function Show({ requisition, rbaList = [] }) {
                     <div className="flex items-center gap-2.5">
                         {!isPending && (
                             <a
-                                href={route('requisitions.print', requisition.id)}
+                                href={route('perencanaan.requisitions.print', requisition.id)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition cursor-pointer"

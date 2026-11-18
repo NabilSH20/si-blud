@@ -332,7 +332,7 @@ export default function Index({ requisitions = [], budgets = [], success, error,
                                                                 Rincian
                                                             </button>
                                                             <a
-                                                                href={route('requisitions.print', req.id)}
+                                                                href={route('keuangan.requisitions.print', req.id)}
                                                                 target="_blank"
                                                                 rel="noreferrer"
                                                                 className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 active:scale-95 text-slate-600 px-2.5 py-1.5 text-xs font-bold shadow-sm transition"

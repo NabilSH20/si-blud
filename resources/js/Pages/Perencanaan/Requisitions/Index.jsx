@@ -390,7 +390,7 @@ export default function Index({ requisitions = [], success, error, selectedYear 
                                                             </button>
 
                                                             <a
-                                                                href={route('requisitions.print', req.id)}
+                                                                href={route('perencanaan.requisitions.print', req.id)}
                                                                 target="_blank"
                                                                 rel="noreferrer"
                                                                 className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50 hover:bg-teal-100 text-teal-800 px-2.5 py-1 text-xs font-bold shadow-2xs transition cursor-pointer"

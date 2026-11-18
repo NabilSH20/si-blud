@@ -342,8 +342,12 @@ class RbaController extends Controller
     public function printRingkasan(Request $request): Response
     {
         $shiftId = $request->query('shift_id');
+        if ($shiftId === 'undefined' || $shiftId === 'null' || empty($shiftId)) {
+            $shiftId = null;
+        }
+
         $shift = $shiftId
-            ? RbaShift::findOrFail($shiftId)
+            ? (RbaShift::find($shiftId) ?? RbaShift::where('status', 'Aktif')->first() ?? RbaShift::latest('id')->firstOrFail())
             : (RbaShift::where('status', 'Aktif')->first() ?? RbaShift::latest('id')->firstOrFail());
 
         if ($shift) {
@@ -635,8 +639,12 @@ class RbaController extends Controller
     public function printBelanja(Request $request): Response
     {
         $shiftId = $request->query('shift_id');
+        if ($shiftId === 'undefined' || $shiftId === 'null' || empty($shiftId)) {
+            $shiftId = null;
+        }
+
         $shift = $shiftId
-            ? RbaShift::findOrFail($shiftId)
+            ? (RbaShift::find($shiftId) ?? RbaShift::where('status', 'Aktif')->first() ?? RbaShift::latest('id')->firstOrFail())
             : (RbaShift::where('status', 'Aktif')->first() ?? RbaShift::latest('id')->firstOrFail());
 
         $items = $shift->expenseItems()->orderBy('order_index')->get();
@@ -653,8 +661,12 @@ class RbaController extends Controller
     public function printPendapatan(Request $request): Response
     {
         $shiftId = $request->query('shift_id');
+        if ($shiftId === 'undefined' || $shiftId === 'null' || empty($shiftId)) {
+            $shiftId = null;
+        }
+
         $shift = $shiftId
-            ? RbaShift::findOrFail($shiftId)
+            ? (RbaShift::find($shiftId) ?? RbaShift::where('status', 'Aktif')->first() ?? RbaShift::latest('id')->firstOrFail())
             : (RbaShift::where('status', 'Aktif')->first() ?? RbaShift::latest('id')->firstOrFail());
 
         $items = $shift->revenueItems()->orderBy('order_index')->get();
@@ -672,10 +684,13 @@ class RbaController extends Controller
     {
         $selectedYear = (int) $request->query('year', 2026);
         $shiftId = $request->query('shift_id');
+        if ($shiftId === 'undefined' || $shiftId === 'null' || empty($shiftId)) {
+            $shiftId = null;
+        }
 
         $shifts = RbaShift::where('year', $selectedYear)->orderBy('id', 'desc')->get();
         $currentShift = $shiftId
-            ? $shifts->firstWhere('id', $shiftId)
+            ? ($shifts->firstWhere('id', (int) $shiftId) ?? $shifts->firstWhere('status', 'Aktif') ?? $shifts->first())
             : ($shifts->firstWhere('status', 'Aktif') ?? $shifts->first());
 
         $expenseItems = $currentShift ? $currentShift->expenseItems()->orderBy('order_index')->get() : collect();

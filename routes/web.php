@@ -58,6 +58,11 @@ Route::prefix('perencanaan')->middleware(['auth', 'role:perencanaan'])->group(fu
         ->name('perencanaan.rba.pembiayaan.update');
     Route::patch('/rba/shifts/{id}/batch-revenue', [PerencanaanRbaController::class, 'batchUpdateRevenue'])
         ->name('perencanaan.rba.batch-revenue.update');
+});
+
+Route::prefix('perencanaan')->middleware(['auth', 'role:perencanaan,keuangan,admin'])->group(function () {
+    Route::get('/requisitions/{id}/print', [PerencanaanRequisitionController::class, 'print'])
+        ->name('perencanaan.requisitions.print');
     Route::get('/rba/print-ringkasan', [PerencanaanRbaController::class, 'printRingkasan'])
         ->name('perencanaan.rba.print-ringkasan');
     Route::get('/rba/print-belanja', [PerencanaanRbaController::class, 'printBelanja'])
@@ -77,12 +82,15 @@ Route::prefix('keuangan')->middleware(['auth', 'role:keuangan'])->group(function
     Route::resource('requisitions', KeuanganRequisitionController::class)
         ->only(['index', 'show', 'update'])
         ->names('keuangan.requisitions');
-    Route::get('/requisitions/{id}/print', [KeuanganRequisitionController::class, 'print'])
-        ->name('keuangan.requisitions.print');
 
     Route::get('/reports', [KeuanganReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/print', [KeuanganReportController::class, 'print'])->name('reports.print');
     Route::get('/reports/surplus-deficit', [KeuanganReportController::class, 'surplusDeficit'])->name('reports.surplus-deficit');
+});
+
+Route::prefix('keuangan')->middleware(['auth', 'role:keuangan,perencanaan,admin'])->group(function () {
+    Route::get('/requisitions/{id}/print', [KeuanganRequisitionController::class, 'print'])
+        ->name('keuangan.requisitions.print');
+    Route::get('/reports/print', [KeuanganReportController::class, 'print'])->name('reports.print');
     Route::get('/reports/surplus-deficit/print', [KeuanganReportController::class, 'printSurplusDeficit'])->name('reports.surplus-deficit.print');
 });
 

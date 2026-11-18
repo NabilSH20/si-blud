@@ -610,6 +610,13 @@ class RequisitionController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
+
+        // 1. Role pengawas dan verifikator memiliki izin sah meninjau dan mencetak seluruh berkas usulan belanja
+        if (in_array($user->role, ['admin', 'perencanaan', 'keuangan'])) {
+            return;
+        }
+
+        // 2. Isolasi akses untuk pengguna unit/divisi operasional
         if ($user->unit_id && $requisition->unit_id !== $user->unit_id) {
             abort(403, 'Anda tidak memiliki akses ke usulan belanja ini.');
         } elseif (! $user->unit_id && $user->division_id && $requisition->division_id !== $user->division_id) {
