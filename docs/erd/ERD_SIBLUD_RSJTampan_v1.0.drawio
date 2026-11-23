@@ -1,0 +1,156 @@
+<mxfile host="app.diagrams.net" modified="2026-11-19T07:45:00.000Z" agent="Antigravity" version="24.0.0">
+  <diagram id="SIBLUD-ERD-v1" name="ERD SI-BLUD RS Jiwa Tampan v1.0">
+    <mxGraphModel dx="2000" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="2339" background="#0f172a" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title Header -->
+        <mxCell id="title_header" value="DIAGRAM RELASI ENTITAS (ERD) TERINTEGRASI - SI-BLUD RS JIWA TAMPAN PROVINSI RIAU (v1.0)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#38bdf8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="600" y="40" width="1600" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="title_sub" value="Mencakup Modul Master Organisasi, Modul Perencanaan (RBA &amp; SSH), Modul Unit Pengaju, dan Modul Keuangan (SP2D, Pendapatan, LRA)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#94a3b8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="600" y="80" width="1600" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- 1. divisions -->
+        <mxCell id="tbl_divisions" value="&lt;b&gt;divisions&lt;/b&gt;&lt;hr/&gt;+ id: bigint unsigned [PK]&lt;br/&gt;+ division_code: varchar(255) [UK]&lt;br/&gt;+ name: varchar(255)&lt;br/&gt;+ group: enum('Pelayanan_Keperawatan', 'Umum_Kepegawaian')" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#064e3b;strokeColor=#059669;fontColor=#6ee7b7;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="80" y="160" width="280" height="130" as="geometry" />
+        </mxCell>
+
+        <!-- 2. units -->
+        <mxCell id="tbl_units" value="&lt;b&gt;units&lt;/b&gt;&lt;hr/&gt;+ id: bigint unsigned [PK]&lt;br/&gt;+ division_id: bigint unsigned [FK]&lt;br/&gt;+ unit_code: varchar(255) [UK]&lt;br/&gt;+ name: varchar(255)&lt;br/&gt;+ description: text" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#064e3b;strokeColor=#059669;fontColor=#6ee7b7;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="420" y="160" width="280" height="140" as="geometry" />
+        </mxCell>
+
+        <!-- 3. users -->
+        <mxCell id="tbl_users" value="&lt;b&gt;users&lt;/b&gt;&lt;hr/&gt;+ id: bigint unsigned [PK]&lt;br/&gt;+ name: varchar(255)&lt;br/&gt;+ nip: varchar(30) [UK]&lt;br/&gt;+ email: varchar(255) [UK]&lt;br/&gt;+ password: varchar(255)&lt;br/&gt;+ division_id: bigint unsigned [FK]&lt;br/&gt;+ unit_id: bigint unsigned [FK]&lt;br/&gt;+ role: enum('admin', 'perencanaan', 'keuangan', 'divisi')&lt;br/&gt;+ position: varchar(255)&lt;br/&gt;+ phone: varchar(30)&lt;br/&gt;+ is_active: boolean" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#064e3b;strokeColor=#059669;fontColor=#6ee7b7;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="760" y="160" width="320" height="230" as="geometry" />
+        </mxCell>
+
+        <!-- 4. fiscal_years -->
+        <mxCell id="tbl_fiscal_years" value="&lt;b&gt;fiscal_years&lt;/b&gt;&lt;hr/&gt;+ id: bigint unsigned [PK]&lt;br/&gt;+ year: int [UK]&lt;br/&gt;+ name: varchar(255)&lt;br/&gt;+ is_active: boolean&lt;br/&gt;+ is_default: boolean&lt;br/&gt;+ description: varchar(255)" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#1e3a8a;strokeColor=#2563eb;fontColor=#93c5fd;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="160" width="260" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- 5. rba_shifts -->
+        <mxCell id="tbl_rba_shifts" value="&lt;b&gt;rba_shifts&lt;/b&gt;&lt;hr/&gt;+ id: bigint unsigned [PK]&lt;br/&gt;+ year: int&lt;br/&gt;+ shift_name: varchar(255)&lt;br/&gt;+ doc_title: varchar(255)&lt;br/&gt;+ period_month: varchar(255)&lt;br/&gt;+ penerimaan_silpa: decimal(18,2)&lt;br/&gt;+ status: enum('Draft', 'Aktif', 'Arsip')&lt;br/&gt;+ notes: text" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#1e3a8a;strokeColor=#2563eb;fontColor=#93c5fd;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1500" y="160" width="280" height="190" as="geometry" />
+        </mxCell>
+
+        <!-- 6. rba_revenue_items -->
+        <mxCell id="tbl_rba_revenue_items" value="&lt;b&gt;rba_revenue_items&lt;/b&gt;&lt;hr/&gt;+ id: bigint unsigned [PK]&lt;br/&gt;+ rba_shift_id: bigint unsigned [FK]&lt;br/&gt;+ item_code: varchar(255)&lt;br/&gt;+ item_name: varchar(255)&lt;br/&gt;+ level: tinyint unsigned&lt;br/&gt;+ is_header: boolean&lt;br/&gt;+ before_amount: decimal(18,2)&lt;br/&gt;+ after_amount: decimal(18,2)&lt;br/&gt;+ difference: decimal(18,2)" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#1e3a8a;strokeColor=#2563eb;fontColor=#93c5fd;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1850" y="160" width="280" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- 7. revenues -->
+        <mxCell id="tbl_revenues" value="&lt;b&gt;revenues&lt;/b&gt;&lt;hr/&gt;+ id: bigint unsigned [PK]&lt;br/&gt;+ revenue_number: varchar(255) [UK]&lt;br/&gt;+ source: varchar(255)&lt;br/&gt;+ amount: decimal(15,2)&lt;br/&gt;+ date: date&lt;br/&gt;+ description: text" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#581c87;strokeColor=#9333ea;fontColor=#d8b4fe;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="2200" y="160" width="280" height="160" as="geometry" />
+        </mxCell>
+
+        <!-- 8. rba_expense_items -->
+        <mxCell id="tbl_rba_expense_items" value="&lt;b&gt;rba_expense_items&lt;/b&gt;&lt;hr/&gt;+ id: bigint unsigned [PK]&lt;br/&gt;+ rba_shift_id: bigint unsigned [FK]&lt;br/&gt;+ rba_account_id: bigint unsigned [FK]&lt;br/&gt;+ account_code: varchar(255)&lt;br/&gt;+ account_name: varchar(255)&lt;br/&gt;+ level: tinyint unsigned&lt;br/&gt;+ before_total: decimal(18,2)&lt;br/&gt;+ after_total: decimal(18,2)&lt;br/&gt;+ difference: decimal(18,2)" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#1e3a8a;strokeColor=#2563eb;fontColor=#93c5fd;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1500" y="440" width="280" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- 9. rba_accounts -->
+        <mxCell id="tbl_rba_accounts" value="&lt;b&gt;rba_accounts&lt;/b&gt;&lt;hr/&gt;+ id: bigint unsigned [PK]&lt;br/&gt;+ account_code: varchar(255)&lt;br/&gt;+ account_name: varchar(255)&lt;br/&gt;+ kategori_belanja: enum('Operasi', 'Modal')&lt;br/&gt;+ sumber_dana: enum('BLUD', 'APBD')&lt;br/&gt;+ period_year: int&lt;br/&gt;+ total_budget: decimal(18,2)&lt;br/&gt;+ remaining_budget: decimal(18,2)&lt;br/&gt;+ spent_budget: decimal(18,2)" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#1e3a8a;strokeColor=#2563eb;fontColor=#93c5fd;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="440" width="290" height="210" as="geometry" />
+        </mxCell>
+
+        <!-- 10. items -->
+        <mxCell id="tbl_items" value="&lt;b&gt;items (SSH)&lt;/b&gt;&lt;hr/&gt;+ id: bigint unsigned [PK]&lt;br/&gt;+ rba_account_id: bigint unsigned [FK]&lt;br/&gt;+ item_code: varchar(255) [UK]&lt;br/&gt;+ name: varchar(255)&lt;br/&gt;+ unit_type: varchar(255)&lt;br/&gt;+ source: enum('STANDAR', 'USULAN_UNIT')&lt;br/&gt;+ origin_unit_id: bigint unsigned [FK]&lt;br/&gt;+ standard_price: decimal(18,2)" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#78350f;strokeColor=#d97706;fontColor=#fcd34d;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="760" y="440" width="300" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- 11. requisitions -->
+        <mxCell id="tbl_requisitions" value="&lt;b&gt;requisitions&lt;/b&gt;&lt;hr/&gt;+ id: bigint unsigned [PK]&lt;br/&gt;+ requisition_number: varchar(255) [UK]&lt;br/&gt;+ nomor_surat_unit: varchar(255)&lt;br/&gt;+ division_id: bigint unsigned [FK]&lt;br/&gt;+ unit_id: bigint unsigned [FK]&lt;br/&gt;+ user_id: bigint unsigned [FK]&lt;br/&gt;+ rba_account_id: bigint unsigned [FK]&lt;br/&gt;+ fiscal_year: int&lt;br/&gt;+ status: enum('Pending_Perencanaan', 'Diproses_Keuangan', 'Disetujui_Selesai', 'Ditolak')&lt;br/&gt;+ submission_date: date&lt;br/&gt;+ total_estimated: decimal(18,2)&lt;br/&gt;+ total_approved: decimal(18,2)&lt;br/&gt;+ verified_by_perencanaan_id: bigint unsigned [FK]&lt;br/&gt;+ approved_by_keuangan_id: bigint unsigned [FK]&lt;br/&gt;+ sp2d_number: varchar(255)&lt;br/&gt;+ receipt_number: varchar(255)" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#881337;strokeColor=#e11d48;fontColor=#fda4af;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="420" y="440" width="320" height="340" as="geometry" />
+        </mxCell>
+
+        <!-- 12. requisition_details -->
+        <mxCell id="tbl_requisition_details" value="&lt;b&gt;requisition_details&lt;/b&gt;&lt;hr/&gt;+ id: bigint unsigned [PK]&lt;br/&gt;+ requisition_id: bigint unsigned [FK]&lt;br/&gt;+ item_id: bigint unsigned [FK]&lt;br/&gt;+ item_name: varchar(255)&lt;br/&gt;+ unit_type: varchar(255)&lt;br/&gt;+ quantity_requested: int&lt;br/&gt;+ quantity_approved: int&lt;br/&gt;+ unit_price: decimal(18,2)&lt;br/&gt;+ exceeds_ssh: boolean&lt;br/&gt;+ subtotal: decimal(18,2)" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#881337;strokeColor=#e11d48;fontColor=#fda4af;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="80" y="440" width="280" height="240" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES / RELATIONSHIPS -->
+        <!-- divisions -> units -->
+        <mxCell id="rel_div_unit" value="1 : N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10b981;fontColor=#6ee7b7;strokeWidth=2;" edge="1" parent="1" source="tbl_divisions" target="tbl_units">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- units -> users -->
+        <mxCell id="rel_unit_user" value="1 : N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10b981;fontColor=#6ee7b7;strokeWidth=2;" edge="1" parent="1" source="tbl_units" target="tbl_users">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- divisions -> requisitions -->
+        <mxCell id="rel_div_req" value="1 : N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10b981;fontColor=#6ee7b7;strokeWidth=2;exitX=0.5;exitY=1;entryX=0;entryY=0.5;" edge="1" parent="1" source="tbl_divisions" target="tbl_requisitions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- units -> requisitions -->
+        <mxCell id="rel_unit_req" value="1 : N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10b981;fontColor=#6ee7b7;strokeWidth=2;" edge="1" parent="1" source="tbl_units" target="tbl_requisitions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- units -> items -->
+        <mxCell id="rel_unit_items" value="origin_unit (1:N)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10b981;fontColor=#6ee7b7;strokeWidth=2;" edge="1" parent="1" source="tbl_units" target="tbl_items">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- rba_shifts -> rba_expense_items -->
+        <mxCell id="rel_shift_exp" value="1 : N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3b82f6;fontColor=#93c5fd;strokeWidth=2;" edge="1" parent="1" source="tbl_rba_shifts" target="tbl_rba_expense_items">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- rba_shifts -> rba_revenue_items -->
+        <mxCell id="rel_shift_rev" value="1 : N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3b82f6;fontColor=#93c5fd;strokeWidth=2;" edge="1" parent="1" source="tbl_rba_shifts" target="tbl_rba_revenue_items">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- rba_accounts -> rba_expense_items -->
+        <mxCell id="rel_acc_exp" value="sync (1:N)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3b82f6;fontColor=#93c5fd;strokeWidth=2;" edge="1" parent="1" source="tbl_rba_accounts" target="tbl_rba_expense_items">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- rba_accounts -> items -->
+        <mxCell id="rel_acc_items" value="1 : N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3b82f6;fontColor=#93c5fd;strokeWidth=2;" edge="1" parent="1" source="tbl_rba_accounts" target="tbl_items">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- rba_accounts -> requisitions -->
+        <mxCell id="rel_acc_req" value="pagu belanja (1:N)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3b82f6;fontColor=#93c5fd;strokeWidth=2;" edge="1" parent="1" source="tbl_rba_accounts" target="tbl_requisitions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- users -> requisitions (3 roles) -->
+        <mxCell id="rel_user_req" value="user_id / verified / approved" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10b981;fontColor=#6ee7b7;strokeWidth=2;" edge="1" parent="1" source="tbl_users" target="tbl_requisitions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- requisitions -> requisition_details -->
+        <mxCell id="rel_req_det" value="1 : N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e11d48;fontColor=#fda4af;strokeWidth=2;" edge="1" parent="1" source="tbl_requisitions" target="tbl_requisition_details">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- items -> requisition_details -->
+        <mxCell id="rel_item_det" value="1 : N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d97706;fontColor=#fcd34d;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="tbl_items" target="tbl_requisition_details">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- fiscal_years (logis) -> rba_shifts, rba_accounts, requisitions, revenues -->
+        <mxCell id="rel_fy_acc" value="tahun anggaran" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#60a5fa;fontColor=#93c5fd;" edge="1" parent="1" source="tbl_fiscal_years" target="tbl_rba_accounts">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_fy_shift" value="tahun rba" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#60a5fa;fontColor=#93c5fd;" edge="1" parent="1" source="tbl_fiscal_years" target="tbl_rba_shifts">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_rev_target" value="target vs realisasi" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#a855f7;fontColor=#d8b4fe;" edge="1" parent="1" source="tbl_rba_revenue_items" target="tbl_revenues">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
