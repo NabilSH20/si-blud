@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 
 class SystemSetting extends Model
 {
@@ -29,10 +30,11 @@ class SystemSetting extends Model
     {
         try {
             return Cache::remember("system_setting_{$key}", 3600, function () use ($key, $default) {
-                if (! \Illuminate\Support\Facades\Schema::hasTable('system_settings')) {
+                if (! Schema::hasTable('system_settings')) {
                     return $default;
                 }
                 $setting = static::where('key_name', $key)->first();
+
                 return $setting ? $setting->value : $default;
             });
         } catch (\Throwable) {
@@ -62,9 +64,10 @@ class SystemSetting extends Model
     {
         try {
             return Cache::remember('system_settings_all', 3600, function () {
-                if (! \Illuminate\Support\Facades\Schema::hasTable('system_settings')) {
+                if (! Schema::hasTable('system_settings')) {
                     return [];
                 }
+
                 return static::pluck('value', 'key_name')->toArray();
             });
         } catch (\Throwable) {

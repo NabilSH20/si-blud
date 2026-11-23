@@ -18,6 +18,12 @@ use App\Http\Controllers\Perencanaan\RbaController as PerencanaanRbaController;
 use App\Http\Controllers\Perencanaan\RequisitionController as PerencanaanRequisitionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RootController;
+use App\Http\Controllers\SuperAdmin\AuditLogController;
+use App\Http\Controllers\SuperAdmin\DashboardController;
+use App\Http\Controllers\SuperAdmin\ImpersonateController;
+use App\Http\Controllers\SuperAdmin\MonitoringController;
+use App\Http\Controllers\SuperAdmin\SettingController;
+use App\Http\Controllers\SuperAdmin\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [RootController::class, 'index']);
@@ -113,33 +119,39 @@ Route::prefix('admin')->middleware(['auth', 'role:admin,super_admin'])->group(fu
 });
 
 Route::prefix('super-admin')->middleware(['auth', 'role:super_admin'])->name('superadmin.')->group(function () {
-    Route::get('/dashboard', [\App\Http\Controllers\SuperAdmin\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Root User Management
-    Route::get('/users', [\App\Http\Controllers\SuperAdmin\UserController::class, 'index'])->name('users.index');
-    Route::post('/users', [\App\Http\Controllers\SuperAdmin\UserController::class, 'store'])->name('users.store');
-    Route::put('/users/{user}', [\App\Http\Controllers\SuperAdmin\UserController::class, 'update'])->name('users.update');
-    Route::patch('/users/{user}/toggle-status', [\App\Http\Controllers\SuperAdmin\UserController::class, 'toggleStatus'])->name('users.toggle-status');
-    Route::post('/users/{user}/reset-password', [\App\Http\Controllers\SuperAdmin\UserController::class, 'resetPassword'])->name('users.reset-password');
-    Route::delete('/users/{user}', [\App\Http\Controllers\SuperAdmin\UserController::class, 'destroy'])->name('users.destroy');
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+    Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
     // Impersonate
-    Route::post('/impersonate/{user}', [\App\Http\Controllers\SuperAdmin\ImpersonateController::class, 'start'])->name('impersonate.start');
+    Route::post('/impersonate/{user}', [ImpersonateController::class, 'start'])->name('impersonate.start');
 
     // Audit Logs
-    Route::get('/audit-logs', [\App\Http\Controllers\SuperAdmin\AuditLogController::class, 'index'])->name('audit-logs.index');
+    Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 
     // System Settings
-    Route::get('/settings', [\App\Http\Controllers\SuperAdmin\SettingController::class, 'index'])->name('settings.index');
-    Route::post('/settings', [\App\Http\Controllers\SuperAdmin\SettingController::class, 'update'])->name('settings.update');
+    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+
+    // Dedicated Fiscal Years & Tutup Buku
+    Route::patch('/fiscal-years/{fiscal_year}/toggle-lock', [App\Http\Controllers\SuperAdmin\FiscalYearController::class, 'toggleLock'])->name('fiscal-years.toggle-lock');
+    Route::patch('/fiscal-years/{fiscal_year}/toggle-status', [App\Http\Controllers\SuperAdmin\FiscalYearController::class, 'toggleStatus'])->name('fiscal-years.toggle-status');
+    Route::patch('/fiscal-years/{fiscal_year}/set-default', [App\Http\Controllers\SuperAdmin\FiscalYearController::class, 'setDefault'])->name('fiscal-years.set-default');
+    Route::resource('fiscal-years', App\Http\Controllers\SuperAdmin\FiscalYearController::class)->except(['create', 'show', 'edit']);
 
     // Global Monitoring
-    Route::get('/monitoring/rba', [\App\Http\Controllers\SuperAdmin\MonitoringController::class, 'rba'])->name('monitoring.rba');
-    Route::get('/monitoring/requisitions', [\App\Http\Controllers\SuperAdmin\MonitoringController::class, 'requisitions'])->name('monitoring.requisitions');
-    Route::get('/monitoring/finance', [\App\Http\Controllers\SuperAdmin\MonitoringController::class, 'finance'])->name('monitoring.finance');
+    Route::get('/monitoring/rba', [MonitoringController::class, 'rba'])->name('monitoring.rba');
+    Route::get('/monitoring/requisitions', [MonitoringController::class, 'requisitions'])->name('monitoring.requisitions');
+    Route::get('/monitoring/finance', [MonitoringController::class, 'finance'])->name('monitoring.finance');
 });
 
-Route::post('/impersonate-leave', [\App\Http\Controllers\SuperAdmin\ImpersonateController::class, 'stop'])
+Route::post('/impersonate-leave', [ImpersonateController::class, 'stop'])
     ->name('superadmin.impersonate.leave')
     ->middleware('auth');
 

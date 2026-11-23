@@ -1,20 +1,21 @@
 <?php
 
 $baseDir = dirname(__DIR__);
-require $baseDir . '/vendor/autoload.php';
-$app = require_once $baseDir . '/bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+require $baseDir.'/vendor/autoload.php';
+$app = require_once $baseDir.'/bootstrap/app.php';
+$kernel = $app->make(Kernel::class);
 $kernel->bootstrap();
 
-use App\Models\User;
 use App\Models\Division;
-use App\Models\Unit;
 use App\Models\FiscalYear;
+use App\Models\Item;
+use App\Models\RbaShift;
 use App\Models\Requisition;
 use App\Models\RequisitionDetail;
-use App\Models\RbaShift;
-use App\Models\Item;
 use App\Models\Revenue;
+use App\Models\Unit;
+use App\Models\User;
+use Illuminate\Contracts\Console\Kernel;
 
 echo "Preparing clean demo state for Year 2028...\n";
 
@@ -49,11 +50,11 @@ User::whereIn('email', [
     'pengaju2028@rsj.com',
     'perencana2028@rsj.com',
     'bendahara2028@rsj.com',
-    'radiologi@rsj.com'
+    'radiologi@rsj.com',
 ])->orWhere('email', 'like', '%2028@rsj.com')
-  ->orWhereIn('nip', ['198501012028011001', '198601012028012001', '199201012028011001'])
-  ->orWhereIn('nik', ['1471010101850001', '1471010101860001', '1471010101920001'])
-  ->delete();
+    ->orWhereIn('nip', ['198501012028011001', '198601012028012001', '199201012028011001'])
+    ->orWhereIn('nik', ['1471010101850001', '1471010101860001', '1471010101920001'])
+    ->delete();
 
 // 5. Delete test units & divisions if exist (units first for FK integrity)
 Unit::whereIn('unit_code', ['IRND28', 'IRND'])
@@ -71,7 +72,7 @@ Item::where('name', 'like', '%Plester Medis Non-Woven%')->delete();
 
 // 7. Ensure Fiscal Year 2028 exists and is active for demo login
 $fy2028 = FiscalYear::where('year', 2028)->first();
-if (!$fy2028) {
+if (! $fy2028) {
     FiscalYear::create([
         'year' => 2028,
         'name' => 'Tahun Anggaran 2028',

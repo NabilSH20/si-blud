@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Models\FiscalYear;
+use App\Models\SystemSetting;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -45,7 +47,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
                 'impersonator' => session()->has('impersonator_id')
-                    ? \App\Models\User::select('id', 'name', 'email', 'role')->find(session('impersonator_id'))
+                    ? User::select('id', 'name', 'email', 'role')->find(session('impersonator_id'))
                     : null,
             ],
             'flash' => [
@@ -57,8 +59,8 @@ class HandleInertiaRequests extends Middleware
             'available_fiscal_years' => fn () => class_exists(FiscalYear::class)
                 ? FiscalYear::getActiveYears()
                 : [],
-            'system_settings' => fn () => class_exists(\App\Models\SystemSetting::class)
-                ? \App\Models\SystemSetting::getAllKeyValues()
+            'system_settings' => fn () => class_exists(SystemSetting::class)
+                ? SystemSetting::getAllKeyValues()
                 : [],
         ];
     }

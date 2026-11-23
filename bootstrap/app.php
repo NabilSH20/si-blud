@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\CheckFiscalYearLock;
+use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\NormalizeActiveFiscalYear;
@@ -25,8 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
         //
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
-            'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
-            'fiscal_year_lock' => \App\Http\Middleware\CheckFiscalYearLock::class,
+            'super_admin' => EnsureSuperAdmin::class,
+            'fiscal_year_lock' => CheckFiscalYearLock::class,
         ]);
 
         // User yang sudah login dan membuka halaman guest (login/register)

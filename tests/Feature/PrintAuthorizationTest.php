@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Division;
 use App\Models\FiscalYear;
 use App\Models\RbaShift;
 use App\Models\Requisition;
@@ -15,11 +16,17 @@ class PrintAuthorizationTest extends TestCase
     use RefreshDatabase;
 
     protected User $perencanaanUser;
+
     protected User $keuanganUser;
+
     protected User $divisiUser1;
+
     protected User $divisiUser2;
+
     protected Requisition $requisition1;
+
     protected Requisition $requisition2;
+
     protected RbaShift $activeShift;
 
     protected function setUp(): void
@@ -33,7 +40,7 @@ class PrintAuthorizationTest extends TestCase
             'is_default' => true,
         ]);
 
-        $division = \App\Models\Division::create(['name' => 'Pelayanan Medik', 'division_code' => 'MED-01']);
+        $division = Division::create(['name' => 'Pelayanan Medik', 'division_code' => 'MED-01']);
         $unit1 = Unit::create(['name' => 'Rawat Inap', 'unit_code' => 'RI-01', 'division_id' => $division->id]);
         $unit2 = Unit::create(['name' => 'Farmasi', 'unit_code' => 'FAR-01', 'division_id' => $division->id]);
 

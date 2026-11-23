@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\ActivityLog;
 use App\Models\FiscalYear;
 use App\Models\SystemSetting;
 use App\Models\User;
@@ -57,6 +56,10 @@ class SuperAdminSuiteTest extends TestCase
 
         $this->actingAs($superAdmin)
             ->get('/super-admin/monitoring/finance')
+            ->assertStatus(200);
+
+        $this->actingAs($superAdmin)
+            ->get('/super-admin/fiscal-years')
             ->assertStatus(200);
     }
 
@@ -233,5 +236,99 @@ class SuperAdminSuiteTest extends TestCase
 
         $responseUnlock->assertSessionHasNoErrors();
         $this->assertFalse((bool) $fiscalYear->fresh()->is_locked);
+    }
+
+    public function test_super_admin_can_manage_dedicated_fiscal_years_full_lifecycle()
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+
+        // 1. Index
+        $this->actingAs($superAdmin)
+            ->get('/super-admin/fiscal-years')
+            ->assertStatus(200);
+
+        // 2. Store
+        $responseStore = $this->actingAs($superAdmin)
+            ->post('/super-admin/fiscal-years', [
+                'year' => 2029,
+                'name' => 'Tahun Anggaran 2029',
+                'description' => 'Target Perencanaan Jangka Menengah',
+                'is_active' => true,
+                'is_default' => false,
+                'is_locked' => false,
+            ]);
+
+        $responseStore->assertRedirect(route('superadmin.fiscal-years.index'));
+        $this->assertDatabaseHas('fiscal_years', ['year' => 2029]);
+
+        $fy2029 = FiscalYear::where('year', 2029)->first();
+
+        // Verify audit log CREATE_YEAR
+        $this->assertDatabaseHas('activity_logs', [
+            'action' => 'CREATE_YEAR',
+            'module' => 'FISCAL_YEAR',
+            'user_id' => $superAdmin->id,
+        ]);
+
+        // 3. Update
+        $responseUpdate = $this->actingAs($superAdmin)
+            ->put("/super-admin/fiscal-years/{$fy2029->id}", [
+                'name' => 'Tahun Anggaran 2029 Definitif',
+                'description' => 'Catatan revisi nama',
+                'is_active' => true,
+                'is_default' => false,
+            ]);
+
+        $responseUpdate->assertRedirect(route('superadmin.fiscal-years.index'));
+        $this->assertEquals('Tahun Anggaran 2029 Definitif', $fy2029->fresh()->name);
+
+        // 4. Toggle Status
+        $this->actingAs($superAdmin)
+            ->patch("/super-admin/fiscal-years/{$fy2029->id}/toggle-status")
+            ->assertRedirect(route('superadmin.fiscal-years.index'));
+        $this->assertFalse((bool) $fy2029->fresh()->is_active);
+
+        // 5. Set Default
+        $this->actingAs($superAdmin)
+            ->patch("/super-admin/fiscal-years/{$fy2029->id}/set-default")
+            ->assertRedirect(route('superadmin.fiscal-years.index'));
+        $this->assertTrue((bool) $fy2029->fresh()->is_default);
+        $this->assertTrue((bool) $fy2029->fresh()->is_active);
+
+        // 6. Dedicated Toggle Lock
+        $this->actingAs($superAdmin)
+            ->patch("/super-admin/fiscal-years/{$fy2029->id}/toggle-lock")
+            ->assertRedirect(route('superadmin.fiscal-years.index'));
+        $this->assertTrue((bool) $fy2029->fresh()->is_locked);
+
+        // 7. Unset default before delete
+        $fy2026 = FiscalYear::where('year', 2026)->first();
+        $this->actingAs($superAdmin)->patch("/super-admin/fiscal-years/{$fy2026->id}/set-default");
+
+        // 8. Destroy
+        $this->actingAs($superAdmin)
+            ->delete("/super-admin/fiscal-years/{$fy2029->id}")
+            ->assertRedirect(route('superadmin.fiscal-years.index'));
+        $this->assertDatabaseMissing('fiscal_years', ['id' => $fy2029->id]);
+
+        // Verify audit log DELETE_YEAR
+        $this->assertDatabaseHas('activity_logs', [
+            'action' => 'DELETE_YEAR',
+            'module' => 'FISCAL_YEAR',
+            'user_id' => $superAdmin->id,
+        ]);
+    }
+
+    public function test_non_super_admin_cannot_access_dedicated_super_admin_fiscal_years()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $perencanaan = User::factory()->create(['role' => 'perencanaan']);
+        $keuangan = User::factory()->create(['role' => 'keuangan']);
+        $divisi = User::factory()->create(['role' => 'divisi']);
+
+        $this->actingAs($admin)->get('/super-admin/fiscal-years')->assertStatus(403);
+        $this->actingAs($perencanaan)->get('/super-admin/fiscal-years')->assertStatus(403);
+        $this->actingAs($keuangan)->get('/super-admin/fiscal-years')->assertStatus(403);
+        $this->actingAs($divisi)->get('/super-admin/fiscal-years')->assertStatus(403);
     }
 }

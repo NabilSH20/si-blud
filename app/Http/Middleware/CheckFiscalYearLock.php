@@ -13,7 +13,7 @@ class CheckFiscalYearLock
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -31,7 +31,7 @@ class CheckFiscalYearLock
                 AuditLogService::log(
                     'FISCAL_YEAR',
                     'EMERGENCY_OVERRIDE',
-                    "Super Admin melakukan tindakan darurat pada tahun anggaran terkunci ({$activeYear}): " . $request->input('emergency_reason'),
+                    "Super Admin melakukan tindakan darurat pada tahun anggaran terkunci ({$activeYear}): ".$request->input('emergency_reason'),
                     null,
                     $request->except(['password', 'password_confirmation', '_token'])
                 );

@@ -1016,11 +1016,11 @@ class RbaController extends Controller
             })->whereNotIn('status', ['Ditolak', 'Dibatalkan']);
         })
             ->with([
-            'requisition:id,requisition_number,rba_account_id,unit_id,fiscal_year,budget_year,status,user_id,nomor_surat_unit',
-            'requisition.unit:id,name,unit_code',
-            'requisition.user:id,name,nip',
-            'item:id,item_code,name,specification,unit_type,standard_price,rba_account_id',
-        ])
+                'requisition:id,requisition_number,rba_account_id,unit_id,fiscal_year,budget_year,status,user_id,nomor_surat_unit',
+                'requisition.unit:id,name,unit_code',
+                'requisition.user:id,name,nip',
+                'item:id,item_code,name,specification,unit_type,standard_price,rba_account_id',
+            ])
             ->get();
 
         $groupedDetails = $proposedDetails->groupBy(function ($d) {

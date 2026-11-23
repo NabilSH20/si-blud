@@ -5,7 +5,6 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import {
     Activity,
-    Building2,
     Calendar,
     ChevronDown,
     FileSpreadsheet,
@@ -61,12 +60,6 @@ const menuGroups = [
                 routeName: 'superadmin.monitoring.finance',
                 icon: Wallet,
             },
-            {
-                name: 'Portal Administrator Biasa',
-                href: route('admin.dashboard'),
-                routeName: 'admin.*',
-                icon: Building2,
-            },
         ],
     },
     {
@@ -86,8 +79,8 @@ const menuGroups = [
             },
             {
                 name: 'Tahun Anggaran & Tutup Buku',
-                href: route('fiscal-years.index'),
-                routeName: 'fiscal-years.*',
+                href: route('superadmin.fiscal-years.index'),
+                routeName: 'superadmin.fiscal-years.*',
                 icon: Calendar,
             },
         ],

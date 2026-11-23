@@ -4,10 +4,12 @@ namespace App\Http\Requests\Auth;
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Models\FiscalYear;
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -85,13 +87,13 @@ class LoginRequest extends FormRequest
         $sanitizedId = str_replace([' ', '-', '.'], '', $loginInput);
 
         // Pencarian murni hanya berdasarkan NIP atau NIK (login pure NIP / NIK tanpa email)
-        $user = \App\Models\User::where('nip', $sanitizedId)
+        $user = User::where('nip', $sanitizedId)
             ->orWhere('nip', $loginInput)
             ->orWhere('nik', $sanitizedId)
             ->orWhere('nik', $loginInput)
             ->first();
 
-        if (! $user || ! \Illuminate\Support\Facades\Hash::check($this->input('password'), $user->password)) {
+        if (! $user || ! Hash::check($this->input('password'), $user->password)) {
             RateLimiter::hit($this->throttleKey());
 
             session(['login_captcha' => AuthenticatedSessionController::generateCaptchaCode()]);
