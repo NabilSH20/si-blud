@@ -51,7 +51,6 @@ class UserSeeder extends Seeder
             [
                 'name' => 'dr. Demo IGD, Sp.KJ',
                 'nip' => '199001012020011001',
-                'nik' => '1471010101900001',
                 'email' => 'igd@rsj.com',
                 'password' => $passwordHash,
                 'role' => 'divisi',
@@ -64,7 +63,6 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Admin Demo IGD',
                 'nip' => '199001012020011002',
-                'nik' => '1471010101900002',
                 'email' => 'pelayanan@rsj.com',
                 'password' => $passwordHash,
                 'role' => 'divisi',
@@ -77,7 +75,6 @@ class UserSeeder extends Seeder
             [
                 'name' => 'dr. Demo Poli',
                 'nip' => '199001012020011003',
-                'nik' => '1471010101900003',
                 'email' => 'poliklinik@rsj.com',
                 'password' => $passwordHash,
                 'role' => 'divisi',
@@ -222,7 +219,6 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Admin Demo IT',
                 'nip' => '199001012020011014',
-                'nik' => '1471010101900014',
                 'email' => 'admin@rsj.com',
                 'password' => $passwordHash,
                 'role' => 'admin',
@@ -231,19 +227,6 @@ class UserSeeder extends Seeder
                 'is_active' => true,
                 'division_id' => $tu?->id,
                 'unit_id' => $unitTu?->id,
-            ],
-            [
-                'name' => 'Ns. Siti Rahma, S.Kep (Tenaga BLUD Non-PNS)',
-                'nip' => null, // Pegawai Non-PNS hanya memiliki NIK
-                'nik' => '1471015508950001',
-                'email' => 'siti.blud@rsj.com',
-                'password' => $passwordHash,
-                'role' => 'divisi',
-                'position' => 'Perawat Pelaksana Rawat Inap',
-                'phone' => '081277889901',
-                'is_active' => true,
-                'division_id' => $rawat?->id,
-                'unit_id' => $unitRanapPria?->id,
             ],
 
             // Legacy support
@@ -286,7 +269,7 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $userData) {
-            User::updateOrCreate(
+            User::firstOrCreate(
                 ['email' => $userData['email']],
                 $userData
             );

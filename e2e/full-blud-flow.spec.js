@@ -11,21 +11,12 @@ test.describe('Alur Lengkap Bisnis E-BLUD RSJ Tampan (Multi-Role Flow)', () => {
       pageErrors.push(err.message);
     });
 
-    const emailToNipMap = {
-      'admin@rsj.com': '199001012020011014',
-      'perencanaan@rsj.com': '199001012020011010',
-      'keuangan@rsj.com': '199001012020011012',
-      'igd@rsj.com': '199001012020011001',
-      'farmasi@rsj.com': '199001012020011005',
-    };
-
     // Helper: Login
-    async function login(identifier, password = 'password') {
-      const loginId = emailToNipMap[identifier] || identifier;
+    async function login(email, password = 'password') {
       await page.goto('/login');
       await page.waitForLoadState('networkidle');
 
-      await page.fill('#email', loginId);
+      await page.fill('#email', email);
       await page.fill('#password', password);
 
       // Tangani captcha (ekstrak SVG text atau gunakan bypass testing)

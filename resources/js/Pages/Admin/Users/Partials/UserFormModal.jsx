@@ -21,7 +21,6 @@ export default function UserFormModal({
     const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
         name: '',
         nip: '',
-        nik: '',
         email: '',
         position: '',
         phone: '',
@@ -46,7 +45,6 @@ export default function UserFormModal({
             setData({
                 name: user.name || '',
                 nip: user.nip || '',
-                nik: user.nik || '',
                 email: user.email || '',
                 position: user.position || '',
                 phone: user.phone || '',
@@ -60,7 +58,6 @@ export default function UserFormModal({
             setData({
                 name: '',
                 nip: '',
-                nik: '',
                 email: '',
                 position: '',
                 phone: '',
@@ -466,21 +463,21 @@ export default function UserFormModal({
                                     <InputError message={errors.position} className="mt-1" />
                                 </div>
 
-                                {/* Grid 2 Kolom NIP & NIK */}
+                                {/* Grid 2 Kolom NIP & No HP */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <div className="flex items-center justify-between mb-1">
                                             <label className="block text-xs font-medium text-slate-700">
                                                 NIP Pegawai
                                             </label>
-                                            <span className="text-[10px] text-slate-400">PNS/PPPK</span>
+                                            <span className="text-[10px] text-slate-400">Opsional</span>
                                         </div>
                                         <input
                                             type="text"
                                             value={data.nip}
                                             maxLength={30}
                                             onChange={(e) => setData('nip', e.target.value.replace(/\s+/g, ''))}
-                                            placeholder="18 digit NIP"
+                                            placeholder="18 digit ASN"
                                             className="block w-full h-10 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition"
                                         />
                                         <InputError message={errors.nip} className="mt-1" />
@@ -489,38 +486,19 @@ export default function UserFormModal({
                                     <div>
                                         <div className="flex items-center justify-between mb-1">
                                             <label className="block text-xs font-medium text-slate-700">
-                                                NIK KTP
+                                                No. WhatsApp / HP
                                             </label>
-                                            <span className="text-[10px] text-slate-400">16 digit</span>
+                                            <span className="text-[10px] text-slate-400">Opsional</span>
                                         </div>
                                         <input
                                             type="text"
-                                            value={data.nik}
-                                            maxLength={16}
-                                            onChange={(e) => setData('nik', e.target.value.replace(/\D/g, ''))}
-                                            placeholder="16 digit NIK"
-                                            className="block w-full h-10 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition"
+                                            value={data.phone}
+                                            onChange={(e) => setData('phone', e.target.value)}
+                                            placeholder="0812xxxxxxxx"
+                                            className="block w-full h-10 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition"
                                         />
-                                        <InputError message={errors.nik} className="mt-1" />
+                                        <InputError message={errors.phone} className="mt-1" />
                                     </div>
-                                </div>
-
-                                {/* No. WhatsApp / HP */}
-                                <div>
-                                    <div className="flex items-center justify-between mb-1">
-                                        <label className="block text-xs font-medium text-slate-700">
-                                            No. WhatsApp / HP
-                                        </label>
-                                        <span className="text-[10px] text-slate-400">Opsional</span>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={data.phone}
-                                        onChange={(e) => setData('phone', e.target.value)}
-                                        placeholder="0812xxxxxxxx"
-                                        className="block w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition"
-                                    />
-                                    <InputError message={errors.phone} className="mt-1" />
                                 </div>
                             </div>
 

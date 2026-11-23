@@ -23,12 +23,11 @@ class UserLoginAndCrudTest extends TestCase
         $this->seed(UnitSeeder::class);
     }
 
-    public function test_user_cannot_login_with_email(): void
+    public function test_user_can_login_with_email(): void
     {
         $user = User::factory()->create([
             'email' => 'farmasi.test@rsj.com',
             'nip' => '198501152010012099',
-            'nik' => '1471010101850099',
             'password' => Hash::make('Rahasia2026Aman'),
             'role' => 'divisi',
             'is_active' => true,
@@ -36,26 +35,6 @@ class UserLoginAndCrudTest extends TestCase
 
         $response = $this->post('/login', [
             'email' => 'farmasi.test@rsj.com',
-            'password' => 'Rahasia2026Aman',
-        ]);
-
-        $this->assertGuest();
-        $response->assertSessionHasErrors('email');
-    }
-
-    public function test_user_can_login_with_nik(): void
-    {
-        $user = User::factory()->create([
-            'email' => 'farmasi.nik@rsj.com',
-            'nip' => null,
-            'nik' => '1471010101850099',
-            'password' => Hash::make('Rahasia2026Aman'),
-            'role' => 'divisi',
-            'is_active' => true,
-        ]);
-
-        $response = $this->post('/login', [
-            'email' => '1471010101850099',
             'password' => 'Rahasia2026Aman',
         ]);
 
@@ -92,7 +71,7 @@ class UserLoginAndCrudTest extends TestCase
         ]);
 
         $response = $this->post('/login', [
-            'email' => '199999999999999999',
+            'email' => 'inactive@rsj.com',
             'password' => 'Rahasia2026Aman',
         ]);
 
@@ -234,7 +213,6 @@ class UserLoginAndCrudTest extends TestCase
         $response = $this->actingAs($admin)->put(route('users.update', $user), [
             'name' => $user->name,
             'email' => $user->email,
-            'nip' => $user->nip,
             'role' => $user->role,
             'password' => 'PasswordBaru123',
         ]);
@@ -247,7 +225,7 @@ class UserLoginAndCrudTest extends TestCase
 
         // User fails login with old password
         $failLogin = $this->post('/login', [
-            'email' => $user->nip,
+            'email' => 'staff.reset@rsj.com',
             'password' => 'PasswordLama123',
         ]);
         $failLogin->assertSessionHasErrors('email');
@@ -256,7 +234,7 @@ class UserLoginAndCrudTest extends TestCase
         // User successfully logs in with new password
         $captcha = session('login_captcha');
         $successLogin = $this->post('/login', [
-            'email' => $user->nip,
+            'email' => 'staff.reset@rsj.com',
             'password' => 'PasswordBaru123',
             'captcha' => $captcha,
         ]);
