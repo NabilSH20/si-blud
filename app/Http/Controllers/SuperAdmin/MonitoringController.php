@@ -22,18 +22,20 @@ class MonitoringController extends Controller
     {
         $activeYear = (int) session('active_year', date('Y'));
 
-        $accounts = RbaAccount::where('fiscal_year', $activeYear)
-            ->with('parent')
+        $accounts = RbaAccount::where(function ($q) use ($activeYear) {
+            $q->where('period_year', $activeYear)->orWhere('year', $activeYear);
+        })
             ->orderBy('account_code')
             ->get();
 
-        $shifts = RbaShift::where('fiscal_year', $activeYear)
-            ->with('user:id,name')
-            ->orderByDesc('shift_number')
+        $shifts = RbaShift::where('year', $activeYear)
+            ->orderByDesc('id')
             ->get();
 
-        $totalOriginal = (float) $accounts->where('type', 'belanja')->sum('original_amount');
-        $totalAllocated = (float) $accounts->where('type', 'belanja')->sum('allocated_amount');
+        $totalOriginal = (float) $accounts->sum('total_budget');
+        $totalAllocated = (float) $accounts->sum(function ($acc) {
+            return $acc->budget_after_revision !== null ? (float) $acc->budget_after_revision : (float) $acc->total_budget;
+        });
 
         return Inertia::render('SuperAdmin/Monitoring/Rba', [
             'active_year' => $activeYear,
@@ -74,7 +76,8 @@ class MonitoringController extends Controller
             $q = $request->q;
             $query->where(function ($sub) use ($q) {
                 $sub->where('requisition_number', 'like', "%{$q}%")
-                    ->orWhere('purpose', 'like', "%{$q}%");
+                    ->orWhere('urgency_reason', 'like', "%{$q}%")
+                    ->orWhere('sub_kegiatan', 'like', "%{$q}%");
             });
         }
 
@@ -102,7 +105,9 @@ class MonitoringController extends Controller
             ->withQueryString();
 
         $totalRevenue = (float) Revenue::whereYear('date', $activeYear)->sum('amount');
-        $budgets = Budget::where('fiscal_year', $activeYear)->with('division')->get();
+        $budgets = Budget::where(function ($q) use ($activeYear) {
+            $q->where('period_year', $activeYear)->orWhere('year', $activeYear);
+        })->get();
         $totalDpa = (float) $budgets->sum('total_budget');
 
         $disbursedReqs = Requisition::where(function ($q) use ($activeYear) {
@@ -110,7 +115,7 @@ class MonitoringController extends Controller
         })
             ->where('status', 'Disetujui_Selesai')
             ->with(['division:id,name', 'unit:id,name'])
-            ->latest('approved_at')
+            ->latest('approved_keuangan_at')
             ->limit(10)
             ->get();
 

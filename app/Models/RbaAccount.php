@@ -49,6 +49,14 @@ class RbaAccount extends Model
         return $this->hasMany(Requisition::class, 'rba_account_id');
     }
 
+    protected $appends = [
+        'kode_rekening',
+        'uraian_rekening',
+        'original_amount',
+        'allocated_amount',
+        'type',
+    ];
+
     // Accessors for backward compatibility
     public function getKodeRekeningAttribute(): string
     {
@@ -58,6 +66,21 @@ class RbaAccount extends Model
     public function getUraianRekeningAttribute(): string
     {
         return $this->account_name;
+    }
+
+    public function getOriginalAmountAttribute(): float
+    {
+        return (float) $this->total_budget;
+    }
+
+    public function getAllocatedAmountAttribute(): float
+    {
+        return (float) ($this->budget_after_revision !== null ? $this->budget_after_revision : $this->total_budget);
+    }
+
+    public function getTypeAttribute(): string
+    {
+        return strtolower($this->kategori_belanja ?: 'belanja');
     }
 
     /**

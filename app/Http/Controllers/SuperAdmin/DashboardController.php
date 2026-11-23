@@ -40,8 +40,11 @@ class DashboardController extends Controller
         $ditolak = (clone $reqQuery)->where('status', 'Ditolak')->count();
         $totalEstimatedUsulan = (float) (clone $reqQuery)->sum('total_estimated');
 
-        $totalPaguMurni = (float) RbaAccount::where('fiscal_year', $activeYear)->sum('original_amount');
-        $totalPaguPergeseran = (float) RbaAccount::where('fiscal_year', $activeYear)->sum('allocated_amount');
+        $rbaQuery = RbaAccount::where(function ($q) use ($activeYear) {
+            $q->where('period_year', $activeYear)->orWhere('year', $activeYear);
+        });
+        $totalPaguMurni = (float) (clone $rbaQuery)->sum('total_budget');
+        $totalPaguPergeseran = (float) (clone $rbaQuery)->selectRaw('COALESCE(SUM(COALESCE(budget_after_revision, total_budget)), 0) as total')->value('total');
 
         // 2. KPI Keuangan (Pendapatan & Realisasi Kas SP2D)
         $totalRevenue = (float) Revenue::whereYear('date', $activeYear)->sum('amount');

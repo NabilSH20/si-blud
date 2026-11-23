@@ -43,6 +43,27 @@ class Requisition extends Model
         'receipt_number',
     ];
 
+    protected $appends = [
+        'purpose',
+        'total_amount',
+        'approved_at',
+    ];
+
+    public function getPurposeAttribute(): ?string
+    {
+        return $this->urgency_reason ?: $this->sub_kegiatan;
+    }
+
+    public function getTotalAmountAttribute(): float
+    {
+        return (float) ($this->total_approved > 0 ? $this->total_approved : $this->total_estimated);
+    }
+
+    public function getApprovedAtAttribute(): ?\DateTimeInterface
+    {
+        return $this->approved_keuangan_at;
+    }
+
     protected function casts(): array
     {
         return [

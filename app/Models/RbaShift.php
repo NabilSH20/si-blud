@@ -26,6 +26,27 @@ class RbaShift extends Model
         ];
     }
 
+    protected $appends = [
+        'shift_number',
+        'shift_date',
+        'reference_document',
+    ];
+
+    public function getShiftNumberAttribute(): string
+    {
+        return $this->shift_name ?: (string) $this->id;
+    }
+
+    public function getShiftDateAttribute(): ?string
+    {
+        return $this->created_at?->format('Y-m-d');
+    }
+
+    public function getReferenceDocumentAttribute(): ?string
+    {
+        return $this->doc_title;
+    }
+
     public function expenseItems(): HasMany
     {
         return $this->hasMany(RbaExpenseItem::class, 'rba_shift_id')->orderBy('order_index');
