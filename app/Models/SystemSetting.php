@@ -27,10 +27,17 @@ class SystemSetting extends Model
 
     public static function get(string $key, mixed $default = null): mixed
     {
-        return Cache::remember("system_setting_{$key}", 3600, function () use ($key, $default) {
-            $setting = static::where('key_name', $key)->first();
-            return $setting ? $setting->value : $default;
-        });
+        try {
+            return Cache::remember("system_setting_{$key}", 3600, function () use ($key, $default) {
+                if (! \Illuminate\Support\Facades\Schema::hasTable('system_settings')) {
+                    return $default;
+                }
+                $setting = static::where('key_name', $key)->first();
+                return $setting ? $setting->value : $default;
+            });
+        } catch (\Throwable) {
+            return $default;
+        }
     }
 
     public static function set(string $key, mixed $value, ?int $userId = null): static
@@ -53,8 +60,15 @@ class SystemSetting extends Model
 
     public static function getAllKeyValues(): array
     {
-        return Cache::remember('system_settings_all', 3600, function () {
-            return static::pluck('value', 'key_name')->toArray();
-        });
+        try {
+            return Cache::remember('system_settings_all', 3600, function () {
+                if (! \Illuminate\Support\Facades\Schema::hasTable('system_settings')) {
+                    return [];
+                }
+                return static::pluck('value', 'key_name')->toArray();
+            });
+        } catch (\Throwable) {
+            return [];
+        }
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\FiscalYear;
 use App\Models\Requisition;
 use App\Models\Revenue;
+use App\Services\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -206,7 +207,7 @@ class FiscalYearController extends Controller
 
         $status = $fiscalYear->is_locked ? 'DITUTUP (Terkunci)' : 'DIBUKA KEMBALI';
 
-        \App\Services\AuditLogService::log(
+        AuditLogService::log(
             'FISCAL_YEAR',
             $fiscalYear->is_locked ? 'LOCK_YEAR' : 'UNLOCK_YEAR',
             "Mengubah status tahun anggaran {$fiscalYear->year} menjadi {$status}"

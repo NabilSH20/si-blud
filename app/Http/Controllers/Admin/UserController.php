@@ -7,6 +7,7 @@ use App\Models\Division;
 use App\Models\Requisition;
 use App\Models\Unit;
 use App\Models\User;
+use App\Services\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -42,9 +43,12 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        abort_unless(in_array(Auth::user()?->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
+        /** @var User|null $currentUser */
+        $currentUser = Auth::user();
+        abort_unless($currentUser && in_array($currentUser->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
 
-        $allowedRoles = Auth::user()?->isSuperAdmin()
+        $isSuperAdmin = $currentUser->role === 'super_admin';
+        $allowedRoles = $isSuperAdmin
             ? ['super_admin', 'admin', 'divisi', 'perencanaan', 'keuangan']
             : ['admin', 'divisi', 'perencanaan', 'keuangan'];
 
@@ -117,7 +121,7 @@ class UserController extends Controller
             'unit_id' => $validated['role'] === 'divisi' ? $validated['unit_id'] : ($validated['unit_id'] ?? null),
         ]);
 
-        \App\Services\AuditLogService::log(
+        AuditLogService::log(
             'USERS',
             'CREATE_USER',
             "Menambahkan pengguna baru: {$createdUser->name} ({$createdUser->role})",
@@ -134,13 +138,17 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user): RedirectResponse
     {
-        abort_unless(in_array(Auth::user()?->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
+        /** @var User|null $currentUser */
+        $currentUser = Auth::user();
+        abort_unless($currentUser && in_array($currentUser->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
 
-        if ($user->isSuperAdmin() && ! Auth::user()->isSuperAdmin()) {
+        $isSuperAdmin = $currentUser->role === 'super_admin';
+
+        if ($user->isSuperAdmin() && ! $isSuperAdmin) {
             abort(403, 'Akses ditolak: Anda tidak memiliki wewenang mengelola akun Super Admin.');
         }
 
-        $allowedRoles = Auth::user()?->isSuperAdmin()
+        $allowedRoles = $isSuperAdmin
             ? ['super_admin', 'admin', 'divisi', 'perencanaan', 'keuangan']
             : ['admin', 'divisi', 'perencanaan', 'keuangan'];
 
@@ -222,7 +230,7 @@ class UserController extends Controller
         $before = $user->only(['name', 'email', 'role', 'nip', 'nik', 'is_active']);
         $user->update($userData);
 
-        \App\Services\AuditLogService::log(
+        AuditLogService::log(
             'USERS',
             'UPDATE_USER',
             "Memperbarui profil akun pengguna: {$user->name}",
@@ -239,13 +247,17 @@ class UserController extends Controller
      */
     public function toggleStatus(User $user): RedirectResponse
     {
-        abort_unless(in_array(Auth::user()?->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
+        /** @var User|null $currentUser */
+        $currentUser = Auth::user();
+        abort_unless($currentUser && in_array($currentUser->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
 
-        if ($user->isSuperAdmin() && ! Auth::user()->isSuperAdmin()) {
+        $isSuperAdmin = $currentUser->role === 'super_admin';
+
+        if ($user->isSuperAdmin() && ! $isSuperAdmin) {
             abort(403, 'Akses ditolak: Anda tidak memiliki wewenang menonaktifkan akun Super Admin.');
         }
 
-        if ($user->id === Auth::id()) {
+        if ($user->id === $currentUser->id) {
             return back()->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
         }
 
@@ -255,7 +267,7 @@ class UserController extends Controller
 
         $statusLabel = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
-        \App\Services\AuditLogService::log(
+        AuditLogService::log(
             'USERS',
             'TOGGLE_STATUS',
             "Mengubah status akun {$user->name} menjadi {$statusLabel}"
@@ -269,13 +281,15 @@ class UserController extends Controller
      */
     public function destroy(User $user): RedirectResponse
     {
-        abort_unless(in_array(Auth::user()?->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
+        /** @var User|null $currentUser */
+        $currentUser = Auth::user();
+        abort_unless($currentUser && in_array($currentUser->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
 
         if ($user->isSuperAdmin()) {
             abort(403, 'Akses ditolak: Akun Super Admin dilindungi dan tidak dapat dihapus.');
         }
 
-        if ($user->id === Auth::id()) {
+        if ($user->id === $currentUser->id) {
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri saat sedang aktif login.');
         }
 
@@ -292,7 +306,7 @@ class UserController extends Controller
         $deletedData = $user->only(['id', 'name', 'email', 'role', 'nip', 'nik']);
         $user->delete();
 
-        \App\Services\AuditLogService::log(
+        AuditLogService::log(
             'USERS',
             'DELETE_USER',
             "Menghapus akun pengguna: {$name}",
