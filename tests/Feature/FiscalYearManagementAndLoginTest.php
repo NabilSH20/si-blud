@@ -57,7 +57,7 @@ class FiscalYearManagementAndLoginTest extends TestCase
     public function test_user_can_login_with_specific_fiscal_year(): void
     {
         $response = $this->post('/login', [
-            'email' => $this->divisiUser->nip,
+            'email' => $this->divisiUser->email,
             'password' => 'password',
             'fiscal_year' => 2027,
         ]);
@@ -71,7 +71,7 @@ class FiscalYearManagementAndLoginTest extends TestCase
         FiscalYear::query()->delete();
 
         $response = $this->post('/login', [
-            'email' => $this->divisiUser->nip,
+            'email' => $this->divisiUser->email,
             'password' => 'password',
             'fiscal_year' => '',
         ]);
