@@ -1,359 +1,273 @@
-# [ISSUE / PLANNING] Implementasi Role Super Admin (Root / System Master), Audit Log Terpadu, Pengaturan Cetak Global, dan Kontrol Tutup Buku Anggaran
+# [ISSUE / PLANNING - REVISI] Penambahan Role Super Admin (Root / System Master) dengan Akses Penuh Lintas Modul Tanpa Menambah Tabel Baru
 
-**Tipe**: Epic / Security Architecture / Feature  
+**Tipe**: Feature / Role-Based Access Control (RBAC)  
 **Prioritas**: Tinggi (*High*)  
 **Status**: Ready for Implementation  
-**Label**: `rbac`, `super-admin`, `security`, `audit-log`, `system-settings`, `segregation-of-duties`, `fiscal-year-lock`  
+**Label**: `rbac`, `super-admin`, `security`, `lean-architecture`  
 **Target Pelaksana**: Junior Programmer & AI Model  
-*(Catatan: Dokumen ini adalah rancangan perencanaan komprehensif. Tidak ada perubahan kode aplikasi yang dieksekusi pada sesi pembuatan dokumen ini).*
+*(Catatan: Dokumen ini adalah rancangan perencanaan yang telah disederhanakan. Tidak ada perubahan kode aplikasi yang dieksekusi pada sesi pembuatan dokumen ini).*
 
 ---
 
-## 1. Latar Belakang & Analisis Masalah
+## 1. Analisis & Evaluasi Revisi: Mengapa TIDAK Perlu Tabel Baru?
 
-Berdasarkan hasil presentasi dan pengujian sistem aplikasi **E-BLUD RS Jiwa Tampan Provinsi Riau** bersama para stakeholder, terdapat kebutuhan struktural terkait tata kelola hak akses pengguna (*Role-Based Access Control / RBAC*):
+Menjawab evaluasi dan arahan:
+> *"Apakah tabel `activity_logs` dan `system_settings` ini penting? Bukannya super admin ini hanya perlu menambahkan role dan mengakses semuanya, atau fitur yang sudah ada?"*
 
-### 1.1 Keterbatasan Kondisi Saat Ini (4 Role Operasional)
-Saat ini sistem hanya memiliki 4 role pengguna:
-1. `divisi`: Unit kerja pengusul belanja (Instalasi / Ruangan).
-2. `perencanaan`: Verifikator usulan belanja & penyusun dokumen RBA.
-3. `keuangan`: Verifikator pencairan kas (SP2D), pencatatan pendapatan BLUD, dan penyusun laporan keuangan (LRA / Surplus-Defisit).
-4. `admin`: Administrator tingkat operasional pengelola data master (master divisi, unit, tahun anggaran, dan pengguna).
-
-### 1.2 Urgensi Penambahan Role `super_admin` (Root / Master SIM-RS)
-Dalam operasional riil rumah sakit pemerintah, role `admin` biasa yang dipegang oleh staf administrasi umum tidak boleh memiliki hak mutlak atas akun sistem tingkat tinggi. Dibutuhkan 1 role paling tinggi, yaitu **`super_admin`**, yang dipegang khusus oleh Pranata Komputer Utama / Kepala SIM-RS untuk:
-- Mengawasi integritas sistem secara menyeluruh (*Global Monitoring*).
-- Mengamankan akun administratif dari manipulasi tidak sah (*Root User Protection*).
-- Menangani kendala teknis lapangan tanpa meminta kata sandi pegawai (*Troubleshooting Impersonation*).
-- Menyediakan rekam jejak audit komprehensif atas setiap perubahan data (*System Audit Trail*).
-- Mengelola data pejabat penandatangan dan kop surat dinamis tanpa *hardcoded* di kodingan (*Dynamic Print Settings*).
-- Menutup buku tahun anggaran secara tegas untuk mencegah pergeseran angka historis (*Fiscal Year Locking*).
-
----
-
-## 2. Prinsip Tata Kelola & Batasan (*Segregation of Duties di BLUD*)
-
-> [!IMPORTANT]
-> **Super Admin adalah Penguasa Teknis Sistem, BUKAN Eksekutor Anggaran.**  
-> Dalam tata kelola keuangan Badan Layanan Umum Daerah (BLUD), pemisahan kewenangan (*Segregation of Duties*) wajib dijaga ketat agar tidak menjadi temuan pemeriksaan BPK / Inspektorat:
-
-1. **Dilarang Edit Saldo Manual**: Super Admin **DILARANG** mengedit langsung nilai `remaining_budget` (sisa pagu) atau `spent_budget` (realisasi) di tabel `rba_accounts`. Saldo hanya boleh bergerak melalui transaksi resmi RBA Pergeseran dan pencairan SP2D Keuangan.
-2. **Tidak Boleh Memverifikasi atau Mencairkan Usulan Belanja**:
-   - Field `verified_by_perencanaan_id` tetap menjadi hak prerogatif role `perencanaan`.
-   - Field `approved_by_keuangan_id` tetap menjadi hak prerogatif role `keuangan`.
-   - Super Admin hanya bertindak sebagai pengawas lintas modul (*read-all / monitoring*).
-3. **Emergency Override Wajib Justifikasi**: Jika terjadi kondisi darurat sistem (misal: perbaikan status transaksi macet karena *crash* server), Super Admin wajib menyertakan teks alasan darurat yang secara otomatis dicatat ke tabel `activity_logs`.
+### Kesimpulan Evaluasi: **Tabel Baru TIDAK DIPERLUKAN (Over-Engineering Dihilangkan)**
+1. **Audit Trail Dokumen Sudah Ada**:
+   - Seluruh mutasi transaksi usulan belanja (`requisitions`) **sudah memiliki rekam jejak bawaan** di database:
+     - Siapa pengusul awal (`user_id`) & waktu pengajuan (`submission_date`).
+     - Siapa verifikator perencanaan (`verified_by_perencanaan_id`) & catatan verifikasi (`notes_perencanaan`).
+     - Siapa verifikator pencairan kas (`approved_by_keuangan_id`), nomor SP2D, kuitansi, & catatan keuangan (`notes_keuangan`).
+   - Oleh karena itu, membuat tabel `activity_logs` baru secara terpisah hanya akan menambah beban query dan kompleksitas migrasi yang tidak esensial bagi sistem.
+2. **Format Dokumen Cetak Sudah Baku & Stabil**:
+   - Format kop surat, identitas RSJ Tampan, dan pejabat penandatangan pada dokumen cetak (`Print*.jsx`) sudah dirancang rapi dan telah disetujui stakeholder.
+   - Membuat tabel `system_settings` dan mengubah puluhan file cetak justru berisiko merusak tata letak cetak (*layout regression*).
+3. **Fokus Inti Super Admin**:
+   - Menambahkan 1 nilai enum baru `'super_admin'` pada tabel `users`.
+   - Memberikan Super Admin wewenang tertinggi untuk **mengakses dan memantau seluruh fitur operasional yang sudah ada** (Admin, Perencanaan, Keuangan, dan Unit Kerja).
+   - Memproteksi akun `super_admin` agar tidak dapat dihapus, dimanipulasi, atau diturunkan rolenya oleh `admin` biasa.
 
 ---
 
-## 3. Arsitektur 6 Pilar Fitur Super Admin
+## 2. Definisi Peran & Hak Akses Super Admin (*Scope of Work*)
+
+Super Admin diposisikan sebagai **Master Akun / Root Administrator** dengan 4 pilar fungsional sederhana:
 
 ```mermaid
 flowchart TD
-    SA["Super Admin (Root System Master)"]
-    
-    subgraph P1["Pilar 1: Root User Management"]
-        SA --> U1["Kelola Semua User & Admin"]
-        SA --> U2["Reset Sandi Darurat"]
-        SA --> U3["Proteksi Akun Root (Anti-Hapus oleh Admin)"]
-    end
-    
-    subgraph P2["Pilar 2: Global Monitoring"]
-        SA --> M1["Dashboard Eksekutif 3-in-1"]
-        SA --> M2["Monitoring Perencanaan (RBA & Usulan)"]
-        SA --> M3["Monitoring Keuangan (Kas, SP2D, LRA)"]
+    SA["Super Admin (Root / System Master)"]
+
+    subgraph M1["1. Modul Admin (Master Data)"]
+        SA --> A1["Kelola Pengguna (Buat/Edit Admin & Super Admin)"]
+        SA --> A2["Kelola Bidang & Unit Kerja"]
+        SA --> A3["Kelola & Kunci Tahun Anggaran"]
     end
 
-    subgraph P3["Pilar 3: Troubleshooting Session"]
-        SA --> I1["Aman Impersonasi Akun Staf Lapangan"]
-        SA --> I2["Banner Peringatan Modus Impersonasi"]
-        SA --> I3["Tombol Sekali Klik Kembali ke Super Admin"]
+    subgraph M2["2. Modul Perencanaan"]
+        SA --> P1["Monitoring Matriks RBA & Pergeseran"]
+        SA --> P2["Monitoring Usulan Belanja Ruangan"]
+        SA --> P3["Katalog Standar Satuan Harga (SSH)"]
+        SA --> P4["Cetak Dokumen RBA"]
     end
 
-    subgraph P4["Pilar 4: System Audit Log"]
-        SA --> L1["Catat Waktu Login & Logout"]
-        SA --> L2["Catat Perubahan Data User & RBA"]
-        SA --> L3["Catat Emergency Action & Otorisasi SP2D"]
+    subgraph M3["3. Modul Keuangan"]
+        SA --> K1["Monitoring Pagu Anggaran (DPA)"]
+        SA --> K2["Monitoring Pendapatan BLUD"]
+        SA --> K3["Monitoring Realisasi Belanja & SP2D"]
+        SA --> K4["Cetak LRA & Laporan Surplus/Defisit"]
     end
 
-    subgraph P5["Pilar 5: Konfigurasi Cetak Dinamis"]
-        SA --> S1["Setting Kop Surat & Logo RSJ Tampan"]
-        SA --> S2["Setting Nama & NIP Direktur RSJ Tampan"]
-        SA --> S3["Setting Pejabat Penandatangan RBA & LRA"]
+    subgraph M4["4. Modul Unit Kerja (Divisi)"]
+        SA --> D1["Monitoring Seluruh Pengajuan Usulan Ruangan"]
+        SA --> D2["Cetak Lembar Nota Dinas Usulan"]
     end
 
-    subgraph P6["Pilar 6: Siklus Anggaran & Emergency"]
-        SA --> F1["Kunci / Buka Tutup Buku Tahun Anggaran"]
-        SA --> F2["Emergency Force Revert Transaksi Macet"]
-        SA --> F3["Form Wajib Alasan Audit Trail"]
+    subgraph PROT["5. Proteksi Akun Root"]
+        SA -.->|Kebijakan Keamanan| SEC["Admin Biasa Dilarang Edit/Hapus Super Admin"]
     end
 ```
 
-### 3.1 Pilar 1: Manajemen Akun Tingkat Tinggi (*Root User Management*)
-- Super Admin dapat membuat, mengedit profil/jabatan/NIP/NIK, mereset password, dan menonaktifkan seluruh akun, baik akun operasional maupun akun ber-role `admin`.
-- **Proteksi Immutability**:
-  - Role `admin` biasa dilarang membuat akun dengan role `super_admin`.
-  - Role `admin` biasa dilarang mengedit, mengubah status aktif, mereset password, atau menghapus akun yang ber-role `super_admin`.
-  - Jika ada *request* manipulasi akun super admin oleh admin biasa, backend otomatis melempar `abort(403, 'Akses ditolak: Anda tidak memiliki wewenang mengelola akun Super Admin.')`.
+### 2.1 Akses Universal Lintas Modul (*Full Access to Existing Features*)
+Super Admin dapat membuka seluruh rute dan antarmuka yang ada di sistem:
+- **Akses Modul Admin** (`/admin/*`): Mengelola pengguna, bidang, unit, dan tahun anggaran.
+- **Akses Modul Perencanaan** (`/perencanaan/*`): Melihat dashboard perencanaan, katalog barang SSH, matriks RBA (murni/pergeseran), usulan belanja, dan cetak dokumen RBA.
+- **Akses Modul Keuangan** (`/keuangan/*`): Melihat dashboard keuangan, pagu DPA, daftar penerimaan kas, pencairan belanja SP2D, cetak LRA, dan laporan Surplus/Defisit.
+- **Akses Modul Divisi** (`/divisi/*`): Melihat daftar usulan belanja seluruh instalasi/ruangan dan cetak nota dinas.
+- **Navigasi Cepat Antar-Modul (*Quick Switcher*)**:
+  Di bilah navigasi (Navbar/Sidebar), Super Admin memiliki tombol menu pintas (*Module Switcher*) untuk berpindah ke modul Perencanaan, Keuangan, Admin, atau Divisi secara instan tanpa perlu logout/ganti akun.
 
-### 3.2 Pilar 2: Pemantauan Lintas Modul (*Global Executive Monitoring*)
-- Tersedia dashboard terpadu yang merangkum KPI 3 modul secara *real-time*:
-  - **KPI Perencanaan**: Total anggaran murni vs pergeseran, persentase serapan usulan, jumlah nota dinas diajukan/disetujui/ditolak.
-  - **KPI Keuangan**: Realisasi belanja per SP2D, total penerimaan pendapatan BLUD, sisa kas riil rumah sakit.
-  - **KPI Unit Kerja**: Frekuensi pengajuan terbanyak berdasarkan instalasi/ruangan.
-- Fitur *read-all view* yang memungkinkan Super Admin memeriksa rincian RBA, daftar nota dinas, buku kas, dan laporan LRA tanpa tombol edit/verifikasi/cairkan (mencegah *accidental modification*).
+### 2.2 Proteksi Akun Root (*Root User Security*)
+- Hanya pengguna ber-role `super_admin` yang dapat:
+  1. Membuat akun baru dengan role `super_admin` atau `admin`.
+  2. Mengubah role pengguna lain menjadi `admin` atau `super_admin`.
+  3. Mereset kata sandi akun `super_admin` atau `admin`.
+- **Aturan Proteksi untuk Admin Biasa (`role: 'admin'`)**:
+  - Pilihan role `super_admin` **tidak muncul** pada form tambah/edit pengguna jika yang sedang login adalah admin biasa.
+  - Jika admin biasa mencoba mengirim *request* HTTP untuk mengedit, menonaktifkan, atau menghapus user `super_admin`, backend langsung menolak dengan `abort(403, 'Akses ditolak: Anda tidak memiliki wewenang mengelola akun Super Admin.')`.
+  - Tombol edit dan hapus pada baris akun `super_admin` di tabel pengguna otomatis disembunyikan jika dilihat oleh admin biasa.
 
-### 3.3 Pilar 3: Fitur Troubleshooting (*Secure User Impersonation*)
-- Ketika staf ruangan (misal: Unit Farmasi atau IGD) melapor kendala form atau tampilan sistem, Super Admin dapat menekan tombol **"Lihat sebagai Staf (Impersonate)"** pada tabel pengguna.
-- Sistem menyimpan `impersonator_id = Auth::id()` pada *session*, kemudian mengganti sesi login aktif ke pengguna target tanpa perlu mengetahui kata sandi pegawai.
-- **Mekanisme Keamanan Impersonasi**:
-  1. Terdapat bar notifikasi melayang (*Floating Banner*) di bagian atas layar:
-     `"⚠️ PERHATIAN: Anda sedang login atas nama [Nama Pegawai] (Mode Troubleshooting)."`
-  2. Terdapat tombol *"Keluar dari Mode Troubleshooting & Kembali ke Super Admin"* yang langsung memulihkan autentikasi asli Super Admin.
-  3. Aksi impersonasi wajib dicatat di tabel `activity_logs`.
-
-### 3.4 Pilar 4: Log Aktivitas Sistem Terpadu (*System Audit Trail*)
-- Tabel terpusat `activity_logs` merekam setiap tindakan penting:
-  - Autentikasi: waktu login, waktu logout, gagal login.
-  - Master User: buat user baru, reset password, nonaktifkan user, ganti role.
-  - Perencanaan: tambah barang katalog SSH, buat pergeseran RBA, aktivasi shift RBA.
-  - Keuangan: pencatatan pendapatan BLUD, penerbitan SP2D belanja.
-  - Sistem: ganti pengaturan pejabat cetak, kunci tahun anggaran.
-- Struktur log menyimpan *payload before* dan *payload after* dalam format JSON untuk kebutuhan audit forensik.
-
-### 3.5 Pilar 5: Konfigurasi Global & Dokumen Cetak Dinamis (*System Settings*)
-- Tabel `system_settings` menyimpan pasangan *key-value* konfigurasi cetak rumah sakit:
-  - `hospital_name`: "Rumah Sakit Jiwa Tampan Provinsi Riau"
-  - `hospital_address`: "Jl. H.R. Soebrantas Km. 12.5, Panam, Pekanbaru, Riau"
-  - `director_name`: Nama Direktur aktif (misal: "dr. Zainal Arifin, MPH")
-  - `director_nip`: NIP Direktur
-  - `planning_head_name`: Kepala Bagian Perencanaan
-  - `planning_head_nip`: NIP Kepala Bagian Perencanaan
-  - `treasurer_name`: Bendahara Pengeluaran BLUD
-  - `treasurer_nip`: NIP Bendahara Pengeluaran
-- Seluruh template cetak React (`PrintRingkasan.jsx`, `PrintBelanja.jsx`, `PrintPendapatan.jsx`, `PrintRincianBelanja.jsx`, `PrintReport.jsx`, `PrintSurplusDeficit.jsx`, dan `PrintRequisition.jsx`) membaca properti ini secara dinamis. Jika terjadi pergantian pimpinan rumah sakit, SIM-RS cukup memperbarui form setting di panel Super Admin.
-
-### 3.6 Pilar 6: Kontrol Tutup Buku Anggaran & Emergency Action
-- Pada tabel `fiscal_years`, ditambahkan kolom `is_locked` (boolean, *default* `false`).
-- Jika tahun anggaran di-lock (tutup buku):
-  - Unit tidak dapat membuat usulan belanja baru pada tahun tersebut.
-  - Perencanaan tidak dapat menggeser anggaran RBA.
-  - Keuangan tidak dapat mencairkan SP2D.
-- Super Admin memiliki tombol *Lock/Unlock* tahun anggaran.
-- Terdapat tombol *Emergency Force Revert* untuk membatalkan nota dinas yang macet atau salah klik oleh staf, dengan syarat wajib menginputkan `alasan_pembatalan` minimal 20 karakter yang langsung masuk ke `activity_logs`.
+### 2.3 Batasan Etika Keuangan BLUD (*Segregation of Duties*)
+- Walaupun Super Admin memiliki akses melihat (*view / monitor*) seluruh modul, Super Admin tetap disarankan bertindak sebagai pemantau teknis (*technical watchdog*).
+- Transaksi usulan belanja dan verifikasi keuangan tetap dijalankan oleh staf fungsional Perencanaan dan Bendahara Keuangan sesuai tanggung jawab jabatannya.
 
 ---
 
-## 4. Perubahan Database & Skema Tabel Baru
+## 3. Penyesuaian Database (Hanya 1 Titik Perubahan)
 
-### 4.1 Update Tabel `users` (Enum Role)
-Mengubah definisi enum kolom `role` pada tabel `users`:
-```sql
-ALTER TABLE users MODIFY COLUMN role ENUM('super_admin', 'admin', 'perencanaan', 'keuangan', 'divisi') NOT NULL DEFAULT 'divisi';
-```
+Sesuai prinsip kesederhanaan, **TIDAK ADA tabel baru yang dibuat**. Satu-satunya perubahan skema database adalah memperbarui kolom `role` pada tabel `users`.
 
-### 4.2 Tabel Baru: `activity_logs`
-```sql
-CREATE TABLE activity_logs (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT UNSIGNED NULL,
-    impersonator_id BIGINT UNSIGNED NULL COMMENT 'Diisi ID Super Admin jika aksi dilakukan dalam mode impersonate',
-    action VARCHAR(100) NOT NULL COMMENT 'LOGIN, LOGOUT, CREATE_USER, UPDATE_ROLE, RBA_SHIFT, SP2D_DISBURSE, SETTING_UPDATE, EMERGENCY_OVERRIDE',
-    module VARCHAR(50) NOT NULL COMMENT 'AUTH, USERS, RBA, REQUISITIONS, FINANCE, SETTINGS, FISCAL_YEAR',
-    description TEXT NOT NULL,
-    ip_address VARCHAR(45) NULL,
-    user_agent TEXT NULL,
-    payload_before JSON NULL,
-    payload_after JSON NULL,
-    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_activity_logs_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-    CONSTRAINT fk_activity_logs_impersonator FOREIGN KEY (impersonator_id) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_activity_logs_module (module),
-    INDEX idx_activity_logs_action (action),
-    INDEX idx_activity_logs_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
+### Skema Migrasi: Modifikasi Kolom `role` pada Tabel `users`
+```php
+// database/migrations/2026_10_01_000001_add_super_admin_to_users_role_enum.php
 
-### 4.3 Tabel Baru: `system_settings`
-```sql
-CREATE TABLE system_settings (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    key_name VARCHAR(100) NOT NULL UNIQUE,
-    value TEXT NULL,
-    label VARCHAR(255) NOT NULL,
-    group_name VARCHAR(50) NOT NULL DEFAULT 'general' COMMENT 'general, print_document, official_signers',
-    type VARCHAR(30) NOT NULL DEFAULT 'text' COMMENT 'text, textarea, file, number',
-    updated_by BIGINT UNSIGNED NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL,
-    CONSTRAINT fk_settings_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
-### 4.4 Penambahan Kolom pada `fiscal_years`
-```sql
-ALTER TABLE fiscal_years ADD COLUMN is_locked BOOLEAN NOT NULL DEFAULT FALSE AFTER is_default;
+return new class extends Migration
+{
+    public function up(): void
+    {
+        // Menambahkan 'super_admin' pada enum role
+        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('super_admin', 'admin', 'perencanaan', 'keuangan', 'divisi') NOT NULL DEFAULT 'divisi'");
+    }
+
+    public function down(): void
+    {
+        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'perencanaan', 'keuangan', 'divisi') NOT NULL DEFAULT 'divisi'");
+    }
+};
 ```
 
 ---
 
-## 5. Rencana Tahapan Implementasi (*Step-by-Step Execution Plan*)
+## 4. Rencana Tahapan Implementasi (*Step-by-Step Execution Plan*)
 
-Tahapan ini disusun secara runut untuk dieksekusi oleh junior programmer atau model AI tanpa menimbulkan *breaking changes* pada fitur yang sudah berjalan:
+Tahapan ini dirancang sangat ringkas, terarah, dan dapat diselesaikan dalam waktu cepat:
 
-### Tahap 1: Migrasi Database & Seeder Super Admin
-1. Buat migration `2026_10_01_000001_update_role_enum_on_users_table.php` untuk menambahkan `super_admin` pada enum `users.role`.
-2. Buat migration `2026_10_01_000002_create_activity_logs_table.php` sesuai skema 4.2.
-3. Buat migration `2026_10_01_000003_create_system_settings_table.php` sesuai skema 4.3.
-4. Buat migration `2026_10_01_000004_add_is_locked_to_fiscal_years_table.php` sesuai skema 4.4.
-5. Perbarui `database/seeders/UserSeeder.php` untuk menanam akun default Root Super Admin:
-   - Nama: `Pranata Komputer Utama (Super Admin SIMRS)`
-   - NIP: `198501012010011000`
-   - NIK: `1471010101850000`
-   - Email: `superadmin@rsjtampan.riau.go.id`
-   - Role: `super_admin`
-6. Buat `database/seeders/SystemSettingSeeder.php` untuk mengisi nilai awal kop surat dan nama pejabat RSJ Tampan.
-
-### Tahap 2: Eloquent Model, Observers & Helper Services
-1. Perbarui `app/Models/User.php`:
-   - Tambahkan method `isSuperAdmin(): bool` -> `$this->role === 'super_admin'`.
-   - Perbarui method `dashboardPath(): string` agar me-return `'/super-admin/dashboard'` untuk role `super_admin`.
-2. Buat model `app/Models/ActivityLog.php`:
-   - Relasi `belongsTo(User::class)` dan casts JSON untuk `payload_before`, `payload_after`.
-3. Buat model `app/Models/SystemSetting.php`:
-   - Method statis `SystemSetting::get(string $key, $default = null)` dengan caching sederhana.
-   - Method statis `SystemSetting::set(string $key, $value, ?int $userId = null)`.
-4. Buat service helper `app/Services/AuditLogService.php`:
-   - Method `log(string $module, string $action, string $description, ?array $before = null, ?array $after = null)`.
-   - Mengambil otomatis IP address, User Agent, `user_id`, dan `impersonator_id` dari sesi aktif.
-
-### Tahap 3: Kebijakan Keamanan (*Security Policy & Middleware*)
-1. Perbarui middleware `app/Http/Middleware/EnsureUserHasRole.php`:
-   - Berikan izin akses otomatis (*bypass pass-through*) jika role pengguna adalah `super_admin` pada rute yang bersifat monitoring *read-only*.
-2. Buat middleware `app/Http/Middleware/EnsureSuperAdmin.php`:
-   - Memastikan hanya role `super_admin` yang dapat mengakses rute prefix `/super-admin`.
-3. Perbarui `app/Http/Controllers/Admin/UserController.php`:
-   - Cegah role `admin` biasa mengedit atau menghapus akun dengan role `super_admin`.
-   - Validasi `role` hanya boleh memilih `admin,divisi,perencanaan,keuangan` jika pengedit adalah admin biasa; hanya `super_admin` yang boleh memberikan hak akses `admin` atau `super_admin`.
-4. Buat middleware `app/Http/Middleware/CheckFiscalYearLock.php`:
-   - Blokir request mutating (`POST`, `PUT`, `PATCH`, `DELETE`) pada modul usulan belanja dan RBA jika tahun anggaran berstatus `is_locked = true`, kecuali dilakukan melalui *Emergency Override* oleh Super Admin.
-
-### Tahap 4: Fitur Troubleshooting Sesi (*Impersonation System*)
-1. Buat `app/Http/Controllers/SuperAdmin/ImpersonateController.php`:
-   - `start(User $user)`: Simpan `session(['impersonator_id' => Auth::id()])`, lalu panggil `Auth::loginUsingId($user->id)`. Catat log aktivitas `"Memulai investigasi impersonasi akun: {$user->name}"`.
-   - `stop()`: Ambil `$impersonatorId = session('impersonator_id')`. Panggil `Auth::loginUsingId($impersonatorId)`, hapus session `impersonator_id`. Catat log aktivitas `"Mengakhiri investigasi impersonasi."`.
-2. Bagikan status impersonasi ke seluruh view Inertia melalui `app/Http/Middleware/HandleInertiaRequests.php`:
-   - Tambahkan `auth.impersonator` yang berisi data Super Admin asli jika `session()->has('impersonator_id')`.
-
-### Tahap 5: Backend Controllers & Routing Super Admin
-1. Daftarkan grup rute pada `routes/web.php` dengan prefix `/super-admin`:
-   - `/super-admin/dashboard` -> `SuperAdmin\DashboardController::class`
-   - `/super-admin/users` -> `SuperAdmin\UserController::class`
-   - `/super-admin/monitoring/rba` -> Monitoring RBA (read-only)
-   - `/super-admin/monitoring/requisitions` -> Monitoring Usulan Belanja
-   - `/super-admin/monitoring/finance` -> Monitoring Kas & Realisasi
-   - `/super-admin/audit-logs` -> `SuperAdmin\AuditLogController::class`
-   - `/super-admin/settings` -> `SuperAdmin\SettingController::class`
-   - `/super-admin/fiscal-years/{id}/toggle-lock` -> Lock/Unlock tahun anggaran
-   - `/super-admin/impersonate/{user}` & `/super-admin/impersonate-leave`
-2. Implementasikan `SuperAdmin\DashboardController`:
-   - Menghitung agregat data lintas divisi, total usulan, pagu aktif, serapan kas, dan 10 riwayat audit log terbaru.
-3. Implementasikan `SuperAdmin\AuditLogController`:
-   - Menampilkan tabel log aktivitas dengan filter tanggal, modul, jenis aksi, dan pencarian teks.
-4. Implementasikan `SuperAdmin\SettingController`:
-   - Menyimpan konfigurasi kop surat, logo, dan nama pejabat penandatangan dokumen.
-
-### Tahap 6: Frontend React / Inertia & UI Components
-1. Buat layout khusus `resources/js/Layouts/SuperAdminLayout.jsx`:
-   - Navigasi sidebar bernuansa *Root System Admin* (Dark Indigo / Slate theme) yang membedakannya dengan Admin biasa.
-   - Menu:
-     - 📊 *Dashboard Global*
-     - 👥 *Kelola Seluruh Akun (Root Access)*
-     - 📑 *Monitoring Perencanaan & RBA*
-     - 💰 *Monitoring Keuangan & Kas BLUD*
-     - 📜 *System Audit Logs*
-     - ⚙️ *Konfigurasi Master Dokumen & Pejabat*
-     - 🔒 *Kontrol Tutup Buku Anggaran*
-2. Buat komponen `resources/js/Components/ImpersonateBanner.jsx`:
-   - Komponen melayang di bagian paling atas layar (*fixed top z-50*) berwarna oranye/merah menyala yang tampil di seluruh layout jika `auth.impersonator` tidak kosong.
-   - Menyediakan tombol *"Keluar dari Mode Staf & Kembali ke Super Admin"*.
-3. Buat halaman:
-   - `resources/js/Pages/SuperAdmin/Dashboard.jsx` (Matriks gabungan eksekutif).
-   - `resources/js/Pages/SuperAdmin/Users/Index.jsx` (Daftar semua akun lengkap dengan tombol *Impersonate* dan proteksi akun root).
-   - `resources/js/Pages/SuperAdmin/AuditLogs/Index.jsx` (Tabel audit trail dengan inspect payload JSON).
-   - `resources/js/Pages/SuperAdmin/Settings/Index.jsx` (Form dinamis kop surat dan pejabat).
-
-### Tahap 7: Refactor Dokumen Cetak Menggunakan Dynamic Settings
-1. Perbarui controller yang menyuplai data cetak atau share via Inertia:
-   - Sertakan objek `settings` (hasil pembacaan `SystemSetting::all()`) ke halaman cetak.
-2. Perbarui seluruh berkas cetak di `resources/js/Pages/`:
-   - `Perencanaan/Rba/PrintRingkasan.jsx`
-   - `Perencanaan/Rba/PrintBelanja.jsx`
-   - `Perencanaan/Rba/PrintPendapatan.jsx`
-   - `Perencanaan/Rba/PrintRincianBelanja.jsx`
-   - `Keuangan/Reports/PrintReport.jsx`
-   - `Keuangan/Reports/PrintSurplusDeficit.jsx`
-   - `Divisi/Requisitions/PrintRequisition.jsx`
-3. Ganti teks statis nama Direktur dan Kepala Perencanaan dengan variabel dinamis:
-   ```jsx
-   // Contoh:
-   <span>{settings.director_name || 'drg. YUSRA, M.Si'}</span>
-   <span>NIP. {settings.director_nip || '19681012 199803 1 003'}</span>
+### Tahap 1: Migrasi Database & Seeder Default Super Admin
+1. Buat berkas migrasi database:
+   `database/migrations/2026_10_01_000001_add_super_admin_to_users_role_enum.php`
+2. Jalankan `php artisan migrate`.
+3. Perbarui `database/seeders/UserSeeder.php` dengan menambahkan akun default Super Admin:
+   ```php
+   [
+       'name' => 'Pranata Komputer Utama (Super Admin SIM-RS)',
+       'nip' => '198501012010011000',
+       'nik' => '1471010101850000',
+       'email' => 'superadmin@rsjtampan.riau.go.id',
+       'password' => $passwordHash,
+       'role' => 'super_admin',
+       'position' => 'Kepala Instalasi SIM-RS / IT Master',
+       'phone' => '081234567899',
+       'is_active' => true,
+       'division_id' => $tu?->id,
+       'unit_id' => $unitTu?->id,
+   ]
+   ```
+4. Perbarui `database/factories/UserFactory.php` agar dapat menerima state `super_admin`:
+   ```php
+   public function superAdmin(): static
+   {
+       return $this->state(fn (array $attributes) => [
+           'role' => 'super_admin',
+       ]);
+   }
    ```
 
-### Tahap 8: Verifikasi & Pembuatan Automated Tests
-1. Buat pengujian fitur di `tests/Feature/SuperAdmin/`:
-   - `SuperAdminAccessTest.php`: Memastikan role lain ditolak akses ke `/super-admin`.
-   - `RootUserProtectionTest.php`: Memastikan admin biasa tidak dapat menghapus atau mengubah super admin.
-   - `AuditLogRecordingTest.php`: Memastikan setiap mutasi data tercatat di `activity_logs`.
-   - `ImpersonationSecurityTest.php`: Menguji masuk dan keluarnya sesi impersonasi.
-   - `FiscalYearLockTest.php`: Memastikan tahun anggaran yang terkunci menolak input usulan baru.
-2. Jalankan test suite penuh (`php artisan test`) dan pastikan 100% PASS.
+### Tahap 2: Penyesuaian Middleware Otorisasi & Model User
+1. Perbarui `app/Http/Middleware/EnsureUserHasRole.php`:
+   - Tambahkan logika *pass-through* agar pengguna ber-role `super_admin` otomatis lolos otorisasi di semua rute:
+     ```php
+     public function handle(Request $request, Closure $next, ...$roles): Response
+     {
+         if (! $request->user()) {
+             abort(403, 'Akses ditolak.');
+         }
+
+         // Super Admin memiliki akses universal ke seluruh modul
+         if ($request->user()->role === 'super_admin') {
+             return $next($request);
+         }
+
+         if (! in_array($request->user()->role, $roles)) {
+             abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengakses halaman ini.');
+         }
+
+         return $next($request);
+     }
+     ```
+2. Perbarui `app/Models/User.php`:
+   - Tambahkan method pembantu:
+     ```php
+     public function isSuperAdmin(): bool
+     {
+         return $this->role === 'super_admin';
+     }
+     ```
+   - Perbarui method `dashboardPath()`:
+     ```php
+     public function dashboardPath(): string
+     {
+         return match ($this->role) {
+             'super_admin', 'admin' => '/admin/dashboard',
+             'perencanaan' => '/perencanaan/dashboard',
+             'keuangan' => '/keuangan/dashboard',
+             'divisi' => '/divisi/dashboard',
+             default => '/',
+         };
+     }
+     ```
+
+### Tahap 3: Proteksi Akun Root di `UserController.php`
+Perbarui `app/Http/Controllers/Admin/UserController.php` pada method `store()`, `update()`, `destroy()`, dan `toggleStatus()`:
+1. **Validasi Pembuatan User (`store`)**:
+   - Jika input `role === 'super_admin'`, pastikan `Auth::user()->isSuperAdmin()` bernilai `true`. Jika admin biasa mencoba membuat super_admin, lemparkan error validasi.
+2. **Proteksi Pengubahan User (`update`)**:
+   - Jika `$user->role === 'super_admin'`, pastikan pengedit adalah Super Admin.
+   - Admin biasa dilarang mengubah akun Super Admin:
+     ```php
+     if ($user->role === 'super_admin' && ! Auth::user()->isSuperAdmin()) {
+         abort(403, 'Anda tidak memiliki wewenang untuk mengubah data akun Super Admin.');
+     }
+     ```
+3. **Proteksi Penonaktifan & Penghapusan (`toggleStatus` & `destroy`)**:
+   - Cegah akun ber-role `super_admin` dinonaktifkan atau dihapus oleh siapapun kecuali sesama Super Admin (atau cegah akun Super Admin utama dihapus sama sekali demi keamanan sistem).
+
+### Tahap 4: Antarmuka Frontend (Pilihan Role & Navigasi Cepat)
+1. **Modal Form Pengguna (`resources/js/Pages/Admin/Users/Partials/UserFormModal.jsx`)**:
+   - Tambahkan tombol/kartu pilihan role **Super Admin** di bagian atas pilihan role:
+     - Nama: *"Super Admin"*
+     - Subtext: *"Root / Hak Akses Penuh"*
+     - Icon: Ikon Shield / Key / Master
+   - Kondisional tampilan: Kartu pilihan *"Super Admin"* **hanya ditampilkan** jika `auth.user.role === 'super_admin'`.
+2. **Tabel Pengguna (`resources/js/Pages/Admin/Users/Index.jsx`)**:
+   - Tampilkan badge khusus untuk Super Admin (misal: badge ungu/indigo dengan teks `"Super Admin (Root)"`).
+   - Sembunyikan tombol Edit dan Hapus pada baris Super Admin jika `auth.user.role !== 'super_admin'`.
+3. **Bilah Navigasi / Header Admin (`resources/js/Layouts/AdminLayout.jsx`)**:
+   - Jika yang login adalah `super_admin`, tampilkan dropdown menu pintas *"Jelajahi Modul"* di header atas atau sidebar:
+     - 🔗 *Buka Modul Perencanaan* (`/perencanaan/dashboard`)
+     - 🔗 *Buka Modul Keuangan* (`/keuangan/dashboard`)
+     - 🔗 *Buka Modul Unit Kerja* (`/divisi/dashboard`)
+     - 🔗 *Kembali ke Modul Admin* (`/admin/dashboard`)
+   - Ini memungkinkan Super Admin menginspeksi seluruh modul yang sudah ada secara langsung tanpa perlu rekayasa layout baru.
+
+### Tahap 5: Pengujian Otomatis (*Automated Testing*)
+1. Tambahkan test case pada `tests/Feature/AdminUserControllerTest.php` atau buat `tests/Feature/SuperAdminAccessTest.php`:
+   - `test_super_admin_can_access_all_modules()`: Memastikan akun super admin berhasil mengakses `/admin/dashboard`, `/perencanaan/dashboard`, `/keuangan/dashboard`, dan `/divisi/dashboard` (status 200 OK).
+   - `test_regular_admin_cannot_modify_super_admin()`: Memastikan admin biasa mendapat respon 403 saat mencoba mengedit atau menonaktifkan super admin.
+   - `test_regular_admin_cannot_create_super_admin()`: Memastikan admin biasa tidak bisa membuat akun baru dengan role super admin.
+   - `test_super_admin_can_login_using_nip_or_nik()`: Memastikan super admin dapat login menggunakan NIP atau NIK.
+2. Jalankan seluruh test suite menggunakan `php artisan test` dan pastikan **100% PASS**.
 
 ---
 
-## 6. Ringkasan Berkas yang Akan Dibuat & Dimodifikasi (*File Checklist*)
+## 5. Ringkasan Berkas yang Dibuat & Dimodifikasi (*File Checklist*)
 
 | No | Lokasi Berkas | Status | Deskripsi Pekerjaan |
 |---|---|---|---|
-| 1 | `database/migrations/xxxx_update_role_enum_on_users_table.php` | **Baru** | Menambahkan `'super_admin'` pada enum role |
-| 2 | `database/migrations/xxxx_create_activity_logs_table.php` | **Baru** | Membuat tabel log audit aktivitas |
-| 3 | `database/migrations/xxxx_create_system_settings_table.php` | **Baru** | Membuat tabel konfigurasi kop & pejabat |
-| 4 | `database/migrations/xxxx_add_is_locked_to_fiscal_years_table.php` | **Baru** | Menambahkan kolom kunci tutup buku |
-| 5 | `app/Models/User.php` | **Modifikasi** | Menambahkan method `isSuperAdmin()` & update `dashboardPath()` |
-| 6 | `app/Models/ActivityLog.php` | **Baru** | Eloquent model audit log |
-| 7 | `app/Models/SystemSetting.php` | **Baru** | Eloquent model setting sistem dengan helper get/set |
-| 8 | `app/Services/AuditLogService.php` | **Baru** | Helper service pencatatan audit log terpusat |
-| 9 | `app/Http/Middleware/EnsureSuperAdmin.php` | **Baru** | Proteksi akses rute khusus super admin |
-| 10 | `app/Http/Middleware/CheckFiscalYearLock.php` | **Baru** | Proteksi manipulasi data tahun yang ditutup |
-| 11 | `app/Http/Middleware/HandleInertiaRequests.php` | **Modifikasi** | Share data `impersonator` & `settings` ke React |
-| 12 | `app/Http/Controllers/SuperAdmin/DashboardController.php` | **Baru** | Controller dashboard eksekutif global |
-| 13 | `app/Http/Controllers/SuperAdmin/UserController.php` | **Baru** | Controller manajemen seluruh akun (root user) |
-| 14 | `app/Http/Controllers/SuperAdmin/AuditLogController.php` | **Baru** | Controller pemantauan log aktivitas sistem |
-| 15 | `app/Http/Controllers/SuperAdmin/SettingController.php` | **Baru** | Controller pengaturan kop surat & penandatangan |
-| 16 | `app/Http/Controllers/SuperAdmin/ImpersonateController.php` | **Baru** | Controller mulai dan hentikan impersonasi |
-| 17 | `app/Http/Controllers/Admin/UserController.php` | **Modifikasi** | Proteksi agar admin biasa dilarang sentuh super admin |
-| 18 | `routes/web.php` | **Modifikasi** | Menambahkan rute prefix `/super-admin` |
-| 19 | `resources/js/Layouts/SuperAdminLayout.jsx` | **Baru** | Layout antarmuka khusus Super Admin |
-| 20 | `resources/js/Components/ImpersonateBanner.jsx` | **Baru** | Banner indikator mode investigasi staf |
-| 21 | `resources/js/Pages/SuperAdmin/Dashboard.jsx` | **Baru** | Antarmuka dashboard gabungan 3-in-1 |
-| 22 | `resources/js/Pages/SuperAdmin/AuditLogs/Index.jsx` | **Baru** | Antarmuka riwayat log audit sistem |
-| 23 | `resources/js/Pages/SuperAdmin/Settings/Index.jsx` | **Baru** | Form pengaturan nama pejabat & kop surat |
-| 24 | `resources/js/Pages/**/Print*.jsx` | **Modifikasi** | Refactor dokumen cetak membaca data dinamis |
-| 25 | `database/seeders/UserSeeder.php` | **Modifikasi** | Penanaman data akun default Super Admin |
-| 26 | `database/seeders/SystemSettingSeeder.php` | **Baru** | Penanaman data default kop surat & pejabat RSJ |
-| 27 | `tests/Feature/SuperAdmin/*.php` | **Baru** | Unit/Feature automated tests |
+| 1 | `database/migrations/xxxx_add_super_admin_to_users_role_enum.php` | **Baru** | Menambahkan `'super_admin'` pada enum role kolom `users.role` |
+| 2 | `app/Models/User.php` | **Modifikasi** | Menambahkan helper `isSuperAdmin()` & update `dashboardPath()` |
+| 3 | `app/Http/Middleware/EnsureUserHasRole.php` | **Modifikasi** | Menambahkan bypass akses universal untuk role `super_admin` |
+| 4 | `app/Http/Controllers/Admin/UserController.php` | **Modifikasi** | Proteksi backend: admin biasa dilarang memanipulasi super admin |
+| 5 | `database/seeders/UserSeeder.php` | **Modifikasi** | Menambahkan akun default Super Admin SIM-RS |
+| 6 | `database/factories/UserFactory.php` | **Modifikasi** | Menambahkan state helper `superAdmin()` |
+| 7 | `resources/js/Pages/Admin/Users/Partials/UserFormModal.jsx` | **Modifikasi** | Opsi pilihan role Super Admin (khusus bagi super admin) |
+| 8 | `resources/js/Pages/Admin/Users/Index.jsx` | **Modifikasi** | Badge visual Super Admin & proteksi tombol aksi di tabel |
+| 9 | `resources/js/Layouts/AdminLayout.jsx` | **Modifikasi** | Menu navigasi pintas lintas modul untuk Super Admin |
+| 10 | `tests/Feature/SuperAdminAccessTest.php` | **Baru** | Unit/Feature test pengujian hak akses & proteksi root |
 
 ---
 
-## 7. Kriteria Keberhasilan (*Definition of Done*)
+## 6. Kriteria Keberhasilan (*Definition of Done*)
 
-Fitur ini dinyatakan selesai dan siap dirilis ke *production* apabila memenuhi seluruh kriteria berikut:
-1. [ ] Akun ber-role `super_admin` dapat login dan otomatis diarahkan ke `/super-admin/dashboard`.
-2. [ ] Role `admin` biasa tidak dapat membuat, mengedit, menonaktifkan, atau menghapus akun `super_admin`.
-3. [ ] Super Admin dapat memantau usulan belanja, RBA, dan laporan keuangan tanpa memicu error HTTP 403.
-4. [ ] Fitur *Impersonate* berjalan lancar: Super Admin dapat masuk ke tampilan user target, banner indikator troubleshooting tampil jelas, dan tombol keluar impersonasi berfungsi sempurna memulihkan sesi Super Admin.
-5. [ ] Seluruh aktivitas penting (login, edit user, impersonate, ubah setting, lock anggaran) terekam akurat di tabel `activity_logs`.
-6. [ ] Perubahan nama Direktur atau NIP di menu Pengaturan Dokumen otomatis tercermin di seluruh cetakan dokumen (RBA, LRA, Nota Dinas) tanpa mengubah kode program.
-7. [ ] Tahun anggaran yang dikunci (*is_locked = true*) menolak mutasi data baru dari staf ruangan dan perencana.
-8. [ ] Seluruh unit & feature automated tests (`php artisan test`) lulus 100% tanpa ada regresi pada fitur yang sudah ada.
+Fitur ini dinyatakan selesai dan memenuhi standar apabila:
+1. [ ] Nilai `'super_admin'` berhasil terdaftar pada kolom enum `users.role` di database tanpa merusak data pengguna lama.
+2. [ ] Akun Super Admin dapat login menggunakan NIP/NIK dan diarahkan ke Dashboard.
+3. [ ] Super Admin dapat membuka seluruh modul operasional (`/admin`, `/perencanaan`, `/keuangan`, `/divisi`) secara mulus tanpa terhalang HTTP 403.
+4. [ ] Admin biasa **TIDAK DAPAT** mengedit, menonaktifkan, atau menghapus akun Super Admin.
+5. [ ] Admin biasa **TIDAK DAPAT** membuat pengguna baru dengan role Super Admin.
+6. [ ] **TIDAK ADA tabel baru yang ditambahkan ke database** (arsitektur tetap ramping dan bersih).
+7. [ ] Dokumen cetak yang sudah berjalan di modul Perencanaan, Keuangan, dan Divisi tetap berfungsi normal tanpa regresi.
+8. [ ] Seluruh pengujian otomatis (`php artisan test`) menghasilkan status **100% PASS**.
