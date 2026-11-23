@@ -146,9 +146,6 @@ export default function Login({ status, canResetPassword, captchaSvg, fiscalYear
                                 </svg>
                             </div>
                         </div>
-                        <p className="mt-1 text-[11px] text-slate-500">
-                            PNS/PPPK gunakan 18 digit NIP. Pegawai Non-PNS gunakan 16 digit NIK KTP.
-                        </p>
                         <InputError message={errors.email} className="mt-1.5" />
                     </div>
 
