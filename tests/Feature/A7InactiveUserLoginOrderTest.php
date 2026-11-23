@@ -15,12 +15,13 @@ class A7InactiveUserLoginOrderTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'nonaktif@rsj.com',
+            'nip' => '199001012020011099',
             'password' => Hash::make('Rahasia2026Aman'),
             'is_active' => false,
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'nonaktif@rsj.com',
+            'email' => '199001012020011099',
             'password' => 'Rahasia2026Aman',
         ]);
 
@@ -32,12 +33,13 @@ class A7InactiveUserLoginOrderTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'nonaktif@rsj.com',
+            'nip' => '199001012020011099',
             'password' => Hash::make('Rahasia2026Aman'),
             'is_active' => false,
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'nonaktif@rsj.com',
+            'email' => '199001012020011099',
             'password' => 'SalahPassword123',
         ]);
 

@@ -47,6 +47,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'nip' => ['nullable', 'string', 'max:30', 'unique:users,nip'],
+            'nik' => ['nullable', 'string', 'max:20', 'unique:users,nik'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'position' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
@@ -66,6 +67,7 @@ class UserController extends Controller
         ], [
             'name.required' => 'Nama pengguna wajib diisi.',
             'nip.unique' => 'NIP ini sudah terdaftar untuk pegawai lain.',
+            'nik.unique' => 'NIK ini sudah terdaftar untuk pegawai lain.',
             'email.required' => 'Alamat email wajib diisi.',
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email ini sudah terdaftar di sistem.',
@@ -100,6 +102,7 @@ class UserController extends Controller
         User::create([
             'name' => $validated['name'],
             'nip' => $validated['nip'] ?? null,
+            'nik' => $validated['nik'] ?? null,
             'email' => $validated['email'],
             'position' => $validated['position'] ?? null,
             'phone' => $validated['phone'] ?? null,
@@ -124,6 +127,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'nip' => ['nullable', 'string', 'max:30', Rule::unique('users')->ignore($user->id)],
+            'nik' => ['nullable', 'string', 'max:20', Rule::unique('users')->ignore($user->id)],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'position' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
@@ -143,6 +147,7 @@ class UserController extends Controller
         ], [
             'name.required' => 'Nama pengguna wajib diisi.',
             'nip.unique' => 'NIP ini sudah terdaftar untuk pegawai lain.',
+            'nik.unique' => 'NIK ini sudah terdaftar untuk pegawai lain.',
             'email.required' => 'Alamat email wajib diisi.',
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email ini sudah digunakan oleh akun lain.',
@@ -179,10 +184,11 @@ class UserController extends Controller
 
         $userData = [
             'name' => $validated['name'],
-            'nip' => $validated['nip'] ?? null,
+            'nip' => $request->has('nip') ? ($validated['nip'] ?? null) : $user->nip,
+            'nik' => $request->has('nik') ? ($validated['nik'] ?? null) : $user->nik,
             'email' => $validated['email'],
-            'position' => $validated['position'] ?? null,
-            'phone' => $validated['phone'] ?? null,
+            'position' => $request->has('position') ? ($validated['position'] ?? null) : $user->position,
+            'phone' => $request->has('phone') ? ($validated['phone'] ?? null) : $user->phone,
             'is_active' => $request->has('is_active') ? (bool) $request->is_active : $user->is_active,
             'role' => $validated['role'],
             'division_id' => $validated['role'] === 'divisi' ? $validated['division_id'] : ($validated['division_id'] ?? null),
