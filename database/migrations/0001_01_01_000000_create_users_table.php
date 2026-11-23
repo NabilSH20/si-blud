@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('password');
             $table->foreignId('division_id')->nullable()->constrained('divisions')->nullOnDelete();
             $table->foreignId('unit_id')->nullable()->constrained('units')->nullOnDelete();
-            $table->enum('role', ['divisi', 'perencanaan', 'keuangan', 'admin'])->default('divisi');
+            $table->enum('role', ['super_admin', 'admin', 'perencanaan', 'keuangan', 'divisi'])->default('divisi');
             $table->string('position')->nullable();
             $table->string('phone', 30)->nullable();
             $table->boolean('is_active')->default(true);

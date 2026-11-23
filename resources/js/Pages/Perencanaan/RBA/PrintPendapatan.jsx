@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 
 const formatRupiah = (value) => {
     const val = Number(value || 0);
@@ -10,6 +10,8 @@ const formatRupiah = (value) => {
 };
 
 export default function PrintPendapatan({ shift, items = [] }) {
+    const { system_settings = {} } = usePage().props;
+
     const handlePrint = () => {
         window.print();
     };
@@ -64,7 +66,7 @@ export default function PrintPendapatan({ shift, items = [] }) {
                             PEMERINTAH PROVINSI RIAU
                         </h2>
                         <h2 className="text-xs font-bold tracking-wider uppercase text-slate-800">
-                            BADAN LAYANAN UMUM DAERAH RS JIWA TAMPAN
+                            {system_settings.hospital_name || 'BADAN LAYANAN UMUM DAERAH RS JIWA TAMPAN'}
                         </h2>
                         <h1 className="text-sm font-black tracking-wide uppercase text-black mt-0.5">
                             {shift?.doc_title || `RENCANA BISNIS DAN ANGGARAN ${shift?.shift_name?.toUpperCase()}`}
@@ -151,10 +153,10 @@ export default function PrintPendapatan({ shift, items = [] }) {
                             </p>
                             <div className="h-24" />
                             <p className="font-bold underline text-black">
-                                dr. Prima Wulandari, M.K.M
+                                {system_settings.director_name || 'dr. Prima Wulandari, M.K.M'}
                             </p>
                             <p className="text-[11px] text-slate-600">
-                                NIP. 19810606 201001 2 041
+                                NIP. {system_settings.director_nip || '19810606 201001 2 041'}
                             </p>
                         </div>
                     </div>

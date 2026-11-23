@@ -16,7 +16,16 @@ class EnsureUserHasRole
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        if (! $request->user() || ! in_array($request->user()->role, $roles)) {
+        if (! $request->user()) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengakses halaman ini.');
+        }
+
+        // Super Admin memiliki bypass akses universal ke seluruh modul sistem
+        if ($request->user()->isSuperAdmin()) {
+            return $next($request);
+        }
+
+        if (! in_array($request->user()->role, $roles)) {
             abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengakses halaman ini.');
         }
 

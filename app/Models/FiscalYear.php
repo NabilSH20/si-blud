@@ -15,6 +15,7 @@ class FiscalYear extends Model
         'name',
         'is_active',
         'is_default',
+        'is_locked',
         'description',
     ];
 
@@ -22,6 +23,7 @@ class FiscalYear extends Model
         'year' => 'integer',
         'is_active' => 'boolean',
         'is_default' => 'boolean',
+        'is_locked' => 'boolean',
     ];
 
     /**

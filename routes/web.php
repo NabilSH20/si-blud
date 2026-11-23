@@ -22,14 +22,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [RootController::class, 'index']);
 
-Route::prefix('divisi')->middleware(['auth', 'role:divisi'])->group(function () {
+Route::prefix('divisi')->middleware(['auth', 'role:divisi', 'fiscal_year_lock'])->group(function () {
     Route::get('/dashboard', [DivisiDashboardController::class, 'index'])
         ->name('divisi.dashboard');
 
     Route::resource('requisitions', DivisiRequisitionController::class)->except(['create', 'edit']);
 });
 
-Route::prefix('perencanaan')->middleware(['auth', 'role:perencanaan'])->group(function () {
+Route::prefix('perencanaan')->middleware(['auth', 'role:perencanaan', 'fiscal_year_lock'])->group(function () {
     Route::get('/dashboard', [PerencanaanDashboardController::class, 'index'])
         ->name('perencanaan.dashboard');
 
@@ -73,7 +73,7 @@ Route::prefix('perencanaan')->middleware(['auth', 'role:perencanaan,keuangan,adm
         ->name('perencanaan.rba.print-rincian-belanja');
 });
 
-Route::prefix('keuangan')->middleware(['auth', 'role:keuangan'])->group(function () {
+Route::prefix('keuangan')->middleware(['auth', 'role:keuangan', 'fiscal_year_lock'])->group(function () {
     Route::get('/dashboard', [KeuanganDashboardController::class, 'index'])
         ->name('keuangan.dashboard');
 
@@ -94,7 +94,7 @@ Route::prefix('keuangan')->middleware(['auth', 'role:keuangan,perencanaan,admin'
     Route::get('/reports/surplus-deficit/print', [KeuanganReportController::class, 'printSurplusDeficit'])->name('reports.surplus-deficit.print');
 });
 
-Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+Route::prefix('admin')->middleware(['auth', 'role:admin,super_admin'])->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])
         ->name('admin.dashboard');
 
@@ -104,11 +104,44 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
         ->name('fiscal-years.toggle-status');
     Route::patch('fiscal-years/{fiscal_year}/set-default', [FiscalYearController::class, 'setDefault'])
         ->name('fiscal-years.set-default');
+    Route::patch('fiscal-years/{fiscal_year}/toggle-lock', [FiscalYearController::class, 'toggleLock'])
+        ->name('fiscal-years.toggle-lock');
     Route::resource('fiscal-years', FiscalYearController::class)->except(['create', 'show', 'edit']);
     Route::patch('users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])
         ->name('users.toggle-status');
     Route::resource('users', AdminUserController::class)->except(['show', 'create', 'edit']);
 });
+
+Route::prefix('super-admin')->middleware(['auth', 'role:super_admin'])->name('superadmin.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\SuperAdmin\DashboardController::class, 'index'])->name('dashboard');
+
+    // Root User Management
+    Route::get('/users', [\App\Http\Controllers\SuperAdmin\UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [\App\Http\Controllers\SuperAdmin\UserController::class, 'store'])->name('users.store');
+    Route::put('/users/{user}', [\App\Http\Controllers\SuperAdmin\UserController::class, 'update'])->name('users.update');
+    Route::patch('/users/{user}/toggle-status', [\App\Http\Controllers\SuperAdmin\UserController::class, 'toggleStatus'])->name('users.toggle-status');
+    Route::post('/users/{user}/reset-password', [\App\Http\Controllers\SuperAdmin\UserController::class, 'resetPassword'])->name('users.reset-password');
+    Route::delete('/users/{user}', [\App\Http\Controllers\SuperAdmin\UserController::class, 'destroy'])->name('users.destroy');
+
+    // Impersonate
+    Route::post('/impersonate/{user}', [\App\Http\Controllers\SuperAdmin\ImpersonateController::class, 'start'])->name('impersonate.start');
+
+    // Audit Logs
+    Route::get('/audit-logs', [\App\Http\Controllers\SuperAdmin\AuditLogController::class, 'index'])->name('audit-logs.index');
+
+    // System Settings
+    Route::get('/settings', [\App\Http\Controllers\SuperAdmin\SettingController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [\App\Http\Controllers\SuperAdmin\SettingController::class, 'update'])->name('settings.update');
+
+    // Global Monitoring
+    Route::get('/monitoring/rba', [\App\Http\Controllers\SuperAdmin\MonitoringController::class, 'rba'])->name('monitoring.rba');
+    Route::get('/monitoring/requisitions', [\App\Http\Controllers\SuperAdmin\MonitoringController::class, 'requisitions'])->name('monitoring.requisitions');
+    Route::get('/monitoring/finance', [\App\Http\Controllers\SuperAdmin\MonitoringController::class, 'finance'])->name('monitoring.finance');
+});
+
+Route::post('/impersonate-leave', [\App\Http\Controllers\SuperAdmin\ImpersonateController::class, 'stop'])
+    ->name('superadmin.impersonate.leave')
+    ->middleware('auth');
 
 Route::middleware('auth')->group(function () {
     Route::get('/requisitions/{id}/print', [DivisiRequisitionController::class, 'print'])->name('requisitions.print');

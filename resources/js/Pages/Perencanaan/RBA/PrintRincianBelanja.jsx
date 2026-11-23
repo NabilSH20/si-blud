@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 
 const formatRupiah = (value) => {
     const val = Number(value || 0);
@@ -16,6 +16,8 @@ export default function PrintRincianBelanja({
     accounts_with_proposed = [],
     selected_year = 2026,
 }) {
+    const { system_settings = {} } = usePage().props;
+
     const handlePrint = () => {
         window.print();
     };
@@ -128,10 +130,10 @@ export default function PrintRincianBelanja({
                             Pemerintah Provinsi Riau
                         </h3>
                         <h2 className="text-base font-black uppercase tracking-wide">
-                            Rumah Sakit Jiwa Tampan
+                            {system_settings.hospital_name || 'Rumah Sakit Jiwa Tampan'}
                         </h2>
                         <p className="text-[10px] text-slate-600">
-                            Jl. H.R. Soebrantas Km. 12,5 Pekanbaru - Riau | Telp: (0761) 63240
+                            {system_settings.hospital_address || 'Jl. H.R. Soebrantas Km. 12,5 Pekanbaru - Riau'} | Telp: {system_settings.hospital_phone || '(0761) 63240'}
                         </p>
                         <div className="mt-2 pt-1 border-t border-slate-300">
                             <h1 className="text-sm font-black uppercase tracking-tight text-slate-900">
@@ -393,8 +395,8 @@ export default function PrintRincianBelanja({
                             <p className="font-medium">Disetujui</p>
                             <p className="font-medium">Direktur Selaku Pimpinan BLUD RS Jiwa Tampan</p>
                             <div className="h-20" />
-                            <p className="font-bold underline">dr. Prima Wulandari, M.K.M</p>
-                            <p className="text-[11px] text-slate-600">NIP. 19810606 201001 2 041</p>
+                            <p className="font-bold underline">{system_settings.director_name || 'dr. Prima Wulandari, M.K.M'}</p>
+                            <p className="text-[11px] text-slate-600">NIP. {system_settings.director_nip || '19810606 201001 2 041'}</p>
                         </div>
 
                         {/* Kepala Bagian Perencanaan */}
@@ -402,8 +404,8 @@ export default function PrintRincianBelanja({
                             <p className="font-medium">Diperiksa Oleh :</p>
                             <p className="font-medium">Kepala Bagian Perencanaan</p>
                             <div className="h-20" />
-                            <p className="font-bold underline">Hawari Dinal, S.Sos.M.Si</p>
-                            <p className="text-[11px] text-slate-600">NIP. 19700211 199703 1 005</p>
+                            <p className="font-bold underline">{system_settings.planning_head_name || 'Hawari Dinal, S.Sos.M.Si'}</p>
+                            <p className="text-[11px] text-slate-600">NIP. {system_settings.planning_head_nip || '19700211 199703 1 005'}</p>
                         </div>
                     </div>
                 </div>

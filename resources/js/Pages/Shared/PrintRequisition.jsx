@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import React, { useState } from 'react';
 
 const formatNumber = (value) =>
@@ -26,6 +26,7 @@ const formatTanggal = (dateString) => {
 };
 
 export default function PrintRequisition({ requisition }) {
+    const { system_settings = {} } = usePage().props;
     const [activeFormat, setActiveFormat] = useState('resmi'); // 'resmi' (PDF Lab RS) | 'notadinas'
     const [showSignerConfig, setShowSignerConfig] = useState(false);
 
@@ -660,10 +661,10 @@ export default function PrintRequisition({ requisition }) {
                                 PEMERINTAH PROVINSI RIAU
                             </h2>
                             <h1 className="text-xl sm:text-2xl font-black uppercase text-black tracking-tight leading-tight mt-0.5">
-                                RUMAH SAKIT JIWA TAMPAN
+                                {system_settings.hospital_name || 'RUMAH SAKIT JIWA TAMPAN'}
                             </h1>
                             <p className="text-xs text-black font-medium mt-0.5">
-                                Jl. H.R. Soebrantas Km. 12,5 Pekanbaru - Riau | Telp: (0761) 63240
+                                {system_settings.hospital_address || 'Jl. H.R. Soebrantas Km. 12,5 Pekanbaru - Riau'} | Telp: {system_settings.hospital_phone || '(0761) 63240'}
                             </p>
                             <div className="mt-2 pt-1 border-t border-black">
                                 <h3 className="text-base font-black tracking-wider uppercase">

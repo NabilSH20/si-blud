@@ -1,5 +1,6 @@
 import ToastListener from '@/Components/ToastListener';
 import ProfileSettingsModal from '@/Components/ProfileSettingsModal';
+import ImpersonateBanner from '@/Components/ImpersonateBanner';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
@@ -201,6 +202,7 @@ export default function AdminLayout({ children }) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-100/90 via-slate-50 to-emerald-50/50 bg-fixed font-sans text-slate-800 antialiased">
+            <ImpersonateBanner />
             <ToastListener />
 
             {/* Mobile backdrop */}

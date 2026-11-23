@@ -19,6 +19,7 @@ class ProductionMasterSeeder extends Seeder
             UnitSeeder::class,
             RbaAccountSeeder::class,
             ItemSeeder::class,
+            SystemSettingSeeder::class,
         ]);
     }
 }

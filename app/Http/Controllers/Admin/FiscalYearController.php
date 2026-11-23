@@ -53,7 +53,7 @@ class FiscalYearController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
+        abort_unless(in_array(Auth::user()?->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
 
         $validated = $request->validate([
             'year' => ['required', 'integer', 'digits:4', 'min:2020', 'max:2050', 'unique:fiscal_years,year'],
@@ -93,7 +93,7 @@ class FiscalYearController extends Controller
      */
     public function update(Request $request, FiscalYear $fiscalYear): RedirectResponse
     {
-        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
+        abort_unless(in_array(Auth::user()?->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -128,7 +128,7 @@ class FiscalYearController extends Controller
      */
     public function toggleStatus(FiscalYear $fiscalYear): RedirectResponse
     {
-        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
+        abort_unless(in_array(Auth::user()?->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
 
         if ($fiscalYear->is_default && $fiscalYear->is_active) {
             return redirect()->route('fiscal-years.index')
@@ -149,7 +149,7 @@ class FiscalYearController extends Controller
      */
     public function setDefault(FiscalYear $fiscalYear): RedirectResponse
     {
-        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
+        abort_unless(in_array(Auth::user()?->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
 
         FiscalYear::query()->update(['is_default' => false]);
 
@@ -166,7 +166,7 @@ class FiscalYearController extends Controller
      */
     public function destroy(FiscalYear $fiscalYear): RedirectResponse
     {
-        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
+        abort_unless(in_array(Auth::user()?->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
 
         if ($fiscalYear->is_default) {
             return redirect()->route('fiscal-years.index')
@@ -191,5 +191,27 @@ class FiscalYearController extends Controller
 
         return redirect()->route('fiscal-years.index')
             ->with('success', "Tahun Anggaran {$yr} berhasil dihapus.");
+    }
+
+    /**
+     * Toggle lock/unlock fiscal year (Tutup Buku).
+     */
+    public function toggleLock(FiscalYear $fiscalYear): RedirectResponse
+    {
+        abort_unless(in_array(Auth::user()?->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
+
+        $fiscalYear->update([
+            'is_locked' => ! $fiscalYear->is_locked,
+        ]);
+
+        $status = $fiscalYear->is_locked ? 'DITUTUP (Terkunci)' : 'DIBUKA KEMBALI';
+
+        \App\Services\AuditLogService::log(
+            'FISCAL_YEAR',
+            $fiscalYear->is_locked ? 'LOCK_YEAR' : 'UNLOCK_YEAR',
+            "Mengubah status tahun anggaran {$fiscalYear->year} menjadi {$status}"
+        );
+
+        return back()->with('success', "Tahun Anggaran {$fiscalYear->year} berhasil {$status}.");
     }
 }

@@ -1,0 +1,298 @@
+import SuperAdminLayout from '@/Layouts/SuperAdminLayout';
+import { Head, useForm } from '@inertiajs/react';
+import {
+    Building2,
+    CheckCircle2,
+    FileText,
+    Save,
+    Settings,
+    Shield,
+    UserCheck,
+} from 'lucide-react';
+
+export default function Index({ settings = [], grouped_settings = {}, success }) {
+    // Flatten settings array to key-value object for form initial state
+    const initialValues = {};
+    settings.forEach((s) => {
+        initialValues[s.key_name] = s.value || '';
+    });
+
+    const { data, setData, post, processing } = useForm({
+        settings: initialValues,
+    });
+
+    const handleFieldChange = (key, val) => {
+        setData('settings', {
+            ...data.settings,
+            [key]: val,
+        });
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        post(route('superadmin.settings.update'));
+    };
+
+    return (
+        <SuperAdminLayout>
+            <Head title="Pengaturan Dokumen Cetak - Super Admin SIM-RS" />
+
+            {/* Header */}
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <div className="flex items-center gap-2">
+                        <div className="rounded-xl bg-indigo-600 p-2 text-white">
+                            <Settings className="h-5 w-5" />
+                        </div>
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                            Konfigurasi Global & Dokumen Cetak Dinamis
+                        </h1>
+                    </div>
+                    <p className="mt-1 text-xs sm:text-sm text-slate-500 font-medium">
+                        Atur nama Direktur, NIP pejabat penandatangan RBA/LRA/Surplus-Defisit, dan kop surat resmi rumah sakit tanpa perlu mengubah kodingan.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={processing}
+                    className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-5 py-2.5 text-xs font-black shadow-xs transition cursor-pointer self-start sm:self-auto"
+                >
+                    <Save className="h-4 w-4" />
+                    <span>{processing ? 'Menyimpan...' : 'Simpan Semua Pengaturan'}</span>
+                </button>
+            </div>
+
+            {/* Alerts */}
+            {success && (
+                <div className="mb-6 flex items-center gap-3 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-4 text-xs font-bold text-emerald-900 shadow-xs">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+                    <span>{success}</span>
+                </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Section 1: Kop Surat & Identitas RS */}
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+                    <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 mb-5">
+                        <div className="rounded-xl bg-blue-100 p-2 text-blue-700">
+                            <Building2 className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-black text-slate-900">
+                                1. Identitas Rumah Sakit & Kop Surat Cetak
+                            </h2>
+                            <p className="text-[11px] text-slate-400 font-medium">
+                                Data ini dicetak pada bagian kepala (header kop surat) seluruh laporan dan nota dinas.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div className="md:col-span-2">
+                            <label className="block font-bold text-slate-700 mb-1">Nama Instansi / Rumah Sakit</label>
+                            <input
+                                type="text"
+                                value={data.settings.hospital_name || ''}
+                                onChange={(e) => handleFieldChange('hospital_name', e.target.value)}
+                                className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-900 focus:border-indigo-500"
+                                placeholder="Contoh: Rumah Sakit Jiwa Tampan Provinsi Riau"
+                            />
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block font-bold text-slate-700 mb-1">Alamat Lengkap Instansi</label>
+                            <textarea
+                                rows={2}
+                                value={data.settings.hospital_address || ''}
+                                onChange={(e) => handleFieldChange('hospital_address', e.target.value)}
+                                className="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 focus:border-indigo-500"
+                                placeholder="Contoh: Jl. H.R. Soebrantas Km. 12.5, Panam, Pekanbaru, Riau"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block font-bold text-slate-700 mb-1">Nomor Telepon / Fax</label>
+                            <input
+                                type="text"
+                                value={data.settings.hospital_phone || ''}
+                                onChange={(e) => handleFieldChange('hospital_phone', e.target.value)}
+                                className="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 focus:border-indigo-500"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block font-bold text-slate-700 mb-1">Email Resmi</label>
+                            <input
+                                type="email"
+                                value={data.settings.hospital_email || ''}
+                                onChange={(e) => handleFieldChange('hospital_email', e.target.value)}
+                                className="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 focus:border-indigo-500"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block font-bold text-slate-700 mb-1">Website Resmi</label>
+                            <input
+                                type="text"
+                                value={data.settings.hospital_website || ''}
+                                onChange={(e) => handleFieldChange('hospital_website', e.target.value)}
+                                className="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 focus:border-indigo-500"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block font-bold text-slate-700 mb-1">Kota Penetapan Dokumen Cetak</label>
+                            <input
+                                type="text"
+                                value={data.settings.city_name || ''}
+                                onChange={(e) => handleFieldChange('city_name', e.target.value)}
+                                className="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 focus:border-indigo-500"
+                                placeholder="Contoh: Pekanbaru"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section 2: Pejabat Penandatangan Resmi */}
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+                    <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 mb-5">
+                        <div className="rounded-xl bg-emerald-100 p-2 text-emerald-700">
+                            <UserCheck className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-black text-slate-900">
+                                2. Pejabat Penandatangan Resmi (Official Signers)
+                            </h2>
+                            <p className="text-[11px] text-slate-400 font-medium">
+                                Nama dan NIP yang otomatis tercetak pada kolom tanda tangan dokumen RBA, LRA, Surplus-Defisit, dan SP2D.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6 text-xs">
+                        {/* 1. Direktur */}
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <span className="font-black text-indigo-950 uppercase tracking-wider text-[11px] block mb-3">
+                                A. Direktur Rumah Sakit Jiwa Tampan
+                            </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">Nama Lengkap & Gelar</label>
+                                    <input
+                                        type="text"
+                                        value={data.settings.director_name || ''}
+                                        onChange={(e) => handleFieldChange('director_name', e.target.value)}
+                                        className="w-full rounded-xl border border-slate-300 p-2 text-xs font-bold text-slate-900"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">NIP Direktur</label>
+                                    <input
+                                        type="text"
+                                        value={data.settings.director_nip || ''}
+                                        onChange={(e) => handleFieldChange('director_nip', e.target.value)}
+                                        className="w-full rounded-xl border border-slate-300 p-2 text-xs font-mono"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">Jabatan Resmi</label>
+                                    <input
+                                        type="text"
+                                        value={data.settings.director_title || ''}
+                                        onChange={(e) => handleFieldChange('director_title', e.target.value)}
+                                        className="w-full rounded-xl border border-slate-300 p-2 text-xs text-slate-700"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 2. Kabag Perencanaan */}
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <span className="font-black text-indigo-950 uppercase tracking-wider text-[11px] block mb-3">
+                                B. Pejabat Verifikator Perencanaan (Kabag Ren)
+                            </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">Nama Lengkap & Gelar</label>
+                                    <input
+                                        type="text"
+                                        value={data.settings.planning_head_name || ''}
+                                        onChange={(e) => handleFieldChange('planning_head_name', e.target.value)}
+                                        className="w-full rounded-xl border border-slate-300 p-2 text-xs font-bold text-slate-900"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">NIP Pejabat</label>
+                                    <input
+                                        type="text"
+                                        value={data.settings.planning_head_nip || ''}
+                                        onChange={(e) => handleFieldChange('planning_head_nip', e.target.value)}
+                                        className="w-full rounded-xl border border-slate-300 p-2 text-xs font-mono"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">Jabatan Resmi</label>
+                                    <input
+                                        type="text"
+                                        value={data.settings.planning_head_title || ''}
+                                        onChange={(e) => handleFieldChange('planning_head_title', e.target.value)}
+                                        className="w-full rounded-xl border border-slate-300 p-2 text-xs text-slate-700"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 3. Bendahara Pengeluaran */}
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <span className="font-black text-indigo-950 uppercase tracking-wider text-[11px] block mb-3">
+                                C. Bendahara Pengeluaran BLUD
+                            </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">Nama Lengkap & Gelar</label>
+                                    <input
+                                        type="text"
+                                        value={data.settings.treasurer_name || ''}
+                                        onChange={(e) => handleFieldChange('treasurer_name', e.target.value)}
+                                        className="w-full rounded-xl border border-slate-300 p-2 text-xs font-bold text-slate-900"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">NIP Bendahara</label>
+                                    <input
+                                        type="text"
+                                        value={data.settings.treasurer_nip || ''}
+                                        onChange={(e) => handleFieldChange('treasurer_nip', e.target.value)}
+                                        className="w-full rounded-xl border border-slate-300 p-2 text-xs font-mono"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">Jabatan Resmi</label>
+                                    <input
+                                        type="text"
+                                        value={data.settings.treasurer_title || ''}
+                                        onChange={(e) => handleFieldChange('treasurer_title', e.target.value)}
+                                        className="w-full rounded-xl border border-slate-300 p-2 text-xs text-slate-700"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-end">
+                    <button
+                        type="submit"
+                        disabled={processing}
+                        className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-6 py-2.5 text-xs font-black shadow-sm transition cursor-pointer"
+                    >
+                        <Save className="h-4 w-4" />
+                        <span>{processing ? 'Menyimpan...' : 'Simpan Perubahan Pengaturan'}</span>
+                    </button>
+                </div>
+            </form>
+        </SuperAdminLayout>
+    );
+}

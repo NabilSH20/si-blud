@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 
 const formatRupiah = (value) => {
     const val = Number(value || 0);
@@ -10,6 +10,8 @@ const formatRupiah = (value) => {
 };
 
 export default function PrintBelanja({ shift, items = [] }) {
+    const { system_settings = {} } = usePage().props;
+
     const handlePrint = () => {
         window.print();
     };
@@ -61,7 +63,7 @@ export default function PrintBelanja({ shift, items = [] }) {
                         </div>
 
                         <h2 className="text-xs font-bold tracking-wider uppercase text-slate-800">
-                            BADAN LAYANAN UMUM DAERAH RS JIWA TAMPAN PROVINSI RIAU
+                            {system_settings.hospital_name || 'BADAN LAYANAN UMUM DAERAH RS JIWA TAMPAN PROVINSI RIAU'}
                         </h2>
                         <h1 className="text-sm font-black tracking-wide uppercase text-black mt-0.5">
                             {shift?.doc_title || `RENCANA BISNIS DAN ANGGARAN ${shift?.shift_name?.toUpperCase()}`}
@@ -203,8 +205,8 @@ export default function PrintBelanja({ shift, items = [] }) {
                             <p className="font-medium">Disetujui</p>
                             <p className="font-medium">Direktur Selaku Pimpinan BLUD RS Jiwa Tampan</p>
                             <div className="h-20" />
-                            <p className="font-bold underline">dr. Prima Wulandari, M.K.M</p>
-                            <p className="text-[11px] text-slate-600">NIP. 19810606 201001 2 041</p>
+                            <p className="font-bold underline">{system_settings.director_name || 'dr. Prima Wulandari, M.K.M'}</p>
+                            <p className="text-[11px] text-slate-600">NIP. {system_settings.director_nip || '19810606 201001 2 041'}</p>
                         </div>
 
                         {/* Kepala Bagian Perencanaan */}
@@ -212,8 +214,8 @@ export default function PrintBelanja({ shift, items = [] }) {
                             <p className="font-medium">Diperiksa Oleh :</p>
                             <p className="font-medium">Kepala Bagian Perencanaan</p>
                             <div className="h-20" />
-                            <p className="font-bold underline">Hawari Dinal, S.Sos.M.Si</p>
-                            <p className="text-[11px] text-slate-600">NIP. 19700211 199703 1 005</p>
+                            <p className="font-bold underline">{system_settings.planning_head_name || 'Hawari Dinal, S.Sos.M.Si'}</p>
+                            <p className="text-[11px] text-slate-600">NIP. {system_settings.planning_head_nip || '19700211 199703 1 005'}</p>
                         </div>
                     </div>
                 </div>

@@ -25,6 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
         //
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
+            'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
+            'fiscal_year_lock' => \App\Http\Middleware\CheckFiscalYearLock::class,
         ]);
 
         // User yang sudah login dan membuka halaman guest (login/register)

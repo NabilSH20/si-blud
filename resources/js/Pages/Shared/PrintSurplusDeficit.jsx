@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 
 const formatRupiah = (value) =>
@@ -16,6 +16,8 @@ export default function PrintSurplusDeficit({
     expense_categories = [],
     printed_at = '',
 }) {
+    const { system_settings = {} } = usePage().props;
+
     useEffect(() => {
         const timer = setTimeout(() => {
             window.print();
@@ -72,13 +74,13 @@ export default function PrintSurplusDeficit({
                             Pemerintah Provinsi Riau
                         </h2>
                         <h1 className="text-lg font-black uppercase tracking-tight text-black">
-                            Rumah Sakit Jiwa Tampan
+                            {system_settings.hospital_name || 'Rumah Sakit Jiwa Tampan'}
                         </h1>
                         <p className="text-xs text-black mt-0.5">
-                            Jl. H.R. Soebrantas Km. 12,5 Pekanbaru - Riau &bull; Telp. (0761) 63240
+                            {system_settings.hospital_address || 'Jl. H.R. Soebrantas Km. 12,5 Pekanbaru - Riau'} &bull; Telp. {system_settings.hospital_phone || '(0761) 63240'}
                         </p>
                         <p className="text-[11px] text-black">
-                            Laman: rsjtampan.riau.go.id &bull; Pos-el: rsjtampan@riau.go.id
+                            Pos-el: {system_settings.hospital_email || 'rsjtampan@riau.go.id'}
                         </p>
                     </div>
                 </div>
@@ -212,16 +214,16 @@ export default function PrintSurplusDeficit({
                     <p>Mengetahui,</p>
                     <p className="font-bold">Direktur RSJ Tampan</p>
                     <div className="h-20" />
-                    <p className="font-black underline uppercase">dr. Zulkifli, Sp.KJ</p>
-                    <p>NIP. 19740512 200212 1 004</p>
+                    <p className="font-black underline uppercase">{system_settings.director_name || 'dr. Zulkifli, Sp.KJ'}</p>
+                    <p>NIP. {system_settings.director_nip || '19740512 200212 1 004'}</p>
                 </div>
 
                 <div className="text-center w-64">
                     <p>Pekanbaru, {printed_at || new Date().toLocaleDateString('id-ID')}</p>
                     <p className="font-bold">Pejabat Penatausahaan Keuangan (PPK)</p>
                     <div className="h-20" />
-                    <p className="font-black underline uppercase">H. Ahmad Fauzi, SE, M.Ak</p>
-                    <p>NIP. 19800315 200604 1 009</p>
+                    <p className="font-black underline uppercase">{system_settings.treasurer_name || 'H. Ahmad Fauzi, SE, M.Ak'}</p>
+                    <p>NIP. {system_settings.treasurer_nip || '19800315 200604 1 009'}</p>
                 </div>
             </div>
         </div>

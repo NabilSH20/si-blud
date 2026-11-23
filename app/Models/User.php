@@ -74,11 +74,20 @@ class User extends \Illuminate\Foundation\Auth\User
     }
 
     /**
+     * Check if user is a Super Admin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    /**
      * Get the dashboard path for the user's role.
      */
     public function dashboardPath(): string
     {
         return match ($this->role) {
+            'super_admin' => '/super-admin/dashboard',
             'divisi' => '/divisi/dashboard',
             'perencanaan' => '/perencanaan/dashboard',
             'keuangan' => '/keuangan/dashboard',

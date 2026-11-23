@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -19,6 +19,7 @@ const formatTanggal = (dateString) => {
 };
 
 export default function PrintReport({ budgets = [], summary = {}, active_year }) {
+    const { system_settings = {} } = usePage().props;
     const currentDate = formatTanggal(new Date());
     const displayYear = active_year || budgets[0]?.period_year || new Date().getFullYear();
 
@@ -66,10 +67,10 @@ export default function PrintReport({ budgets = [], summary = {}, active_year })
                         PEMERINTAH PROVINSI RIAU
                     </h2>
                     <h1 className="text-xl sm:text-2xl font-black uppercase text-black tracking-tight leading-tight mt-0.5">
-                        RUMAH SAKIT JIWA TAMPAN
+                        {system_settings.hospital_name || 'RUMAH SAKIT JIWA TAMPAN'}
                     </h1>
                     <p className="text-xs text-black font-medium mt-0.5">
-                        Jl. H.R. Soebrantas Km. 12,5 Pekanbaru - Riau | Telp: (0761) 63240
+                        {system_settings.hospital_address || 'Jl. H.R. Soebrantas Km. 12,5 Pekanbaru - Riau'} | Telp: {system_settings.hospital_phone || '(0761) 63240'}
                     </p>
                     <div className="mt-2 pt-1 border-t border-black">
                         <h3 className="text-base font-black tracking-wider uppercase">
@@ -160,9 +161,9 @@ export default function PrintReport({ budgets = [], summary = {}, active_year })
                     <div className="h-28" />
 
                     <p className="font-bold underline uppercase">
-                        ( ............................................................ )
+                        {system_settings.treasurer_name || '( ............................................................ )'}
                     </p>
-                    <p className="text-xs text-slate-600 mt-0.5">NIP. ........................................................</p>
+                    <p className="text-xs text-slate-600 mt-0.5">NIP. {system_settings.treasurer_nip || '........................................................'}</p>
                 </div>
             </div>
 

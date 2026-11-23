@@ -42,7 +42,11 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
+        abort_unless(in_array(Auth::user()?->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
+
+        $allowedRoles = Auth::user()?->isSuperAdmin()
+            ? ['super_admin', 'admin', 'divisi', 'perencanaan', 'keuangan']
+            : ['admin', 'divisi', 'perencanaan', 'keuangan'];
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -53,7 +57,7 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'is_active' => ['nullable', 'boolean'],
             'password' => ['required', Password::defaults()],
-            'role' => ['required', 'string', 'in:admin,divisi,perencanaan,keuangan'],
+            'role' => ['required', 'string', Rule::in($allowedRoles)],
             'division_id' => [
                 'nullable',
                 'exists:divisions,id',
@@ -99,7 +103,7 @@ class UserController extends Controller
             }
         }
 
-        User::create([
+        $createdUser = User::create([
             'name' => $validated['name'],
             'nip' => $validated['nip'] ?? null,
             'nik' => $validated['nik'] ?? null,
@@ -113,6 +117,14 @@ class UserController extends Controller
             'unit_id' => $validated['role'] === 'divisi' ? $validated['unit_id'] : ($validated['unit_id'] ?? null),
         ]);
 
+        \App\Services\AuditLogService::log(
+            'USERS',
+            'CREATE_USER',
+            "Menambahkan pengguna baru: {$createdUser->name} ({$createdUser->role})",
+            null,
+            $createdUser->only(['id', 'name', 'email', 'role', 'nip', 'nik'])
+        );
+
         return redirect()->route('users.index')
             ->with('success', "Pengguna {$validated['name']} berhasil ditambahkan.");
     }
@@ -122,7 +134,15 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user): RedirectResponse
     {
-        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
+        abort_unless(in_array(Auth::user()?->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
+
+        if ($user->isSuperAdmin() && ! Auth::user()->isSuperAdmin()) {
+            abort(403, 'Akses ditolak: Anda tidak memiliki wewenang mengelola akun Super Admin.');
+        }
+
+        $allowedRoles = Auth::user()?->isSuperAdmin()
+            ? ['super_admin', 'admin', 'divisi', 'perencanaan', 'keuangan']
+            : ['admin', 'divisi', 'perencanaan', 'keuangan'];
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -133,7 +153,7 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'is_active' => ['nullable', 'boolean'],
             'password' => ['nullable', Password::defaults()],
-            'role' => ['required', 'string', 'in:admin,divisi,perencanaan,keuangan'],
+            'role' => ['required', 'string', Rule::in($allowedRoles)],
             'division_id' => [
                 'nullable',
                 'exists:divisions,id',
@@ -199,7 +219,16 @@ class UserController extends Controller
             $userData['password'] = Hash::make($validated['password']);
         }
 
+        $before = $user->only(['name', 'email', 'role', 'nip', 'nik', 'is_active']);
         $user->update($userData);
+
+        \App\Services\AuditLogService::log(
+            'USERS',
+            'UPDATE_USER',
+            "Memperbarui profil akun pengguna: {$user->name}",
+            $before,
+            $user->only(['name', 'email', 'role', 'nip', 'nik', 'is_active'])
+        );
 
         return redirect()->route('users.index')
             ->with('success', "Data pengguna {$user->name} berhasil diperbarui.");
@@ -210,7 +239,11 @@ class UserController extends Controller
      */
     public function toggleStatus(User $user): RedirectResponse
     {
-        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
+        abort_unless(in_array(Auth::user()?->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
+
+        if ($user->isSuperAdmin() && ! Auth::user()->isSuperAdmin()) {
+            abort(403, 'Akses ditolak: Anda tidak memiliki wewenang menonaktifkan akun Super Admin.');
+        }
 
         if ($user->id === Auth::id()) {
             return back()->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
@@ -222,6 +255,12 @@ class UserController extends Controller
 
         $statusLabel = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
+        \App\Services\AuditLogService::log(
+            'USERS',
+            'TOGGLE_STATUS',
+            "Mengubah status akun {$user->name} menjadi {$statusLabel}"
+        );
+
         return back()->with('success', "Akun pengguna {$user->name} berhasil {$statusLabel}.");
     }
 
@@ -230,7 +269,11 @@ class UserController extends Controller
      */
     public function destroy(User $user): RedirectResponse
     {
-        abort_unless(Auth::user()?->role === 'admin', 403, 'Akses ditolak.');
+        abort_unless(in_array(Auth::user()?->role, ['admin', 'super_admin']), 403, 'Akses ditolak.');
+
+        if ($user->isSuperAdmin()) {
+            abort(403, 'Akses ditolak: Akun Super Admin dilindungi dan tidak dapat dihapus.');
+        }
 
         if ($user->id === Auth::id()) {
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri saat sedang aktif login.');
@@ -246,7 +289,16 @@ class UserController extends Controller
         }
 
         $name = $user->name;
+        $deletedData = $user->only(['id', 'name', 'email', 'role', 'nip', 'nik']);
         $user->delete();
+
+        \App\Services\AuditLogService::log(
+            'USERS',
+            'DELETE_USER',
+            "Menghapus akun pengguna: {$name}",
+            $deletedData,
+            null
+        );
 
         return redirect()->route('users.index')
             ->with('success', "Akun pengguna {$name} telah berhasil dihapus.");
