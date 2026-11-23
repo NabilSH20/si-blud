@@ -22,12 +22,25 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->post('/login', [
-            'email' => $user->email,
+            'email' => $user->nip,
             'password' => 'password',
         ]);
 
         $this->assertAuthenticated();
         $response->assertRedirect('/divisi/dashboard');
+    }
+
+    public function test_login_using_email_is_rejected_as_only_nip_or_nik_allowed(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors('email');
     }
 
     public function test_users_are_redirected_to_their_role_dashboard(): void
@@ -43,7 +56,7 @@ class AuthenticationTest extends TestCase
             $user = User::factory()->create(['role' => $role]);
 
             $response = $this->post('/login', [
-                'email' => $user->email,
+                'email' => $user->nip,
                 'password' => 'password',
             ]);
 
@@ -62,7 +75,7 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
 
         $this->post('/login', [
-            'email' => $user->email,
+            'email' => $user->nip,
             'password' => 'wrong-password',
         ]);
 
@@ -102,7 +115,7 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->withSession(['login_captcha' => 'ABC12'])->post('/login', [
-            'email' => $user->email,
+            'email' => $user->nip,
             'password' => 'password',
             'captcha' => 'WRONG',
         ]);
@@ -116,12 +129,88 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->withSession(['login_captcha' => 'ABC12'])->post('/login', [
-            'email' => $user->email,
+            'email' => $user->nip,
             'password' => 'password',
             'captcha' => 'abc12',
         ]);
 
         $this->assertAuthenticated();
         $response->assertRedirect('/divisi/dashboard');
+    }
+
+    public function test_users_can_authenticate_using_nip(): void
+    {
+        $user = User::factory()->create([
+            'nip' => '199001012020011001',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => '199001012020011001',
+            'password' => 'password123',
+        ]);
+
+        $this->assertAuthenticatedAs($user);
+        $response->assertRedirect('/divisi/dashboard');
+    }
+
+    public function test_users_can_authenticate_using_nip_with_spaces(): void
+    {
+        $user = User::factory()->create([
+            'nip' => '199001012020011002',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => '19900101 202001 1 002',
+            'password' => 'password123',
+        ]);
+
+        $this->assertAuthenticatedAs($user);
+        $response->assertRedirect('/divisi/dashboard');
+    }
+
+    public function test_users_can_authenticate_using_nik(): void
+    {
+        $user = User::factory()->create([
+            'nip' => null,
+            'nik' => '1471015508950001',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => '1471015508950001',
+            'password' => 'password123',
+        ]);
+
+        $this->assertAuthenticatedAs($user);
+        $response->assertRedirect('/divisi/dashboard');
+    }
+
+    public function test_users_can_not_authenticate_with_unregistered_nip_or_nik(): void
+    {
+        $this->post('/login', [
+            'email' => '999999999999999999',
+            'password' => 'password123',
+        ]);
+
+        $this->assertGuest();
+    }
+
+    public function test_inactive_users_can_not_authenticate_via_nip_or_nik(): void
+    {
+        $user = User::factory()->create([
+            'nik' => '1471015508950099',
+            'password' => bcrypt('password123'),
+            'is_active' => false,
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => '1471015508950099',
+            'password' => 'password123',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors('email');
     }
 }

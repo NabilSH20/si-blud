@@ -1,0 +1,284 @@
+// ============================================================================
+// DATABASE MARKUP LANGUAGE (DBML)
+// ERD SI-BLUD RS Jiwa Tampan Provinsi Riau (Modul Perencanaan & Keuangan)
+// Versi: 1.0 (Terintegrasi)
+// Sumber: database/migrations/ (Tanpa timestamp created_at/updated_at)
+// Dapat dibuka langsung di: https://dbdiagram.io
+// ============================================================================
+
+Project SIBLUD_RSJ_Tampan {
+  database_type: 'MySQL'
+  Note: '''
+    # ERD Terintegrasi SI-BLUD RS Jiwa Tampan Provinsi Riau
+    Mencakup Modul Perencanaan, Modul Unit Pengaju, Modul Keuangan, dan Master Admin.
+    Sesuai standar Permendagri No. 79 Tahun 2018 tentang BLUD.
+  '''
+}
+
+// ==========================================
+// KELOMPOK A: MASTER ORGANISASI & PENGGUNA
+// ==========================================
+
+Table divisions {
+  id bigint [pk, increment, note: 'Primary Key']
+  division_code varchar(255) [unique, not null, note: 'Kode unik bagian/bidang']
+  name varchar(255) [not null, note: 'Nama bagian/bidang']
+  group varchar(255) [not null, default: 'Pelayanan_Keperawatan', note: "enum: 'Pelayanan_Keperawatan', 'Umum_Kepegawaian'"]
+
+  Note: 'Master Divisi / Bagian / Bidang'
+}
+
+Table units {
+  id bigint [pk, increment, note: 'Primary Key']
+  division_id bigint [not null, note: 'FK ke divisions.id (CASCADE DELETE)']
+  unit_code varchar(255) [unique, not null, note: 'Kode unik unit kerja']
+  name varchar(255) [not null, note: 'Nama instalasi / ruangan / unit']
+  description text [null, note: 'Deskripsi unit']
+
+  Note: 'Master Unit Kerja / Ruangan di bawah Bagian'
+}
+
+Table users {
+  id bigint [pk, increment, note: 'Primary Key']
+  name varchar(255) [not null, note: 'Nama pegawai']
+  nip varchar(30) [unique, null, note: 'NIP Pegawai']
+  email varchar(255) [unique, not null, note: 'Email login sistem']
+  email_verified_at timestamp [null]
+  password varchar(255) [not null, note: 'Hashed password']
+  division_id bigint [null, note: 'FK ke divisions.id (SET NULL)']
+  unit_id bigint [null, note: 'FK ke units.id (SET NULL)']
+  role enum [not null, default: 'divisi', note: "enum: 'admin', 'perencanaan', 'keuangan', 'divisi'"]
+  position varchar(255) [null, note: 'Jabatan struktural / fungsional']
+  phone varchar(30) [null, note: 'Nomor telepon']
+  is_active boolean [not null, default: true, note: 'Status aktif user']
+  remember_token varchar(100) [null]
+  avatar varchar(255) [null, note: 'Path file foto profil']
+
+  Note: 'Pengguna Sistem dengan 4 Hak Akses'
+}
+
+Table fiscal_years {
+  id bigint [pk, increment, note: 'Primary Key']
+  year int [unique, not null, note: 'Tahun Anggaran (cth: 2027, 2028)']
+  name varchar(255) [not null, note: 'Nama Tahun Anggaran']
+  is_active boolean [not null, default: true, note: 'Status aktif']
+  is_default boolean [not null, default: false, note: 'Tahun default saat login']
+  description varchar(255) [null, note: 'Keterangan tahun anggaran']
+
+  Note: 'Master Tahun Anggaran Fiskal'
+}
+
+// ==========================================
+// KELOMPOK B: PERENCANAAN & RBA
+// ==========================================
+
+Table rba_shifts {
+  id bigint [pk, increment, note: 'Primary Key']
+  year int [not null, default: 2026, note: 'Tahun anggaran RBA']
+  shift_name varchar(255) [not null, note: "Nama versi (cth: 'Murni', 'Pergeseran 1')"]
+  doc_title varchar(255) [null, note: 'Judul dokumen cetak resmi RBA']
+  period_month varchar(255) [not null, default: 'Juli 2026', note: 'Bulan penetapan RBA']
+  penerimaan_silpa decimal(18,2) [not null, default: 0, note: 'Penerimaan Pembiayaan SiLPA']
+  penerimaan_divestasi decimal(18,2) [not null, default: 0]
+  penerimaan_pinjaman decimal(18,2) [not null, default: 0]
+  pengeluaran_investasi decimal(18,2) [not null, default: 0]
+  pengeluaran_pokok_utang decimal(18,2) [not null, default: 0]
+  status enum [not null, default: 'Aktif', note: "enum: 'Draft', 'Aktif', 'Arsip'"]
+  notes text [null, note: 'Catatan RBA']
+
+  Note: 'Versi Dokumen RBA (Murni & Pergeseran)'
+}
+
+Table rba_expense_items {
+  id bigint [pk, increment, note: 'Primary Key']
+  rba_shift_id bigint [not null, note: 'FK ke rba_shifts.id (CASCADE DELETE)']
+  rba_account_id bigint [null, note: 'FK ke rba_accounts.id (SET NULL)']
+  account_code varchar(255) [not null, note: 'Kode rekening belanja']
+  account_name varchar(255) [not null, note: 'Uraian rekening belanja']
+  parent_code varchar(255) [null, note: 'Kode rekening induk']
+  level tinyint [not null, default: 1, note: 'Level hierarki akun']
+  is_header boolean [not null, default: false, note: 'Header / Leaf node']
+  before_jasa_layanan decimal(18,2) [not null, default: 0]
+  before_hasil_kerjasama decimal(18,2) [not null, default: 0]
+  before_lain_lain_sah decimal(18,2) [not null, default: 0]
+  before_silpa decimal(18,2) [not null, default: 0]
+  before_apbd decimal(18,2) [not null, default: 0]
+  before_total decimal(18,2) [not null, default: 0]
+  after_jasa_layanan decimal(18,2) [not null, default: 0]
+  after_hasil_kerjasama decimal(18,2) [not null, default: 0]
+  after_lain_lain_sah decimal(18,2) [not null, default: 0]
+  after_silpa decimal(18,2) [not null, default: 0]
+  after_apbd decimal(18,2) [not null, default: 0]
+  after_total decimal(18,2) [not null, default: 0]
+  difference decimal(18,2) [not null, default: 0]
+  keterangan text [null, note: 'Telaahan staf pergeseran']
+  order_index int [not null, default: 0]
+
+  Note: 'Matriks RBA Belanja Sebelum & Sesudah Pergeseran'
+}
+
+Table rba_revenue_items {
+  id bigint [pk, increment, note: 'Primary Key']
+  rba_shift_id bigint [not null, note: 'FK ke rba_shifts.id (CASCADE DELETE)']
+  item_code varchar(255) [not null, note: 'Kode pos pendapatan']
+  item_name varchar(255) [not null, note: 'Uraian pos pendapatan']
+  parent_code varchar(255) [null, note: 'Kode induk pos']
+  level tinyint [not null, default: 1]
+  is_header boolean [not null, default: false]
+  before_amount decimal(18,2) [not null, default: 0]
+  after_amount decimal(18,2) [not null, default: 0]
+  difference decimal(18,2) [not null, default: 0]
+  keterangan text [null]
+  order_index int [not null, default: 0]
+
+  Note: 'Target Pendapatan BLUD Sebelum & Sesudah Pergeseran'
+}
+
+Table rba_accounts {
+  id bigint [pk, increment, note: 'Primary Key']
+  account_code varchar(255) [not null, note: 'Kode rekening belanja (cth: 1.2.03.01)']
+  parent_code varchar(255) [null]
+  account_name varchar(255) [not null, note: 'Uraian nama rekening']
+  kategori_belanja varchar(50) [not null, default: 'Operasi', note: "enum: 'Operasi', 'Modal'"]
+  sumber_dana varchar(255) [not null, default: 'BLUD', note: "enum: 'BLUD', 'APBD'"]
+  funding_source varchar(255) [null]
+  period_year int [not null, default: 2026, note: 'Tahun anggaran buku kas']
+  year int [null]
+  total_budget decimal(18,2) [not null, default: 0, note: 'Pagu anggaran definitif']
+  budget_after_revision decimal(18,2) [null, note: 'Pagu revisi']
+  remaining_budget decimal(18,2) [not null, default: 0, note: 'Sisa pagu tersedia']
+  spent_budget decimal(18,2) [not null, default: 0, note: 'Realisasi belanja dicairkan']
+
+  indexes {
+    (account_code, period_year) [unique]
+  }
+  Note: 'Buku Kas Rekening DPA / Pagu Belanja Resmi'
+}
+
+// ==========================================
+// KELOMPOK C: STANDAR SATUAN HARGA (SSH)
+// ==========================================
+
+Table items {
+  id bigint [pk, increment, note: 'Primary Key']
+  rba_account_id bigint [null, note: 'FK ke rba_accounts.id (SET NULL)']
+  item_code varchar(255) [unique, not null, note: 'Format: ITM-0001']
+  name varchar(255) [not null, note: 'Nama barang']
+  specification text [null, note: 'Spesifikasi teknis barang']
+  unit_type varchar(255) [not null, note: 'Satuan (Rim, Botol, Roll, dll)']
+  source varchar(255) [not null, default: 'STANDAR', note: "enum: 'STANDAR', 'USULAN_UNIT'"]
+  origin_unit_id bigint [null, note: 'FK ke units.id (SET NULL)']
+  standard_price decimal(18,2) [not null, default: 0, note: 'Harga acuan satuan']
+
+  Note: 'Katalog Barang Acuan Standar Satuan Harga (SSH)'
+}
+
+// ==========================================
+// KELOMPOK D: PENGAJUAN & VERIFIKASI (UNIT, PERENCANAAN, KEUANGAN)
+// ==========================================
+
+Table requisitions {
+  id bigint [pk, increment, note: 'Primary Key']
+  requisition_number varchar(255) [unique, not null, note: 'Nomor sistem otomatis']
+  nomor_surat_unit varchar(255) [null, note: 'Nomor Nota Dinas unit']
+  division_id bigint [not null, note: 'FK ke divisions.id']
+  unit_id bigint [null, note: 'FK ke units.id (SET NULL)']
+  user_id bigint [not null, note: 'FK ke users.id (Pembuat Usulan)']
+  rba_account_id bigint [null, note: 'FK ke rba_accounts.id (Mata Anggaran)']
+  jenis_belanja varchar(30) [not null, default: 'Operasi', note: "enum: 'Operasi', 'Modal'"]
+  sumber_dana varchar(255) [not null, default: 'BLUD']
+  program varchar(255) [null]
+  kegiatan varchar(255) [null]
+  sub_kegiatan varchar(255) [null]
+  tolok_ukur_output text [null]
+  target_output varchar(50) [null, default: '100%']
+  tolok_ukur_outcome text [null]
+  target_outcome varchar(50) [null, default: '100%']
+  urgency_reason text [null, note: 'Alasan urgensi belanja']
+  fiscal_year int [not null, default: 2027, note: 'Tahun Anggaran']
+  budget_year int [null]
+  status enum [not null, default: 'Pending_Perencanaan', note: "enum: 'Pending_Perencanaan', 'Diproses_Keuangan', 'Disetujui_Selesai', 'Ditolak'"]
+  submission_date date [not null, note: 'Tanggal pengajuan']
+  total_estimated decimal(18,2) [not null, default: 0, note: 'Total usulan unit']
+  total_operasional decimal(18,2) [not null, default: 0]
+  total_modal decimal(18,2) [not null, default: 0]
+  total_approved decimal(18,2) [not null, default: 0, note: 'Total disetujui cair']
+  notes_perencanaan text [null, note: 'Catatan telaah perencanaan']
+  verified_by_perencanaan_id bigint [null, note: 'FK ke users.id (Verifikator Perencanaan)']
+  verified_perencanaan_at timestamp [null]
+  notes_keuangan text [null, note: 'Catatan bendahara pengeluaran']
+  approved_by_keuangan_id bigint [null, note: 'FK ke users.id (Pencair Keuangan)']
+  approved_keuangan_at timestamp [null]
+  sp2d_number varchar(255) [null, note: 'Nomor SP2D terbit']
+  receipt_number varchar(255) [null, note: 'Nomor Kuitansi terbit']
+
+  Note: 'Nota Dinas Pengajuan Belanja Unit'
+}
+
+Table requisition_details {
+  id bigint [pk, increment, note: 'Primary Key']
+  requisition_id bigint [not null, note: 'FK ke requisitions.id (CASCADE DELETE)']
+  item_id bigint [null, note: 'FK ke items.id (SET NULL, jika SSH)']
+  item_name varchar(255) [null, note: 'Nama barang manual/custom']
+  unit_type varchar(255) [null, note: 'Satuan barang']
+  specification text [null, note: 'Spesifikasi barang']
+  quantity_requested int [not null, note: 'Volume dimohon']
+  quantity_approved int [null, note: 'Volume disetujui']
+  unit_price decimal(18,2) [not null, default: 0, note: 'Harga satuan']
+  exceeds_ssh boolean [not null, default: false, note: 'Apakah di atas SSH']
+  subtotal decimal(18,2) [not null, default: 0, note: 'Subtotal per item']
+
+  Note: 'Rincian Item Barang per Nota Dinas'
+}
+
+// ==========================================
+// KELOMPOK E: REALISASI PENDAPATAN BLUD
+// ==========================================
+
+Table revenues {
+  id bigint [pk, increment, note: 'Primary Key']
+  revenue_number varchar(255) [unique, not null, note: 'Nomor Bukti Kas Masuk']
+  source varchar(255) [not null, note: "Pos pendapatan resmi (cth: 'Pendapatan Pelayanan Rawat Jalan')"]
+  amount decimal(15,2) [not null, note: 'Nominal kas masuk']
+  date date [not null, note: 'Tanggal transaksi']
+  description text [null, note: 'Uraian penerimaan']
+
+  Note: 'Realisasi Kas Masuk Harian BLUD'
+}
+
+// ============================================================================
+// RELASI ANTAR TABEL (21 HUBUNGAN LENGKAP)
+// ============================================================================
+
+// 1. Relasi Organisasi
+Ref: divisions.id < units.division_id [delete: cascade]
+Ref: divisions.id < users.division_id [delete: set null]
+Ref: divisions.id < requisitions.division_id [delete: restrict]
+
+// 2. Relasi Unit Kerja
+Ref: units.id < users.unit_id [delete: set null]
+Ref: units.id < requisitions.unit_id [delete: set null]
+Ref: units.id < items.origin_unit_id [delete: set null]
+
+// 3. Relasi RBA & Perencanaan
+Ref: rba_shifts.id < rba_expense_items.rba_shift_id [delete: cascade]
+Ref: rba_shifts.id < rba_revenue_items.rba_shift_id [delete: cascade]
+Ref: rba_accounts.id < rba_expense_items.rba_account_id [delete: set null]
+Ref: rba_accounts.id < items.rba_account_id [delete: set null]
+Ref: rba_accounts.id < requisitions.rba_account_id [delete: set null]
+
+// 4. Relasi Pengguna ke Transaksi Nota Dinas (Tripartit Governance)
+Ref: users.id < requisitions.user_id [delete: restrict]
+Ref: users.id < requisitions.verified_by_perencanaan_id [delete: set null]
+Ref: users.id < requisitions.approved_by_keuangan_id [delete: set null]
+
+// 5. Relasi Detail Pengajuan & Katalog
+Ref: requisitions.id < requisition_details.requisition_id [delete: cascade]
+Ref: items.id < requisition_details.item_id [delete: set null]
+
+// 6. Relasi Logis Tahun Anggaran & Realisasi Pendapatan (Non-FK Database)
+Ref: fiscal_years.year < rba_shifts.year
+Ref: fiscal_years.year < rba_accounts.period_year
+Ref: fiscal_years.year < requisitions.fiscal_year
+Ref: fiscal_years.year < revenues.date
+Ref: rba_revenue_items.item_name < revenues.source

@@ -145,6 +145,7 @@ export default function Index({ users = [], divisions = [], success, error }) {
             return (
                 u.name?.toLowerCase().includes(q) ||
                 u.nip?.toLowerCase().includes(q) ||
+                u.nik?.toLowerCase().includes(q) ||
                 u.email?.toLowerCase().includes(q) ||
                 u.position?.toLowerCase().includes(q) ||
                 u.phone?.toLowerCase().includes(q) ||
@@ -368,11 +369,25 @@ export default function Index({ users = [], divisions = [], success, error }) {
                                                 #{(currentPage - 1) * itemsPerPage + idx + 1}
                                             </td>
 
-                                            {/* NIP / Kode Unit Style */}
+                                            {/* NIP & NIK Style */}
                                             <td className="whitespace-nowrap px-5 py-4">
-                                                <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-mono font-black text-blue-900 border border-blue-300">
-                                                    {u.nip || 'NON-PNS'}
-                                                </span>
+                                                <div className="flex flex-col gap-1 items-start">
+                                                    {u.nip ? (
+                                                        <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-mono font-bold text-blue-900 border border-blue-300">
+                                                            NIP. {u.nip}
+                                                        </span>
+                                                    ) : null}
+                                                    {u.nik ? (
+                                                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-mono font-semibold text-slate-700 border border-slate-300">
+                                                            NIK. {u.nik}
+                                                        </span>
+                                                    ) : null}
+                                                    {!u.nip && !u.nik && (
+                                                        <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-mono text-amber-700 border border-amber-200">
+                                                            NON-PNS
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
 
                                             {/* Nama Pegawai & Email */}
