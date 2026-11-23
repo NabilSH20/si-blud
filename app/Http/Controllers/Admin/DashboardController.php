@@ -90,6 +90,7 @@ class DashboardController extends Controller
                 'name',
                 'email',
                 'nip',
+                'nik',
                 'role',
                 'position',
                 'division_id',
@@ -137,6 +138,7 @@ class DashboardController extends Controller
             $usersQuery->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('nip', 'like', "%{$search}%")
+                    ->orWhere('nik', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhere('position', 'like', "%{$search}%");
             });
@@ -145,7 +147,7 @@ class DashboardController extends Controller
         // Unpaginated filtered users for charts
         $chartUsers = clone $usersQuery;
         $chartUsers = $chartUsers->get([
-            'id', 'name', 'email', 'nip', 'role', 'position', 'division_id', 'unit_id', 'is_active', 'created_at',
+            'id', 'name', 'email', 'nip', 'nik', 'role', 'position', 'division_id', 'unit_id', 'is_active', 'created_at',
         ]);
 
         // Paginated users for the table

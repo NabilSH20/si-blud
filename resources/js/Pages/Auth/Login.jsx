@@ -95,14 +95,14 @@ export default function Login({ status, canResetPassword, captchaSvg, fiscalYear
                                 onChange={(e) => setData('fiscal_year', e.target.value)}
                                 disabled={!hasFiscalYears}
                                 className={`block w-full appearance-none bg-none [background-image:none] rounded-xl border border-slate-200 pl-3.5 pr-9 py-2.5 text-sm font-semibold transition ${!hasFiscalYears
-                                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                        : 'bg-[#edf4fc] text-slate-900 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 cursor-pointer'
+                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                    : 'bg-[#edf4fc] text-slate-900 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 cursor-pointer'
                                     }`}
                             >
                                 {hasFiscalYears ? (
                                     fiscalYears.map((fy) => (
                                         <option key={fy.year} value={fy.year}>
-                                            Tahun Anggaran {fy.year} {fy.is_default ? '★ (Default)' : ''}
+                                            {fy.year} {fy.is_default ? '' : ''}
                                         </option>
                                     ))
                                 ) : (
@@ -123,22 +123,32 @@ export default function Login({ status, canResetPassword, captchaSvg, fiscalYear
                         <InputError message={errors.fiscal_year} className="mt-1.5" />
                     </div>
 
-                    {/* Input Email / NIP */}
+                    {/* Input NIP / NIK */}
                     <div>
                         <label htmlFor="email" className="mb-1.5 block text-xs font-semibold text-slate-700">
-                            Email
+                            NIP atau NIK Pegawai
                         </label>
-                        <input
-                            id="email"
-                            type="text"
-                            name="email"
-                            value={data.email}
-                            autoComplete="username"
-                            autoFocus
-                            onChange={(e) => setData('email', e.target.value)}
-                            placeholder="masukkan email atau NIP"
-                            className="block w-full rounded-xl border border-slate-200 bg-[#edf4fc] px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition"
-                        />
+                        <div className="relative">
+                            <input
+                                id="email"
+                                type="text"
+                                name="email"
+                                value={data.email}
+                                autoComplete="username"
+                                autoFocus
+                                onChange={(e) => setData('email', e.target.value)}
+                                placeholder="Masukkan NIP (18 digit) atau NIK (16 digit)"
+                                className="block w-full rounded-xl border border-slate-200 bg-[#edf4fc] pl-3.5 pr-10 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition"
+                            />
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400">
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <p className="mt-1 text-[11px] text-slate-500">
+                            PNS/PPPK gunakan 18 digit NIP. Pegawai Non-PNS gunakan 16 digit NIK KTP.
+                        </p>
                         <InputError message={errors.email} className="mt-1.5" />
                     </div>
 

@@ -14,6 +14,7 @@ use Illuminate\Notifications\Notifiable;
  * @property int $id
  * @property string $name
  * @property string|null $nip
+ * @property string|null $nik
  * @property string $email
  * @property string|null $email_verified_at
  * @property string $password

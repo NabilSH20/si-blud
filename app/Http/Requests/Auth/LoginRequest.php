@@ -51,9 +51,9 @@ class LoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => 'Email kedinasan atau NIP wajib diisi.',
+            'email.required' => 'NIP atau NIK wajib diisi.',
             'password.required' => 'Kata sandi wajib diisi.',
-            'captcha.required' => 'Kode captcha wajib diisi sebelum klik login.',
+            'captcha.required' => 'Kode captcha wajib diisi sebelum klik masuk.',
         ];
     }
 
@@ -81,44 +81,33 @@ class LoginRequest extends FormRequest
             }
         }
 
-        $loginInput = trim((string) $this->input('email'));
-        $isEmail = filter_var($loginInput, FILTER_VALIDATE_EMAIL);
+        $loginInput = trim((string) ($this->input('email') ?? $this->input('login') ?? $this->input('nip_or_nik')));
+        $sanitizedId = str_replace([' ', '-', '.'], '', $loginInput);
 
-        $credentials = [
-            'password' => $this->input('password'),
-        ];
-        if ($isEmail) {
-            $credentials['email'] = $loginInput;
-        } else {
-            $credentials['nip'] = $loginInput;
+        // Pencarian murni hanya berdasarkan NIP atau NIK (login pure NIP / NIK tanpa email)
+        $user = \App\Models\User::where('nip', $sanitizedId)
+            ->orWhere('nip', $loginInput)
+            ->orWhere('nik', $sanitizedId)
+            ->orWhere('nik', $loginInput)
+            ->first();
+
+        if (! $user || ! \Illuminate\Support\Facades\Hash::check($this->input('password'), $user->password)) {
+            RateLimiter::hit($this->throttleKey());
+
+            session(['login_captcha' => AuthenticatedSessionController::generateCaptchaCode()]);
+
+            throw ValidationException::withMessages([
+                'email' => trans('auth.failed'),
+            ]);
         }
 
-        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
-            // Fallback attempt: in case an email was formatted abnormally or nip was attempted with email field
-            $fallbackCredentials = [
-                $isEmail ? 'nip' : 'email' => $loginInput,
-                'password' => $this->input('password'),
-            ];
-
-            if (! Auth::attempt($fallbackCredentials, $this->boolean('remember'))) {
-                RateLimiter::hit($this->throttleKey());
-
-                session(['login_captcha' => AuthenticatedSessionController::generateCaptchaCode()]);
-
-                throw ValidationException::withMessages([
-                    'email' => trans('auth.failed'),
-                ]);
-            }
-        }
-
-        if (! Auth::user()->is_active) {
-            Auth::logout();
-            $this->session()->invalidate();
-            $this->session()->regenerateToken();
+        if (! $user->is_active) {
             throw ValidationException::withMessages([
                 'email' => 'Akun Anda sedang dinonaktifkan. Silakan hubungi Administrator SIM-RS / Bagian Tata Usaha.',
             ]);
         }
+
+        Auth::login($user, $this->boolean('remember'));
 
         session()->forget('login_captcha');
 
