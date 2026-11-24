@@ -32,18 +32,13 @@ const getStatusBadge = (status) => {
                 dot: 'bg-amber-500',
                 isPending: true,
             };
+        case 'Disetujui':
+        case 'Disetujui_Selesai':
         case 'Diproses_Keuangan':
             return {
-                label: 'Proses Keuangan',
-                bg: 'bg-blue-50 text-blue-800 border-blue-200',
-                dot: 'bg-blue-500',
-                isPending: false,
-            };
-        case 'Disetujui_Selesai':
-            return {
-                label: 'Disetujui',
-                bg: 'bg-teal-50 text-teal-800 border-teal-200',
-                dot: 'bg-teal-600',
+                label: 'Disetujui (ACC Final)',
+                bg: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+                dot: 'bg-emerald-600',
                 isPending: false,
             };
         case 'Ditolak':
@@ -148,7 +143,7 @@ export default function Index({ requisitions = [], success, error, selectedYear 
                         )}
                     </div>
                     <p className="mt-1 text-xs sm:text-sm text-slate-500 font-medium">
-                        Periksa spesifikasi barang dan sesuaikan volume yang disetujui sebelum diteruskan ke Bagian Keuangan.
+                        Periksa spesifikasi barang, kesesuaian SSH, dan ketersediaan pagu rekening belanja RBA BLUD.
                     </p>
                 </div>
             </div>

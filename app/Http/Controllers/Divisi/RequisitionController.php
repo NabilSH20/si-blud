@@ -52,7 +52,7 @@ class RequisitionController extends Controller
         $user = $request->user();
         $user->load(['division', 'unit']);
 
-        $query = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])
+        $query = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan'])
             ->latest();
 
         // Isolasi data pengajuan per unit kerja staf yang login
@@ -562,7 +562,7 @@ class RequisitionController extends Controller
     public function show(Requisition $requisition): Response
     {
         $this->authorizeAccess($requisition);
-        $requisition->load(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan']);
+        $requisition->load(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan']);
 
         return Inertia::render('Divisi/Requisitions/Show', [
             'requisition' => $requisition,
@@ -574,7 +574,7 @@ class RequisitionController extends Controller
      */
     public function print(int|string $id): Response
     {
-        $requisition = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])->findOrFail($id);
+        $requisition = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan'])->findOrFail($id);
         $this->authorizeAccess($requisition);
 
         return Inertia::render('Shared/PrintRequisition', [

@@ -249,9 +249,9 @@ class PerencanaanRbaPlanningTest extends TestCase
             ->where('requisition.sub_kegiatan', 'Pelayanan dan Penunjang Pelayanan BLUD RS Jiwa Tampan')
         );
 
-        // Perencanaan approves with 15 quantity (volume adjusted)
+        // Perencanaan approves with 15 quantity (volume adjusted) - ACC Final
         $approvalPayload = [
-            'status' => 'Diproses_Keuangan',
+            'status' => 'Disetujui',
             'notes_perencanaan' => 'Disetujui 15 unit sesuai pagu efisiensi RBA BLUD Farmasi.',
             'items' => [
                 [
@@ -268,7 +268,7 @@ class PerencanaanRbaPlanningTest extends TestCase
 
         $this->assertDatabaseHas('requisitions', [
             'id' => $requisition->id,
-            'status' => 'Diproses_Keuangan',
+            'status' => 'Disetujui',
             'total_approved' => 750000, // 15 * 50,000
             'notes_perencanaan' => 'Disetujui 15 unit sesuai pagu efisiensi RBA BLUD Farmasi.',
         ]);

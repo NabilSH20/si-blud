@@ -4,7 +4,7 @@ import ImpersonateBanner from '@/Components/ImpersonateBanner';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
-import { LayoutDashboard, Wallet, PiggyBank, ClipboardCheck, FileText, TrendingDown } from 'lucide-react';
+import { LayoutDashboard, Wallet, PiggyBank, FileSpreadsheet, FileText, TrendingDown } from 'lucide-react';
 
 const menuGroups = [
     {
@@ -30,7 +30,6 @@ const menuGroups = [
                     { name: 'Semua', href: route('revenues.index') },
                     { name: 'Jasa Layanan', href: route('revenues.index', { category: 'Jasa Layanan' }) },
                     { name: 'Hasil Kerja Sama', href: route('revenues.index', { category: 'Hasil Kerja Sama' }) },
-                    { name: 'APBD', href: route('revenues.index', { category: 'APBD' }) },
                     { name: 'Lain-lain BLUD Sah', href: route('revenues.index', { category: 'Lain-lain BLUD Sah' }) },
                 ]
             },
@@ -43,25 +42,14 @@ const menuGroups = [
         ],
     },
     {
-        title: 'Verifikasi & Pembebanan',
-        items: [
-            {
-                name: 'Validasi Requisition',
-                href: route('keuangan.requisitions.index'),
-                routeName: 'keuangan.requisitions.*',
-                icon: <ClipboardCheck className="h-5 w-5 shrink-0" strokeWidth={2} />,
-                subItems: [
-                    { name: 'Semua Status', href: route('keuangan.requisitions.index') },
-                    { name: 'Siap Validasi', href: route('keuangan.requisitions.index', { status: 'Diproses_Keuangan' }) },
-                    { name: 'Disetujui & Selesai', href: route('keuangan.requisitions.index', { status: 'Disetujui_Selesai' }) },
-                    { name: 'Ditolak', href: route('keuangan.requisitions.index', { status: 'Ditolak' }) },
-                ]
-            },
-        ],
-    },
-    {
         title: 'Laporan & Akuntabilitas',
         items: [
+            {
+                name: 'Matriks 12 Bulan',
+                href: route('reports.revenue-monthly-matrix'),
+                routeName: 'reports.revenue-monthly-matrix*',
+                icon: <FileSpreadsheet className="h-5 w-5 shrink-0" strokeWidth={2} />,
+            },
             {
                 name: 'Laporan Realisasi',
                 href: route('reports.index'),

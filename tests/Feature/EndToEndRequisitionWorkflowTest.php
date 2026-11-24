@@ -134,7 +134,7 @@ class EndToEndRequisitionWorkflowTest extends TestCase
 
         $verifyResponse = $this->actingAs($this->perencanaanUser)
             ->put(route('perencanaan.requisitions.update', $requisition->id), [
-                'status' => 'Diproses_Keuangan',
+                'status' => 'Disetujui',
                 'notes_perencanaan' => 'Disetujui dengan penyesuaian kuantitas hand sanitizer menjadi 4 botol.',
                 'items' => $itemsPayload,
             ]);
@@ -142,11 +142,16 @@ class EndToEndRequisitionWorkflowTest extends TestCase
         $verifyResponse->assertRedirect(route('perencanaan.requisitions.index'));
 
         $requisition->refresh();
-        $this->assertEquals('Diproses_Keuangan', $requisition->status);
+        $this->assertEquals('Disetujui', $requisition->status);
         // Total approved: (10 * 27000) + (4 * 35000) = 270000 + 140000 = 410000
         $this->assertEquals(410000, (float) $requisition->total_approved);
         $this->assertEquals($this->perencanaanUser->id, $requisition->verified_by_perencanaan_id);
         $this->assertNotNull($requisition->verified_perencanaan_at);
+
+        // Check budget deduction immediately upon Perencanaan ACC Final
+        $this->rbaAccount->refresh();
+        $this->assertEquals(410000, (float) $this->rbaAccount->spent_budget);
+        $this->assertEquals(99590000, (float) $this->rbaAccount->remaining_budget);
 
         // 3. PRINT VIEW RENDERS WITH ACCURATE MANUAL ITEM DATA, UNIT, AND VERIFIER INFO
         $printResponse = $this->actingAs($this->divisiUser)
@@ -164,32 +169,7 @@ class EndToEndRequisitionWorkflowTest extends TestCase
             ->where('requisition.requisition_details.1.quantity_approved', 10)
         );
 
-        // Also test print from Keuangan route
-        $keuanganPrintResponse = $this->actingAs($this->keuanganUser)
-            ->get(route('keuangan.requisitions.print', $requisition->id));
-        $keuanganPrintResponse->assertOk();
-
-        // 4. KEUANGAN DISBURSES WITH SP2D NUMBER & DEDUCTS RBA BUDGET
-        $disburseResponse = $this->actingAs($this->keuanganUser)
-            ->put(route('keuangan.requisitions.update', $requisition->id), [
-                'status' => 'Disetujui_Selesai',
-                'rba_account_id' => $this->rbaAccount->id,
-                'sp2d_number' => 'SP2D-BLUD-2026-0089',
-                'receipt_number' => 'KWT-2026-0045',
-                'notes_keuangan' => 'Pencairan dana transfer kas BLUD selesai.',
-            ]);
-
-        $disburseResponse->assertRedirect(route('keuangan.requisitions.index'));
-
-        $requisition->refresh();
-        $this->assertEquals('Disetujui_Selesai', $requisition->status);
-        $this->assertEquals('SP2D-BLUD-2026-0089', $requisition->sp2d_number);
-        $this->assertEquals($this->keuanganUser->id, $requisition->approved_by_keuangan_id);
-        $this->assertNotNull($requisition->approved_keuangan_at);
-
-        // Check budget deduction
-        $this->rbaAccount->refresh();
-        $this->assertEquals(410000, (float) $this->rbaAccount->spent_budget);
-        $this->assertEquals(99590000, (float) $this->rbaAccount->remaining_budget);
+        // Verify Keuangan requisition route is removed (0% dead code)
+        $this->actingAs($this->keuanganUser)->get('/keuangan/requisitions')->assertNotFound();
     }
 }

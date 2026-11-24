@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Requisition extends Model
 {
+    public const STATUS_DRAFT = 'Draft';
+    public const STATUS_PENDING_PERENCANAAN = 'Pending_Perencanaan';
+    public const STATUS_DISETUJUI = 'Disetujui';
+    public const STATUS_DITOLAK = 'Ditolak';
+
     protected $fillable = [
         'requisition_number',
         'nomor_surat_unit',
@@ -36,11 +41,6 @@ class Requisition extends Model
         'notes_perencanaan',
         'verified_by_perencanaan_id',
         'verified_perencanaan_at',
-        'notes_keuangan',
-        'approved_by_keuangan_id',
-        'approved_keuangan_at',
-        'sp2d_number',
-        'receipt_number',
     ];
 
     protected $appends = [
@@ -61,7 +61,12 @@ class Requisition extends Model
 
     public function getApprovedAtAttribute(): ?\DateTimeInterface
     {
-        return $this->approved_keuangan_at;
+        return $this->verified_perencanaan_at;
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->status === self::STATUS_DISETUJUI;
     }
 
     protected function casts(): array
@@ -69,7 +74,6 @@ class Requisition extends Model
         return [
             'submission_date' => 'date',
             'verified_perencanaan_at' => 'datetime',
-            'approved_keuangan_at' => 'datetime',
             'fiscal_year' => 'integer',
             'budget_year' => 'integer',
             'total_estimated' => 'decimal:2',
@@ -116,11 +120,6 @@ class Requisition extends Model
     public function verifiedByPerencanaan(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by_perencanaan_id');
-    }
-
-    public function approvedByKeuangan(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'approved_by_keuangan_id');
     }
 
     public function requisitionDetails(): HasMany

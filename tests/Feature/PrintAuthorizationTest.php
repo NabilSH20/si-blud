@@ -109,10 +109,10 @@ class PrintAuthorizationTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_keuangan_user_can_access_keuangan_requisition_print(): void
+    public function test_keuangan_user_can_access_revenue_monthly_matrix_print(): void
     {
         $response = $this->actingAs($this->keuanganUser)
-            ->get(route('keuangan.requisitions.print', $this->requisition1->id));
+            ->get(route('reports.revenue-monthly-matrix.print'));
 
         $response->assertOk();
     }

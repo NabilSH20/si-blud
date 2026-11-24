@@ -51,14 +51,13 @@ class DashboardController extends Controller
 
         $totalEstimated = (float) (clone $baseQuery)->sum('total_estimated');
         $totalApproved = (float) (clone $baseQuery)
-            ->where('status', 'Disetujui_Selesai')
+            ->where('status', 'Disetujui')
             ->sum('total_approved');
 
         return Inertia::render('Divisi/Dashboard', [
             'total_requests' => (clone $baseQuery)->count(),
             'pending_requests' => (clone $baseQuery)->where('status', 'Pending_Perencanaan')->count(),
-            'in_finance_requests' => (clone $baseQuery)->where('status', 'Diproses_Keuangan')->count(),
-            'approved_requests' => (clone $baseQuery)->where('status', 'Disetujui_Selesai')->count(),
+            'approved_requests' => (clone $baseQuery)->where('status', 'Disetujui')->count(),
             'rejected_requests' => (clone $baseQuery)->where('status', 'Ditolak')->count(),
             'total_estimated' => $totalEstimated,
             'total_approved' => $totalApproved,

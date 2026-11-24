@@ -34,15 +34,10 @@ const getStatusBadge = (status) => {
                 className: 'bg-amber-50 text-amber-800 border-amber-200',
                 dot: 'bg-amber-500',
             };
-        case 'Diproses_Keuangan':
-            return {
-                label: 'Proses Keuangan',
-                className: 'bg-blue-50 text-blue-800 border-blue-200',
-                dot: 'bg-blue-500',
-            };
+        case 'Disetujui':
         case 'Disetujui_Selesai':
             return {
-                label: 'Disetujui Selesai',
+                label: 'Disetujui Perencanaan',
                 className: 'bg-emerald-50 text-emerald-800 border-emerald-200',
                 dot: 'bg-emerald-500',
             };

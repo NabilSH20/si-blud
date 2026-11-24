@@ -96,28 +96,10 @@ class ModalCardIntegrationTest extends TestCase
 
     public function test_keuangan_requisitions_index_supplies_budgets_and_requisitions_for_modal_disbursement(): void
     {
-        $requisition = Requisition::create([
-            'requisition_number' => 'REQ-2027-KEU-01',
-            'division_id' => $this->division->id,
-            'unit_id' => $this->unit->id,
-            'user_id' => $this->keuanganUser->id,
-            'rba_account_id' => $this->rbaAccount->id,
-            'status' => 'Diproses_Keuangan',
-            'submission_date' => now()->toDateString(),
-            'fiscal_year' => 2027,
-            'total_estimated' => 20000000,
-            'jenis_belanja' => 'Operasi',
-        ]);
-
         $response = $this->actingAs($this->keuanganUser)
-            ->get(route('keuangan.requisitions.index'));
+            ->get('/keuangan/requisitions');
 
-        $response->assertOk();
-        $response->assertInertia(fn (Assert $page) => $page
-            ->component('Keuangan/Requisitions/Index')
-            ->has('requisitions', 1)
-            ->has('budgets')
-        );
+        $response->assertNotFound();
     }
 
     public function test_keuangan_budgets_index_is_read_only(): void

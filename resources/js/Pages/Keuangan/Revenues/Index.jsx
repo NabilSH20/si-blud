@@ -1,10 +1,11 @@
 import KeuanganLayout from '@/Layouts/KeuanganLayout';
 import Pagination from '@/Components/Pagination';
 import RevenueFormModal from './Partials/RevenueFormModal';
+import RevenueTargetModal from './Partials/RevenueTargetModal';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState, useEffect } from 'react';
-import { Plus, Wallet, TrendingUp, HandCoins, ReceiptText, Search, Trash2 } from 'lucide-react';
+import { Plus, Wallet, TrendingUp, HandCoins, ReceiptText, Search, Trash2, Target, Table } from 'lucide-react';
 
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -30,6 +31,7 @@ export default function Index({
     categories = ['Semua', 'Jasa Layanan', 'Hasil Kerja Sama', 'APBD', 'Lain-lain BLUD Sah'],
     grouped_sources = null,
     sources = [],
+    targets = [],
     default_date = '',
     active_year = 2026,
     selected_year = null,
@@ -52,6 +54,7 @@ export default function Index({
     const [selectedRevenue, setSelectedRevenue] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -106,7 +109,22 @@ export default function Index({
                     </p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2.5">
+                    <button
+                        type="button"
+                        onClick={() => setIsTargetModalOpen(true)}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-teal-600 bg-white hover:bg-teal-50 active:scale-95 px-3.5 py-2 text-xs font-bold text-teal-700 shadow-2xs transition-all duration-200 cursor-pointer whitespace-nowrap"
+                    >
+                        <Target className="h-4 w-4" strokeWidth={2.2} />
+                        Atur Target Pendapatan
+                    </button>
+                    <Link
+                        href={route('reports.revenue-monthly-matrix')}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition-all duration-200 cursor-pointer whitespace-nowrap"
+                    >
+                        <Table className="h-4 w-4" strokeWidth={2.2} />
+                        Matriks 12 Bulan
+                    </Link>
                     <button
                         type="button"
                         onClick={() => setIsCreateModalOpen(true)}
@@ -329,6 +347,15 @@ export default function Index({
                 grouped_sources={grouped_sources}
                 sources={sources}
                 default_date={default_date}
+            />
+
+            {/* Modal Pengaturan Target Pendapatan Fleksibel */}
+            <RevenueTargetModal
+                show={isTargetModalOpen}
+                onClose={() => setIsTargetModalOpen(false)}
+                fiscal_year={selected_year || active_year}
+                grouped_sources={grouped_sources}
+                existing_targets={targets}
             />
         </KeuanganLayout>
     );

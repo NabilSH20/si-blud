@@ -32,7 +32,6 @@ export default function PrintRequisition({ requisition }) {
 
     const details = requisition.requisition_details || requisition.requisitionDetails || [];
     const verifikatorPerencanaan = requisition.verified_by_perencanaan || requisition.verifiedByPerencanaan;
-    const verifikatorKeuangan = requisition.approved_by_keuangan || requisition.approvedByKeuangan;
 
     const unitName = requisition.unit?.name || 'Instalasi Laboratorium';
     const divisionName = requisition.division?.name || 'Bidang Penunjang Medik & Diklit';
@@ -887,22 +886,18 @@ export default function PrintRequisition({ requisition }) {
                             </div>
                         </div>
 
-                        {/* 3. Bagian Keuangan */}
+                        {/* 3. Mengetahui / Atasan */}
                         <div className="flex flex-col justify-between h-40">
                             <div>
-                                <p className="font-medium">
-                                    {requisition.approved_keuangan_at
-                                        ? `Pekanbaru, ${formatTanggal(requisition.approved_keuangan_at)}`
-                                        : 'Disetujui Pagu Kas Oleh,'}
-                                </p>
-                                <p className="font-bold mt-0.5">Bagian Keuangan RSJ Tampan</p>
+                                <p className="font-medium">Mengetahui,</p>
+                                <p className="font-bold mt-0.5">{signerWadirTitle || 'Wakil Direktur RSJ Tampan'}</p>
                             </div>
                             <div>
                                 <p className="font-bold underline uppercase">
-                                    {verifikatorKeuangan?.name || '( .................................... )'}
+                                    {signerWadirName || '( .................................... )'}
                                 </p>
                                 <p className="text-[11px] text-slate-700">
-                                    NIP. {verifikatorKeuangan?.nip || '....................................'}
+                                    NIP. {signerWadirNip || '....................................'}
                                 </p>
                             </div>
                         </div>

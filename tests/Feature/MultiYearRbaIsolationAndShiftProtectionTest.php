@@ -289,7 +289,7 @@ class MultiYearRbaIsolationAndShiftProtectionTest extends TestCase
             'source' => 'STANDAR',
         ]);
 
-        // Pengajuan 1: Sudah Diproses_Keuangan sebesar Rp 700.000
+        // Pengajuan 1: Sudah Disetujui sebesar Rp 700.000
         Requisition::create([
             'requisition_number' => 'REQ-20261015-0001',
             'division_id' => $this->division->id,
@@ -298,14 +298,15 @@ class MultiYearRbaIsolationAndShiftProtectionTest extends TestCase
             'rba_account_id' => $account->id,
             'fiscal_year' => 2026,
             'budget_year' => 2026,
-            'status' => 'Diproses_Keuangan',
+            'status' => 'Disetujui',
             'total_approved' => 700000,
             'submission_date' => today(),
             'sub_kegiatan' => 'Penyelenggaraan Tata Kelola dan Administrasi BLUD',
         ]);
+        $account->update(['remaining_budget' => 300000, 'spent_budget' => 700000]);
 
         // Pengajuan 2: Baru diajukan (Pending_Perencanaan) dengan usulan 10 rim (Rp 500.000)
-        // Padahal sisa pagu tersedia setelah komitmen Rp 700.000 tinggal Rp 300.000!
+        // Padahal sisa pagu tersedia setelah persetujuan Rp 700.000 tinggal Rp 300.000!
         $req2 = Requisition::create([
             'requisition_number' => 'REQ-20261015-0002',
             'division_id' => $this->division->id,
@@ -333,7 +334,7 @@ class MultiYearRbaIsolationAndShiftProtectionTest extends TestCase
         // Perencanaan mencoba menyetujui 10 rim (total Rp 500.000) -> Harus Ditolak karena pagu tersedia tinggal 300.000
         $failResponse = $this->actingAs($this->perencanaanUser)
             ->put(route('perencanaan.requisitions.update', $req2->id), [
-                'status' => 'Diproses_Keuangan',
+                'status' => 'Disetujui',
                 'notes_perencanaan' => 'Disetujui 10 rim.',
                 'items' => [
                     [
@@ -350,7 +351,7 @@ class MultiYearRbaIsolationAndShiftProtectionTest extends TestCase
         // Perencanaan menyesuaikan volume menjadi 5 rim (Rp 250.000 <= Rp 300.000) -> Harus Berhasil!
         $successResponse = $this->actingAs($this->perencanaanUser)
             ->put(route('perencanaan.requisitions.update', $req2->id), [
-                'status' => 'Diproses_Keuangan',
+                'status' => 'Disetujui',
                 'notes_perencanaan' => 'Disetujui 5 rim sesuai sisa pagu komitmen.',
                 'items' => [
                     [
@@ -362,7 +363,7 @@ class MultiYearRbaIsolationAndShiftProtectionTest extends TestCase
 
         $successResponse->assertSessionHasNoErrors();
         $req2->refresh();
-        $this->assertEquals('Diproses_Keuangan', $req2->status);
+        $this->assertEquals('Disetujui', $req2->status);
         $this->assertEquals(250000, (float) $req2->total_approved);
     }
 
@@ -434,10 +435,10 @@ class MultiYearRbaIsolationAndShiftProtectionTest extends TestCase
 
         $detail = $requisition->requisitionDetails->first();
 
-        // 5. Perencanaan menelaah dan menyetujui pengajuan
+        // 5. Perencanaan menelaah dan menyetujui pengajuan (ACC Final)
         $perencanaanResponse = $this->actingAs($this->perencanaanUser)
             ->put(route('perencanaan.requisitions.update', $requisition->id), [
-                'status' => 'Diproses_Keuangan',
+                'status' => 'Disetujui',
                 'notes_perencanaan' => 'Disetujui 5 unit SSD untuk T.A. 2027.',
                 'items' => [
                     [
@@ -449,30 +450,16 @@ class MultiYearRbaIsolationAndShiftProtectionTest extends TestCase
 
         $perencanaanResponse->assertSessionHasNoErrors();
         $requisition->refresh();
-        $this->assertEquals('Diproses_Keuangan', $requisition->status);
+        $this->assertEquals('Disetujui', $requisition->status);
         $this->assertEquals($account2027->id, $requisition->rba_account_id);
         $this->assertEquals(5000000, (float) $requisition->total_approved);
 
-        // 6. Keuangan mencairkan / menyetujui pengajuan
-        $keuanganResponse = $this->actingAs($this->keuanganUser)
-            ->put(route('keuangan.requisitions.update', $requisition->id), [
-                'status' => 'Disetujui_Selesai',
-                'sp2d_number' => 'SP2D/2027/001',
-                'receipt_number' => 'BND/2027/001',
-                'notes_keuangan' => 'Pencairan dana T.A. 2027 selesai.',
-            ]);
-
-        $keuanganResponse->assertSessionHasNoErrors();
-        $requisition->refresh();
-        $this->assertEquals('Disetujui_Selesai', $requisition->status);
-        $this->assertEquals($account2027->id, $requisition->rba_account_id);
-
-        // 7. Assert: Pagu tahun 2027 terpotong Rp 5.000.000
+        // 6. Assert: Pagu tahun 2027 langsung terpotong Rp 5.000.000 saat disetujui Perencanaan
         $account2027->refresh();
         $this->assertEquals(5000000, (float) $account2027->spent_budget);
         $this->assertEquals(65000000, (float) $account2027->remaining_budget);
 
-        // 8. Assert: Pagu tahun 2026 TETAP UTUH (spent = 0, remaining = 50.000.000)
+        // 7. Assert: Pagu tahun 2026 TETAP UTUH (spent = 0, remaining = 50.000.000)
         $account2026->refresh();
         $this->assertEquals(0, (float) $account2026->spent_budget);
         $this->assertEquals(50000000, (float) $account2026->remaining_budget);
@@ -496,7 +483,7 @@ class MultiYearRbaIsolationAndShiftProtectionTest extends TestCase
             'remaining_budget' => 60000000,
         ]);
 
-        // 2. Ada pengajuan yang sedang Diproses_Keuangan sebesar 30jt
+        // 2. Ada pengajuan yang sudah Disetujui (ACC Final) sebesar 30jt
         Requisition::create([
             'requisition_number' => 'REQ-20261015-0099',
             'division_id' => $this->division->id,
@@ -505,10 +492,14 @@ class MultiYearRbaIsolationAndShiftProtectionTest extends TestCase
             'rba_account_id' => $account->id,
             'fiscal_year' => 2026,
             'budget_year' => 2026,
-            'status' => 'Diproses_Keuangan',
+            'status' => 'Disetujui',
             'total_approved' => 30000000,
             'submission_date' => today(),
             'sub_kegiatan' => 'Penyelenggaraan Tata Kelola dan Administrasi BLUD',
+        ]);
+        $account->update([
+            'spent_budget' => 70000000, // 40jt + 30jt = 70jt
+            'remaining_budget' => 30000000,
         ]);
 
         // Total minimal required = 40jt + 30jt = 70jt.
@@ -572,7 +563,7 @@ class MultiYearRbaIsolationAndShiftProtectionTest extends TestCase
             $this->fail('Expected ValidationException was not thrown on activate() when budget is below spent + committed.');
         } catch (ValidationException $e) {
             $this->assertArrayHasKey('after_total', $e->errors());
-            $this->assertStringContainsString('komitmen pengajuan yang sedang diproses Keuangan', $e->errors()['after_total'][0]);
+            $this->assertStringContainsString('realisasi belanja yang telah disetujui', $e->errors()['after_total'][0]);
         }
 
         // 5. Pergeseran dengan nominal yang mencukupi (misal 75jt >= 70jt) harus BERHASIL
@@ -588,7 +579,7 @@ class MultiYearRbaIsolationAndShiftProtectionTest extends TestCase
         $validResponse->assertSessionHasNoErrors();
         $account->refresh();
         $this->assertEquals(75000000, (float) $account->total_budget);
-        $this->assertEquals(35000000, (float) $account->remaining_budget); // 75jt - 40jt = 35jt
+        $this->assertEquals(5000000, (float) $account->remaining_budget); // 75jt - 70jt = 5jt
     }
 
     /**
@@ -656,7 +647,7 @@ class MultiYearRbaIsolationAndShiftProtectionTest extends TestCase
         // Perencanaan memverifikasi dan mengubah rba_account_id ke Account B
         $response = $this->actingAs($this->perencanaanUser)
             ->put(route('perencanaan.requisitions.update', $req->id), [
-                'status' => 'Diproses_Keuangan',
+                'status' => 'Disetujui',
                 'rba_account_id' => $accountB->id,
                 'notes_perencanaan' => 'Dialihkan pembebanannya ke Rekening B.',
                 'items' => [

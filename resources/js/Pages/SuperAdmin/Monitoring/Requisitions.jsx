@@ -57,34 +57,25 @@ export default function MonitoringRequisitions({
 
     const getStatusBadge = (statusName) => {
         switch (statusName) {
+            case 'Pending_Perencanaan':
             case 'Diajukan':
                 return {
-                    label: 'Diajukan (Menunggu)',
+                    label: 'Menunggu Telaah',
                     bg: 'bg-amber-50 text-amber-800 border-amber-200',
                     dot: 'bg-amber-500',
                 };
+            case 'Disetujui':
+            case 'Disetujui_Selesai':
             case 'Disetujui_Perencanaan':
                 return {
-                    label: 'Verif Perencanaan',
-                    bg: 'bg-indigo-50 text-indigo-800 border-indigo-200',
-                    dot: 'bg-indigo-500',
+                    label: 'Disetujui (ACC Final)',
+                    bg: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+                    dot: 'bg-emerald-500',
                 };
             case 'Ditolak_Perencanaan':
             case 'Ditolak':
                 return {
                     label: 'Ditolak Perencanaan',
-                    bg: 'bg-rose-50 text-rose-700 border-rose-200',
-                    dot: 'bg-rose-500',
-                };
-            case 'Disetujui_Selesai':
-                return {
-                    label: 'SP2D Selesai (Cair)',
-                    bg: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-                    dot: 'bg-emerald-500',
-                };
-            case 'Ditolak_Keuangan':
-                return {
-                    label: 'Ditolak Keuangan',
                     bg: 'bg-rose-50 text-rose-700 border-rose-200',
                     dot: 'bg-rose-500',
                 };
@@ -172,9 +163,8 @@ export default function MonitoringRequisitions({
                                     className="w-full text-xs font-bold rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-8 text-slate-700 focus:border-indigo-500 shadow-2xs cursor-pointer"
                                 >
                                     <option value="ALL">Semua Status</option>
-                                    <option value="Diajukan">Diajukan Unit</option>
-                                    <option value="Disetujui_Perencanaan">Verif Perencanaan</option>
-                                    <option value="Disetujui_Selesai">SP2D Cair (Selesai)</option>
+                                    <option value="Pending_Perencanaan">Menunggu Telaah Perencanaan</option>
+                                    <option value="Disetujui">Disetujui (ACC Final)</option>
                                     <option value="Ditolak">Ditolak</option>
                                 </select>
                             </div>
@@ -258,15 +248,9 @@ export default function MonitoringRequisitions({
                                                 </td>
 
                                                 <td className="px-5 py-4 whitespace-nowrap text-xs">
-                                                    <div className="space-y-1">
-                                                        <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                                                            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                                                            <span>Verif: {req.verified_by_perencanaan?.name || '-'}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                                            <span>SP2D: {req.approved_by_keuangan?.name || '-'}</span>
-                                                        </div>
+                                                    <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                        <span>Verifikator: {req.verified_by_perencanaan?.name || '-'}</span>
                                                     </div>
                                                 </td>
 
@@ -391,12 +375,6 @@ export default function MonitoringRequisitions({
                                     <span className="text-slate-600 font-medium">Verifikator Bag. Perencanaan:</span>
                                     <span className="font-bold text-slate-900">
                                         {selectedReq?.verified_by_perencanaan?.name || 'Belum Diverifikasi'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center text-xs">
-                                    <span className="text-slate-600 font-medium">Pencairan Kas (SP2D Keuangan):</span>
-                                    <span className="font-bold text-slate-900">
-                                        {selectedReq?.approved_by_keuangan?.name || 'Belum Dicairkan'}
                                     </span>
                                 </div>
                             </div>

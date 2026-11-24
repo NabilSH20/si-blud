@@ -44,8 +44,7 @@ class DashboardController extends Controller
 
         $statusData = [
             'pending_perencanaan' => $statusCounts['Pending_Perencanaan'] ?? 0,
-            'diproses_keuangan' => $statusCounts['Diproses_Keuangan'] ?? 0,
-            'disetujui' => $statusCounts['Disetujui_Selesai'] ?? 0,
+            'disetujui' => $statusCounts['Disetujui'] ?? 0,
             'ditolak' => $statusCounts['Ditolak'] ?? 0,
         ];
 
@@ -69,9 +68,9 @@ class DashboardController extends Controller
         $realisasiPendapatan = (float) Revenue::whereYear('date', $activeYear)->sum('amount');
 
         // Serapan Belanja (from Requisition model)
-        // We consider Disetujui_Selesai as absorbed budget.
+        // Usulan yang telah disetujui (Disetujui) oleh Perencanaan
         $serapanBelanja = (float) (clone $baseQuery)
-            ->where('status', 'Disetujui_Selesai')
+            ->where('status', 'Disetujui')
             ->sum(DB::raw('COALESCE(NULLIF(total_approved, 0), total_estimated)'));
 
         $currentInputYear = (int) date('Y');
@@ -91,7 +90,7 @@ class DashboardController extends Controller
         return Inertia::render('Perencanaan/Dashboard', [
             'total_requests' => (clone $baseQuery)->count(),
             'total_to_verify' => $statusData['pending_perencanaan'],
-            'total_verified' => $statusData['diproses_keuangan'] + $statusData['disetujui'],
+            'total_verified' => $statusData['disetujui'],
             'total_items' => Item::count(),
             'pending_requisitions' => $pendingRequisitions,
             'status_data' => $statusData,

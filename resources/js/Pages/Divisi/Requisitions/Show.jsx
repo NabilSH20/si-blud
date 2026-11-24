@@ -23,6 +23,13 @@ const formatTanggal = (dateString) => {
 
 const getStatusBadge = (status) => {
     switch (status) {
+        case 'Draft':
+            return {
+                label: 'Draf Usulan Belanja',
+                desc: 'Pengajuan usulan belanja masih dalam tahap draf penyusunan oleh unit kerja.',
+                bg: 'bg-slate-50 text-slate-800 border-slate-200',
+                dot: 'bg-slate-400',
+            };
         case 'Pending_Perencanaan':
             return {
                 label: 'Menunggu Telaah Perencanaan',
@@ -30,19 +37,13 @@ const getStatusBadge = (status) => {
                 bg: 'bg-amber-50 text-amber-800 border-amber-200',
                 dot: 'bg-amber-500',
             };
-        case 'Diproses_Keuangan':
-            return {
-                label: 'Sedang Diproses Keuangan',
-                desc: 'Usulan telah diverifikasi oleh Tim Perencanaan dan diteruskan ke Bagian Keuangan terkait ketersediaan kas BLUD.',
-                bg: 'bg-blue-50 text-blue-800 border-blue-200',
-                dot: 'bg-blue-500',
-            };
+        case 'Disetujui':
         case 'Disetujui_Selesai':
             return {
-                label: 'Disetujui / Selesai',
-                desc: 'Usulan belanja telah disetujui penuh oleh Bagian Keuangan dan siap direalisasikan belanja/pengadaannya.',
-                bg: 'bg-teal-50 text-teal-800 border-teal-200',
-                dot: 'bg-teal-500',
+                label: 'Disetujui Perencanaan (ACC Final)',
+                desc: 'Usulan belanja telah disahkan oleh Bagian Perencanaan, saldo pagu RBA belanja telah dipotong otomatis, dan siap direalisasikan.',
+                bg: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+                dot: 'bg-emerald-500',
             };
         case 'Ditolak':
             return {
@@ -160,7 +161,7 @@ export default function Show({ requisition }) {
                 </div>
 
                 {/* Banner Berkas Hasil Revisi Unit */}
-                {requisition.status === 'Pending_Perencanaan' && (requisition.notes_perencanaan || requisition.notes_keuangan) && (
+                {requisition.status === 'Pending_Perencanaan' && requisition.notes_perencanaan && (
                     <div className="rounded-2xl border border-teal-300 bg-teal-50/90 p-4 shadow-xs">
                         <div className="flex items-start gap-3">
                             <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white text-xs font-black">
@@ -257,21 +258,13 @@ export default function Show({ requisition }) {
                         </div>
                     )}
 
-                    {/* Notes from Perencanaan / Keuangan if available */}
-                    {(requisition.notes_perencanaan || requisition.notes_keuangan) && (
+                    {/* Notes from Perencanaan if available */}
+                    {requisition.notes_perencanaan && (
                         <div className="mt-4 pt-3 border-t border-slate-100 space-y-2 text-xs">
-                            {requisition.notes_perencanaan && (
-                                <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3">
-                                    <span className="font-bold text-amber-900">Catatan Perencanaan:</span>
-                                    <p className="mt-0.5 text-amber-800">{requisition.notes_perencanaan}</p>
-                                </div>
-                            )}
-                            {requisition.notes_keuangan && (
-                                <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-3">
-                                    <span className="font-bold text-blue-900">Catatan Keuangan:</span>
-                                    <p className="mt-0.5 text-blue-800">{requisition.notes_keuangan}</p>
-                                </div>
-                            )}
+                            <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+                                <span className="font-bold text-amber-900">Catatan Perencanaan:</span>
+                                <p className="mt-0.5 text-amber-800">{requisition.notes_perencanaan}</p>
+                            </div>
                         </div>
                     )}
                 </div>

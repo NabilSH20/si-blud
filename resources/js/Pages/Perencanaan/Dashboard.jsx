@@ -84,8 +84,7 @@ export default function Dashboard({
 
     const pieData = [
         { name: 'Menunggu Telaah', value: status_data.pending_perencanaan || 0, color: PIE_COLORS[3] }, // Amber
-        { name: 'Diproses Keuangan', value: status_data.diproses_keuangan || 0, color: PIE_COLORS[0] }, // Blue/Sky
-        { name: 'Disetujui', value: status_data.disetujui || 0, color: PIE_COLORS[2] }, // Emerald
+        { name: 'Disetujui (ACC Final)', value: status_data.disetujui || 0, color: PIE_COLORS[2] }, // Emerald
         { name: 'Ditolak', value: status_data.ditolak || 0, color: PIE_COLORS[1] }, // Rose
     ].filter(item => item.value > 0);
 

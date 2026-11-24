@@ -29,23 +29,18 @@ const getStatusBadge = (status) => {
         case 'Pending_Perencanaan':
             return {
                 label: 'Menunggu Telaah Perencanaan',
-                desc: 'Pengajuan ini memerlukan pemeriksaan spesifikasi barang dan penyesuaian kuantitas yang disetujui sebelum diteruskan ke Bagian Keuangan.',
+                desc: 'Pengajuan ini memerlukan pemeriksaan spesifikasi barang, kesesuaian SSH, dan ketersediaan pagu rekening belanja RBA.',
                 bg: 'bg-amber-50 text-amber-900 border-amber-200',
                 dot: 'bg-amber-500',
             };
+        case 'Disetujui':
+        case 'Disetujui_Selesai':
         case 'Diproses_Keuangan':
             return {
-                label: 'Diteruskan ke Keuangan',
-                desc: 'Pengajuan telah diverifikasi oleh tim Perencanaan dan saat ini sedang ditelaah pagu anggarannya oleh Bagian Keuangan.',
-                bg: 'bg-blue-50 text-blue-900 border-blue-200',
-                dot: 'bg-blue-500',
-            };
-        case 'Disetujui_Selesai':
-            return {
-                label: 'Disetujui Selesai',
-                desc: 'Pengajuan telah disetujui penuh dan anggaran telah dialokasikan.',
-                bg: 'bg-teal-50 text-teal-900 border-teal-200',
-                dot: 'bg-teal-600',
+                label: 'Disetujui (ACC Final)',
+                desc: 'Pengajuan telah disahkan oleh Bagian Perencanaan, memotong pagu rekening belanja RBA, dan sah direalisasikan.',
+                bg: 'bg-emerald-50 text-emerald-900 border-emerald-200',
+                dot: 'bg-emerald-600',
             };
         case 'Ditolak':
             return {
@@ -82,7 +77,7 @@ export default function Show({ requisition, rbaList = [] }) {
 
     // Initialize form state
     const { data, setData, put, processing, errors } = useForm({
-        status: 'Diproses_Keuangan',
+        status: 'Disetujui',
         rba_account_id: requisition.rba_account_id || '',
         notes_perencanaan: requisition.notes_perencanaan || '',
         items: details.map((d) => ({
@@ -192,7 +187,7 @@ export default function Show({ requisition, rbaList = [] }) {
         put(
             route('perencanaan.requisitions.update', requisition.id),
             {
-                status: 'Diproses_Keuangan',
+                status: 'Disetujui',
                 notes_perencanaan: data.notes_perencanaan,
                 items: data.items,
                 rba_account_id: data.rba_account_id || null,
@@ -204,7 +199,7 @@ export default function Show({ requisition, rbaList = [] }) {
                         toast: true,
                         position: 'top-end',
                         icon: 'success',
-                        title: 'Usulan belanja disetujui & diteruskan ke Keuangan',
+                        title: 'Usulan belanja berhasil disetujui (ACC Final)',
                         showConfirmButton: false,
                         timer: 2500,
                         timerProgressBar: true,
@@ -682,7 +677,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                         rows={3}
                                         value={data.notes_perencanaan}
                                         onChange={(e) => setData('notes_perencanaan', e.target.value)}
-                                        placeholder="Tuliskan catatan arahan teknis untuk Bagian Keuangan atau unit kerja pengusul..."
+                                        placeholder="Tuliskan catatan arahan teknis atau justifikasi persetujuan..."
                                         className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-teal-500 focus:ring-teal-500 focus:outline-none transition shadow-sm"
                                     />
                                 ) : (
@@ -763,7 +758,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                                                 </svg>
-                                                <span>Setujui & Teruskan ke Keuangan</span>
+                                                <span>Setujui & Sahkan Pengajuan (ACC Final)</span>
                                             </>
                                         )}
                                     </button>

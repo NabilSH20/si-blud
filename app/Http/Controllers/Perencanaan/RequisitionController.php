@@ -33,7 +33,7 @@ class RequisitionController extends Controller
             ? $request->budget_year
             : ($request->filled('fiscal_year') ? $request->fiscal_year : $activeYear);
 
-        $query = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])
+        $query = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan'])
             ->where(function ($q) use ($selectedYear, $request) {
                 if ($request->filled('budget_year')) {
                     $q->where('budget_year', (int) $request->budget_year)
@@ -71,7 +71,7 @@ class RequisitionController extends Controller
      */
     public function show(string $id): Response
     {
-        $requisition = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan', 'approvedByKeuangan'])
+        $requisition = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan'])
             ->findOrFail($id);
 
         $year = (int) ($requisition->budget_year ?? $requisition->fiscal_year ?? session('active_year', date('Y')));
@@ -93,21 +93,8 @@ class RequisitionController extends Controller
             $rbaList = RbaAccount::orderBy('account_code')->get();
         }
 
-        // Hitung komitmen pagu yang sedang diproses di Keuangan (status 'Diproses_Keuangan')
-        $committedByAccount = Requisition::where('status', 'Diproses_Keuangan')
-            ->where(function ($q) use ($year) {
-                $q->where('budget_year', $year)->orWhere('fiscal_year', $year);
-            })
-            ->whereNotNull('rba_account_id')
-            ->selectRaw('rba_account_id, sum(total_approved) as total_committed')
-            ->groupBy('rba_account_id')
-            ->pluck('total_committed', 'rba_account_id')
-            ->toArray();
-
-        $rbaList->transform(function ($acc) use ($committedByAccount) {
-            $committed = (float) ($committedByAccount[$acc->id] ?? 0);
-            $acc->committed_budget = $committed;
-            $acc->available_budget = max(0, (float) $acc->remaining_budget - $committed);
+        $rbaList->transform(function ($acc) {
+            $acc->available_budget = (float) $acc->remaining_budget;
 
             return $acc;
         });
@@ -128,7 +115,7 @@ class RequisitionController extends Controller
         $requisition = Requisition::with(['requisitionDetails.item'])->findOrFail($id);
 
         $validated = $request->validate([
-            'status' => ['required', 'string', 'in:Diproses_Keuangan,Ditolak'],
+            'status' => ['required', 'string', 'in:Disetujui,Ditolak'],
             'rba_account_id' => ['nullable', 'exists:rba_accounts,id'],
             'notes_perencanaan' => ['nullable', 'string', 'max:500'],
             'items' => ['required', 'array', 'min:1'],
@@ -144,7 +131,7 @@ class RequisitionController extends Controller
             }],
         ], [
             'status.required' => 'Status verifikasi wajib dipilih.',
-            'status.in' => 'Status verifikasi harus berupa persetujuan atau penolakan.',
+            'status.in' => 'Status verifikasi harus berupa Disetujui atau Ditolak.',
             'items.required' => 'Rincian barang wajib disertakan.',
             'items.*.quantity_approved.required' => 'Jumlah yang disetujui wajib diisi.',
             'items.*.quantity_approved.min' => 'Jumlah yang disetujui minimal 0.',
@@ -157,13 +144,12 @@ class RequisitionController extends Controller
         $resolvedAccount = RbaAccount::resolveForYear($chosenAccountId, $reqYear);
         $targetAccountId = $resolvedAccount?->id;
 
-        if ($validated['status'] === 'Diproses_Keuangan') {
+        if ($validated['status'] === 'Disetujui') {
             $exceedsSSH = false;
             $calculatedTotalApproved = 0;
 
             foreach ($validated['items'] as $itemData) {
                 $detail = clone $requisition->requisitionDetails->firstWhere('id', $itemData['id']);
-                // Load item if not loaded
                 if ($detail && ! $detail->relationLoaded('item')) {
                     $detail->load('item');
                 }
@@ -183,23 +169,15 @@ class RequisitionController extends Controller
                 ]);
             }
 
-            // Task 3: Pengecekan Komitmen Pagu (Pagu Terikat / Diproses_Keuangan)
+            // Pengecekan Ketersediaan Pagu Rekening RBA Belanja
             if ($resolvedAccount) {
-                $committedBudget = (float) Requisition::where('rba_account_id', $resolvedAccount->id)
-                    ->where('status', 'Diproses_Keuangan')
-                    ->where('id', '!=', $requisition->id)
-                    ->sum('total_approved');
-
-                $availableBudget = (float) $resolvedAccount->remaining_budget - $committedBudget;
+                $availableBudget = (float) $resolvedAccount->remaining_budget;
 
                 if ((float) $calculatedTotalApproved > $availableBudget) {
                     $formattedAvailable = 'Rp '.number_format(max(0, $availableBudget), 0, ',', '.');
                     $formattedTotal = 'Rp '.number_format($calculatedTotalApproved, 0, ',', '.');
-                    $formattedRemaining = 'Rp '.number_format($resolvedAccount->remaining_budget, 0, ',', '.');
-                    $formattedCommitted = 'Rp '.number_format($committedBudget, 0, ',', '.');
-
                     throw ValidationException::withMessages([
-                        'rba_account_id' => "Sisa pagu anggaran tersedia pada rekening [{$resolvedAccount->account_code} - {$resolvedAccount->account_name}] ({$formattedAvailable}) tidak mencukupi untuk menyetujui pengajuan sebesar {$formattedTotal}. Sisa pagu buku: {$formattedRemaining}, komitmen pengajuan lain: {$formattedCommitted}.",
+                        'rba_account_id' => "Sisa pagu anggaran pada rekening [{$resolvedAccount->account_code} - {$resolvedAccount->account_name}] ({$formattedAvailable}) tidak mencukupi untuk menyetujui pengajuan sebesar {$formattedTotal}. Silakan lakukan penyesuaian melalui RBA Pergeseran.",
                     ]);
                 }
             }
@@ -208,7 +186,7 @@ class RequisitionController extends Controller
         DB::transaction(function () use ($requisition, $validated, $targetAccountId, $resolvedAccount) {
             $totalApproved = 0;
 
-            // Update quantity_approved for each requisition detail
+            // Update quantity_approved untuk tiap rincian usulan
             foreach ($validated['items'] as $itemData) {
                 $detail = RequisitionDetail::where('id', $itemData['id'])
                     ->where('requisition_id', $requisition->id)
@@ -233,10 +211,10 @@ class RequisitionController extends Controller
                 }
             }
 
-            // Update requisition status, verifier audit, total approved, and target rba_account_id
+            // Update status usulan menjadi Disetujui (ACC Final) atau Ditolak
             $updateData = [
                 'status' => $validated['status'],
-                'total_approved' => $validated['status'] === 'Diproses_Keuangan' ? $totalApproved : 0,
+                'total_approved' => $validated['status'] === 'Disetujui' ? $totalApproved : 0,
                 'notes_perencanaan' => $validated['notes_perencanaan'] ?? null,
                 'verified_by_perencanaan_id' => Auth::id(),
                 'verified_perencanaan_at' => now(),
@@ -250,10 +228,17 @@ class RequisitionController extends Controller
             }
 
             $requisition->update($updateData);
+
+            // Jika Disetujui, langsung mutasikan sisa pagu rekening belanja RBA
+            if ($validated['status'] === 'Disetujui' && $resolvedAccount && $totalApproved > 0) {
+                $resolvedAccount->remaining_budget = max(0, (float) $resolvedAccount->remaining_budget - (float) $totalApproved);
+                $resolvedAccount->spent_budget = (float) $resolvedAccount->spent_budget + (float) $totalApproved;
+                $resolvedAccount->save();
+            }
         });
 
-        $message = $validated['status'] === 'Diproses_Keuangan'
-            ? "Pengajuan {$requisition->requisition_number} berhasil disetujui dan diteruskan ke Bagian Keuangan."
+        $message = $validated['status'] === 'Disetujui'
+            ? "Pengajuan {$requisition->requisition_number} berhasil disetujui (ACC Final) dan memotong pagu RBA belanja."
             : "Pengajuan {$requisition->requisition_number} telah ditolak.";
 
         return redirect()->route('perencanaan.requisitions.index')
@@ -272,7 +257,6 @@ class RequisitionController extends Controller
             'requisitionDetails.item',
             'rbaAccount',
             'verifiedByPerencanaan',
-            'approvedByKeuangan',
         ])->findOrFail($id);
 
         return Inertia::render('Shared/PrintRequisition', [

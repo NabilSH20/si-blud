@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\FiscalYear;
 use App\Models\RbaShift;
 use App\Models\Revenue;
+use App\Models\RevenueTarget;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -39,17 +40,15 @@ class RevenueController extends Controller
             'Pendapatan Pelayanan Rekam Medik',
             'Pendapatan Pelayanan Ambulance/Kereta Jenazah',
         ],
-        '3. HASIL KERJA SAMA' => [
+        '2. HASIL KERJA SAMA' => [
             'Hasil Kerjasama Diklat',
             'Pendapatan Hasil Kerja Sama Fasilitas ( Parkir )',
             'Hasil Kerjasama Penggunaan Fasilitas RSJ Tampan',
         ],
-        '4. ANGGARAN PENDAPATAN BELANJA DAERAH' => [
-            'APBD',
-        ],
-        '5. LAIN-LAIN PENDAPATAN BADAN LAYANAN UMUM DAERAH YANG SAH' => [
+        '3. LAIN-LAIN PENDAPATAN BADAN LAYANAN UMUM DAERAH YANG SAH' => [
             'Jasa Giro',
             'Pendapatan Bunga',
+            'Pendapatan Lain-Lain BLUD',
         ],
     ];
 
@@ -116,32 +115,33 @@ class RevenueController extends Controller
 
         $jasaLayanan = (float) $revenues->where('category', 'Jasa Layanan')->sum('amount');
         $hasilKerjasama = (float) $revenues->where('category', 'Hasil Kerja Sama')->sum('amount');
-        $apbd = (float) $revenues->where('category', 'APBD')->sum('amount');
         $lainLainSah = (float) $revenues->where('category', 'Lain-lain BLUD Sah')->sum('amount');
 
-        // Hubungkan dengan Target Pendapatan RBA Aktif untuk tahun yang bersangkutan
-        $activeShift = RbaShift::where('year', $selectedYear)
-            ->where('status', 'Aktif')
-            ->first();
+        // Hubungkan dengan Target Pendapatan (RevenueTarget) untuk tahun fiskal aktif
+        $dbTargets = RevenueTarget::where('fiscal_year', $selectedYear)->get()->keyBy('source_name');
 
-        $targetTotal = 0;
-        $targetJasaLayanan = 0;
-        $targetHasilKerjasama = 0;
-        $targetApbd = 0;
-        $targetLainLainSah = 0;
+        $targetTotal = (float) $dbTargets->sum('target_yearly');
+        $targetJasaLayanan = (float) $dbTargets->where('category', 'Jasa Layanan')->sum('target_yearly');
+        $targetHasilKerjasama = (float) $dbTargets->where('category', 'Hasil Kerja Sama')->sum('target_yearly');
+        $targetLainLainSah = (float) $dbTargets->where('category', 'Lain-lain BLUD Sah')->sum('target_yearly');
 
-        if ($activeShift) {
-            $rootRev = $activeShift->revenueItems()->where('item_code', '0')->first();
-            $cat1 = $activeShift->revenueItems()->where('item_code', '1')->first();
-            $cat3 = $activeShift->revenueItems()->where('item_code', '3')->first();
-            $cat4 = $activeShift->revenueItems()->where('item_code', '4')->first();
-            $cat5 = $activeShift->revenueItems()->where('item_code', '5')->first();
+        // Fallback ke RbaShift jika belum ada target di RevenueTarget
+        if ($targetTotal == 0) {
+            $activeShift = RbaShift::where('year', $selectedYear)
+                ->where('status', 'Aktif')
+                ->first();
 
-            $targetTotal = $rootRev ? (float) $rootRev->after_amount : (float) $activeShift->revenueItems()->where('is_header', false)->sum('after_amount');
-            $targetJasaLayanan = $cat1 ? (float) $cat1->after_amount : 0;
-            $targetHasilKerjasama = $cat3 ? (float) $cat3->after_amount : 0;
-            $targetApbd = $cat4 ? (float) $cat4->after_amount : 0;
-            $targetLainLainSah = $cat5 ? (float) $cat5->after_amount : 0;
+            if ($activeShift) {
+                $rootRev = $activeShift->revenueItems()->where('item_code', '0')->first();
+                $cat1 = $activeShift->revenueItems()->where('item_code', '1')->first();
+                $cat3 = $activeShift->revenueItems()->where('item_code', '3')->first();
+                $cat5 = $activeShift->revenueItems()->where('item_code', '5')->first();
+
+                $targetTotal = $rootRev ? (float) $rootRev->after_amount : (float) $activeShift->revenueItems()->where('is_header', false)->sum('after_amount');
+                $targetJasaLayanan = $cat1 ? (float) $cat1->after_amount : 0;
+                $targetHasilKerjasama = $cat3 ? (float) $cat3->after_amount : 0;
+                $targetLainLainSah = $cat5 ? (float) $cat5->after_amount : 0;
+            }
         }
 
         $achievementRate = $targetTotal > 0 ? round(($totalRevenue / $targetTotal) * 100, 2) : 0;
@@ -162,25 +162,90 @@ class RevenueController extends Controller
                 'total_transactions' => $revenues->count(),
                 'jasa_layanan' => $jasaLayanan,
                 'hasil_kerjasama' => $hasilKerjasama,
-                'apbd' => $apbd,
                 'lain_lain_sah' => $lainLainSah,
                 'target_rba' => $targetTotal,
                 'achievement_rate' => $achievementRate,
                 'target_jasa_layanan' => $targetJasaLayanan,
                 'target_hasil_kerjasama' => $targetHasilKerjasama,
-                'target_apbd' => $targetApbd,
                 'target_lain_lain_sah' => $targetLainLainSah,
                 'current_input_year' => $currentInputYear,
                 'ongoing_year_realized' => $ongoingYearRealized,
                 'is_future_planning' => $isFuturePlanning,
             ],
-            'categories' => ['Semua', 'Jasa Layanan', 'Hasil Kerja Sama', 'APBD', 'Lain-lain BLUD Sah'],
+            'categories' => ['Semua', 'Jasa Layanan', 'Hasil Kerja Sama', 'Lain-lain BLUD Sah'],
             'grouped_sources' => $this->groupedSources,
             'sources' => $this->getFlatSources(),
+            'targets' => $dbTargets->values(),
             'default_date' => $defaultDate,
             'active_year' => $activeYear,
             'selected_year' => $selectedYear,
         ]);
+    }
+
+    /**
+     * Store or update revenue targets for a fiscal year.
+     */
+    public function storeTarget(Request $request): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        abort_unless($user && in_array($user->role, ['keuangan', 'perencanaan', 'super_admin']), 403, 'Akses ditolak.');
+
+        $validated = $request->validate([
+            'fiscal_year' => ['required', 'integer', 'min:2020', 'max:2099'],
+            'targets' => ['required', 'array'],
+            'targets.*.source_name' => ['required', 'string', 'max:255'],
+            'targets.*.category' => ['nullable', 'string', 'max:100'],
+            'targets.*.target_yearly' => ['nullable', 'numeric', 'min:0'],
+            'targets.*.target_weekly' => ['nullable', 'numeric', 'min:0'],
+            'targets.*.target_jan' => ['nullable', 'numeric', 'min:0'],
+            'targets.*.target_feb' => ['nullable', 'numeric', 'min:0'],
+            'targets.*.target_mar' => ['nullable', 'numeric', 'min:0'],
+            'targets.*.target_apr' => ['nullable', 'numeric', 'min:0'],
+            'targets.*.target_mei' => ['nullable', 'numeric', 'min:0'],
+            'targets.*.target_jun' => ['nullable', 'numeric', 'min:0'],
+            'targets.*.target_jul' => ['nullable', 'numeric', 'min:0'],
+            'targets.*.target_agu' => ['nullable', 'numeric', 'min:0'],
+            'targets.*.target_sep' => ['nullable', 'numeric', 'min:0'],
+            'targets.*.target_okt' => ['nullable', 'numeric', 'min:0'],
+            'targets.*.target_nov' => ['nullable', 'numeric', 'min:0'],
+            'targets.*.target_des' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            foreach ($validated['targets'] as $item) {
+                $sourceName = $item['source_name'];
+                $category = $item['category'] ?? self::resolveCategory($sourceName);
+                $targetYearly = isset($item['target_yearly']) ? (float) $item['target_yearly'] : 0;
+                $targetWeekly = isset($item['target_weekly']) ? (float) $item['target_weekly'] : ($targetYearly / 52);
+
+                RevenueTarget::updateOrCreate(
+                    [
+                        'fiscal_year' => $validated['fiscal_year'],
+                        'source_name' => $sourceName,
+                    ],
+                    [
+                        'category' => $category,
+                        'target_yearly' => $targetYearly,
+                        'target_weekly' => $targetWeekly,
+                        'target_jan' => (float) ($item['target_jan'] ?? ($targetYearly / 12)),
+                        'target_feb' => (float) ($item['target_feb'] ?? ($targetYearly / 12)),
+                        'target_mar' => (float) ($item['target_mar'] ?? ($targetYearly / 12)),
+                        'target_apr' => (float) ($item['target_apr'] ?? ($targetYearly / 12)),
+                        'target_mei' => (float) ($item['target_mei'] ?? ($targetYearly / 12)),
+                        'target_jun' => (float) ($item['target_jun'] ?? ($targetYearly / 12)),
+                        'target_jul' => (float) ($item['target_jul'] ?? ($targetYearly / 12)),
+                        'target_agu' => (float) ($item['target_agu'] ?? ($targetYearly / 12)),
+                        'target_sep' => (float) ($item['target_sep'] ?? ($targetYearly / 12)),
+                        'target_okt' => (float) ($item['target_okt'] ?? ($targetYearly / 12)),
+                        'target_nov' => (float) ($item['target_nov'] ?? ($targetYearly / 12)),
+                        'target_des' => (float) ($item['target_des'] ?? ($targetYearly / 12)),
+                    ]
+                );
+            }
+        });
+
+        return redirect()->back()->with('success', 'Target pendapatan BLUD berhasil diperbarui.');
     }
 
     /**

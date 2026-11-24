@@ -14,15 +14,13 @@ export default function AuditTrailTimeline({ requisition }) {
     if (!requisition) return null;
 
     const verifikatorPerencanaan = requisition.verified_by_perencanaan || requisition.verifiedByPerencanaan;
-    const verifikatorKeuangan = requisition.approved_by_keuangan || requisition.approvedByKeuangan;
 
-    const isPerencanaanPassed =
-        requisition.status === 'Diproses_Keuangan' || requisition.status === 'Disetujui_Selesai';
-    const isKeuanganDone = requisition.status === 'Disetujui_Selesai';
+    const isApproved =
+        requisition.status === 'Disetujui' || requisition.status === 'Disetujui_Selesai';
     const isRejected = requisition.status === 'Ditolak';
+    const isPending = requisition.status === 'Pending_Perencanaan';
     const isRevision =
-        requisition.status === 'Pending_Perencanaan' &&
-        Boolean(requisition.notes_perencanaan || requisition.notes_keuangan);
+        isPending && Boolean(requisition.notes_perencanaan);
 
     return (
         <div className="overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-md shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-900/10 transition-all duration-200">
@@ -35,7 +33,7 @@ export default function AuditTrailTimeline({ requisition }) {
                         </svg>
                     </span>
                     <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
-                        Jejak Audit & Riwayat Persetujuan (Audit Trail)
+                        Jejak Audit & Riwayat Persetujuan Usulan Belanja
                     </h3>
                 </div>
                 <div className="flex items-center gap-2">
@@ -53,7 +51,7 @@ export default function AuditTrailTimeline({ requisition }) {
             {/* Timeline Body */}
             <div className="p-6">
                 <div className="relative pl-6 border-l-2 border-emerald-200/80 space-y-8 ml-3">
-                    {/* Stage 1: Pengajuan oleh Divisi */}
+                    {/* Stage 1: Pengajuan oleh Unit Kerja */}
                     <div className="relative">
                         {/* Dot */}
                         <div className="absolute -left-[31px] top-0 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm ring-4 ring-white">
@@ -78,10 +76,10 @@ export default function AuditTrailTimeline({ requisition }) {
                         </div>
                     </div>
 
-                    {/* Stage 2: Verifikasi Perencanaan */}
+                    {/* Stage 2: Telaah & Pengesahan Final Perencanaan */}
                     <div className="relative">
                         {/* Dot */}
-                        {isPerencanaanPassed ? (
+                        {isApproved ? (
                             <div className="absolute -left-[31px] top-0 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm ring-4 ring-white">
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -102,42 +100,42 @@ export default function AuditTrailTimeline({ requisition }) {
                         <div>
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                                 <h4 className="text-sm font-black text-slate-900">
-                                    Tahap 2: Verifikasi oleh Bagian Perencanaan & Pengadaan
+                                    Tahap 2: Telaah SSH & Persetujuan Final oleh Bagian Perencanaan
                                 </h4>
-                                {(requisition.verified_perencanaan_at || (isPerencanaanPassed && requisition.updated_at)) && (
+                                {(requisition.verified_perencanaan_at || (isApproved && requisition.updated_at)) && (
                                     <span className="text-xs font-semibold text-slate-500">
                                         {formatTanggalWaktu(requisition.verified_perencanaan_at || requisition.updated_at)}
                                     </span>
                                 )}
                             </div>
                             <p className="mt-1 text-xs text-slate-600">
-                                {isPerencanaanPassed
-                                    ? 'Kuantitas disetujui telah diverifikasi dan spesifikasi barang sesuai standar katalog acuan rumah sakit. Dokumen diteruskan ke Bagian Keuangan.'
+                                {isApproved
+                                    ? 'Kuantitas disetujui telah diverifikasi dan disahkan final oleh Bagian Perencanaan. Saldo pagu rekening belanja RBA BLUD telah dipotong secara otomatis.'
                                     : isRejected
-                                    ? 'Pengajuan ditolak oleh Tim Penelaah karena ketidaksesuaian spesifikasi atau anggaran.'
+                                    ? 'Pengajuan usulan belanja ditolak oleh Tim Perencanaan karena ketidaksesuaian spesifikasi atau pagu anggaran.'
                                     : isRevision
                                     ? 'Pengajuan usulan telah diperbaiki & diajukan ulang oleh Unit pengusul. Saat ini menunggu penelaahan ulang oleh Tim Perencanaan.'
-                                    : 'Sedang dalam penelaahan kuantitas barang dan spesifikasi kebutuhan instalasi.'}
+                                    : 'Sedang dalam penelaahan kuantitas barang, kesesuaian SSH, dan ketersediaan pagu RBA belanja.'}
                             </p>
-                            {isRevision && (requisition.notes_perencanaan || requisition.notes_keuangan) && (
+                            {isRevision && requisition.notes_perencanaan && (
                                 <div className="mt-2.5 rounded-lg bg-amber-50 border border-amber-200/90 p-2.5 text-xs text-amber-900">
                                     <div className="flex items-center gap-1.5 font-bold">
                                         <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-white text-[10px]">!</span>
                                         <span>Catatan Evaluasi / Arahan Revisi Sebelumnya:</span>
                                     </div>
                                     <p className="mt-1 pl-5.5 italic text-slate-700">
-                                        "{requisition.notes_perencanaan || requisition.notes_keuangan}"
+                                        "{requisition.notes_perencanaan}"
                                     </p>
                                 </div>
                             )}
-                            {isRejected && (requisition.notes_perencanaan || requisition.notes_keuangan) && (
+                            {isRejected && requisition.notes_perencanaan && (
                                 <div className="mt-2.5 rounded-lg bg-rose-50 border border-rose-200 p-2.5 text-xs text-rose-900">
                                     <div className="flex items-center gap-1.5 font-bold">
                                         <span className="flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-white text-[10px]">✕</span>
                                         <span>Alasan Penolakan:</span>
                                     </div>
                                     <p className="mt-1 pl-5.5 italic text-slate-700">
-                                        "{requisition.notes_perencanaan || requisition.notes_keuangan}"
+                                        "{requisition.notes_perencanaan}"
                                     </p>
                                 </div>
                             )}
@@ -146,7 +144,7 @@ export default function AuditTrailTimeline({ requisition }) {
                                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-[10px] font-bold">✓</span>
                                     <div>
                                         <p className="font-semibold">
-                                            Diverifikasi oleh: <strong>{verifikatorPerencanaan.name}</strong>
+                                            Diverifikasi & Disahkan oleh: <strong>{verifikatorPerencanaan.name}</strong>
                                             {verifikatorPerencanaan.nip && <span className="text-slate-600 font-normal"> (NIP: {verifikatorPerencanaan.nip})</span>}
                                         </p>
                                         {verifikatorPerencanaan.position && (
@@ -159,83 +157,8 @@ export default function AuditTrailTimeline({ requisition }) {
                             )}
                         </div>
                     </div>
-
-                    {/* Stage 3: Validasi & Pembebanan Anggaran Keuangan */}
-                    <div className="relative">
-                        {/* Dot */}
-                        {isKeuanganDone ? (
-                            <div className="absolute -left-[31px] top-0 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm ring-4 ring-white">
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                </svg>
-                            </div>
-                        ) : isRejected ? (
-                            <div className="absolute -left-[31px] top-0 flex h-7 w-7 items-center justify-center rounded-full bg-slate-300 text-slate-600 ring-4 ring-white">
-                                <span className="text-xs font-bold">-</span>
-                            </div>
-                        ) : requisition.status === 'Diproses_Keuangan' ? (
-                            <div className="absolute -left-[31px] top-0 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm ring-4 ring-white animate-pulse">
-                                <span className="h-2 w-2 rounded-full bg-white" />
-                            </div>
-                        ) : (
-                            <div className="absolute -left-[31px] top-0 flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-slate-400 ring-4 ring-white">
-                                <span className="text-xs font-bold">3</span>
-                            </div>
-                        )}
-
-                        <div>
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                                <h4 className="text-sm font-black text-slate-900">
-                                    Tahap 3: Pembebanan Anggaran oleh Bagian Keuangan
-                                </h4>
-                                {(requisition.approved_keuangan_at || (isKeuanganDone && requisition.updated_at)) && (
-                                    <span className="text-xs font-semibold text-slate-500">
-                                        {formatTanggalWaktu(requisition.approved_keuangan_at || requisition.updated_at)}
-                                    </span>
-                                )}
-                            </div>
-                            <p className="mt-1 text-xs text-slate-600">
-                                {isKeuanganDone
-                                    ? `Anggaran telah resmi disetujui dan saldo rekening pagu anggaran DPA telah dipotong. ${
-                                          requisition.budget
-                                              ? `(Kode Rekening: ${requisition.budget.account_code} - ${requisition.budget.account_name})`
-                                              : ''
-                                      }`
-                                    : requisition.status === 'Diproses_Keuangan'
-                                    ? 'Sedang menunggu pemilihan kode rekening belanja dan otorisasi pembebanan anggaran oleh staf Keuangan.'
-                                    : isRejected
-                                    ? 'Tahap pembebanan anggaran dibatalkan karena pengajuan berstatus ditolak.'
-                                    : 'Menunggu penyelesaian verifikasi dari Bagian Perencanaan terlebih dahulu.'}
-                            </p>
-                            {verifikatorKeuangan && isKeuanganDone && (
-                                <div className="mt-2.5 rounded-lg bg-emerald-50 border border-emerald-200/80 p-2.5 text-xs text-emerald-900 flex items-center gap-2">
-                                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-[10px] font-bold">✓</span>
-                                    <div>
-                                        <p className="font-semibold">
-                                            Disetujui & SP2D diterbitkan oleh: <strong>{verifikatorKeuangan.name}</strong>
-                                            {verifikatorKeuangan.nip && <span className="text-slate-600 font-normal"> (NIP: {verifikatorKeuangan.nip})</span>}
-                                        </p>
-                                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600 mt-0.5">
-                                            {verifikatorKeuangan.position && <span className="italic">{verifikatorKeuangan.position}</span>}
-                                            {requisition.sp2d_number && (
-                                                <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-emerald-200 font-bold text-emerald-800">
-                                                    SP2D: {requisition.sp2d_number}
-                                                </span>
-                                            )}
-                                            {requisition.receipt_number && (
-                                                <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-emerald-200 font-bold text-slate-700">
-                                                    Kuitansi: {requisition.receipt_number}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
     );
 }
-

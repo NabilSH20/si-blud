@@ -197,16 +197,6 @@ class MultiYearRevenueAndRbaShiftEquilibriumTest extends TestCase
                 ->has('requisitions', 1)
                 ->where('requisitions.0.id', $reqA->id)
             );
-
-        // 3. Filter Keuangan dengan budget_year=2028 harus hanya mengembalikan reqA
-        $this->actingAs($this->keuanganUser)
-            ->get(route('keuangan.requisitions.index', ['budget_year' => 2028]))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Keuangan/Requisitions/Index')
-                ->has('requisitions', 1)
-                ->where('requisitions.0.id', $reqA->id)
-            );
     }
 
     public function test_keuangan_revenue_synchronizes_with_rba_shift_and_computes_achievement_and_baseline(): void

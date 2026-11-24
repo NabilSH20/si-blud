@@ -76,19 +76,13 @@ class RbaShift extends Model
                     ->first();
 
                 if ($account) {
-                    $committedBudget = (float) Requisition::where('rba_account_id', $account->id)
-                        ->where('status', 'Diproses_Keuangan')
-                        ->sum('total_approved');
-
-                    $minRequired = (float) $account->spent_budget + $committedBudget;
+                    $minRequired = (float) $account->spent_budget;
 
                     if ((float) $item->after_total < $minRequired) {
                         $formattedSpent = 'Rp '.number_format($account->spent_budget, 0, ',', '.');
-                        $formattedCommitted = 'Rp '.number_format($committedBudget, 0, ',', '.');
-                        $formattedMin = 'Rp '.number_format($minRequired, 0, ',', '.');
 
                         throw ValidationException::withMessages([
-                            'after_total' => "Pagu setelah pergeseran pada rekening [{$item->account_code} - {$item->account_name}] tidak boleh lebih kecil dari batas minimum pagu yang dibutuhkan ({$formattedMin}), terdiri dari realisasi belanja dicairkan ({$formattedSpent}) dan komitmen pengajuan yang sedang diproses Keuangan ({$formattedCommitted}).",
+                            'after_total' => "Pagu setelah pergeseran pada rekening [{$item->account_code} - {$item->account_name}] tidak boleh lebih kecil dari realisasi belanja yang telah disetujui ({$formattedSpent}).",
                         ]);
                     }
                 }

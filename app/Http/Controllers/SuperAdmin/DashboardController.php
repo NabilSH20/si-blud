@@ -35,8 +35,7 @@ class DashboardController extends Controller
 
         $totalRequisitions = (clone $reqQuery)->count();
         $pendingPerencanaan = (clone $reqQuery)->where('status', 'Pending_Perencanaan')->count();
-        $diprosesKeuangan = (clone $reqQuery)->where('status', 'Diproses_Keuangan')->count();
-        $disetujuiSelesai = (clone $reqQuery)->where('status', 'Disetujui_Selesai')->count();
+        $disetujui = (clone $reqQuery)->where('status', 'Disetujui')->count();
         $ditolak = (clone $reqQuery)->where('status', 'Ditolak')->count();
         $totalEstimatedUsulan = (float) (clone $reqQuery)->sum('total_estimated');
 
@@ -46,9 +45,9 @@ class DashboardController extends Controller
         $totalPaguMurni = (float) (clone $rbaQuery)->sum('total_budget');
         $totalPaguPergeseran = (float) (clone $rbaQuery)->selectRaw('COALESCE(SUM(COALESCE(budget_after_revision, total_budget)), 0) as total')->value('total');
 
-        // 2. KPI Keuangan (Pendapatan & Realisasi Kas SP2D)
+        // 2. KPI Keuangan (Pendapatan & Realisasi Kas Belanja Disetujui)
         $totalRevenue = (float) Revenue::whereYear('date', $activeYear)->sum('amount');
-        $totalRealisasiBelanja = (float) (clone $reqQuery)->where('status', 'Disetujui_Selesai')->sum('total_approved');
+        $totalRealisasiBelanja = (float) (clone $reqQuery)->where('status', 'Disetujui')->sum('total_approved');
 
         // 3. KPI Pengguna & Sistem
         $totalUsers = User::count();
@@ -86,8 +85,7 @@ class DashboardController extends Controller
                 'total_estimated' => $totalEstimatedUsulan,
             ],
             'kpi_keuangan' => [
-                'diproses_keuangan' => $diprosesKeuangan,
-                'disetujui_selesai' => $disetujuiSelesai,
+                'disetujui' => $disetujui,
                 'ditolak' => $ditolak,
                 'total_revenue' => $totalRevenue,
                 'total_realisasi_belanja' => $totalRealisasiBelanja,

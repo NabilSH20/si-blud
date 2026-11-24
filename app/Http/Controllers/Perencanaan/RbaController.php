@@ -517,26 +517,20 @@ class RbaController extends Controller
             + (float) $validated['after_silpa']
             + (float) $validated['after_apbd'];
 
-        // Proteksi Defisit Pagu: pastikan pagu setelah pergeseran tidak di bawah realisasi belanja (spent_budget) + komitmen pengajuan (Diproses_Keuangan)
+        // Proteksi Defisit Pagu: pastikan pagu setelah pergeseran tidak di bawah realisasi belanja (spent_budget)
         if (! $item->is_header) {
             $account = RbaAccount::where('account_code', $item->account_code)
                 ->where('period_year', $shift->year)
                 ->first();
 
             if ($account) {
-                $committedBudget = (float) Requisition::where('rba_account_id', $account->id)
-                    ->where('status', 'Diproses_Keuangan')
-                    ->sum('total_approved');
-
-                $minRequiredBudget = (float) $account->spent_budget + $committedBudget;
+                $minRequiredBudget = (float) $account->spent_budget;
 
                 if ($afterTotal < $minRequiredBudget) {
                     $formattedSpent = 'Rp '.number_format($account->spent_budget, 0, ',', '.');
-                    $formattedCommitted = 'Rp '.number_format($committedBudget, 0, ',', '.');
-                    $formattedMin = 'Rp '.number_format($minRequiredBudget, 0, ',', '.');
 
                     throw ValidationException::withMessages([
-                        'after_total' => "Pagu setelah pergeseran pada rekening [{$item->account_code} - {$item->account_name}] tidak boleh lebih kecil dari batas minimum pagu yang dibutuhkan ({$formattedMin}), terdiri dari realisasi belanja dicairkan ({$formattedSpent}) dan komitmen pengajuan yang sedang diproses Keuangan ({$formattedCommitted}).",
+                        'after_total' => "Pagu setelah pergeseran pada rekening [{$item->account_code} - {$item->account_name}] tidak boleh lebih kecil dari realisasi belanja yang telah disetujui ({$formattedSpent}).",
                     ]);
                 }
             }

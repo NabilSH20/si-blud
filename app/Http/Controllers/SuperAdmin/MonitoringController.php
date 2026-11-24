@@ -61,7 +61,6 @@ class MonitoringController extends Controller
             'unit:id,name,unit_code',
             'user:id,name,nip',
             'verifiedByPerencanaan:id,name',
-            'approvedByKeuangan:id,name',
         ]);
 
         if ($request->filled('status') && $request->status !== 'ALL') {

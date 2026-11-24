@@ -10,7 +10,6 @@ use App\Http\Controllers\Divisi\RequisitionController as DivisiRequisitionContro
 use App\Http\Controllers\Keuangan\BudgetController;
 use App\Http\Controllers\Keuangan\DashboardController as KeuanganDashboardController;
 use App\Http\Controllers\Keuangan\ReportController as KeuanganReportController;
-use App\Http\Controllers\Keuangan\RequisitionController as KeuanganRequisitionController;
 use App\Http\Controllers\Keuangan\RevenueController as KeuanganRevenueController;
 use App\Http\Controllers\Perencanaan\DashboardController as PerencanaanDashboardController;
 use App\Http\Controllers\Perencanaan\ItemController;
@@ -84,19 +83,17 @@ Route::prefix('keuangan')->middleware(['auth', 'role:keuangan', 'fiscal_year_loc
         ->name('keuangan.dashboard');
 
     Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
+    Route::post('/revenues/targets', [KeuanganRevenueController::class, 'storeTarget'])->name('revenues.targets.store');
     Route::resource('revenues', KeuanganRevenueController::class)->except(['create', 'edit', 'update', 'show']);
-    Route::resource('requisitions', KeuanganRequisitionController::class)
-        ->only(['index', 'show', 'update'])
-        ->names('keuangan.requisitions');
 
     Route::get('/reports', [KeuanganReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/revenue-monthly-matrix', [KeuanganReportController::class, 'revenueMonthlyMatrix'])->name('reports.revenue-monthly-matrix');
     Route::get('/reports/surplus-deficit', [KeuanganReportController::class, 'surplusDeficit'])->name('reports.surplus-deficit');
 });
 
 Route::prefix('keuangan')->middleware(['auth', 'role:keuangan,perencanaan,admin'])->group(function () {
-    Route::get('/requisitions/{id}/print', [KeuanganRequisitionController::class, 'print'])
-        ->name('keuangan.requisitions.print');
     Route::get('/reports/print', [KeuanganReportController::class, 'print'])->name('reports.print');
+    Route::get('/reports/revenue-monthly-matrix/print', [KeuanganReportController::class, 'printRevenueMonthlyMatrix'])->name('reports.revenue-monthly-matrix.print');
     Route::get('/reports/surplus-deficit/print', [KeuanganReportController::class, 'printSurplusDeficit'])->name('reports.surplus-deficit.print');
 });
 

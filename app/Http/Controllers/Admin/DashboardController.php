@@ -59,8 +59,7 @@ class DashboardController extends Controller
 
         $totalRequisitions = (clone $reqQuery)->count();
         $pendingPerencanaan = (clone $reqQuery)->where('status', 'Pending_Perencanaan')->count();
-        $diprosesKeuangan = (clone $reqQuery)->where('status', 'Diproses_Keuangan')->count();
-        $disetujuiSelesai = (clone $reqQuery)->where('status', 'Disetujui_Selesai')->count();
+        $disetujui = (clone $reqQuery)->where('status', 'Disetujui')->count();
         $ditolak = (clone $reqQuery)->where('status', 'Ditolak')->count();
         $totalEstimatedPagu = (float) (clone $reqQuery)->sum('total_estimated');
 
@@ -188,8 +187,7 @@ class DashboardController extends Controller
                 'active_year' => $activeYear,
                 'total' => $totalRequisitions,
                 'pending_perencanaan' => $pendingPerencanaan,
-                'diproses_keuangan' => $diprosesKeuangan,
-                'disetujui_selesai' => $disetujuiSelesai,
+                'disetujui' => $disetujui,
                 'ditolak' => $ditolak,
                 'total_amount' => $totalEstimatedPagu,
             ],
