@@ -1,270 +1,458 @@
-# [ISSUE / PLANNING] Penyelarasan Desain UI/UX Super Admin & Pemisahan Fitur Mandiri Tahun Anggaran
+# [ISSUE / PLANNING] Restrukturisasi Alur Pengajuan Belanja (Unit-Perencanaan), Pembersihan Total Komponen Warisan (Database, Kode, UI), Manajemen Target Pendapatan Fleksibel (Mingguan/Bulanan/Tahunan), dan Rekapitulasi Matriks Realisasi 12 Bulan E-BLUD RSJ Tampan
 
-**Tipe**: Refactoring / UI/UX Modernization / Navigation Architecture  
-**Prioritas**: Tinggi (*High*)  
+**Tipe**: Core Business Workflow Refactoring / Feature Expansion / Technical Debt Purge  
+**Prioritas**: P0 - Sangat Tinggi (*Critical Feedback Stakeholder*)  
 **Status**: Ready for Implementation  
-**Label**: `ui-ux`, `super-admin`, `design-system`, `tailwind`, `sidebar-navigation`, `fiscal-years`  
+**Label**: `workflow-refactoring`, `requisitions`, `code-cleanup`, `revenue-target`, `monthly-matrix`, `surplus-deficit`, `perencanaan`, `keuangan`  
 **Target Pelaksana**: Junior Programmer & AI Model  
-*(Dokumen ini berisi spesifikasi teknis dan tahapan implementasi terperinci untuk menyelaraskan antarmuka pengguna Super Admin dengan Design System E-BLUD serta memisahkan manajemen tahun anggaran menjadi modul mandiri tanpa tautan ke halaman admin biasa).*
+*(Dokumen ini merupakan spesifikasi teknis dan panduan implementasi komprehensif hasil revisi presentasi sistem dengan stakeholder E-BLUD RS Jiwa Tampan, mencakup penambahan fitur baru sekaligus penghapusan tuntas semua artefak dan kode yang tidak lagi relevan).*
 
 ---
 
-## 1. Latar Belakang & Analisis Masalah
+## 1. Latar Belakang & Analisis Hasil Evaluasi Presentasi
 
-Implementasi fungsional role Super Admin dan 6 pilar pendukungnya telah berhasil dibuat. Namun, berdasarkan evaluasi antarmuka dan interaksi pengguna, terdapat dua permasalahan mendasar yang perlu diperbaiki:
+Berdasarkan hasil presentasi sistem aplikasi **E-BLUD RS Jiwa Tampan Provinsi Riau** bersama para stakeholder, ditemukan ketidaksesuaian mendasar antara alur kerja sistem sebelumnya dengan regulasi operasional riil rumah sakit:
 
-### 1.1 Masalah 1: Inkonsistensi Visual UI/UX, Tipografi, Button, dan Elemen Antarmuka
-Halaman-halaman Super Admin yang ada saat ini (`Dashboard`, `Users`, `AuditLogs`, `Settings`, `Monitoring`) terasa berantakan dan tidak serasi dengan bahasa desain (*Design Language*) yang telah matang pada halaman role lain (`Admin`, `Perencanaan`, `Keuangan`, `Divisi`).
-- **Tipografi & Hirarki**: Ukuran font, ketebalan (*font weight*), dan jarak (*line-height*) antar-elemen teks tidak seimbang, membuat keterbacaan data angka anggaran berkurang.
-- **Komponen Button & Kontrol**: Bentuk tombol, padding, ukuran ikon, dan efek interaksi (*hover / active scale*) berbeda-beda dan belum mengikuti standar button kit aplikasi.
-- **Tabel & Kartu Kontainer**: Card pembungkus data, warna header tabel, padding sel, serta badge status belum serasi dengan gaya minimalis-elegan aplikasi E-BLUD RSJ Tampan.
-- **PENTING**: Prinsip perbaikan UI ini **BUKAN** meng-copy-paste mentah halaman role lain, melainkan menerapkan token desain (*Design Tokens*), layout rhythm, palet warna berkarakter (*Deep Indigo / Slate Neutral*), dan komponen standar agar terasa sebagai satu kesatuan sistem yang harmonis dan profesional.
+### 1.1 Masalah 1: Miskonsepsi Alur Pengajuan Belanja Unit Kerja
+* **Alur Sistem Lama**: Unit mengajukan &rarr; Bagian Perencanaan memverifikasi &rarr; Berkas diteruskan ke Bagian Keuangan &rarr; Bagian Keuangan memverifikasi & mencairkan (SP2D / Kuitansi).
+* **Fakta Operasional Sebenarnya**: 
+  * Pengajuan belanja rutin oleh Unit/Instalasi/Ruangan titik akhirnya adalah **validasi dan persetujuan final oleh Bagian Perencanaan**.
+  * Pengajuan belanja unit **TIDAK SAMPAI KE BAGIAN KEUANGAN** sebagai berkas verifikasi individual.
+  * Ketika usulan belanja telah disetujui (*di-ACC*) oleh Bagian Perencanaan, usulan tersebut secara otomatis memotong pagu anggaran rekening RBA belanja dan langsung diakui sebagai belanja sah BLUD (serta memicu proses RBA Pergeseran apabila pagu tidak mencukupi atau terjadi pergeseran pos anggaran).
 
-### 1.2 Masalah 2: Kebocoran Navigasi & Ketergantungan ke Halaman Admin Biasa pada Sidebar
-Pada navigasi sidebar `SuperAdminLayout.jsx`, masih terdapat elemen yang tidak tepat:
-1. **Link "Portal Administrator Biasa"**: Tautan ini menuju `/admin/dashboard`. Super Admin adalah pengawas tertinggi (*Root Master*), sehingga jalan pintas untuk melompat ke dashboard admin operasional biasa ini membingungkan batasan wewenang dan harus **dihapus**.
-2. **"Tahun Anggaran & Tutup Buku" masih mengarah ke halaman Admin**: Saat ini link tersebut mengarah ke `/admin/fiscal-years`. Seharusnya Super Admin memiliki halaman dan controller manajemen Tahun Anggaran sendiri (`/super-admin/fiscal-years`), dengan antarmuka elegan khusus Super Admin yang memiliki kendali penuh:
-   - Pengalihan Tahun Anggaran Aktif.
-   - Kunci / Tutup Buku Anggaran (*Lock/Unlock Toggle*) dengan perekaman jejak audit darurat.
-   - Penetapan Tahun Default.
-   - Pembuatan dan pengeditan tahun anggaran baru.
+### 1.2 Masalah 2: Penegasan dan Pemisahan Peran (*Separation of Duties*)
+1. **Bagian Perencanaan**:
+   * Menetapkan dan mengelola **Target Pagu Belanja (RBA Belanja Murni)**.
+   * Menelaah, memvalidasi, dan memberikan **Persetujuan Final (ACC)** terhadap usulan belanja unit kerja.
+   * Mengelola penyesuaian anggaran belanja melalui **RBA Pergeseran**.
+2. **Bagian Keuangan**:
+   * **Tidak lagi memverifikasi atau mencairkan berkas pengajuan belanja unit**.
+   * Bertanggung jawab penuh menyusun **Target Pendapatan BLUD**, yang dapat ditentukan secara fleksibel dalam format **per minggu, per bulan, atau per tahun**.
+   * Bertanggung jawab mencatat **Realisasi Pendapatan Harian/Periodik (Kas Masuk)**.
+   * Menampilkan **Matriks Rekapitulasi Realisasi Pendapatan 12 Bulan (Januari - Desember)** secara hierarkis per kode rekening dan sub-pos layanan.
+   * Menyusun **Laporan Surplus / Defisit (Laporan Operasional E-BLUD)** dengan formula:
+     $$\text{Surplus / (Defisit)} = \text{Total Realisasi Pendapatan} - \text{Total Belanja (Usulan yang Telah Disetujui Perencanaan)}$$
+
+### 1.3 Masalah 3: Bahaya *Dead Code* & Sisa Skema Warisan (*Pelajaran dari Kasus Unknown Column*)
+Membiarkan sisa-sisa kolom database, route, controller, atau elemen UI dari alur lama yang tidak lagi dipakai (*dead code/legacy artifacts*) terbukti menimbulkan bug fatal di runtime (seperti kasus error `Unknown column 'original_amount'` pada controller karena ketidaksinkronan nama kolom database dan pemanggilan query). Oleh karena itu, dalam perbaikan ini:
+**SEMUA hal yang tidak penting/tidak lagi digunakan di alur lama HARUS DIHAPUS SECARA TOTAL, mulai dari level database, backend code, hingga antarmuka pengguna (UI). Jangan ada yang disisakan untuk sekadar "backward compatibility" yang semu.**
 
 ---
 
-## 2. Arsitektur Perubahan
+## 2. Arsitektur Alur Bisnis Baru (Sebelum vs Sesudah)
+
+### 2.1 Diagram Perbandingan Alur Pengajuan Belanja
 
 ```mermaid
 flowchart TD
-    subgraph S1["Sidebar Navigasi SuperAdminLayout.jsx"]
+    subgraph OLD["ALUR LAMA (SALAH - AKAN DIHAPUS TOTAL)"]
         direction TB
-        M1["Dashboard Global (/super-admin/dashboard)"]
-        M2["Manajemen Akun Root (/super-admin/users)"]
-        M3["Monitoring RBA (/super-admin/monitoring/rba)"]
-        M4["Monitoring Usulan (/super-admin/monitoring/requisitions)"]
-        M5["Monitoring Keuangan (/super-admin/monitoring/finance)"]
-        M6["System Audit Log (/super-admin/audit-logs)"]
-        M7["Pengaturan Cetak (/super-admin/settings)"]
-        M8["Tahun Anggaran & Tutup Buku (/super-admin/fiscal-years)"]
+        O1["Unit Kerja Buat Usulan"] --> O2["Verifikasi Bag. Perencanaan"]
+        O2 -->|Diteruskan| O3["Verifikasi Bag. Keuangan (DIHAPUS)"]
+        O3 -->|Pencairan SP2D (DIHAPUS)| O4["Selesai Cair (DIHAPUS)"]
+    end
+
+    subgraph NEW["ALUR BARU HASIL REVISI (BENAR & RINGKAS)"]
+        direction TB
+        N1["Unit Kerja (Ruangan / Instalasi)<br/>Mengajukan Usulan Belanja"] --> N2["Bagian Perencanaan<br/>Telaah & Validasi Pagu RBA"]
+        N2 -->|Disetujui / ACC Final| N3["Status: Disetujui (Final)<br/>Memotong Pagu Rekening RBA"]
+        N2 -->|Ditolak / Catatan Revisi| N4["Status: Ditolak<br/>Kembali ke Unit Kerja"]
+        N3 -.->|Jika Pagu Kurang / Geser Pos| N5["Proses RBA Pergeseran"]
         
-        DEL["HAPUS: Portal Admin Biasa (/admin/dashboard)"] -.->|Dihapus Total| S1
+        N3 ==>|Otomatis Diakui Sebagai| N6["Realisasi Belanja Disetujui<br/>(Sumber Data Laporan Surplus/Defisit)"]
+    end
+```
+
+### 2.2 Diagram Interaksi Modul Keuangan (Pendapatan & Surplus-Defisit)
+
+```mermaid
+flowchart LR
+    subgraph KEU["MODUL BAGIAN KEUANGAN"]
+        direction TB
+        K1["1. Penyusunan Target Pendapatan<br/>(Per Minggu / Per Bulan / Per Tahun)"]
+        K2["2. Pencatatan Realisasi Pendapatan<br/>(Kas Masuk Harian/Periodik)"]
+        K3["3. Matriks Laporan 12 Bulan<br/>(Januari s/d Desember vs Target)"]
+        
+        K1 --> K3
+        K2 --> K3
     end
 
-    subgraph S2["Modul Baru: Dedicated Fiscal Years Super Admin"]
-        M8 --> C1["SuperAdmin/FiscalYearController.php"]
-        C1 --> V1["SuperAdmin/FiscalYears/Index.jsx"]
-        V1 --> A1["Modal Tambah/Edit Tahun Anggaran"]
-        V1 --> A2["Kontrol Kunci / Tutup Buku (Lock Toggle)"]
-        V1 --> A3["Penetapan Default & Status Aktif"]
+    subgraph LAP["LAPORAN SURPLUS / DEFISIT"]
+        direction TB
+        L1["Total Realisasi Pendapatan<br/>(Dari Bagian Keuangan)"]
+        L2["Total Belanja Disetujui<br/>(Usulan status 'Disetujui' Perencanaan)"]
+        L3["SURPLUS / (DEFISIT)<br/>= Total Pendapatan - Total Belanja"]
+        
+        L1 --> L3
+        L2 --> L3
     end
 
-    subgraph S3["Harmonisasi UI Design System"]
-        T1["Typography: Barlow / Poppins / Mono IDR"]
-        T2["Button System: Primary, Secondary, Danger, Icon Pill"]
-        T3["Card & Tables: rounded-2xl, border-slate-200, bg-slate-50 thead"]
-        T4["Status Badges: Dot Indicator + Soft Tint Pill"]
-    end
+    K3 --> L1
 ```
 
 ---
 
-## 3. Standar Design System E-BLUD RS Jiwa Tampan
+## 3. Rencana Pembersihan Total Komponen Warisan (*Comprehensive Deletion & Cleanup Plan*)
 
-Junior Programmer atau AI Model wajib mengacu pada panduan visual berikut untuk menata ulang seluruh halaman Super Admin:
+Untuk menjamin kebersihan codebase dan stabilitas aplikasi, implementor wajib menghapus komponen berikut secara tuntas:
 
-### 3.1 Tipografi & Hirarki Teks
-| Elemen | Kelas Tailwind | Keterangan |
-| :--- | :--- | :--- |
-| **Header Judul Halaman** | `text-xl sm:text-2xl font-bold tracking-tight text-slate-900` | Judul utama di atas halaman |
-| **Subjudul / Deskripsi** | `text-xs sm:text-sm font-medium text-slate-500 mt-0.5` | Penjelasan ringkas fungsi halaman |
-| **Section Title di Card**| `text-sm sm:text-base font-bold text-slate-900` | Header pada kontainer card |
-| **Label Form Input** | `block text-xs font-bold text-slate-700 mb-1.5` | Di atas kolom input form |
-| **Teks Angka Moneter** | `font-mono font-bold text-slate-900` | Format Rupiah `Intl.NumberFormat` |
-| **Header Kolom Tabel** | `px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-700` | Bagian `thead` tabel |
-| **Isi Baris Tabel** | `px-4 py-3.5 text-xs text-slate-600` | Baris data `tbody` |
+### 3.1 Pembersihan Basis Data (*Database Cleanup*)
+Tabel `requisitions` dibersihkan dari seluruh kolom dan status yang terkait dengan verifikasi/pencairan keuangan:
+1. **Drop Kolom dari Tabel `requisitions`**:
+   - `approved_by_keuangan_id` *(drop foreign key `requisitions_approved_by_keuangan_id_foreign` terlebih dahulu)*.
+   - `approved_keuangan_at`.
+   - `notes_keuangan`.
+   - `sp2d_number`.
+   - `receipt_number`.
+2. **Pembersihan Enum Status `requisitions.status`**:
+   - Status lama yang dihapus: `Diproses_Keuangan` dan `Disetujui_Selesai`.
+   - Sebelum mengubah definisi enum, jalankan update data:
+     ```sql
+     UPDATE requisitions 
+     SET status = 'Disetujui' 
+     WHERE status IN ('Diproses_Keuangan', 'Disetujui_Selesai');
+     ```
+   - Definisi baru enum:
+     ```sql
+     ALTER TABLE requisitions MODIFY COLUMN status ENUM(
+         'Draft',
+         'Pending_Perencanaan',
+         'Disetujui',
+         'Ditolak'
+     ) NOT NULL DEFAULT 'Pending_Perencanaan';
+     ```
 
-### 3.2 Gaya Tombol (*Button System*)
-1. **Primary Action Button (Tambah Data / Simpan / Aksi Utama)**:
-   ```jsx
-   <button
-       type="button"
-       className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer"
-   >
-       <Plus className="h-4 w-4" />
-       Tambah Pengguna
-   </button>
-   ```
-2. **Secondary / Outline Button (Filter, Reset, Batal, Kembali)**:
-   ```jsx
-   <button
-       type="button"
-       className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer"
-   >
-       <Filter className="h-3.5 w-3.5" />
-       Reset Filter
-   </button>
-   ```
-3. **Table Row Action Buttons (Edit / Aksi Cepat / Detail)**:
-   - **Edit / Warning Action**:
-     `className="inline-flex items-center gap-1 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 active:scale-95 px-2.5 py-1 text-xs font-bold transition cursor-pointer"`
-   - **Inspect / Detail Action**:
-     `className="inline-flex items-center gap-1 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 active:scale-95 px-2.5 py-1 text-xs font-bold transition cursor-pointer"`
-   - **Danger / Hapus Action**:
-     `className="inline-flex items-center gap-1 rounded-xl border border-transparent hover:border-rose-300 bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-700 active:scale-95 px-2 py-1 text-xs font-bold transition cursor-pointer"`
+### 3.2 Pembersihan Kode Backend (*Backend Code Cleanup*)
+1. **HAPUS FILE CONTROLLER**:
+   - **Hapus Permanen**: `app/Http/Controllers/Keuangan/RequisitionController.php`.  
+     *(Bagian Keuangan tidak lagi memiliki urusan memvalidasi atau memproses berkas usulan per unit).*
+2. **Hapus Rute Terkait di `routes/web.php`**:
+   - Hapus semua deklarasi route yang mengarah ke `Keuangan\RequisitionController`:
+     - `GET /keuangan/requisitions`
+     - `GET /keuangan/requisitions/{requisition}`
+     - `POST /keuangan/requisitions/{requisition}/verify`
+     - `POST /keuangan/requisitions/{requisition}/disburse`
+     - `GET /keuangan/requisitions/{requisition}/print-sp2d`
+3. **Pembersihan Model `app/Models/Requisition.php`**:
+   - Hapus relasi `approvedByKeuangan()`.
+   - Hapus properti dari `$fillable`: `'approved_by_keuangan_id'`, `'approved_keuangan_at'`, `'notes_keuangan'`, `'sp2d_number'`, `'receipt_number'`.
+   - Hapus properti dari `$casts`: `'approved_keuangan_at'`.
+   - Hapus konstanta status: `STATUS_DIPROSES_KEUANGAN = 'Diproses_Keuangan'` dan `STATUS_DISETUJUI_SELESAI = 'Disetujui_Selesai'`.
+   - Tambahkan/gunakan konstanta: `STATUS_DISETUJUI = 'Disetujui'`.
+   - Perbarui helper `isApproved()`: cukup memeriksa `status === self::STATUS_DISETUJUI`.
+4. **Refactoring Controller Perencanaan (`app/Http/Controllers/Perencanaan/RequisitionController.php`)**:
+   - Pada method `approve()`: ubah status berkas langsung menjadi **`Disetujui`** (tidak lagi diarahkan ke Keuangan).
+   - Langsung mutasikan sisa pagu rekening belanja:
+     ```php
+     $rbaAccount = RbaAccount::find($requisition->rba_account_id);
+     if ($rbaAccount) {
+         $rbaAccount->remaining_budget = max(0, (float) $rbaAccount->remaining_budget - (float) $requisition->total_approved);
+         $rbaAccount->spent_budget = (float) $rbaAccount->spent_budget + (float) $requisition->total_approved;
+         $rbaAccount->save();
+     }
+     ```
+5. **Pembersihan Monitoring & Super Admin**:
+   - Pada `app/Http/Controllers/SuperAdmin/MonitoringController.php` & `DashboardController.php`:
+     - Hapus relasi `approvedByKeuangan` dari query `with(...)`.
+     - Hapus filter dan penghitungan status `Diproses_Keuangan` & `Disetujui_Selesai`, gantikan dengan `Disetujui`.
 
-### 3.3 Status Badges (*Pill with Dot Indicator*)
-Gunakan struktur seragam dengan indikator titik bulat:
-```jsx
-<span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold border ${badgeConfig.bg}`}>
-    <span className={`h-1.5 w-1.5 rounded-full ${badgeConfig.dot}`} />
-    {badgeConfig.label}
-</span>
-```
-- **Aktif / Selesai (Emerald)**: `bg-emerald-50 text-emerald-800 border-emerald-200`, dot `bg-emerald-500`
-- **Terkunci / Warning (Amber)**: `bg-amber-50 text-amber-800 border-amber-200`, dot `bg-amber-500`
-- **Tolak / Nonaktif (Rose)**: `bg-rose-50 text-rose-700 border-rose-200`, dot `bg-rose-500`
-- **Info / Diproses (Blue/Indigo)**: `bg-indigo-50 text-indigo-800 border-indigo-200`, dot `bg-indigo-500`
-
-### 3.4 Card & Container Standard
-- Kontainer Utama: `bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden`
-- Toolbar Pencarian & Filter: Wadah tersendiri dengan padding `p-4 sm:p-5`, input ber-radius `rounded-xl border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-xs`.
-- Table Wrapper: `overflow-x-auto`, `thead` warna `bg-slate-50 border-b border-slate-200 text-slate-700`, `tbody divide-y divide-slate-100`.
+### 3.3 Pembersihan Antarmuka Pengguna (*Frontend UI Cleanup*)
+1. **HAPUS DIREKTORI HALAMAN**:
+   - **Hapus Direktori**: `resources/js/Pages/Keuangan/Requisitions/` beserta seluruh isinya:
+     - `Index.jsx`
+     - `Show.jsx`
+     - `Partials/FinanceDisbursementModal.jsx`
+2. **Pembersihan Layout Keuangan (`resources/js/Layouts/KeuanganLayout.jsx`)**:
+   - Hapus menu "Validasi Requisition" / "Pencairan SP2D" dari sidebar navigasi.
+   - Gantikan dengan menu baru: **"Target Pendapatan BLUD"** dan submenu laporan **"Matriks Pendapatan 12 Bulan"**.
+3. **Pembersihan Tampilan Unit Kerja (`resources/js/Pages/Divisi/Requisitions/`)**:
+   - Pada `Show.jsx`:
+     - Hapus step ke-3 (Verifikasi Keuangan / SP2D) pada timeline/stepper pengajuan.
+     - Stepper hanya memiliki 2 tahapan: **1. Pengajuan Usulan** &rarr; **2. Telaah & Persetujuan Perencanaan**.
+     - Hapus bagian kartu rincian SP2D, Nomor Kuitansi, dan Catatan Keuangan.
+   - Pada `Index.jsx`:
+     - Hapus filter tab / badge `Diproses Keuangan` dan `Selesai Cair`.
+     - Badge yang aktif: `Draft (Abu-abu)`, `Diajukan / Pending Perencanaan (Kuning)`, `Disetujui (Hijau Emerald)`, `Ditolak (Merah)`.
+4. **Pembersihan Tampilan Perencanaan (`resources/js/Pages/Perencanaan/Requisitions/Show.jsx`)**:
+   - Hapus teks "Berkas akan diteruskan ke Bagian Keuangan untuk pencairan".
+   - Ubah tombol modal menjadi **"Setujui & Sahkan Pengajuan (ACC Final)"** dengan penjelasan: *"Usulan yang disetujui sah memotong pagu RBA dan diakui sebagai realisasi belanja."*
+5. **Pembersihan Monitoring Super Admin (`resources/js/Pages/SuperAdmin/Monitoring/Requisitions.jsx`)**:
+   - Hapus kolom `No. SP2D / Kuitansi` dari tabel monitoring.
+   - Hapus filter status lama dan sesuaikan dengan status baru `Disetujui`.
 
 ---
 
-## 4. Rincian Perubahan Teknis & File Terdampak
+## 4. Spesifikasi Modul Baru: Target Pendapatan Fleksibel (`revenue_targets`)
 
-### 4.1 Modul Baru: Tahun Anggaran Mandiri Super Admin
-Super Admin membutuhkan pengelolaan tahun anggaran yang berdiri sendiri di dalam namespace `SuperAdmin`:
-- **Controller**: Buat [app/Http/Controllers/SuperAdmin/FiscalYearController.php](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/app/Http/Controllers/SuperAdmin/FiscalYearController.php)
-  - Method: `index()`, `store()`, `update()`, `destroy()`, `toggleStatus()`, `setDefault()`, `toggleLock()`.
-  - Merekam setiap aksi perubahan ke `AuditLogService` (`MODULE: FISCAL_YEAR`).
-- **View**: Buat [resources/js/Pages/SuperAdmin/FiscalYears/Index.jsx](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/resources/js/Pages/SuperAdmin/FiscalYears/Index.jsx)
-  - Berisi tabel daftar tahun anggaran, badge status (Aktif, Default, Terkunci/Tutup Buku).
-  - Tombol aksi: Tutup Buku / Buka Kunci (dengan modal alasan jika diperlukan), Jadikan Default, Ubah Status, Edit, Hapus.
-  - Modal form tambah/edit tahun anggaran mandiri (`FiscalYearModal.jsx` atau inline).
-- **Routes**: Daftarkan di [routes/web.php](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/routes/web.php) di dalam grup `Route::prefix('super-admin')->name('superadmin.')`:
+Modul ini adalah fitur utama baru bagi **Bagian Keuangan** untuk merencanakan target pendapatan rumah sakit dengan fleksibilitas alokasi (Tahunan, Bulanan, atau Mingguan).
+
+### 4.1 Skema Tabel `revenue_targets`
+
+```sql
+CREATE TABLE revenue_targets (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    fiscal_year INT NOT NULL COMMENT 'Tahun Anggaran, contoh: 2027',
+    account_code VARCHAR(50) NOT NULL COMMENT 'Kode Rekening e.g. 4.1.4.16 atau kode pos pendapatan',
+    account_name VARCHAR(255) NOT NULL COMMENT 'Nama Akun / Uraian Layanan Pendapatan',
+    category VARCHAR(100) NOT NULL DEFAULT 'Jasa Layanan' COMMENT 'Jasa Layanan, Hasil Kerjasama, APBD, APBN, Lain-lain PAD Sah',
+    period_type ENUM('yearly', 'monthly', 'weekly') NOT NULL DEFAULT 'monthly' COMMENT 'Tipe alokasi pengisian target',
+    target_yearly DECIMAL(18, 2) NOT NULL DEFAULT 0.00 COMMENT 'Total nominal target tahunan',
+    
+    -- Target per Bulan (Januari s/d Desember)
+    target_jan DECIMAL(18, 2) NOT NULL DEFAULT 0.00,
+    target_feb DECIMAL(18, 2) NOT NULL DEFAULT 0.00,
+    target_mar DECIMAL(18, 2) NOT NULL DEFAULT 0.00,
+    target_apr DECIMAL(18, 2) NOT NULL DEFAULT 0.00,
+    target_may DECIMAL(18, 2) NOT NULL DEFAULT 0.00,
+    target_jun DECIMAL(18, 2) NOT NULL DEFAULT 0.00,
+    target_jul DECIMAL(18, 2) NOT NULL DEFAULT 0.00,
+    target_aug DECIMAL(18, 2) NOT NULL DEFAULT 0.00,
+    target_sep DECIMAL(18, 2) NOT NULL DEFAULT 0.00,
+    target_oct DECIMAL(18, 2) NOT NULL DEFAULT 0.00,
+    target_nov DECIMAL(18, 2) NOT NULL DEFAULT 0.00,
+    target_dec DECIMAL(18, 2) NOT NULL DEFAULT 0.00,
+    
+    -- Breakdown target mingguan (opsional dalam format JSON untuk fleksibilitas)
+    weekly_breakdown JSON NULL COMMENT 'Format JSON: {"jan": [w1, w2, w3, w4], "feb": [...]}',
+    
+    notes TEXT NULL,
+    created_by BIGINT UNSIGNED NULL,
+    updated_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
+    
+    CONSTRAINT fk_revenue_targets_creator FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_revenue_targets_updater FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_revenue_targets_year_code (fiscal_year, account_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+### 4.2 Struktur Rekening & Pemetaan Data Pendapatan BLUD RSJ Tampan
+Hierarki pos pendapatan mengacu pada dokumen baku RS Jiwa Tampan:
+
+| Kode Rekening | Level | Uraian Rekening Pendapatan | Kategori Induk | Target Contoh (TA 2027) |
+| :--- | :---: | :--- | :--- | :--- |
+| **4** | 1 | **PENDAPATAN** | Root Akun 4 | Rp 32.469.887.914,00 |
+| **4.1** | 2 | **PENDAPATAN ASLI DAERAH** | PAD | Rp 32.469.887.914,00 |
+| **4.1.4** | 3 | **Lain-lain Pendapatan Asli Daerah yang Sah** | PAD Sah | Rp 32.469.887.914,00 |
+| **4.1.4.16** | 4 | **Pendapatan BLUD** | Pendapatan BLUD | Rp 32.469.887.914,00 |
+| - | 5 | **Pendapatan Jasa Layanan** | Header Jasa Layanan | Rp 31.393.537.914,00 |
+| - | 6 | Pendapatan Pelayanan Gawat Darurat | Jasa Layanan | Rp 135.195.000,00 |
+| - | 6 | Pendapatan Pelayanan Intensif/UPIP | Jasa Layanan | Rp 257.500.000,00 |
+| - | 6 | Pendapatan Pelayanan Rawat Jalan | Jasa Layanan | Rp 7.521.895.000,00 |
+| - | 6 | Pendapatan Pelayanan Rawat Inap | Jasa Layanan | Rp 18.608.697.914,00 |
+| - | 6 | Pendapatan Pelayanan Rawat Inap-Napza | Jasa Layanan | Rp 750.000.000,00 |
+| - | 6 | Pendapatan Pelayanan Rehabilitasi Psikososial | Jasa Layanan | Rp 0,00 |
+| - | 6 | Pendapatan Pelayanan Psikologi | Jasa Layanan | Rp 625.000.000,00 |
+| - | 6 | Pendapatan Pelayanan Konseling Keperawatan Jiwa | Jasa Layanan | Rp 13.000.000,00 |
+| - | 6 | Pendapatan Pelayanan Forensik Psikiatri | Jasa Layanan | Rp 21.000.000,00 |
+| - | 6 | Pendapatan Pelayanan Laboratorium | Jasa Layanan | Rp 500.000.000,00 |
+| - | 6 | Pendapatan Pelayanan Radiologi | Jasa Layanan | Rp 28.750.000,00 |
+| - | 6 | Pendapatan Pelayanan Gizi | Jasa Layanan | Rp 8.000.000,00 |
+| - | 6 | Pendapatan Pelayanan Farmasi | Jasa Layanan | Rp 2.565.500.000,00 |
+| - | 6 | Pendapatan Pelayanan Rekam Medik | Jasa Layanan | Rp 359.000.000,00 |
+| - | 6 | Pendapatan Pelayanan Ambulance/Kereta Jenazah | Jasa Layanan | Rp 0,00 |
+| - | 5 | **Hibah** | Hibah | Rp 0,00 |
+| - | 5 | **Hasil Kerjasama** | Header Kerja Sama | Rp 376.350.000,00 |
+| - | 6 | Hasil Kerjasama Diklat | Hasil Kerja Sama | Rp 150.000.000,00 |
+| - | 6 | Hasil Kerjasama Penggunaan Fasilitas RSJ Tampan | Hasil Kerja Sama | Rp 226.350.000,00 |
+| - | 5 | **Pendapatan dari APBD** (Operasional & Investasi) | APBD | Rp 0,00 |
+| - | 5 | **Pendapatan dari APBN** | APBN | Rp 0,00 |
+| - | 5 | **Lain-lain Pendapatan BLUD yang Sah** | Header Lain-lain | Rp 700.000.000,00 |
+| - | 6 | Jasa Giro | Lain-lain BLUD Sah | Rp 400.000.000,00 |
+| - | 6 | Pendapatan Bunga | Lain-lain BLUD Sah | Rp 0,00 |
+| - | 6 | Pendapatan Lain-Lain BLUD | Lain-lain BLUD Sah | Rp 300.000.000,00 |
+
+### 4.3 Fitur Antarmuka Pengaturan Target (`Keuangan/RevenueTargets/Index.jsx`)
+1. **Pilihan Mode Alokasi**:
+   - **Mode Tahunan**: User memasukkan target 1 tahun penuh, sistem menyediakan tombol otomatis: *"Bagi Rata ke 12 Bulan"* (`target_yearly / 12`).
+   - **Mode Bulanan**: User mengisi nominal spesifik per bulan (Januari s/d Desember), sistem otomatis menghitung `target_yearly = SUM(target_jan .. target_dec)`.
+   - **Mode Mingguan**: Membuka popup rincian 4-5 minggu per bulan untuk proyeksi arus kas jangka pendek.
+2. **Kalkulasi Otomatis Baris Induk**: Ketika nilai sub-pos diubah, nilai pos induk (seperti `Pendapatan Jasa Layanan`, `Hasil Kerjasama`, hingga total akumulatif `Pendapatan BLUD`) otomatis terakumulasi.
+
+---
+
+## 5. Spesifikasi Matriks Rekapitulasi Realisasi Pendapatan 12 Bulan (Januari - Desember)
+
+### 5.1 Format Tabel Matriks Bulanan (`Keuangan/Reports/RevenueMonthlyMatrix.jsx`)
+Format tampilan mengadopsi 100% tata letak laporan evaluasi kinerja pendapatan RS Jiwa Tampan:
+
+```text
++---------------+------------------------+-------------------+---------------------+-----+----------------------+--------------------+--------------------+---------------+
+| Kode Rekening | Uraian                 | Jumlah Anggaran   | REALISASI (Jan-Des) | ... | TOTAL REALISASI      | SISA ANGGARAN      | % Realisasi        |
+| (1)           | (2)                    | (3) [Target]      | (4 s.d. 15)         | ... | (16 = SUM Jan..Des)  | (17 = Col 3 - 16)  | (18 = 16/3 * 100%) |
++---------------+------------------------+-------------------+---------------------+-----+----------------------+--------------------+--------------------+---------------+
+| 4             | PENDAPATAN             | 32.469.887.914,00 | Jan: 2.193.463.410  | ... | 24.298.959.965,00    | (8.170.927.949,00) | 74,84%            |
+| 4.1           | PENDAPATAN ASLI DAERAH | 32.469.887.914,00 | Jan: 2.193.463.410  | ... | 24.298.959.965,00    | (8.170.927.949,00) | 74,84%            |
+| 4.1.4         | Lain-lain PAD yg Sah   | 32.469.887.914,00 | Jan: 2.193.463.410  | ... | 24.298.959.965,00    | (8.170.927.949,00) | 74,84%            |
+| 4.1.4.16      | Pendapatan BLUD        | 32.469.887.914,00 | Jan: 2.193.463.410  | ... | 24.298.959.965,00    | (8.170.927.949,00) | 74,84%            |
+|               | Pendapatan Jasa Layanan| 31.393.537.914,00 | Jan: 2.154.434.994  | ... | 23.856.954.615,00    | (7.536.583.299,00) | 75,99%            |
+|               | Pelayanan Rawat Jalan  |  7.521.895.000,00 | Jan:   504.115.700  | ... |  3.460.744.137,00    | (4.061.150.863,00) | 46,01%            |
+|               | Pelayanan Farmasi      |  2.565.500.000,00 | Jan:   114.655.237  | ... |  1.576.600.861,00    |   (988.899.139,00) | 61,45%            |
+|               | Hasil Kerjasama Diklat |    150.000.000,00 | Jan:    32.450.000  | ... |    205.911.700,00    |     55.911.700,00  | 137,27%           |
+|               | Jasa Giro              |    400.000.000,00 | Jan:     3.965.007  | ... |     47.680.241,00    |   (352.319.759,00) | 11,92%            |
++---------------+------------------------+-------------------+---------------------+-----+----------------------+--------------------+--------------------+---------------+
+| TOTAL PENDAPATAN BLUD                  | 32.469.887.914,00 |                     | ... | 24.298.959.965,00    | (8.170.927.949,00) | 74,84%            |
++---------------+------------------------+-------------------+---------------------+-----+----------------------+--------------------+--------------------+---------------+
+```
+
+### 5.2 Logika Perhitungan Kolom
+1. **Jumlah Anggaran / Target (Kolom 3)**:
+   * Mengambil data `revenue_targets.target_yearly` untuk tahun fiskal aktif.
+   * Baris induk level 1-4 diakumulasikan secara rekursif dari seluruh sub-pos di bawahnya.
+2. **Realisasi Bulanan (Kolom 4 s/d 15: JAN - DES)**:
+   * Mengagregasi nominal kas masuk dari tabel `revenues` per bulan:
+     $$\text{Realisasi}(m) = \sum \text{amount} \quad \text{dimana } \text{MONTH}(date) = m \text{ dan } \text{YEAR}(date) = \text{active\_year}$$
+3. **Total Realisasi (Kolom 16)**:
+   $$\text{Total Realisasi} = \sum_{m=1}^{12} \text{Realisasi}(m)$$
+4. **Sisa Anggaran Target (Kolom 17)**:
+   $$\text{Sisa Anggaran} = \text{Jumlah Anggaran} - \text{Total Realisasi}$$
+   *Aturan Tampilan*:
+   * Jika nilai bernilai positif (target belum tercapai penuh), tampilkan dalam format akuntansi tanda kurung: `(Rp xxx.xxx,xx)`.
+   * Jika nilai negatif atau terlampaui (surplus target), tampilkan positif tanpa kurung: `Rp xxx.xxx,xx`.
+5. **Persentase Capaian (Kolom 18: % Realisasi)**:
+   $$\% \text{ Realisasi} = \begin{cases} \left( \frac{\text{Total Realisasi}}{\text{Jumlah Anggaran}} \times 100\% \right), & \text{jika Jumlah Anggaran} > 0 \\ 0.00\%, & \text{jika Jumlah Anggaran} = 0 \end{cases}$$
+
+### 5.3 Fasilitas Ekspor & Cetak
+* **Ekspor Excel (.xlsx / .csv)**: Menyertakan seluruh kolom dan format angka akuntansi.
+* **Cetak Resmi PDF/Print View**: Menggunakan layout lanskap (*A4/F4 Landscape*) dengan kop surat resmi Pemerintah Provinsi Riau - Rumah Sakit Jiwa Tampan, tanggal cetak dinamis, serta kolom tanda tangan Direktur dan Bendahara Penerimaan.
+
+---
+
+## 6. Spesifikasi Laporan Operasional Surplus / Defisit
+
+Laporan Surplus/Defisit (`Keuangan/Reports/SurplusDeficit.jsx`) diperbarui untuk menggunakan belanja riil yang telah disetujui Bagian Perencanaan:
+
+### 6.1 Formula Perhitungan
+$$\text{Surplus / (Defisit)} = \text{Total Pendapatan Realisasi} - \text{Total Belanja Disetujui}$$
+
+* **Total Pendapatan Realisasi**: Akumulasi seluruh penerimaan kas masuk dari tabel `revenues` pada tahun aktif.
+* **Total Belanja Disetujui**:
   ```php
-  Route::patch('/fiscal-years/{fiscal_year}/toggle-lock', [SuperAdminFiscalYearController::class, 'toggleLock'])->name('fiscal-years.toggle-lock');
-  Route::patch('/fiscal-years/{fiscal_year}/toggle-status', [SuperAdminFiscalYearController::class, 'toggleStatus'])->name('fiscal-years.toggle-status');
-  Route::patch('/fiscal-years/{fiscal_year}/set-default', [SuperAdminFiscalYearController::class, 'setDefault'])->name('fiscal-years.set-default');
-  Route::resource('fiscal-years', SuperAdminFiscalYearController::class)->except(['create', 'show', 'edit']);
+  $totalBelanjaDisetujui = (float) Requisition::where(function ($q) use ($activeYear) {
+          $q->where('budget_year', $activeYear)->orWhere('fiscal_year', $activeYear);
+      })
+      ->where('status', 'Disetujui')
+      ->sum('total_approved');
   ```
 
-### 4.2 Pembaruan Navigasi Sidebar `SuperAdminLayout.jsx`
-Di dalam [resources/js/Layouts/SuperAdminLayout.jsx](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/resources/js/Layouts/SuperAdminLayout.jsx):
-1. **Hapus Item**: Hapus entri `{ name: 'Portal Administrator Biasa', href: route('admin.dashboard'), ... }`.
-2. **Perbarui Item Tahun Anggaran**:
-   - Ganti `href: route('fiscal-years.index')` menjadi `href: route('superadmin.fiscal-years.index')`.
-   - Ganti `routeName: 'fiscal-years.*'` menjadi `routeName: 'superadmin.fiscal-years.*'`.
-3. **Penyelarasan Desain Sidebar**:
-   - Samakan ritme padding, border, drop-shadow, dan ukuran ikon sidebar dengan layout standar aplikasi.
-
-### 4.3 Refactor Halaman-Halaman Super Admin
-1. **[resources/js/Pages/SuperAdmin/Dashboard.jsx](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/resources/js/Pages/SuperAdmin/Dashboard.jsx)**:
-   - Bersihkan penataan kartu KPI eksekutif (RBA, Usulan, Keuangan, User).
-   - Samakan font heading, ukuran badge persentase, dan border card.
-   - Rapikan tabel feed 10 aktivitas log terbaru agar selaras dengan tabel master.
-2. **[resources/js/Pages/SuperAdmin/Users/Index.jsx](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/resources/js/Pages/SuperAdmin/Users/Index.jsx)**:
-   - Tata ulang toolbar pencarian dan filter peran/status agar sejajar rapi.
-   - Standarisasi tabel pengguna (kolom NIP, Nama, Divisi/Unit, Peran, Status, Aksi).
-   - Rapikan modal Reset Password Darurat dan modal Tambah/Edit User agar proporsional dan tidak berantakan.
-3. **[resources/js/Pages/SuperAdmin/AuditLogs/Index.jsx](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/resources/js/Pages/SuperAdmin/AuditLogs/Index.jsx)**:
-   - Rapikan filter dropdown modul dan aksi.
-   - Sempurnakan tampilan tabel audit log dan perbaiki modal *JSON Payload Inspector* agar rapi dan mudah dibaca oleh teknisi IT.
-4. **[resources/js/Pages/SuperAdmin/Settings/Index.jsx](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/resources/js/Pages/SuperAdmin/Settings/Index.jsx)**:
-   - Tata ulang form pengaturan kop surat, logo, dan pejabat penandatangan dengan pengelompokan card (*section card*) yang rapi, label teks yang tegas, dan tombol simpan yang konsisten.
-5. **[resources/js/Pages/SuperAdmin/Monitoring/](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/resources/js/Pages/SuperAdmin/Monitoring/) (`Rba.jsx`, `Requisitions.jsx`, `Finance.jsx`)**:
-   - Selaraskan tab navigasi, kartu ringkasan, kolom tabel, dan badge read-only pengawas.
+### 6.2 Indikator Status Finansial
+* **SURPLUS**: Jika `Total Pendapatan >= Total Belanja` (Badge Hijau Emerald, nilai surplus positif).
+* **DEFISIT**: Jika `Total Pendapatan < Total Belanja` (Badge Merah Rose, nilai defisit dalam kurung).
 
 ---
 
-## 5. Tahapan Implementasi Langkah Demi Langkah (Step-by-Step)
+## 7. Inventaris Komponen: Dibuat, Diubah, dan Dihapus
 
-Junior programmer atau AI model diharapkan mengikuti urutan langkah ini secara berurutan:
+### 7.1 Komponen yang DIHAPUS TOTAL (Purged)
 
-### Tahap 1: Backend Controller & Routing Tahun Anggaran Super Admin
-1. Buat controller `app/Http/Controllers/SuperAdmin/FiscalYearController.php`.
-2. Implementasikan method `index()`, `store()`, `update()`, `destroy()`, `toggleStatus()`, `setDefault()`, `toggleLock()`.
-3. Daftarkan rute-rute tersebut pada `routes/web.php` di dalam grup `Route::prefix('super-admin')->name('superadmin.')`.
-4. Pastikan middleware `auth` dan `role:super_admin` melindungi controller ini.
-5. Jalankan `php artisan route:list --path=super-admin/fiscal-years` untuk memastikan rute terdaftar dengan benar.
+| No | File / Objek | Layer | Alasan Penghapusan |
+| :--- | :--- | :---: | :--- |
+| 1 | `app/Http/Controllers/Keuangan/RequisitionController.php` | Backend Controller | **DEAD CODE**. Keuangan tidak lagi memverifikasi usulan belanja unit. |
+| 2 | `routes/web.php` (rute `keuangan.requisitions.*`) | Backend Route | **DEAD ROUTE**. Menghindari endpoint tak terpakai yang memicu celah keamanan. |
+| 3 | `resources/js/Pages/Keuangan/Requisitions/` *(seluruh isi folder)* | Frontend View | **DEAD VIEW**. Halaman antrean dan verifikasi keuangan dihapus tuntas. |
+| 4 | `resources/js/Pages/Keuangan/Requisitions/Partials/FinanceDisbursementModal.jsx` | Frontend Component | **DEAD COMPONENT**. Modal pencairan SP2D tidak digunakan lagi. |
+| 5 | Kolom `approved_by_keuangan_id`, `approved_keuangan_at`, `notes_keuangan`, `sp2d_number`, `receipt_number` | Database Schema | **DEAD SCHEMA**. Mencegah error `Unknown column` dan menjaga integritas tabel `requisitions`. |
+| 6 | Nilai Enum `Diproses_Keuangan` dan `Disetujui_Selesai` pada `requisitions.status` | Database Schema | **DEAD ENUM**. Disederhanakan menjadi `Disetujui`. |
 
-### Tahap 2: Pembersihan & Perbaikan Sidebar `SuperAdminLayout.jsx`
-1. Buka `resources/js/Layouts/SuperAdminLayout.jsx`.
-2. Hapus entri item `Portal Administrator Biasa` dari `menuGroups`.
-3. Ubah rute menu `Tahun Anggaran & Tutup Buku` mengarah ke `route('superadmin.fiscal-years.index')` dengan `routeName: 'superadmin.fiscal-years.*'`.
-4. Periksa styling font dan warna sidebar agar selaras dengan `AdminLayout.jsx`, namun tetap mempertahankan aksen khas Super Admin (*Indigo / Dark Slate*).
+### 7.2 Komponen Baru yang DIBUAT (Created)
 
-### Tahap 3: Pembuatan Halaman Mandiri `SuperAdmin/FiscalYears/Index.jsx`
-1. Buat berkas `resources/js/Pages/SuperAdmin/FiscalYears/Index.jsx`.
-2. Gunakan pembungkus `<SuperAdminLayout>`.
-3. Tampilkan kartu metrik tahun anggaran (Tahun Aktif, Tahun Terkunci, Total Tahun Terdaftar).
-4. Buat tabel daftar tahun anggaran dengan kolom:
-   - Tahun & Keterangan
-   - Status Aktif (Badge + Toggle)
-   - Status Tutup Buku / Terkunci (`is_locked` Badge + Toggle Kunci)
-   - Status Default (Badge bintang / label default)
-   - Aksi (Edit, Jadikan Default, Hapus)
-5. Sediakan modal Tambah / Edit Tahun Anggaran yang rapi dengan validasi form Inertia.
+| No | File Path | Layer | Deskripsi & Fungsi |
+| :--- | :--- | :---: | :--- |
+| 1 | `database/migrations/xxxx_xx_xx_cleanup_requisitions_and_update_status_enum.php` | Database | Migration untuk drop kolom warisan keuangan dan memperbarui enum status `requisitions`. |
+| 2 | `database/migrations/xxxx_xx_xx_create_revenue_targets_table.php` | Database | Migration untuk tabel baru `revenue_targets` (tahunan, 12 bulan, mingguan). |
+| 3 | `database/seeders/RevenueTargetSeeder.php` | Database | Seeder target pendapatan default RSJ Tampan TA 2027 sesuai angka riil stakeholder. |
+| 4 | `app/Models/RevenueTarget.php` | Eloquent Model | Model target pendapatan BLUD beserta casts, helper, dan scope tahun fiskal. |
+| 5 | `app/Http/Controllers/Keuangan/RevenueTargetController.php` | Backend Controller | Controller penyusunan dan pengeditan target pendapatan per rekening. |
+| 6 | `resources/js/Pages/Keuangan/RevenueTargets/Index.jsx` | Frontend View | Tampilan form pengaturan target tahunan, bulanan, dan mingguan dengan kalkulasi otomatis. |
+| 7 | `resources/js/Pages/Keuangan/Reports/RevenueMonthlyMatrix.jsx` | Frontend View | Tampilan tabel matriks realisasi pendapatan 12 bulan (Jan-Des), ekspor Excel, dan cetak. |
+| 8 | `resources/js/Pages/Shared/PrintRevenueMonthlyMatrix.jsx` | Frontend View | Template cetak laporan matriks 12 bulan ber-kop resmi RS Jiwa Tampan (Landscape). |
+| 9 | `tests/Feature/RevenueWorkflowAndCleanupTest.php` | Automated Test | Pengujian menyeluruh alur baru, penghapusan kolom lama, target pendapatan, dan matriks 12 bulan. |
 
-### Tahap 4: Penataan Ulang UI Halaman Dashboard Global
-1. Buka `resources/js/Pages/SuperAdmin/Dashboard.jsx`.
-2. Susun ulang kartu metrik eksekutif menjadi grid 4 kolom responsif yang proporsional.
-3. Gunakan tipografi standar (`text-xs font-bold text-slate-500`, angka `text-xl font-bold font-mono text-slate-900`).
-4. Rapikan badge persentase dan ikon Lucide agar seimbang (tidak terlalu besar / tidak terlalu kecil).
-5. Perbaiki tampilan daftar riwayat aktivitas log terbaru dengan badge aksi yang rapi.
+### 7.3 Komponen yang DIMODIFIKASI (Updated)
 
-### Tahap 5: Penataan Ulang UI Halaman Manajemen Pengguna (Users)
-1. Buka `resources/js/Pages/SuperAdmin/Users/Index.jsx`.
-2. Rapikan wadah filter bar (Search input + Filter Role + Filter Status) agar sejajar dengan tombol aksi "Tambah Pengguna".
-3. Perbaiki tabel daftar user:
-   - Gunakan `bg-slate-50 border-b border-slate-200` pada `thead`.
-   - Gunakan badge status seragam dengan titik indikator.
-   - Rapikan tombol aksi: Impersonate (Troubleshooting), Reset Password, Edit, dan Hapus.
-4. Periksa dan rapikan modal form Tambah/Edit Pengguna serta modal Reset Password Darurat.
-
-### Tahap 6: Penataan Ulang UI Halaman Log Audit & Pengaturan Sistem
-1. Buka `resources/js/Pages/SuperAdmin/AuditLogs/Index.jsx`:
-   - Selaraskan filter dan tabel log.
-   - Sempurnakan modal tampilan payload JSON (*Before & After*) dengan styling `pre` / `code` yang bersih dan berlatar `bg-slate-900 text-emerald-400 font-mono text-xs`.
-2. Buka `resources/js/Pages/SuperAdmin/Settings/Index.jsx`:
-   - Kelompokkan input ke dalam kartu-kartu tematik: *Identitas Rumah Sakit & Kop Surat*, *Pejabat Direktur & Penandatangan*, *Pejabat Perencanaan & Keuangan*.
-   - Standarisasi kolom input form dan tombol "Simpan Perubahan".
-
-### Tahap 7: Penataan Ulang UI Halaman Monitoring Global
-1. Buka `resources/js/Pages/SuperAdmin/Monitoring/Rba.jsx`, `Requisitions.jsx`, dan `Finance.jsx`.
-2. Samakan komponen tab switcher, filter toolbar, indikator "Mode Pengawas (Read-Only)", tabel data, dan pagination.
-
-### Tahap 8: Pengujian Otomatis (*Feature Testing*)
-1. Perbarui [tests/Feature/SuperAdminSuiteTest.php](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/tests/Feature/SuperAdminSuiteTest.php):
-   - Tambahkan test untuk rute baru `superadmin.fiscal-years.index`, `store`, `update`, `toggle-lock`, `toggle-status`, `set-default`.
-   - Pastikan non-super_admin diblokir (403) saat mengakses `/super-admin/fiscal-years`.
-   - Pastikan toggle lock dan audit logging bekerja sempurna.
-2. Jalankan `php artisan test --filter=SuperAdminSuiteTest`.
-3. Jalankan rangkaian tes penuh: `php artisan test`.
-
-### Tahap 9: Kompilasi Aset Frontend & Verifikasi Visual
-1. Jalankan `npm run build` untuk memverifikasi tidak ada kesalahan sintaks JSX / Tailwind.
-2. Lakukan inspeksi visual di browser: pastikan font, button, jarak margin/padding, dan warna terlihat serasi dan harmonis dengan modul-modul lainnya.
+| No | File Path | Layer | Rangkuman Perubahan |
+| :--- | :--- | :---: | :--- |
+| 1 | `app/Models/Requisition.php` | Backend Model | Hapus relasi `approvedByKeuangan`, bersihkan `$fillable`, sesuaikan konstanta status. |
+| 2 | `app/Http/Controllers/Perencanaan/RequisitionController.php` | Backend Controller | Status approval langsung `Disetujui`, mutasikan sisa pagu `rba_accounts`. |
+| 3 | `app/Http/Controllers/Keuangan/ReportController.php` | Backend Controller | Tambahkan method `revenueMonthlyMatrix()`, perbarui formula `surplusDeficit()`. |
+| 4 | `app/Http/Controllers/Divisi/RequisitionController.php` | Backend Controller | Bersihkan filter `Diproses_Keuangan`. |
+| 5 | `app/Http/Controllers/SuperAdmin/MonitoringController.php` | Backend Controller | Hapus relasi keuangan lama, perbarui filter status. |
+| 6 | `resources/js/Layouts/KeuanganLayout.jsx` | Frontend Layout | Hapus menu validasi belanja, tambahkan menu Target Pendapatan & Matriks 12 Bulan. |
+| 7 | `resources/js/Pages/Divisi/Requisitions/Index.jsx` & `Show.jsx` | Frontend View | Hapus stepper step 3 dan kolom SP2D, tampilkan status final `Disetujui`. |
+| 8 | `resources/js/Pages/Perencanaan/Requisitions/Show.jsx` | Frontend View | Ubah tombol menjadi "Setujui & Sahkan Pengajuan", hapus narasi penerusan ke keuangan. |
+| 9 | `resources/js/Pages/Keuangan/Reports/SurplusDeficit.jsx` | Frontend View | Hitung komparasi pendapatan kas terhadap usulan disetujui Perencanaan. |
+| 10| `resources/js/Pages/SuperAdmin/Monitoring/Requisitions.jsx` | Frontend View | Hapus kolom SP2D dan filter lama. |
 
 ---
 
-## 6. Kriteria Penerimaan (*Acceptance Criteria*)
+## 8. Panduan Langkah demi Langkah (*Step-by-Step Implementation Guide*)
 
-- [ ] **Sidebar Bersih**: Item "Portal Administrator Biasa" telah dihapus dari sidebar Super Admin.
-- [ ] **Modul Tahun Anggaran Mandiri**: Super Admin memiliki halaman `/super-admin/fiscal-years` tersendiri dan tidak lagi berpindah/redirect ke `/admin/fiscal-years`.
-- [ ] **Fitur Tutup Buku Berfungsi**: Tombol kunci/buka kunci tahun anggaran (*toggle lock*) dapat diakses langsung dari modul tahun anggaran Super Admin dan tercatat di `activity_logs`.
-- [ ] **Desain Harmonis & Rapi**: Tipografi, ukuran button, badge status ber-dot, tabel data, dan modal form di seluruh halaman Super Admin (`Dashboard`, `Users`, `AuditLogs`, `Settings`, `FiscalYears`, `Monitoring`) menggunakan Design System yang serasi dengan aplikasi SI-BLUD.
-- [ ] **Bukan Copy-Paste Mentah**: Halaman Super Admin tetap memiliki identitas eksekutif tersendiri (aksen *Deep Indigo / Slate*) tanpa menduplikasi mentah tampilan role operasional.
-- [ ] **100% Tests Passed**: Semua pengujian otomatis (`php artisan test`) berhasil lulus tanpa kegagalan.
-- [ ] **Zero Build Error**: Perintah `npm run build` selesai tanpa peringatan error komponen.
+Junior Programmer atau AI Model wajib mengeksekusi tahapan ini secara berurutan:
+
+### Tahap 1: Pembersihan Skema Basis Data & Migrasi Baru
+1. Buat migration `cleanup_requisitions_and_update_status_enum`:
+   - Lakukan migrasi data lama: ubah status `Diproses_Keuangan` dan `Disetujui_Selesai` menjadi `Disetujui`.
+   - Drop foreign key `requisitions_approved_by_keuangan_id_foreign`.
+   - Drop kolom `approved_by_keuangan_id`, `approved_keuangan_at`, `notes_keuangan`, `sp2d_number`, `receipt_number`.
+   - Modifikasi enum `status` menjadi `['Draft', 'Pending_Perencanaan', 'Disetujui', 'Ditolak']`.
+2. Buat migration `create_revenue_targets_table` sesuai Bagian 4.1.
+3. Buat seeder `RevenueTargetSeeder.php` dengan data riil RS Jiwa Tampan (Total target Rp 32.469.887.914,00).
+4. Jalankan `php artisan migrate` dan `php artisan db:seed --class=RevenueTargetSeeder`.
+
+### Tahap 2: Pembersihan Backend & Refactor Approval Perencanaan
+1. Hapus file `app/Http/Controllers/Keuangan/RequisitionController.php`.
+2. Buka `routes/web.php`: hapus seluruh rute `keuangan.requisitions.*`.
+3. Buka `app/Models/Requisition.php`: bersihkan relasi `approvedByKeuangan`, fillable, cast, dan perbarui konstanta status.
+4. Buka `app/Http/Controllers/Perencanaan/RequisitionController.php`:
+   - Saat approval di-submit, set `status = 'Disetujui'`, kurangi `remaining_budget` dan tambahkan `spent_budget` pada `rba_accounts`.
+5. Buka `app/Http/Controllers/SuperAdmin/MonitoringController.php` & `DashboardController.php`: bersihkan eager load dan query status lama.
+
+### Tahap 3: Pembersihan Antarmuka Pengguna (UI)
+1. Hapus folder `resources/js/Pages/Keuangan/Requisitions/` beserta isinya.
+2. Edit `resources/js/Layouts/KeuanganLayout.jsx`: buang menu validasi pengajuan unit, pasang menu target pendapatan dan matriks 12 bulan.
+3. Edit `resources/js/Pages/Divisi/Requisitions/Show.jsx` & `Index.jsx`: buang step 3 stepper dan kolom SP2D, tampilkan status sah disetujui Perencanaan.
+4. Edit `resources/js/Pages/Perencanaan/Requisitions/Show.jsx`: tombol ACC final mandiri.
+5. Edit `resources/js/Pages/SuperAdmin/Monitoring/Requisitions.jsx`: bersihkan filter dan kolom SP2D.
+
+### Tahap 4: Implementasi Modul Target Pendapatan Keuangan
+1. Buat model `app/Models/RevenueTarget.php`.
+2. Buat controller `app/Http/Controllers/Keuangan/RevenueTargetController.php` dengan rute `GET /keuangan/revenue-targets` dan `POST /keuangan/revenue-targets`.
+3. Buat view `resources/js/Pages/Keuangan/RevenueTargets/Index.jsx` lengkap dengan tab alokasi (Tahunan, Bulanan, Mingguan) dan kalkulator bagi rata.
+
+### Tahap 5: Implementasi Matriks Realisasi Pendapatan 12 Bulan (Jan - Des)
+1. Pada `app/Http/Controllers/Keuangan/ReportController.php`, buat method `revenueMonthlyMatrix()`:
+   - Ambil target dari `revenue_targets`.
+   - Agregasi realisasi dari `revenues` per bulan (Januari s/d Desember).
+   - Hitung total realisasi, sisa anggaran (dengan format kurung untuk sisa belum tercapai), dan % realisasi.
+2. Buat view `resources/js/Pages/Keuangan/Reports/RevenueMonthlyMatrix.jsx`.
+3. Buat template cetak `resources/js/Pages/Shared/PrintRevenueMonthlyMatrix.jsx` (Lanskap dengan kop dinamis).
+4. Sediakan fitur ekspor Excel.
+
+### Tahap 6: Rekalkulasi Laporan Surplus / Defisit
+1. Pada `app/Http/Controllers/Keuangan/ReportController.php::surplusDeficit()`:
+   - Hitung belanja dari seluruh usulan yang berstatus `'Disetujui'` oleh Perencanaan.
+   - Hitung selisih: $\text{Pendapatan} - \text{Belanja Disetujui}$.
+2. Perbarui tampilan `resources/js/Pages/Keuangan/Reports/SurplusDeficit.jsx`.
+
+### Tahap 7: Harmonisasi & Pengujian Menyeluruh (*Testing & Verification*)
+1. Tambahkan feature test di `tests/Feature/RevenueWorkflowAndCleanupTest.php`.
+2. Jalankan `php artisan test` & pastikan semua test lulus 100%.
+3. Jalankan `npm run build` & pastikan aset terkompilasi bersih tanpa peringatan.
 
 ---
 
-## 7. Referensi File Utama Proyek
+## 9. Kriteria Penerimaan (*Acceptance Criteria*)
 
-- **Layout Super Admin**: [resources/js/Layouts/SuperAdminLayout.jsx](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/resources/js/Layouts/SuperAdminLayout.jsx)
-- **Halaman Super Admin Eksisting**: [resources/js/Pages/SuperAdmin/](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/resources/js/Pages/SuperAdmin/)
-- **Referensi Design Token Elemen**: [resources/js/Layouts/AdminLayout.jsx](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/resources/js/Layouts/AdminLayout.jsx) & [resources/js/Pages/Admin/Users/Index.jsx](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/resources/js/Pages/Admin/Users/Index.jsx)
-- **Routing Web**: [routes/web.php](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/routes/web.php)
-- **Automated Tests**: [tests/Feature/SuperAdminSuiteTest.php](file:///d:/Kampus/Nabil_2SIB/laragon-6.0-minimal/www/rsj-req-app/tests/Feature/SuperAdminSuiteTest.php)
+- [ ] **Dead Code & Dead Columns Dihapus Tuntas (0% Sisa)**:
+  - File `Keuangan/RequisitionController.php` dan folder `resources/js/Pages/Keuangan/Requisitions/` sudah terhapus permanen.
+  - Rute `keuangan.requisitions.*` tidak lagi terdaftar di sistem (`php artisan route:list` bersih).
+  - Kolom `approved_by_keuangan_id`, `approved_keuangan_at`, `notes_keuangan`, `sp2d_number`, `receipt_number` sudah tidak ada di tabel `requisitions`.
+  - Enum `status` pada tabel `requisitions` murni hanya terdiri dari: `'Draft'`, `'Pending_Perencanaan'`, `'Disetujui'`, `'Ditolak'`.
+- [ ] **Alur Usulan Berhenti di Perencanaan**: Usulan belanja unit divalidasi dan disetujui final oleh Perencanaan (status langsung `Disetujui`), tidak ada lagi antrean ke Keuangan.
+- [ ] **Pemotongan Pagu RBA Belanja Otomatis**: Ketika Perencanaan menyetujui usulan, `remaining_budget` rekening belanja RBA langsung berkurang dan `spent_budget` bertambah.
+- [ ] **Modul Target Pendapatan Aktif & Fleksibel**: Bagian Keuangan dapat mengatur target pendapatan per rekening dengan alokasi tahunan, bulanan (12 bulan), maupun mingguan.
+- [ ] **Matriks 12 Bulan Sesuai Dokumen Riil RSJ**: Tabel Matriks Realisasi Pendapatan Bulanan berhasil merender 12 kolom bulan (Januari s/d Desember), total realisasi, sisa anggaran target, dan persentase capaian (% Realisasi) persis seperti format dokumen rumah sakit.
+- [ ] **Formula Surplus-Defisit Akurat**: Laporan Surplus-Defisit menghitung `Total Realisasi Kas Pendapatan` dikurangi `Total Belanja Usulan yang Telah Disetujui Perencanaan`.
+- [ ] **Cetak & Ekspor Berfungsi**: Dokumen Matriks 12 Bulan dapat dicetak rapi dalam mode cetak lanskap (*A4/F4 Landscape*) dengan kop surat resmi RSJ Tampan dan diekspor ke Excel.
+- [ ] **Zero Regressions**: Seluruh automated tests (`php artisan test`) lulus 100% dan aset Vite (`npm run build`) terkompilasi bersih.
