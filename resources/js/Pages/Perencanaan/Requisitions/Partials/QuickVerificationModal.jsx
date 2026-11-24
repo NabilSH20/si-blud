@@ -124,7 +124,7 @@ export default function QuickVerificationModal({
         router.put(
             route('perencanaan.requisitions.update', requisition.id),
             {
-                status: 'Diproses_Keuangan',
+                status: 'Disetujui',
                 notes_perencanaan: notesPerencanaan,
                 items: itemsState,
             },
@@ -136,7 +136,7 @@ export default function QuickVerificationModal({
                         toast: true,
                         position: 'top-end',
                         icon: 'success',
-                        title: 'Usulan berhasil disetujui & diteruskan ke Keuangan',
+                        title: 'Usulan belanja berhasil disetujui & disahkan (ACC Final)',
                         showConfirmButton: false,
                         timer: 2500,
                         timerProgressBar: true,
@@ -532,7 +532,7 @@ export default function QuickVerificationModal({
                                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                                     </svg>
-                                    <span>Setujui & Teruskan ke Keuangan</span>
+                                    <span>Setujui & Sahkan Pengajuan (ACC Final)</span>
                                 </>
                             )}
                         </button>

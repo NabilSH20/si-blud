@@ -514,22 +514,15 @@ export default function RequisitionFormModal({
                 <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5 bg-white">
 
                     {/* Notice for Rejected Requisition */}
-                    {isEdit && requisition?.status === 'Ditolak' && (requisition?.notes_perencanaan || requisition?.notes_keuangan) && (
+                    {isEdit && requisition?.status === 'Ditolak' && requisition?.notes_perencanaan && (
                         <div className="rounded-xl border border-amber-300 bg-amber-50/90 p-4 text-xs text-amber-950 shadow-2xs space-y-1.5 animate-fade-in">
                             <div className="flex items-center gap-2 font-bold text-amber-900">
                                 <AlertTriangle size={17} className="text-amber-600 shrink-0" />
                                 <span>Catatan Evaluasi Verifikator (Alasan Usulan Ditolak Sebelumnya):</span>
                             </div>
-                            {requisition.notes_perencanaan && (
-                                <p className="text-amber-900 pl-6">
-                                    <strong className="text-amber-950">Tim Perencanaan:</strong> {requisition.notes_perencanaan}
-                                </p>
-                            )}
-                            {requisition.notes_keuangan && (
-                                <p className="text-amber-900 pl-6">
-                                    <strong className="text-amber-950">Bagian Keuangan:</strong> {requisition.notes_keuangan}
-                                </p>
-                            )}
+                            <p className="text-amber-900 pl-6">
+                                <strong className="text-amber-950">Tim Perencanaan:</strong> {requisition.notes_perencanaan}
+                            </p>
                             <p className="text-[11px] text-amber-700 italic pl-6 pt-0.5">
                                 * Lakukan revisi pada item atau informasi di bawah ini, lalu klik &quot;Simpan &amp; Ajukan Ulang&quot; untuk mengirim kembali ke Tim Perencanaan.
                             </p>

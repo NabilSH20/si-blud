@@ -252,4 +252,63 @@ class RevenueWorkflowAndCleanupTest extends TestCase
             ->where('summary.is_surplus', true)
         );
     }
+
+    public function test_superadmin_monitoring_finance_executes_without_column_errors(): void
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+        $division = Division::create(['division_code' => 'DIV-02', 'name' => 'Bidang Keperawatan']);
+        $unitUser = User::factory()->create(['role' => 'divisi', 'division_id' => $division->id]);
+
+        $requisition = Requisition::create([
+            'requisition_number' => 'REQ-20270120-0002',
+            'user_id' => $unitUser->id,
+            'division_id' => $division->id,
+            'submission_date' => '2027-01-20',
+            'status' => 'Disetujui',
+            'budget_year' => 2027,
+            'verified_perencanaan_at' => now(),
+            'total_estimated' => 1000000,
+            'total_approved' => 1000000,
+        ]);
+
+        session(['active_year' => 2027]);
+
+        $response = $this->actingAs($superAdmin)->get('/super-admin/monitoring/finance');
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('SuperAdmin/Monitoring/Finance')
+            ->has('disbursed_requisitions')
+            ->where('disbursed_requisitions.0.id', $requisition->id)
+        );
+    }
+
+    public function test_keuangan_dashboard_loads_without_error(): void
+    {
+        $keuangan = User::factory()->create(['role' => 'keuangan']);
+        session(['active_year' => 2027]);
+
+        $response = $this->actingAs($keuangan)->get(route('keuangan.dashboard'));
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Keuangan/Dashboard')
+            ->has('total_revenue')
+            ->has('total_processed')
+        );
+    }
+
+    public function test_user_deletion_does_not_fail_with_approved_by_keuangan_column_error(): void
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+        $admin = User::factory()->create(['role' => 'admin']);
+        $targetUser1 = User::factory()->create(['role' => 'keuangan']);
+        $targetUser2 = User::factory()->create(['role' => 'perencanaan']);
+
+        $response1 = $this->actingAs($admin)->delete(route('users.destroy', $targetUser1->id));
+        $response1->assertRedirect();
+        $this->assertDatabaseMissing('users', ['id' => $targetUser1->id]);
+
+        $response2 = $this->actingAs($superAdmin)->delete(route('superadmin.users.destroy', $targetUser2->id));
+        $response2->assertRedirect();
+        $this->assertDatabaseMissing('users', ['id' => $targetUser2->id]);
+    }
 }

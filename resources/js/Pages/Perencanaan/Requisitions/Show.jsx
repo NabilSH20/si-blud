@@ -303,7 +303,7 @@ export default function Show({ requisition, rbaList = [] }) {
                 </div>
 
                 {/* Banner Berkas Hasil Revisi & Pengajuan Ulang Unit */}
-                {requisition.status === 'Pending_Perencanaan' && (requisition.notes_perencanaan || requisition.notes_keuangan) && (
+                {requisition.status === 'Pending_Perencanaan' && requisition.notes_perencanaan && (
                     <div className="rounded-2xl border border-amber-300 bg-amber-50/90 p-4 shadow-xs">
                         <div className="flex items-start gap-3">
                             <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white text-xs font-black">
@@ -324,7 +324,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                 <div className="mt-2 rounded-xl bg-white/95 border border-amber-200 p-3 text-xs shadow-2xs">
                                     <span className="font-bold text-slate-800">Catatan Evaluasi / Arahan Penolakan Sebelumnya:</span>
                                     <p className="mt-1 italic text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                        "{requisition.notes_perencanaan || requisition.notes_keuangan}"
+                                        "{requisition.notes_perencanaan}"
                                     </p>
                                 </div>
                             </div>

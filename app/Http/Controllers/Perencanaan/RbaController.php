@@ -243,7 +243,7 @@ class RbaController extends Controller
             ->where(function ($q) use ($selectedYear) {
                 $q->where('budget_year', $selectedYear)->orWhere('fiscal_year', $selectedYear);
             })
-            ->where('status', 'Disetujui_Selesai')
+            ->whereIn('status', ['Disetujui', 'Disetujui_Selesai'])
             ->get();
 
         $approvedReqTotal = (float) $approvedReqs->sum(fn ($r) => $r->total_approved > 0 ? $r->total_approved : $r->total_estimated);
@@ -1051,8 +1051,8 @@ class RbaController extends Controller
                 'proposed_items' => $mappedItems->values(),
                 'proposed_total' => (float) $mappedItems->sum('resolved_subtotal'),
                 'proposed_count' => $mappedItems->count(),
-                'approved_total' => (float) $mappedItems->where('status', 'Disetujui_Selesai')->sum('resolved_subtotal'),
-                'approved_count' => $mappedItems->where('status', 'Disetujui_Selesai')->count(),
+                'approved_total' => (float) $mappedItems->filter(fn ($item) => in_array($item->status ?? ($item['status'] ?? null), ['Disetujui', 'Disetujui_Selesai']))->sum('resolved_subtotal'),
+                'approved_count' => $mappedItems->filter(fn ($item) => in_array($item->status ?? ($item['status'] ?? null), ['Disetujui', 'Disetujui_Selesai']))->count(),
             ];
         })->keyBy('account_code');
 
@@ -1109,7 +1109,7 @@ class RbaController extends Controller
                 ->where(function ($q) use ($year) {
                     $q->where('budget_year', $year)->orWhere('fiscal_year', $year);
                 })
-                ->where('status', 'Disetujui_Selesai')
+                ->whereIn('status', ['Disetujui', 'Disetujui_Selesai'])
                 ->get();
         }
 

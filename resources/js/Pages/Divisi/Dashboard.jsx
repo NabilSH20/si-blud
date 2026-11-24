@@ -29,14 +29,11 @@ const getStatusBadge = (status) => {
                 label: 'Menunggu Telaah',
                 className: 'bg-amber-50 text-amber-800 border-amber-200',
             };
+        case 'Disetujui':
+        case 'Disetujui_Selesai':
         case 'Diproses_Keuangan':
             return {
-                label: 'Proses Keuangan',
-                className: 'bg-blue-50 text-blue-800 border-blue-200',
-            };
-        case 'Disetujui_Selesai':
-            return {
-                label: 'Disetujui',
+                label: 'Disetujui (ACC Final)',
                 className: 'bg-teal-50 text-teal-800 border-teal-200',
             };
         case 'Ditolak':
@@ -171,26 +168,32 @@ export default function Dashboard({
                             <span className="text-3xl font-bold text-amber-800">{pending_requests}</span>
                             <span className="text-xs font-medium text-amber-700">Berkas</span>
                         </div>
+                        <p className="mt-3 text-[11px] font-medium text-amber-700">
+                            Dalam telaah Bagian Perencanaan
+                        </p>
                     </div>
 
-                    {/* Card 3: Proses Keuangan */}
-                    <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-5 shadow-sm">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">Proses Keuangan</p>
-                        <div className="mt-2 flex items-baseline gap-2">
-                            <span className="text-3xl font-bold text-blue-800">{in_finance_requests}</span>
-                            <span className="text-xs font-medium text-blue-700">Berkas</span>
-                        </div>
-                    </div>
-
-                    {/* Card 4: Disetujui */}
+                    {/* Card 3: Disetujui (ACC Final) */}
                     <div className="rounded-2xl border border-teal-200 bg-teal-50/40 p-5 shadow-sm">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">Disetujui / Selesai</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">Disetujui (ACC Final)</p>
                         <div className="mt-2 flex items-baseline gap-2">
                             <span className="text-3xl font-bold text-teal-800">{approved_requests}</span>
                             <span className="text-xs font-medium text-teal-700">Berkas</span>
                         </div>
                         <p className="mt-3 text-[11px] font-bold text-teal-700">
                             Disetujui: {formatRupiah(total_approved)}
+                        </p>
+                    </div>
+
+                    {/* Card 4: Perlu Revisi / Ditolak */}
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50/40 p-5 shadow-sm">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-rose-700">Perlu Revisi / Ditolak</p>
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-rose-800">{rejected_requests}</span>
+                            <span className="text-xs font-medium text-rose-700">Berkas</span>
+                        </div>
+                        <p className="mt-3 text-[11px] font-medium text-rose-700">
+                            Dapat diperbaiki & diajukan ulang
                         </p>
                     </div>
                 </div>

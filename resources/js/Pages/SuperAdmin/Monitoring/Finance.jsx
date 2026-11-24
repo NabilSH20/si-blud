@@ -43,7 +43,7 @@ export default function MonitoringFinance({
                     <div>
                         <div className="flex items-center gap-2">
                             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-                                Monitoring Keuangan, Pendapatan & SP2D
+                                Monitoring Keuangan & Realisasi Belanja BLUD
                             </h1>
                             <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-xs font-bold text-indigo-700">
                                 <Shield className="h-3 w-3" />
@@ -51,7 +51,7 @@ export default function MonitoringFinance({
                             </span>
                         </div>
                         <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
-                            Ikhtisar realisasi pendapatan fungsional BLUD dan pencairan belanja operasional Tahun {active_year}.
+                            Ikhtisar realisasi pendapatan fungsional BLUD dan realisasi belanja operasional Tahun {active_year}.
                         </p>
                     </div>
 
@@ -72,7 +72,7 @@ export default function MonitoringFinance({
                     <Shield className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
                     <div className="text-xs text-indigo-950 leading-relaxed">
                         <strong className="font-bold text-indigo-900">Segregation of Duties (Prinsip BLUD): </strong>
-                        Super Admin tidak berwenang mengeksekusi SP2D, menginput pendapatan, atau mengubah saldo kas riil. Seluruh proses penatausahaan keuangan dan kas menjadi tanggung jawab penuh Bagian Keuangan & Bendahara Pengeluaran.
+                        Super Admin berwenang memantau ikhtisar realisasi. Seluruh proses penatausahaan kas masuk menjadi tanggung jawab Bagian Keuangan, sedangkan pengesahan belanja operasional unit divalidasi final oleh Bagian Perencanaan.
                     </div>
                 </div>
 
@@ -110,7 +110,7 @@ export default function MonitoringFinance({
 
                     <div className="rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-xs">
                         <div className="flex items-center justify-between text-slate-500">
-                            <span className="text-xs font-bold text-slate-500">Realisasi Belanja (Disbursed)</span>
+                            <span className="text-xs font-bold text-slate-500">Realisasi Belanja Disetujui</span>
                             <div className="rounded-xl bg-rose-50 p-2 text-rose-600 border border-rose-200">
                                 <Wallet className="w-4 h-4" />
                             </div>
@@ -119,7 +119,7 @@ export default function MonitoringFinance({
                             <div className="text-xl sm:text-2xl font-bold font-mono text-rose-700 truncate">
                                 {formatRp(totalDisbursed)}
                             </div>
-                            <p className="mt-1 text-[11px] font-medium text-slate-400">{disbursed_requisitions.length} berkas selesai SP2D</p>
+                            <p className="mt-1 text-[11px] font-medium text-slate-400">{disbursed_requisitions.length} berkas disahkan (ACC Final)</p>
                         </div>
                     </div>
 
@@ -240,17 +240,17 @@ export default function MonitoringFinance({
                     <div className="lg:col-span-5 rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden flex flex-col">
                         <div className="p-4 sm:p-5 border-b border-slate-200/80 bg-slate-50/50">
                             <h2 className="font-bold text-slate-900 text-xs sm:text-sm">
-                                10 Pencairan SP2D Terkini
+                                10 Usulan Belanja Disetujui Terkini
                             </h2>
                             <p className="text-[11px] text-slate-400 mt-0.5">
-                                Berkas belanja yang telah disahkan dan dicairkan bendahara
+                                Berkas belanja yang telah disahkan final oleh Bagian Perencanaan
                             </p>
                         </div>
 
                         <div className="divide-y divide-slate-100 flex-1 overflow-y-auto">
                             {disbursed_requisitions.length === 0 ? (
                                 <div className="px-5 py-12 text-center text-slate-400 font-medium">
-                                    Belum ada berkas belanja yang dicairkan.
+                                    Belum ada berkas belanja yang disetujui.
                                 </div>
                             ) : (
                                 disbursed_requisitions.map((req) => (
@@ -267,7 +267,7 @@ export default function MonitoringFinance({
                                             <span>{req.division?.name || 'Divisi'} • {req.unit?.name || 'Unit'}</span>
                                             <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
                                                 <CheckCircle2 className="w-3.5 h-3.5" />
-                                                Lunas SP2D
+                                                Disetujui Perencanaan
                                             </span>
                                         </div>
                                         {req.purpose && (

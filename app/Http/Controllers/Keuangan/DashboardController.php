@@ -44,7 +44,7 @@ class DashboardController extends Controller
 
         // P0-2 FIX: Official expense is the sum of approved requisitions, not the ledger difference
         $totalSpent = (float) RequisitionDetail::whereHas('requisition', function ($q) use ($activeYear) {
-            $q->where('status', 'Disetujui_Selesai')
+            $q->whereIn('status', ['Disetujui', 'Disetujui_Selesai'])
                 ->where(function ($sq) use ($activeYear) {
                     $sq->where('budget_year', $activeYear)
                         ->orWhere(function ($ssq) use ($activeYear) {
@@ -106,7 +106,7 @@ class DashboardController extends Controller
             ];
         }
 
-        $totalProcessed = Requisition::where('status', 'Disetujui_Selesai')
+        $totalProcessed = Requisition::whereIn('status', ['Disetujui', 'Disetujui_Selesai'])
             ->where(function ($q) use ($activeYear) {
                 $q->where('budget_year', $activeYear)
                     ->orWhere(function ($sq) use ($activeYear) {

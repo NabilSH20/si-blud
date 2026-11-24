@@ -346,7 +346,7 @@ export default function Dashboard({
                                     Ada {total_to_verify} berkas usulan belanja yang menunggu telaah
                                 </p>
                                 <p className="text-xs text-amber-700 mt-0.5">
-                                    Periksa spesifikasi barang dan sesuaikan volume yang disetujui sebelum diteruskan ke Keuangan.
+                                    Periksa spesifikasi barang dan sesuaikan volume yang disetujui (ACC Final) untuk memotong pagu RBA.
                                 </p>
                             </div>
                         </div>
@@ -490,7 +490,7 @@ export default function Dashboard({
                                     Verifikasi Pengajuan
                                 </h4>
                                 <p className="mt-1 text-xs text-slate-500 leading-relaxed line-clamp-2">
-                                    Telaah kuantitas kebutuhan belanja dari unit, sesuaikan volume, dan teruskan ke Keuangan.
+                                    Telaah kuantitas kebutuhan belanja dari unit, sesuaikan volume, dan sahkan persetujuan final (ACC Final).
                                 </p>
                             </div>
                         </Link>

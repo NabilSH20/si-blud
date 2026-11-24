@@ -29,17 +29,11 @@ const getStatusBadge = (status) => {
                 bg: 'bg-amber-100 text-amber-900 border-amber-300',
                 dot: 'bg-amber-500',
             };
-        case 'Diproses_Keuangan':
-            return {
-                label: 'Diproses Keuangan',
-                desc: 'Usulan telah diverifikasi Tim Perencanaan dan saat ini sedang dalam tahap validasi pagu kas serta penerbitan SP2D oleh Bagian Keuangan.',
-                bg: 'bg-blue-100 text-blue-900 border-blue-300',
-                dot: 'bg-blue-500',
-            };
+        case 'Disetujui':
         case 'Disetujui_Selesai':
             return {
-                label: 'Disetujui / Selesai',
-                desc: 'Usulan belanja telah disetujui penuh oleh Bagian Keuangan, SP2D telah terbit, dan anggaran telah teralokasi.',
+                label: 'Disetujui (ACC Final)',
+                desc: 'Usulan belanja telah disetujui penuh oleh Bagian Perencanaan, alokasi pagu anggaran belanja RBA BLUD telah terpotong.',
                 bg: 'bg-emerald-100 text-emerald-900 border-emerald-300',
                 dot: 'bg-emerald-500',
             };
@@ -268,24 +262,14 @@ export default function RequisitionDetailModal({
                     </div>
 
                     {/* CATATAN EVALUASI VERIFIKATOR (If any) */}
-                    {(requisition.notes_perencanaan || requisition.notes_keuangan) && (
+                    {requisition.notes_perencanaan && (
                         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6 space-y-4">
                             <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900">
                                 Catatan Evaluasi Verifikator
                             </h3>
-                            <div className="space-y-3">
-                                {requisition.notes_perencanaan && (
-                                    <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
-                                        <span className="font-bold text-amber-900 block mb-1 text-xs">Catatan Perencanaan:</span>
-                                        <p className="text-sm font-medium text-amber-900">{requisition.notes_perencanaan}</p>
-                                    </div>
-                                )}
-                                {requisition.notes_keuangan && (
-                                    <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4">
-                                        <span className="font-bold text-blue-900 block mb-1 text-xs">Catatan Keuangan:</span>
-                                        <p className="text-sm font-medium text-blue-900">{requisition.notes_keuangan}</p>
-                                    </div>
-                                )}
+                            <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
+                                <span className="font-bold text-amber-900 block mb-1 text-xs">Catatan Tim Perencanaan:</span>
+                                <p className="text-sm font-medium text-amber-900">{requisition.notes_perencanaan}</p>
                             </div>
                         </div>
                     )}
@@ -381,7 +365,7 @@ export default function RequisitionDetailModal({
                                             Total Biaya:
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-black text-emerald-700">
-                                            {formatRupiah(requisition.total_approved && Number(requisition.total_approved) > 0 ? requisition.total_approved : (requisition.status === 'Disetujui_Selesai' || requisition.status === 'Diproses_Keuangan' ? totalApprovedCost : totalCost))}
+                                            {formatRupiah(requisition.total_approved && Number(requisition.total_approved) > 0 ? requisition.total_approved : (requisition.status === 'Disetujui' || requisition.status === 'Disetujui_Selesai' ? totalApprovedCost : totalCost))}
                                         </td>
                                     </tr>
                                 </tfoot>

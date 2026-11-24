@@ -112,9 +112,9 @@ class MonitoringController extends Controller
         $disbursedReqs = Requisition::where(function ($q) use ($activeYear) {
             $q->where('budget_year', $activeYear)->orWhere('fiscal_year', $activeYear);
         })
-            ->where('status', 'Disetujui_Selesai')
+            ->where('status', 'Disetujui')
             ->with(['division:id,name', 'unit:id,name'])
-            ->latest('approved_keuangan_at')
+            ->latest('verified_perencanaan_at')
             ->limit(10)
             ->get();
 

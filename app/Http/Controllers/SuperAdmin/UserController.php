@@ -209,7 +209,6 @@ class UserController extends Controller
 
         $hasRequisitions = Requisition::where('user_id', $user->id)
             ->orWhere('verified_by_perencanaan_id', $user->id)
-            ->orWhere('approved_by_keuangan_id', $user->id)
             ->exists();
 
         if ($hasRequisitions) {
