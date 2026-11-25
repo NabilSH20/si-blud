@@ -51,16 +51,10 @@ export default function MonitoringRba({
                 {/* 1. Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-                                Monitoring RBA & Pergeseran Anggaran
-                            </h1>
-                            <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-xs font-bold text-indigo-700">
-                                <Shield className="h-3 w-3" />
-                                Oversight
-                            </span>
-                        </div>
-                        <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                            Monitoring RBA & Pergeseran Anggaran
+                        </h1>
+                        <p className="mt-1 text-xs sm:text-sm text-slate-500 font-medium">
                             Pengawasan komprehensif struktur rekening RBA dan jejak pergeseran anggaran Tahun {active_year}.
                         </p>
                     </div>
@@ -70,18 +64,18 @@ export default function MonitoringRba({
                             <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                             Mode Pengawas (Read-Only)
                         </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs">
-                            <Calendar className="h-3.5 w-3.5 text-indigo-600" />
-                            TA: <span className="font-mono text-indigo-900 font-bold">{active_year}</span>
+                        <span className="inline-flex items-center gap-1.5 rounded-xl border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-800 shadow-2xs">
+                            <Calendar className="h-3.5 w-3.5 text-teal-600" />
+                            TA: <span className="font-mono text-teal-900 font-bold">{active_year}</span>
                         </span>
                     </div>
                 </div>
 
                 {/* 2. Segregation of Duties Alert Banner */}
-                <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200/80 flex items-start gap-3 shadow-2xs">
-                    <Shield className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
-                    <div className="text-xs text-indigo-950 leading-relaxed">
-                        <strong className="font-bold text-indigo-900">Segregation of Duties (Prinsip BLUD): </strong>
+                <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200/80 flex items-start gap-3 shadow-2xs">
+                    <Shield className="w-5 h-5 text-teal-600 shrink-0 mt-0.5" />
+                    <div className="text-xs text-teal-950 leading-relaxed">
+                        <strong className="font-bold text-teal-900">Segregation of Duties (Prinsip BLUD): </strong>
                         Super Admin mengawasi integritas angka anggaran dan memvalidasi riwayat perubahan tanpa memiliki wewenang mengedit pagu rekening secara manual di luar transaksi sah. Perubahan akun dan input pergeseran tetap menjadi ranah eksklusif Bagian Perencanaan.
                     </div>
                 </div>
@@ -118,10 +112,10 @@ export default function MonitoringRba({
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-xs">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
                         <div className="flex items-center justify-between text-slate-500">
                             <span className="text-xs font-bold text-slate-500">Variasi / Net Pergeseran</span>
-                            <div className="rounded-xl bg-indigo-50 p-2 text-indigo-600 border border-indigo-200">
+                            <div className="rounded-xl bg-teal-50 p-2 text-teal-600 border border-teal-200">
                                 <ArrowRightLeft className="w-4 h-4" />
                             </div>
                         </div>
@@ -163,16 +157,16 @@ export default function MonitoringRba({
                 </div>
 
                 {/* 4. Kontainer Utama Tabel */}
-                <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
                     {/* Navigation Tabs & Search */}
-                    <div className="border-b border-slate-200/80 px-5 pt-3 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="border-b border-slate-100 px-5 pt-3 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-1">
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('accounts')}
                                 className={`flex items-center gap-2 pb-3 px-3 text-xs font-bold border-b-2 transition cursor-pointer ${
                                     activeTab === 'accounts'
-                                        ? 'border-indigo-600 text-indigo-600'
+                                        ? 'border-teal-600 text-teal-700'
                                         : 'border-transparent text-slate-500 hover:text-slate-700'
                                 }`}
                             >
@@ -184,7 +178,7 @@ export default function MonitoringRba({
                                 onClick={() => setActiveTab('shifts')}
                                 className={`flex items-center gap-2 pb-3 px-3 text-xs font-bold border-b-2 transition cursor-pointer ${
                                     activeTab === 'shifts'
-                                        ? 'border-indigo-600 text-indigo-600'
+                                        ? 'border-teal-600 text-teal-700'
                                         : 'border-transparent text-slate-500 hover:text-slate-700'
                                 }`}
                             >
@@ -202,13 +196,13 @@ export default function MonitoringRba({
                                         placeholder="Cari kode atau uraian..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-300 bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 w-44 sm:w-60 shadow-2xs"
+                                        className="pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 w-44 sm:w-60"
                                     />
                                 </div>
                                 <select
                                     value={typeFilter}
                                     onChange={(e) => setTypeFilter(e.target.value)}
-                                    className="text-xs font-bold rounded-xl border border-slate-300 bg-white py-1.5 pl-3 pr-8 focus:border-indigo-500 text-slate-700 shadow-2xs cursor-pointer"
+                                    className="text-xs font-semibold rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-8 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 text-slate-700 cursor-pointer"
                                 >
                                     <option value="ALL">Semua Tipe</option>
                                     <option value="belanja">Belanja</option>
@@ -222,8 +216,8 @@ export default function MonitoringRba({
                     {/* Tab 1: Rekening RBA */}
                     {activeTab === 'accounts' && (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs text-slate-600">
-                                <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-700 uppercase tracking-wider text-[11px] font-bold">
+                            <table className="min-w-full divide-y divide-slate-100">
+                                <thead className="bg-slate-50 font-bold border-b border-slate-200 text-slate-700 uppercase tracking-wider text-xs">
                                     <tr>
                                         <th className="px-5 py-3.5">Kode Rekening</th>
                                         <th className="px-5 py-3.5">Uraian Akun</th>

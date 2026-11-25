@@ -5,6 +5,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import {
     Activity,
+    Bell,
     Calendar,
     ChevronDown,
     FileSpreadsheet,
@@ -16,6 +17,7 @@ import {
     Menu,
     Settings,
     Shield,
+    User as UserIcon,
     Users,
     Wallet,
     X,
@@ -89,14 +91,24 @@ const menuGroups = [
 
 export default function SuperAdminLayout({ children }) {
     const { auth, active_year, is_active_year_locked } = usePage().props;
+    const { url } = usePage();
     const user = auth?.user || {};
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
     const [profileModalOpen, setProfileModalOpen] = useState(false);
     const [showNotification, setShowNotification] = useState(false);
 
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('profile')) {
+                setProfileModalOpen(true);
+            }
+        }
+    }, [url]);
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-100/90 via-slate-50 to-indigo-50/50 bg-fixed font-sans text-slate-800 antialiased">
+        <div className="min-h-screen bg-gradient-to-br from-slate-100/90 via-slate-50 to-emerald-50/50 bg-fixed font-sans text-slate-800 antialiased">
             {/* 0. Impersonate Warning Banner */}
             <ImpersonateBanner />
             <ToastListener />
@@ -104,7 +116,7 @@ export default function SuperAdminLayout({ children }) {
             {/* Mobile backdrop */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity lg:hidden"
+                    className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs transition-opacity lg:hidden"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
@@ -120,19 +132,20 @@ export default function SuperAdminLayout({ children }) {
                 />
             )}
 
-            {/* 1. Sidebar Khusus Super Admin (Indigo / Deep Slate Accent) */}
+            {/* 1. Sidebar Super Admin (Seragam dengan Layout Role Lainnya) */}
             <aside
-                className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r-2 border-indigo-200/80 bg-white shadow-xl transition-transform duration-300 lg:translate-x-0 ${
+                className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r-2 border-slate-300/80 bg-white shadow-lg transition-transform duration-300 lg:translate-x-0 ${
                     sidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
             >
                 {/* Header Logo & Brand */}
-                <div className="border-b-2 border-indigo-100 bg-gradient-to-b from-indigo-50/90 to-slate-50 p-4">
+                <div className="border-b-2 border-emerald-100/90 bg-emerald-50/70 p-4">
                     <div className="flex justify-end lg:hidden mb-2">
                         <button
                             type="button"
-                            className="rounded-xl border border-indigo-200 bg-white p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition"
+                            className="rounded-xl border-2 border-emerald-200 bg-white p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300 active:scale-95 transition shadow-2xs cursor-pointer"
                             onClick={() => setSidebarOpen(false)}
+                            title="Tutup Menu"
                         >
                             <X className="h-5 w-5" />
                         </button>
@@ -144,10 +157,10 @@ export default function SuperAdminLayout({ children }) {
                             alt="Logo RSJ Tampan"
                             className="max-h-14 sm:max-h-16 max-w-[190px] w-auto h-auto object-contain drop-shadow-2xs"
                         />
-                        <div className="mt-2.5 flex flex-col items-center">
-                            <div className="flex items-center gap-1.5">
+                        <div className="mt-3 flex flex-col items-center justify-center">
+                            <div className="flex items-center gap-2">
                                 <span className="text-base font-black tracking-tight text-slate-900">E-BLUD</span>
-                                <span className="inline-flex items-center gap-1 rounded-md bg-indigo-700 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-2xs">
+                                <span className="inline-flex items-center gap-1 rounded-md bg-slate-800 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-2xs">
                                     <Shield className="h-3 w-3" />
                                     SUPER ADMIN
                                 </span>
@@ -161,10 +174,10 @@ export default function SuperAdminLayout({ children }) {
                 <div className="flex-1 overflow-y-auto px-4 py-5 space-y-6">
                     {menuGroups.map((group, idx) => (
                         <div key={idx}>
-                            <div className="px-3 pb-2 text-[10px] font-black uppercase tracking-wider text-indigo-400">
+                            <div className="px-3 pb-2 text-[11px] font-black uppercase tracking-wider text-slate-400">
                                 {group.title}
                             </div>
-                            <nav className="space-y-1">
+                            <nav className="space-y-1.5">
                                 {group.items.map((item) => {
                                     const active = route().current(item.routeName);
                                     const IconComponent = item.icon;
@@ -174,22 +187,22 @@ export default function SuperAdminLayout({ children }) {
                                             key={item.name}
                                             href={item.href}
                                             onClick={() => setSidebarOpen(false)}
-                                            className={`group flex items-center gap-3 rounded-xl py-2.5 px-3 text-xs sm:text-sm transition-all duration-150 ${
+                                            className={`group flex items-center gap-3 rounded-xl py-2.5 pr-3 text-sm transition-all duration-150 ${
                                                 active
-                                                    ? 'bg-indigo-50 font-black text-indigo-950 border-l-4 border-indigo-600 shadow-2xs'
-                                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-semibold'
+                                                    ? 'bg-emerald-50 text-emerald-900 font-bold border-l-4 border-emerald-600 pl-3 shadow-2xs'
+                                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-semibold pl-4'
                                             }`}
                                         >
                                             <IconComponent
-                                                className={`h-4.5 w-4.5 shrink-0 transition-colors ${
+                                                className={`h-5 w-5 shrink-0 transition-colors ${
                                                     active
-                                                        ? 'text-indigo-600'
-                                                        : 'text-slate-400 group-hover:text-indigo-600'
+                                                        ? 'text-emerald-600'
+                                                        : 'text-slate-400 group-hover:text-slate-600'
                                                 }`}
                                             />
                                             <span className="truncate">{item.name}</span>
                                             {active && (
-                                                <span className="ml-auto h-2 w-2 rounded-full bg-indigo-600" />
+                                                <span className="ml-auto h-2 w-2 rounded-full bg-emerald-600" />
                                             )}
                                         </Link>
                                     );
@@ -200,12 +213,12 @@ export default function SuperAdminLayout({ children }) {
                 </div>
 
                 {/* Footer Info */}
-                <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                <div className="border-t-2 border-slate-200/90 bg-slate-50 px-4 py-3 flex items-center justify-between text-[11px] text-slate-500 font-bold">
                     <span className="flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                        Root System Active
+                        Sistem E-BLUD RSJ Tampan
                     </span>
-                    <span className="font-mono text-[10px] font-black text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded">
+                    <span className="font-mono text-[10px] font-black text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded-md border border-emerald-300">
                         TA {active_year}
                     </span>
                 </div>
@@ -219,7 +232,7 @@ export default function SuperAdminLayout({ children }) {
                     <div className="flex items-center gap-3 min-w-0">
                         <button
                             type="button"
-                            className="rounded-xl border-2 border-slate-200 p-2 text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:scale-95 transition lg:hidden"
+                            className="rounded-xl border-2 border-slate-200 p-2 text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:scale-95 transition lg:hidden cursor-pointer"
                             onClick={() => setSidebarOpen(true)}
                         >
                             <Menu className="h-5 w-5" />
@@ -228,8 +241,8 @@ export default function SuperAdminLayout({ children }) {
                             <h1 className="text-sm sm:text-base font-black text-slate-900 truncate">
                                 Selamat datang, {user.name} <Hand size={18} className="inline ml-1 text-amber-500" />
                             </h1>
-                            <p className="text-xs font-semibold text-indigo-700 truncate">
-                                Portal Eksekutif Super Admin & Root System SIM-RS
+                            <p className="text-xs font-semibold text-slate-500 truncate">
+                                Portal Super Admin & Root Management SIM-RS
                             </p>
                         </div>
                     </div>
@@ -251,13 +264,13 @@ export default function SuperAdminLayout({ children }) {
                                 className="relative rounded-xl border-2 border-slate-200 bg-white p-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:scale-95 shadow-2xs transition-all duration-200 cursor-pointer"
                                 title="Notifikasi Sistem"
                             >
-                                <Activity className="h-4.5 w-4.5" />
-                                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse" />
+                                <Bell className="h-5 w-5" />
+                                <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />
                             </button>
 
                             {showNotification && (
                                 <div className="absolute right-0 mt-2 w-72 rounded-2xl border-2 border-slate-300 bg-white p-4 shadow-xl z-50">
-                                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                    <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                                         <span className="text-xs font-black uppercase tracking-wider text-slate-800">
                                             Status Sistem
                                         </span>
@@ -265,11 +278,16 @@ export default function SuperAdminLayout({ children }) {
                                             Optimal
                                         </span>
                                     </div>
-                                    <div className="mt-3 space-y-2 text-xs text-slate-600">
-                                        <p className="font-bold text-slate-900">Root Access Aktif</p>
-                                        <p className="text-[11px] text-slate-500">
-                                            Audit trail terhubung ke database. Seluruh aksi tercatat otomatis.
-                                        </p>
+                                    <div className="mt-3 space-y-2">
+                                        <div className="rounded-xl bg-slate-50 p-2.5 text-xs text-slate-700 border border-slate-200">
+                                            <p className="font-bold text-slate-900 flex items-center gap-1.5">
+                                                <Activity className="h-3.5 w-3.5 text-emerald-600" />
+                                                Root Access Aktif
+                                            </p>
+                                            <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
+                                                Audit trail terhubung ke database. Seluruh aksi tercatat otomatis.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -280,16 +298,24 @@ export default function SuperAdminLayout({ children }) {
                             <button
                                 type="button"
                                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                                className="flex items-center gap-2.5 rounded-2xl border-2 border-indigo-200 bg-white p-1.5 pr-3 hover:bg-indigo-50/50 active:scale-95 transition-all duration-200 shadow-2xs cursor-pointer"
+                                className="flex items-center gap-2.5 rounded-2xl border-2 border-slate-200 bg-white p-1.5 pr-3 hover:bg-slate-50 active:scale-95 transition-all duration-200 shadow-2xs cursor-pointer"
                             >
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-700 font-black text-sm text-white shadow-xs">
-                                    <Shield className="h-5 w-5" />
-                                </div>
+                                {user.avatar ? (
+                                    <img
+                                        src={user.avatar_url || `/storage/${user.avatar}`}
+                                        alt={user.name}
+                                        className="h-9 w-9 shrink-0 rounded-xl object-cover ring-1 ring-slate-200 shadow-xs"
+                                    />
+                                ) : (
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 font-black text-sm text-white shadow-xs">
+                                        {user.name ? user.name.charAt(0).toUpperCase() : <Shield className="h-5 w-5" />}
+                                    </div>
+                                )}
                                 <div className="hidden text-left sm:block">
                                     <span className="block text-xs font-black text-slate-900 leading-tight truncate max-w-[120px]">
                                         {user.name}
                                     </span>
-                                    <span className="block text-[10px] font-bold text-indigo-700 uppercase tracking-wider">
+                                    <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                         SUPER ADMIN
                                     </span>
                                 </div>
@@ -301,13 +327,26 @@ export default function SuperAdminLayout({ children }) {
                             </button>
 
                             {profileDropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-64 rounded-2xl border-2 border-indigo-100 bg-white p-2 shadow-xl z-50">
-                                    <div className="border-b border-slate-100 px-3 py-2.5">
-                                        <p className="text-xs font-bold text-slate-900">{user.name}</p>
-                                        <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
-                                        <span className="mt-1 inline-block rounded bg-indigo-100 px-2 py-0.5 text-[10px] font-black text-indigo-800">
-                                            Super Admin (Root)
-                                        </span>
+                                <div className="absolute right-0 mt-2 w-64 rounded-2xl border-2 border-slate-300 bg-white p-2 shadow-xl z-50">
+                                    <div className="flex items-center gap-3 border-b border-slate-100 px-3 py-2.5">
+                                        {user.avatar ? (
+                                            <img
+                                                src={user.avatar_url || `/storage/${user.avatar}`}
+                                                alt={user.name}
+                                                className="h-10 w-10 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
+                                            />
+                                        ) : (
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 font-black text-base text-white shadow-xs">
+                                                {user.name ? user.name.charAt(0).toUpperCase() : 'S'}
+                                            </div>
+                                        )}
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-black text-slate-900 truncate">{user.name}</p>
+                                            <p className="text-[11px] font-medium text-slate-500 truncate">{user.email}</p>
+                                            <span className="mt-1 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-900 border border-emerald-300">
+                                                Super Admin (Root)
+                                            </span>
+                                        </div>
                                     </div>
                                     <div className="py-1">
                                         <button
@@ -316,18 +355,21 @@ export default function SuperAdminLayout({ children }) {
                                                 setProfileDropdownOpen(false);
                                                 setProfileModalOpen(true);
                                             }}
-                                            className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl"
+                                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition cursor-pointer text-left"
                                         >
+                                            <UserIcon className="h-4 w-4 text-slate-400" />
                                             Pengaturan Profil
                                         </button>
+                                    </div>
+                                    <div className="border-t border-slate-100 pt-1">
                                         <Link
                                             href={route('logout')}
                                             method="post"
                                             as="button"
-                                            className="w-full text-left px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl flex items-center gap-1.5"
+                                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition text-left cursor-pointer"
                                         >
-                                            <LogOut className="h-3.5 w-3.5" />
-                                            Keluar Sistem
+                                            <LogOut className="h-4 w-4 text-rose-500" />
+                                            Keluar (Log Out)
                                         </Link>
                                     </div>
                                 </div>
@@ -337,12 +379,16 @@ export default function SuperAdminLayout({ children }) {
                 </header>
 
                 {/* Main Content Body */}
-                <main className="flex-1 p-4 sm:p-8">{children}</main>
+                <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                    <div className="animate-fade-in-up transition-all duration-300">
+                        {children}
+                    </div>
+                </main>
             </div>
 
             {/* Profile Settings Modal */}
             <ProfileSettingsModal
-                isOpen={profileModalOpen}
+                show={profileModalOpen}
                 onClose={() => setProfileModalOpen(false)}
             />
         </div>

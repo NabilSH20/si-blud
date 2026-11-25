@@ -1,21 +1,18 @@
 import SuperAdminLayout from '@/Layouts/SuperAdminLayout';
 import { Head, Link } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import {
     Activity,
     ArrowUpRight,
-    Building2,
     Calendar,
     CheckCircle2,
     Clock,
     FileSpreadsheet,
-    FileText,
     Lock,
     PieChart,
     Server,
     Settings,
-    Shield,
     TrendingUp,
-    Unlock,
     Users,
     Wallet,
 } from 'lucide-react';
@@ -37,6 +34,26 @@ export default function Dashboard({
     requisitions_by_division = [],
     server_info = {},
 }) {
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const formattedDate = currentTime.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+
+    const formattedTime = currentTime.toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+
     const getActionBadge = (action) => {
         switch (action) {
             case 'LOGIN':
@@ -68,8 +85,8 @@ export default function Dashboard({
                 };
             default:
                 return {
-                    bg: 'bg-indigo-50 text-indigo-800 border-indigo-200',
-                    dot: 'bg-indigo-500',
+                    bg: 'bg-teal-50 text-teal-800 border-teal-200',
+                    dot: 'bg-teal-500',
                 };
         }
     };
@@ -78,47 +95,52 @@ export default function Dashboard({
         <SuperAdminLayout>
             <Head title="Dashboard Global - Super Admin SIM-RS" />
 
-            <div className="space-y-6">
-                {/* 1. Header Title & Status Badges */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Main Clean Canvas (Seragam dengan Dashboard Admin & Unit) */}
+            <div className="min-h-screen bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
+                {/* 1. Header Row */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-slate-100">
                     <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-                                Dashboard Eksekutif Global
-                            </h1>
-                            <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-xs font-bold text-indigo-700">
-                                <Shield className="h-3 w-3" />
-                                3-in-1 Master
-                            </span>
-                        </div>
-                        <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
-                            Pemantauan terpadu lintas modul Perencanaan, Keuangan, Unit Kerja, dan Integritas Sistem E-BLUD RSJ Tampan.
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                            Dashboard Eksekutif Global
+                        </h1>
+                        <p className="mt-1 text-xs sm:text-sm text-slate-500">
+                            Pemantauan terpadu lintas modul Perencanaan, Keuangan, Unit Kerja, dan Integritas Sistem E-BLUD RSJ Tampan &bull; Tahun Anggaran{' '}
+                            <span className="font-bold text-slate-700">{active_year}</span>
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-2.5">
-                        <Link
-                            href={route('superadmin.fiscal-years.index')}
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition"
-                            title="Buka Manajemen Tahun Anggaran"
-                        >
-                            <Calendar className="h-3.5 w-3.5 text-indigo-600" />
-                            TA: <span className="font-mono text-indigo-900 font-bold">{active_year}</span>
-                        </Link>
+                    <div className="flex flex-col sm:items-end gap-2.5 shrink-0">
+                        <div className="text-xs text-slate-500">
+                            Update terakhir:{' '}
+                            <strong className="font-semibold text-slate-800">
+                                {formattedDate} pukul {formattedTime}
+                            </strong>
+                        </div>
 
-                        {is_locked ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold border bg-rose-50 text-rose-700 border-rose-200">
-                                <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                                <Lock className="h-3.5 w-3.5 text-rose-600" />
-                                Tutup Buku (Locked)
-                            </span>
-                        ) : (
-                            <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold border bg-emerald-50 text-emerald-800 border-emerald-200">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                                Anggaran Terbuka
-                            </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href={route('superadmin.fiscal-years.index')}
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer"
+                                title="Buka Manajemen Tahun Anggaran"
+                            >
+                                <Calendar className="h-3.5 w-3.5 text-teal-600" />
+                                TA: <span className="font-mono text-teal-800 font-bold">{active_year}</span>
+                            </Link>
+
+                            {is_locked ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold border bg-rose-50 text-rose-700 border-rose-200">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                                    <Lock className="h-3.5 w-3.5 text-rose-600" />
+                                    Tutup Buku (Locked)
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold border bg-emerald-50 text-emerald-800 border-emerald-200">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                                    Anggaran Terbuka
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -164,12 +186,12 @@ export default function Dashboard({
                     <div className="rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-xs">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-slate-500">Penerimaan Pendapatan</span>
-                            <div className="rounded-xl bg-indigo-50 p-2 text-indigo-600 border border-indigo-200">
+                            <div className="rounded-xl bg-teal-50 p-2 text-teal-600 border border-teal-200">
                                 <TrendingUp className="h-4 w-4" />
                             </div>
                         </div>
                         <div className="mt-3">
-                            <div className="text-xl sm:text-2xl font-bold font-mono text-indigo-900 truncate">
+                            <div className="text-xl sm:text-2xl font-bold font-mono text-teal-800 truncate">
                                 {formatRp(kpi_keuangan.total_revenue)}
                             </div>
                             <p className="mt-1 text-[11px] font-medium text-slate-400">
@@ -205,9 +227,9 @@ export default function Dashboard({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
                     <Link
                         href={route('superadmin.users.index')}
-                        className="flex items-center gap-3 p-3.5 rounded-2xl border border-slate-200/80 bg-white hover:border-indigo-300 hover:bg-indigo-50/30 transition group shadow-2xs"
+                        className="flex items-center gap-3 p-3.5 rounded-2xl border border-slate-200/80 bg-white hover:border-teal-300 hover:bg-teal-50/30 transition group shadow-2xs"
                     >
-                        <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition border border-indigo-100">
+                        <div className="p-2.5 rounded-xl bg-teal-50 text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition border border-teal-100">
                             <Users className="h-4 w-4" />
                         </div>
                         <div className="min-w-0">
@@ -262,14 +284,14 @@ export default function Dashboard({
                     <div className="lg:col-span-2 rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
                         <div className="p-4 sm:p-5 border-b border-slate-200/80 bg-slate-50/50 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <Activity className="h-4 w-4 text-indigo-600" />
+                                <Activity className="h-4 w-4 text-teal-600" />
                                 <h2 className="text-xs sm:text-sm font-bold text-slate-900">
                                     10 Aktivitas Sistem Terkini (Live Audit Feed)
                                 </h2>
                             </div>
                             <Link
                                 href={route('superadmin.audit-logs.index')}
-                                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition"
+                                className="text-xs font-bold text-teal-600 hover:text-teal-800 flex items-center gap-1 transition"
                             >
                                 Lihat Semua
                                 <ArrowUpRight className="h-3.5 w-3.5" />
@@ -335,7 +357,7 @@ export default function Dashboard({
                         {/* Status Usulan Belanja */}
                         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs">
                             <h2 className="text-xs sm:text-sm font-bold text-slate-900 mb-3.5 flex items-center gap-2">
-                                <PieChart className="h-4 w-4 text-indigo-600" />
+                                <PieChart className="h-4 w-4 text-teal-600" />
                                 Status Usulan Belanja
                             </h2>
                             <div className="space-y-2">
@@ -363,7 +385,7 @@ export default function Dashboard({
                         {/* Server & Environment Info */}
                         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs text-xs">
                             <h2 className="text-xs sm:text-sm font-bold text-slate-900 mb-3.5 flex items-center gap-2">
-                                <Server className="h-4 w-4 text-indigo-600" />
+                                <Server className="h-4 w-4 text-teal-600" />
                                 Parameter Lingkungan SIM-RS
                             </h2>
                             <div className="space-y-2.5 text-slate-600 font-medium">

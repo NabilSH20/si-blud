@@ -11,7 +11,6 @@ import {
     Filter,
     RotateCcw,
     Search,
-    Shield,
     X,
     XCircle,
 } from 'lucide-react';
@@ -96,17 +95,11 @@ export default function MonitoringRequisitions({
                 {/* 1. Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-                                Monitoring Pengajuan Belanja
-                            </h1>
-                            <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-xs font-bold text-indigo-700">
-                                <Shield className="h-3 w-3" />
-                                Pipeline Oversight
-                            </span>
-                        </div>
-                        <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
-                            Pantau pergerakan berkas usulan belanja seluruh unit kerja RSJ dan status otorisasi 3-tahap Tahun {active_year}.
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                            Monitoring Pengajuan Belanja
+                        </h1>
+                        <p className="mt-1 text-xs sm:text-sm text-slate-500 font-medium">
+                            Pantau pergerakan berkas usulan belanja seluruh unit kerja RSJ dan status verifikasi Perencanaan Tahun {active_year}.
                         </p>
                     </div>
 
@@ -115,17 +108,17 @@ export default function MonitoringRequisitions({
                             <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                             Mode Pengawas (Read-Only)
                         </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs">
-                            <Calendar className="h-3.5 w-3.5 text-indigo-600" />
-                            TA: <span className="font-mono text-indigo-900 font-bold">{active_year}</span>
+                        <span className="inline-flex items-center gap-1.5 rounded-xl border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-800 shadow-2xs">
+                            <Calendar className="h-3.5 w-3.5 text-teal-600" />
+                            TA: <span className="font-mono text-teal-900 font-bold">{active_year}</span>
                         </span>
                     </div>
                 </div>
 
                 {/* 2. Main Card Container & Toolbar */}
-                <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
                     {/* Filter Bar */}
-                    <div className="border-b border-slate-200/80 p-4 sm:p-5 bg-slate-50/50">
+                    <div className="border-b border-slate-100 p-4 bg-white">
                         <form
                             onSubmit={handleSearch}
                             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center"
@@ -137,7 +130,7 @@ export default function MonitoringRequisitions({
                                     placeholder="Cari nomor berkas atau uraian usulan..."
                                     value={q}
                                     onChange={(e) => setQ(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 text-xs font-medium rounded-xl border border-slate-300 bg-white text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-2xs"
+                                    className="w-full pl-10 pr-4 py-2 text-xs font-medium rounded-xl border border-slate-300 bg-white text-slate-800 placeholder-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                                 />
                             </div>
 
@@ -145,7 +138,7 @@ export default function MonitoringRequisitions({
                                 <select
                                     value={divisionId}
                                     onChange={(e) => setDivisionId(e.target.value)}
-                                    className="w-full text-xs font-bold rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-8 text-slate-700 focus:border-indigo-500 shadow-2xs cursor-pointer truncate"
+                                    className="w-full text-xs font-semibold rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-8 text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer truncate"
                                 >
                                     <option value="ALL">Semua Bagian / Divisi</option>
                                     {divisions.map((div) => (
@@ -160,7 +153,7 @@ export default function MonitoringRequisitions({
                                 <select
                                     value={status}
                                     onChange={(e) => setStatus(e.target.value)}
-                                    className="w-full text-xs font-bold rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-8 text-slate-700 focus:border-indigo-500 shadow-2xs cursor-pointer"
+                                    className="w-full text-xs font-semibold rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-8 text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer"
                                 >
                                     <option value="ALL">Semua Status</option>
                                     <option value="Pending_Perencanaan">Menunggu Telaah Perencanaan</option>
@@ -172,7 +165,7 @@ export default function MonitoringRequisitions({
                             <div className="lg:col-span-2 flex items-center gap-2">
                                 <button
                                     type="submit"
-                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-2xs transition cursor-pointer"
+                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-2xs transition cursor-pointer"
                                 >
                                     <Filter className="w-3.5 h-3.5" />
                                     Filter
@@ -180,7 +173,8 @@ export default function MonitoringRequisitions({
                                 <button
                                     type="button"
                                     onClick={handleReset}
-                                    className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold shadow-2xs transition cursor-pointer"
+                                    className="inline-flex items-center justify-center gap-1 px-4 py-2 bg-white hover:bg-slate-50 active:scale-95 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold shadow-2xs transition cursor-pointer"
+                                    title="Reset Filter"
                                 >
                                     <RotateCcw className="w-3.5 h-3.5" />
                                 </button>
@@ -190,16 +184,16 @@ export default function MonitoringRequisitions({
 
                     {/* Table View */}
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs text-slate-600">
-                            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-700 uppercase tracking-wider text-[11px] font-bold">
+                        <table className="min-w-full divide-y divide-slate-100">
+                            <thead className="bg-slate-50 font-bold border-b border-slate-200 text-slate-700 uppercase tracking-wider text-xs">
                                 <tr>
-                                    <th className="px-5 py-3.5">Nomor & Tanggal</th>
-                                    <th className="px-5 py-3.5">Divisi & Unit Pemohon</th>
-                                    <th className="px-5 py-3.5">Keperluan Belanja</th>
+                                    <th className="px-5 py-3.5 text-left">Nomor & Tanggal</th>
+                                    <th className="px-5 py-3.5 text-left">Divisi & Unit Pemohon</th>
+                                    <th className="px-5 py-3.5 text-left">Keperluan Belanja</th>
                                     <th className="px-5 py-3.5 text-right">Total Anggaran</th>
-                                    <th className="px-5 py-3.5">Jejak Otorisasi</th>
-                                    <th className="px-5 py-3.5 text-center">Status</th>
-                                    <th className="px-5 py-3.5 text-right">Aksi</th>
+                                    <th className="px-5 py-3.5 text-left">Jejak Otorisasi</th>
+                                    <th className="px-4 py-3.5 text-center">Status</th>
+                                    <th className="px-4 py-3.5 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -263,11 +257,11 @@ export default function MonitoringRequisitions({
                                                     </span>
                                                 </td>
 
-                                                <td className="px-5 py-4 text-right whitespace-nowrap">
+                                                <td className="px-4 py-4 text-center whitespace-nowrap">
                                                     <button
                                                         type="button"
                                                         onClick={() => setSelectedReq(req)}
-                                                        className="inline-flex items-center gap-1 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 active:scale-95 px-2.5 py-1 text-xs font-bold shadow-2xs transition cursor-pointer"
+                                                        className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer"
                                                     >
                                                         <Eye className="w-3.5 h-3.5" />
                                                         Detail
@@ -297,7 +291,7 @@ export default function MonitoringRequisitions({
                                         preserveState
                                         className={`px-3 py-1.5 rounded-xl font-bold transition shadow-2xs ${
                                             link.active
-                                                ? 'bg-indigo-600 text-white'
+                                                ? 'bg-emerald-600 text-white'
                                                 : link.url
                                                 ? 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
                                                 : 'bg-slate-100 text-slate-400 pointer-events-none'
@@ -316,7 +310,7 @@ export default function MonitoringRequisitions({
                 <div className="p-6">
                     <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-5">
                         <div className="flex items-center gap-2.5">
-                            <div className="rounded-xl bg-indigo-50 p-2 text-indigo-700 border border-indigo-200">
+                            <div className="rounded-xl bg-teal-50 p-2 text-teal-700 border border-teal-200">
                                 <FileText className="w-5 h-5" />
                             </div>
                             <div>
@@ -331,7 +325,7 @@ export default function MonitoringRequisitions({
                         <button
                             type="button"
                             onClick={() => setSelectedReq(null)}
-                            className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+                            className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
                         >
                             <X className="w-5 h-5" />
                         </button>
@@ -355,7 +349,7 @@ export default function MonitoringRequisitions({
                             </div>
                             <div>
                                 <span className="text-slate-400 block mb-0.5 text-[11px]">Total Anggaran Diajukan</span>
-                                <span className="font-bold text-indigo-700 font-mono text-sm">
+                                <span className="font-bold text-teal-700 font-mono text-sm">
                                     {formatRp(selectedReq?.total_amount || selectedReq?.total_estimated)}
                                 </span>
                             </div>
@@ -383,7 +377,7 @@ export default function MonitoringRequisitions({
                         <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-amber-800 text-[11px] flex items-start gap-2.5">
                             <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
                             <span className="leading-relaxed">
-                                Sesuai regulasi BLUD, Super Admin bertindak sebagai auditor/pengawas berkas. Otorisasi pencairan tetap menjadi wewenang pejabat perencana dan bendahara pengeluaran.
+                                Sesuai regulasi BLUD, Super Admin bertindak sebagai auditor/pengawas berkas. Otorisasi dan pengesahan pagu belanja tetap menjadi wewenang Bagian Perencanaan.
                             </span>
                         </div>
                     </div>
@@ -392,7 +386,7 @@ export default function MonitoringRequisitions({
                         <button
                             type="button"
                             onClick={() => setSelectedReq(null)}
-                            className="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 transition cursor-pointer shadow-2xs"
+                            className="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-4 py-2 text-xs font-bold text-slate-700 transition cursor-pointer shadow-2xs"
                         >
                             Tutup
                         </button>

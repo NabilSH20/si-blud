@@ -41,16 +41,10 @@ export default function MonitoringFinance({
                 {/* 1. Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-                                Monitoring Keuangan & Realisasi Belanja BLUD
-                            </h1>
-                            <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-xs font-bold text-indigo-700">
-                                <Shield className="h-3 w-3" />
-                                Financial Oversight
-                            </span>
-                        </div>
-                        <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                            Monitoring Keuangan & Realisasi Belanja BLUD
+                        </h1>
+                        <p className="mt-1 text-xs sm:text-sm text-slate-500 font-medium">
                             Ikhtisar realisasi pendapatan fungsional BLUD dan realisasi belanja operasional Tahun {active_year}.
                         </p>
                     </div>
@@ -60,18 +54,18 @@ export default function MonitoringFinance({
                             <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                             Mode Pengawas (Read-Only)
                         </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs">
-                            <Calendar className="h-3.5 w-3.5 text-indigo-600" />
-                            TA: <span className="font-mono text-indigo-900 font-bold">{active_year}</span>
+                        <span className="inline-flex items-center gap-1.5 rounded-xl border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-800 shadow-2xs">
+                            <Calendar className="h-3.5 w-3.5 text-teal-600" />
+                            TA: <span className="font-mono text-teal-900 font-bold">{active_year}</span>
                         </span>
                     </div>
                 </div>
 
                 {/* 2. Segregation of Duties Banner */}
-                <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200/80 flex items-start gap-3 shadow-2xs">
-                    <Shield className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
-                    <div className="text-xs text-indigo-950 leading-relaxed">
-                        <strong className="font-bold text-indigo-900">Segregation of Duties (Prinsip BLUD): </strong>
+                <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200/80 flex items-start gap-3 shadow-2xs">
+                    <Shield className="w-5 h-5 text-teal-600 shrink-0 mt-0.5" />
+                    <div className="text-xs text-teal-950 leading-relaxed">
+                        <strong className="font-bold text-teal-900">Segregation of Duties (Prinsip BLUD): </strong>
                         Super Admin berwenang memantau ikhtisar realisasi. Seluruh proses penatausahaan kas masuk menjadi tanggung jawab Bagian Keuangan, sedangkan pengesahan belanja operasional unit divalidasi final oleh Bagian Perencanaan.
                     </div>
                 </div>
@@ -123,10 +117,10 @@ export default function MonitoringFinance({
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-xs">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
                         <div className="flex items-center justify-between text-slate-500">
                             <span className="text-xs font-bold text-slate-500">Surplus / Defisit Kas</span>
-                            <div className="rounded-xl bg-indigo-50 p-2 text-indigo-600 border border-indigo-200">
+                            <div className="rounded-xl bg-teal-50 p-2 text-teal-600 border border-teal-200">
                                 <PieChart className="w-4 h-4" />
                             </div>
                         </div>
@@ -143,11 +137,11 @@ export default function MonitoringFinance({
                     </div>
                 </div>
 
-                {/* 4. Grid Tabel Pendapatan & 10 SP2D Terbaru */}
+                {/* 4. Grid Tabel Pendapatan & 10 Belanja Disetujui Terbaru */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     {/* Left: Revenues Table (7 cols) */}
-                    <div className="lg:col-span-7 rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden flex flex-col">
-                        <div className="p-4 sm:p-5 border-b border-slate-200/80 bg-slate-50/50 flex items-center justify-between">
+                    <div className="lg:col-span-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs flex flex-col">
+                        <div className="p-4 sm:p-5 border-b border-slate-100 bg-white flex items-center justify-between">
                             <div>
                                 <h2 className="font-bold text-slate-900 text-xs sm:text-sm">
                                     Catatan Penerimaan / Pendapatan BLUD
@@ -162,11 +156,11 @@ export default function MonitoringFinance({
                         </div>
 
                         <div className="overflow-x-auto flex-1">
-                            <table className="w-full text-left text-xs text-slate-600">
-                                <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-700 uppercase tracking-wider text-[11px] font-bold">
+                            <table className="min-w-full divide-y divide-slate-100">
+                                <thead className="bg-slate-50 font-bold border-b border-slate-200 text-slate-700 uppercase tracking-wider text-xs">
                                     <tr>
-                                        <th className="px-5 py-3.5">Tanggal & Bukti</th>
-                                        <th className="px-5 py-3.5">Sumber / Unit Layanan</th>
+                                        <th className="px-5 py-3.5 text-left">Tanggal & Bukti</th>
+                                        <th className="px-5 py-3.5 text-left">Sumber / Unit Layanan</th>
                                         <th className="px-5 py-3.5 text-right">Nominal</th>
                                     </tr>
                                 </thead>
@@ -221,9 +215,9 @@ export default function MonitoringFinance({
                                             key={idx}
                                             href={link.url || '#'}
                                             preserveState
-                                            className={`px-2.5 py-1 rounded-xl text-xs font-bold transition shadow-2xs ${
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-2xs ${
                                                 link.active
-                                                    ? 'bg-indigo-600 text-white'
+                                                    ? 'bg-emerald-600 text-white'
                                                     : link.url
                                                     ? 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
                                                     : 'text-slate-300 pointer-events-none'
@@ -237,8 +231,8 @@ export default function MonitoringFinance({
                     </div>
 
                     {/* Right: Recent Disbursed (5 cols) */}
-                    <div className="lg:col-span-5 rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden flex flex-col">
-                        <div className="p-4 sm:p-5 border-b border-slate-200/80 bg-slate-50/50">
+                    <div className="lg:col-span-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs flex flex-col">
+                        <div className="p-4 sm:p-5 border-b border-slate-100 bg-white">
                             <h2 className="font-bold text-slate-900 text-xs sm:text-sm">
                                 10 Usulan Belanja Disetujui Terkini
                             </h2>

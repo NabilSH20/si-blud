@@ -7,13 +7,10 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import {
     Eye,
-    Filter,
     KeyRound,
-    Lock,
     Pencil,
     Plus,
     Search,
-    Shield,
     Trash2,
     Users,
     X,
@@ -201,8 +198,8 @@ export default function Index({ users = [], divisions = [], success, error }) {
             case 'super_admin':
                 return {
                     label: 'Super Admin',
-                    bg: 'bg-indigo-50 text-indigo-800 border-indigo-200',
-                    dot: 'bg-indigo-600',
+                    bg: 'bg-slate-100 text-slate-800 border-slate-300',
+                    dot: 'bg-slate-600',
                 };
             case 'admin':
                 return {
@@ -241,302 +238,330 @@ export default function Index({ users = [], divisions = [], success, error }) {
         <SuperAdminLayout>
             <Head title="Manajemen Pengguna - Super Admin SIM-RS" />
 
-            <div className="space-y-6">
-                {/* 1. Header Standar */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-                                Manajemen Akun Pengguna
-                            </h1>
-                            <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-xs font-bold text-indigo-700">
-                                <Shield className="h-3 w-3" />
-                                Root Authority
-                            </span>
+            {/* 1. Header Minimalis (Persis Desain Admin Manajemen Pengguna) */}
+            <div className="mb-6">
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                    Manajemen Akun Pengguna
+                </h1>
+                <p className="mt-1 text-xs sm:text-sm text-slate-500 font-medium">
+                    Otoritas penuh mengelola akun seluruh pegawai, role sistem, reset password darurat, dan impersonasi troubleshooting.
+                </p>
+            </div>
+
+            {/* Alerts */}
+            {success && (
+                <div className="mb-5 flex items-center gap-3 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-4 text-sm font-bold text-emerald-900 shadow-xs">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-200 text-emerald-900">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                    </div>
+                    <p className="flex-1">{success}</p>
+                </div>
+            )}
+            {error && (
+                <div className="mb-5 flex items-center gap-3 rounded-2xl border-2 border-rose-300 bg-rose-50 p-4 text-sm font-bold text-rose-900 shadow-xs">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-200 text-rose-900">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                        </svg>
+                    </div>
+                    <p className="flex-1">{error}</p>
+                </div>
+            )}
+
+            {/* 2. Main Card Container (Minimalis Putih Bersih) */}
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+                {/* Single Row Toolbar (Persis Referensi Admin Manajemen Pengguna) */}
+                <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 bg-white">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                        {/* Search Input */}
+                        <div className="relative w-full sm:w-64">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                <Search className="h-4 w-4" />
+                            </div>
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => {
+                                    setSearch(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                placeholder="Cari nama, NIP, email..."
+                                className="block w-full rounded-xl border border-slate-300 bg-white pl-9 pr-8 py-2 text-xs text-slate-800 placeholder-slate-400 font-medium transition focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                            />
+                            {search && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSearch('');
+                                        setCurrentPage(1);
+                                    }}
+                                    className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            )}
                         </div>
-                        <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
-                            Otoritas penuh mengelola akun seluruh pegawai, role sistem, reset password darurat, dan impersonasi troubleshooting.
-                        </p>
+
+                        {/* Filter Peran */}
+                        <select
+                            value={roleFilter}
+                            onChange={(e) => {
+                                setRoleFilter(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                            className="rounded-xl border border-slate-300 bg-white pl-3 pr-8 py-2 text-xs font-semibold text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition cursor-pointer"
+                        >
+                            <option value="ALL">Semua Peran</option>
+                            <option value="super_admin">Super Admin</option>
+                            <option value="admin">Admin SIM-RS</option>
+                            <option value="perencanaan">Perencanaan</option>
+                            <option value="keuangan">Keuangan</option>
+                            <option value="divisi">Unit Pemohon</option>
+                        </select>
+
+                        {/* Filter Bagian / Divisi */}
+                        <select
+                            value={divisionFilter}
+                            onChange={(e) => {
+                                setDivisionFilter(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                            className="rounded-xl border border-slate-300 bg-white pl-3 pr-8 py-2 text-xs font-semibold text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition cursor-pointer max-w-[210px] truncate"
+                        >
+                            <option value="ALL">Semua Bagian / Divisi</option>
+                            {divisions.map((d) => (
+                                <option key={d.id} value={d.id}>
+                                    {d.name}
+                                </option>
+                            ))}
+                        </select>
+
+                        {/* Filter Status */}
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => {
+                                setStatusFilter(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                            className="rounded-xl border border-slate-300 bg-white pl-3 pr-8 py-2 text-xs font-semibold text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition cursor-pointer"
+                        >
+                            <option value="ALL">Semua Status</option>
+                            <option value="ACTIVE">Hanya Aktif</option>
+                            <option value="INACTIVE">Hanya Nonaktif</option>
+                        </select>
+
+                        {(search || roleFilter !== 'ALL' || divisionFilter !== 'ALL' || statusFilter !== 'ALL') && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSearch('');
+                                    setRoleFilter('ALL');
+                                    setDivisionFilter('ALL');
+                                    setStatusFilter('ALL');
+                                    setCurrentPage(1);
+                                }}
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer"
+                            >
+                                Reset
+                            </button>
+                        )}
+
+                        {/* Data Counter */}
+                        <div className="text-xs text-slate-500 font-medium whitespace-nowrap">
+                            <span className="font-bold text-slate-900">{filteredUsers.length}</span> dari {users.length} data
+                        </div>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={openCreateModal}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 px-4 py-2.5 text-xs font-bold text-white shadow-2xs transition cursor-pointer self-start sm:self-auto"
-                    >
-                        <Plus className="h-4 w-4" />
-                        Tambah Pengguna Baru
-                    </button>
+                    {/* Dedicated Action Button on the Right */}
+                    <div>
+                        <button
+                            type="button"
+                            onClick={openCreateModal}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer whitespace-nowrap"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Tambah Pengguna
+                        </button>
+                    </div>
                 </div>
 
-                {/* 2. Main Card Table & Toolbar */}
-                <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
-                    {/* Toolbar Pencarian & Filter */}
-                    <div className="border-b border-slate-200/80 p-4 sm:p-5 bg-slate-50/50">
-                        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-                            <div className="flex flex-wrap items-center gap-2.5 flex-1">
-                                <div className="relative w-full sm:w-64">
-                                    <Search className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                                    <input
-                                        type="text"
-                                        value={search}
-                                        onChange={(e) => {
-                                            setSearch(e.target.value);
-                                            setCurrentPage(1);
-                                        }}
-                                        placeholder="Cari nama, NIP, email..."
-                                        className="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-4 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition shadow-2xs"
-                                    />
-                                </div>
-
-                                <div className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 shadow-2xs">
-                                    <Filter className="h-3.5 w-3.5 text-slate-400" />
-                                    <select
-                                        value={roleFilter}
-                                        onChange={(e) => {
-                                            setRoleFilter(e.target.value);
-                                            setCurrentPage(1);
-                                        }}
-                                        className="border-0 bg-transparent py-0 pl-1 pr-6 text-xs font-bold text-slate-700 focus:ring-0 cursor-pointer"
-                                    >
-                                        <option value="ALL">Semua Peran</option>
-                                        <option value="super_admin">Super Admin</option>
-                                        <option value="admin">Admin SIM-RS</option>
-                                        <option value="perencanaan">Perencanaan</option>
-                                        <option value="keuangan">Keuangan</option>
-                                        <option value="divisi">Unit Pemohon</option>
-                                    </select>
-                                </div>
-
-                                <div className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 shadow-2xs max-w-[220px]">
-                                    <select
-                                        value={divisionFilter}
-                                        onChange={(e) => {
-                                            setDivisionFilter(e.target.value);
-                                            setCurrentPage(1);
-                                        }}
-                                        className="border-0 bg-transparent py-0 pl-1 pr-6 text-xs font-bold text-slate-700 focus:ring-0 cursor-pointer truncate w-full"
-                                    >
-                                        <option value="ALL">Semua Bagian / Divisi</option>
-                                        {divisions.map((d) => (
-                                            <option key={d.id} value={d.id}>
-                                                {d.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 shadow-2xs">
-                                    <select
-                                        value={statusFilter}
-                                        onChange={(e) => {
-                                            setStatusFilter(e.target.value);
-                                            setCurrentPage(1);
-                                        }}
-                                        className="border-0 bg-transparent py-0 pl-1 pr-6 text-xs font-bold text-slate-700 focus:ring-0 cursor-pointer"
-                                    >
-                                        <option value="ALL">Semua Status</option>
-                                        <option value="ACTIVE">Hanya Aktif</option>
-                                        <option value="INACTIVE">Hanya Nonaktif</option>
-                                    </select>
-                                </div>
-
-                                {(search || roleFilter !== 'ALL' || divisionFilter !== 'ALL' || statusFilter !== 'ALL') && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setSearch('');
-                                            setRoleFilter('ALL');
-                                            setDivisionFilter('ALL');
-                                            setStatusFilter('ALL');
-                                            setCurrentPage(1);
-                                        }}
-                                        className="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 transition cursor-pointer shadow-2xs"
-                                    >
-                                        Reset
-                                    </button>
-                                )}
-                            </div>
-
-                            <div className="text-xs text-slate-500 font-medium whitespace-nowrap self-end lg:self-center">
-                                Menampilkan <strong className="text-slate-900">{filteredUsers.length}</strong> dari {users.length} pengguna
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Table View */}
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs text-slate-600">
-                            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-700 uppercase tracking-wider text-[11px] font-bold">
+                {/* Table View */}
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-slate-100">
+                        <thead className="bg-slate-50 font-bold border-b border-slate-200 text-slate-700 uppercase tracking-wider text-xs">
+                            <tr>
+                                <th className="w-14 px-4 py-3.5 text-center">No</th>
+                                <th className="px-5 py-3.5 text-left">Nama & Identitas</th>
+                                <th className="px-5 py-3.5 text-left">Penugasan / Unit</th>
+                                <th className="px-4 py-3.5 text-center">Peran Sistem</th>
+                                <th className="px-4 py-3.5 text-center">Status Akun</th>
+                                <th className="px-4 py-3.5 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                            {paginatedUsers.length === 0 ? (
                                 <tr>
-                                    <th className="px-5 py-3.5 w-12 text-center">No</th>
-                                    <th className="px-5 py-3.5">Nama & Identitas</th>
-                                    <th className="px-5 py-3.5">Penugasan / Unit</th>
-                                    <th className="px-5 py-3.5 text-center">Peran Sistem</th>
-                                    <th className="px-5 py-3.5 text-center">Status Akun</th>
-                                    <th className="px-5 py-3.5 text-right">Aksi Root</th>
+                                    <td colSpan={6} className="px-6 py-16 text-center bg-white">
+                                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                                            <Users className="h-6 w-6" />
+                                        </div>
+                                        <p className="mt-3 text-sm font-bold text-slate-800">
+                                            Tidak ada akun pengguna yang sesuai kriteria pencarian
+                                        </p>
+                                        <p className="mt-1 text-xs text-slate-500 font-medium">
+                                            Silakan atur kembali kata kunci atau opsi filter yang dipilih.
+                                        </p>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {paginatedUsers.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={6} className="px-5 py-12 text-center">
-                                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                                                <Users className="h-6 w-6" />
-                                            </div>
-                                            <p className="mt-3 text-sm font-bold text-slate-800">
-                                                Tidak ada akun pengguna yang sesuai kriteria pencarian
-                                            </p>
-                                            <p className="mt-1 text-xs text-slate-400">
-                                                Silakan atur kembali kata kunci atau opsi filter yang dipilih.
-                                            </p>
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    paginatedUsers.map((u, idx) => {
-                                        const badge = getRoleBadge(u.role);
-                                        const isSelf = u.id === currentUserId;
-                                        const isSuper = u.role === 'super_admin';
+                            ) : (
+                                paginatedUsers.map((u, idx) => {
+                                    const badge = getRoleBadge(u.role);
+                                    const isSelf = u.id === currentUserId;
+                                    const isSuper = u.role === 'super_admin';
 
-                                        return (
-                                            <tr key={u.id} className="hover:bg-slate-50/70 transition">
-                                                <td className="px-5 py-4 text-center text-slate-400 font-mono text-[11px]">
-                                                    {(currentPage - 1) * itemsPerPage + idx + 1}
-                                                </td>
+                                    return (
+                                        <tr
+                                            key={u.id}
+                                            className={`hover:bg-slate-50/80 transition-colors duration-150 ${
+                                                !u.is_active ? 'bg-slate-50/50 opacity-75' : ''
+                                            }`}
+                                        >
+                                            <td className="whitespace-nowrap px-4 py-4 text-center text-xs font-semibold text-slate-400">
+                                                #{(currentPage - 1) * itemsPerPage + idx + 1}
+                                            </td>
 
-                                                {/* Nama & Identitas */}
-                                                <td className="px-5 py-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-slate-900 text-xs sm:text-sm">
-                                                            {u.name}
+                                            {/* Nama & Identitas */}
+                                            <td className="px-5 py-4">
+                                                <div className="flex items-center gap-1.5 font-bold text-sm text-slate-900">
+                                                    <span>{u.name}</span>
+                                                    {isSelf && (
+                                                        <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-black text-emerald-800">
+                                                            Anda
                                                         </span>
-                                                        {isSelf && (
-                                                            <span className="rounded-md bg-indigo-100 border border-indigo-200 px-1.5 py-0.5 text-[9px] font-bold text-indigo-800">
-                                                                Anda
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-[11px] text-slate-400 mt-0.5">
-                                                        {u.email}
-                                                        {u.nip && (
-                                                            <span className="ml-2 font-mono text-slate-500">
-                                                                • NIP. {u.nip}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </td>
+                                                    )}
+                                                </div>
+                                                <div className="text-xs text-slate-500 font-medium mt-0.5">
+                                                    {u.email}
+                                                    {u.nip && (
+                                                        <span className="ml-2 font-mono text-slate-600">
+                                                            • NIP. {u.nip}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
 
-                                                {/* Penugasan / Unit */}
-                                                <td className="px-5 py-4">
-                                                    <div className="font-bold text-slate-800">
-                                                        {u.division?.name || '-'}
-                                                    </div>
-                                                    <div className="text-[11px] text-slate-400 mt-0.5">
-                                                        {u.unit?.name || u.position || 'Staf Operasional'}
-                                                    </div>
-                                                </td>
+                                            {/* Penugasan / Unit */}
+                                            <td className="px-5 py-4">
+                                                <div className="text-xs font-bold text-slate-800">
+                                                    {u.division?.name || '-'}
+                                                </div>
+                                                <div className="text-[11px] text-slate-400 font-medium mt-0.5">
+                                                    {u.unit?.name || u.position || 'Staf Operasional'}
+                                                </div>
+                                            </td>
 
-                                                {/* Peran Sistem */}
-                                                <td className="px-5 py-4 text-center whitespace-nowrap">
+                                            {/* Peran Sistem */}
+                                            <td className="px-4 py-4 text-center whitespace-nowrap">
+                                                <span
+                                                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold border ${badge.bg}`}
+                                                >
+                                                    <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
+                                                    {badge.label}
+                                                </span>
+                                            </td>
+
+                                            {/* Status Akun */}
+                                            <td className="px-4 py-4 text-center whitespace-nowrap">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => !isSelf && handleToggleStatus(u)}
+                                                    disabled={isSelf}
+                                                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold border transition ${
+                                                        u.is_active
+                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                                            : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200'
+                                                    } ${isSelf ? 'cursor-default' : 'cursor-pointer'}`}
+                                                    title={isSelf ? 'Anda tidak dapat menonaktifkan akun sendiri' : 'Klik untuk mengubah status aktif'}
+                                                >
                                                     <span
-                                                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold border ${badge.bg}`}
-                                                    >
-                                                        <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
-                                                        {badge.label}
-                                                    </span>
-                                                </td>
+                                                        className={`h-1.5 w-1.5 rounded-full ${
+                                                            u.is_active ? 'bg-emerald-500' : 'bg-slate-400'
+                                                        }`}
+                                                    />
+                                                    {u.is_active ? 'Aktif' : 'Nonaktif'}
+                                                </button>
+                                            </td>
 
-                                                {/* Status Akun */}
-                                                <td className="px-5 py-4 text-center whitespace-nowrap">
+                                            {/* Aksi Root (Diselaraskan dengan Desain Admin & Unit) */}
+                                            <td className="px-4 py-4 text-center whitespace-nowrap">
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    {/* Troubleshoot / Impersonate */}
+                                                    {!isSuper && !isSelf && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleImpersonate(u)}
+                                                            className="inline-flex items-center gap-1 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 hover:text-teal-900 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-teal-800 shadow-2xs transition cursor-pointer"
+                                                            title="Investigasi akun staf (Mode Troubleshooting)"
+                                                        >
+                                                            <Eye className="h-3.5 w-3.5" />
+                                                            Troubleshoot
+                                                        </button>
+                                                    )}
+
+                                                    {/* Edit (Standar Amber Role Lain) */}
                                                     <button
                                                         type="button"
-                                                        onClick={() => !isSelf && handleToggleStatus(u)}
-                                                        disabled={isSelf}
-                                                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold border transition ${
-                                                            u.is_active
-                                                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                                                                : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
-                                                        } ${isSelf ? 'cursor-default' : 'cursor-pointer'}`}
-                                                        title={isSelf ? 'Anda tidak dapat menonaktifkan akun sendiri' : 'Klik untuk mengubah status aktif'}
+                                                        onClick={() => openEditModal(u)}
+                                                        className="inline-flex items-center gap-1 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 hover:text-amber-900 active:scale-95 px-3 py-1.5 text-xs font-bold text-amber-800 shadow-2xs transition cursor-pointer"
+                                                        title="Edit Data Pengguna"
                                                     >
-                                                        <span
-                                                            className={`h-1.5 w-1.5 rounded-full ${
-                                                                u.is_active ? 'bg-emerald-500' : 'bg-slate-400'
-                                                            }`}
-                                                        />
-                                                        {u.is_active ? 'Aktif' : 'Nonaktif'}
+                                                        <Pencil className="h-3.5 w-3.5" />
+                                                        Edit
                                                     </button>
-                                                </td>
 
-                                                {/* Aksi Root */}
-                                                <td className="px-5 py-4 text-right whitespace-nowrap">
-                                                    <div className="flex items-center justify-end gap-1.5">
-                                                        {/* Troubleshoot / Impersonate */}
-                                                        {!isSuper && !isSelf && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleImpersonate(u)}
-                                                                className="inline-flex items-center gap-1 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 active:scale-95 px-2.5 py-1 text-xs font-bold transition cursor-pointer shadow-2xs"
-                                                                title="Investigasi akun staf (Mode Troubleshooting)"
-                                                            >
-                                                                <Eye className="h-3.5 w-3.5 text-indigo-600" />
-                                                                Troubleshoot
-                                                            </button>
-                                                        )}
+                                                    {/* Reset Password */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setResettingUser(u);
+                                                            setPasswordData('password', '');
+                                                        }}
+                                                        className="inline-flex items-center gap-1 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 hover:text-amber-900 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-amber-800 shadow-2xs transition cursor-pointer"
+                                                        title="Reset Kata Sandi Darurat"
+                                                    >
+                                                        <KeyRound className="h-3.5 w-3.5" />
+                                                    </button>
 
-                                                        {/* Edit */}
+                                                    {/* Delete */}
+                                                    {!isSelf && !isSuper && (
                                                         <button
                                                             type="button"
-                                                            onClick={() => openEditModal(u)}
-                                                            className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 active:scale-95 px-2.5 py-1 text-xs font-bold transition cursor-pointer shadow-2xs"
-                                                            title="Edit Data Pengguna"
+                                                            onClick={() => setDeletingUser(u)}
+                                                            className="inline-flex items-center gap-1 rounded-xl border border-transparent hover:border-rose-300 bg-white hover:bg-rose-50 hover:text-rose-700 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-slate-400 transition cursor-pointer"
+                                                            title="Hapus Akun Pengguna"
                                                         >
-                                                            <Pencil className="h-3 w-3" />
-                                                            Edit
+                                                            <Trash2 className="h-3.5 w-3.5" />
                                                         </button>
-
-                                                        {/* Reset Password */}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setResettingUser(u);
-                                                                setPasswordData('password', '');
-                                                            }}
-                                                            className="inline-flex items-center gap-1 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800 active:scale-95 px-2 py-1 text-xs font-bold transition cursor-pointer shadow-2xs"
-                                                            title="Reset Kata Sandi Darurat"
-                                                        >
-                                                            <KeyRound className="h-3.5 w-3.5 text-amber-600" />
-                                                        </button>
-
-                                                        {/* Delete */}
-                                                        {!isSelf && !isSuper && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setDeletingUser(u)}
-                                                                className="inline-flex items-center gap-1 rounded-xl border border-transparent hover:border-rose-300 bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-700 active:scale-95 px-2 py-1 text-xs font-bold transition cursor-pointer"
-                                                                title="Hapus Akun Pengguna"
-                                                            >
-                                                                <Trash2 className="h-3.5 w-3.5" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        totalItems={filteredUsers.length}
-                        itemsPerPage={itemsPerPage}
-                        onPageChange={(p) => setCurrentPage(p)}
-                    />
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
                 </div>
+
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={filteredUsers.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={(p) => setCurrentPage(p)}
+                />
             </div>
 
             {/* Modal Tambah / Edit Pengguna */}
@@ -551,7 +576,7 @@ export default function Index({ users = [], divisions = [], success, error }) {
                 <form onSubmit={handleFormSubmit} className="p-6">
                     <div className="flex items-center justify-between border-b border-slate-200 pb-4">
                         <div className="flex items-center gap-2.5">
-                            <div className="rounded-xl bg-indigo-50 p-2 text-indigo-700 border border-indigo-200">
+                            <div className="rounded-xl bg-teal-50 p-2 text-teal-700 border border-teal-200">
                                 <Users className="h-5 w-5" />
                             </div>
                             <div>
@@ -575,7 +600,7 @@ export default function Index({ users = [], divisions = [], success, error }) {
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => setFormData('name', e.target.value)}
-                                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-2xs"
+                                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs"
                                     required
                                     placeholder="Contoh: drg. Ahmad Fauzi, Sp.BM"
                                 />
@@ -590,7 +615,7 @@ export default function Index({ users = [], divisions = [], success, error }) {
                                     type="email"
                                     value={formData.email}
                                     onChange={(e) => setFormData('email', e.target.value)}
-                                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-2xs"
+                                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs"
                                     required
                                     placeholder="nama@rsjtampan.riau.go.id"
                                 />
@@ -607,7 +632,7 @@ export default function Index({ users = [], divisions = [], success, error }) {
                                     type="text"
                                     value={formData.nip}
                                     onChange={(e) => setFormData('nip', e.target.value)}
-                                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-mono text-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-2xs"
+                                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-mono text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs"
                                     placeholder="198501012010011000"
                                 />
                                 <InputError message={formErrors.nip} />
@@ -621,7 +646,7 @@ export default function Index({ users = [], divisions = [], success, error }) {
                                     type="text"
                                     value={formData.nik}
                                     onChange={(e) => setFormData('nik', e.target.value)}
-                                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-mono text-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-2xs"
+                                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-mono text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs"
                                     placeholder="1471010101850000"
                                 />
                                 <InputError message={formErrors.nik} />
@@ -636,7 +661,7 @@ export default function Index({ users = [], divisions = [], success, error }) {
                                 <select
                                     value={formData.role}
                                     onChange={(e) => setFormData('role', e.target.value)}
-                                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-bold text-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-2xs"
+                                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-bold text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs"
                                     required
                                 >
                                     <option value="divisi">Unit Pemohon (Ruangan / Instalasi)</option>
@@ -656,7 +681,7 @@ export default function Index({ users = [], divisions = [], success, error }) {
                                     type="password"
                                     value={formData.password}
                                     onChange={(e) => setFormData('password', e.target.value)}
-                                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-2xs"
+                                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs"
                                     placeholder={editingUser ? 'Kosongkan jika tidak diubah' : 'Minimal 8 karakter'}
                                     required={!editingUser}
                                 />
@@ -683,7 +708,7 @@ export default function Index({ users = [], divisions = [], success, error }) {
                                                     unit_id: '',
                                                 });
                                             }}
-                                            className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-900 focus:border-indigo-500 shadow-2xs"
+                                            className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs"
                                             required
                                         >
                                             <option value="">-- Pilih Divisi --</option>
@@ -703,7 +728,7 @@ export default function Index({ users = [], divisions = [], success, error }) {
                                         <select
                                             value={formData.unit_id}
                                             onChange={(e) => setFormData('unit_id', e.target.value)}
-                                            className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-900 focus:border-indigo-500 shadow-2xs disabled:bg-slate-100"
+                                            className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs disabled:bg-slate-100"
                                             disabled={!formData.division_id}
                                             required
                                         >
@@ -728,14 +753,14 @@ export default function Index({ users = [], divisions = [], success, error }) {
                                 setIsCreateOpen(false);
                                 setEditingUser(null);
                             }}
-                            className="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 transition cursor-pointer shadow-2xs"
+                            className="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-4 py-2 text-xs font-bold text-slate-700 transition cursor-pointer shadow-2xs"
                         >
                             Batal
                         </button>
                         <button
                             type="submit"
                             disabled={formProcessing}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 px-4.5 py-2 text-xs font-bold text-white transition cursor-pointer shadow-2xs disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white transition cursor-pointer shadow-2xs disabled:opacity-50"
                         >
                             {formProcessing
                                 ? 'Menyimpan...'
@@ -775,7 +800,7 @@ export default function Index({ users = [], divisions = [], success, error }) {
                                 type="password"
                                 value={passwordData.password}
                                 onChange={(e) => setPasswordData('password', e.target.value)}
-                                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-2xs"
+                                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs"
                                 placeholder="Minimal 8 karakter"
                                 required
                             />
@@ -787,7 +812,7 @@ export default function Index({ users = [], divisions = [], success, error }) {
                         <button
                             type="button"
                             onClick={() => setResettingUser(null)}
-                            className="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-700 transition cursor-pointer shadow-2xs"
+                            className="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-4 py-2 text-xs font-bold text-slate-700 transition cursor-pointer shadow-2xs"
                         >
                             Batal
                         </button>

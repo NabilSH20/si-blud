@@ -1,333 +1,348 @@
-# Perencanaan Implementasi: Pembersihan Residu Alur Keuangan pada Modul Pengajuan Belanja
+# Perencanaan Implementasi: Standarisasi & Penyelarasan Tampilan UI Role Super Admin
 
 > **Target Pengembang**: Junior Programmer & AI Assistant Model  
 > **Repository**: `rsj-req-app` (E-BLUD RS Jiwa Tampan Provinsi Riau)  
 > **Status Dokumen**: Siap Diimplementasikan (*Ready for Implementation*)  
-> **Branch Terkait**: `perbaikan_alur`  
+> **Branch Kerja yang Disarankan**: Buat branch baru dari `master`, misalnya `ui_super_admin`  
 
 ---
 
-## 1. Konteks & Latar Belakang Perubahan
+## 1. Konteks & Latar Belakang Masalah
 
-Pada sistem E-BLUD RS Jiwa Tampan sebelumnya, usulan belanja logistik/barang dari Unit Kerja melalui alur 3 tahap:
-$$\text{Unit Pengusul} \longrightarrow \text{Bagian Perencanaan} \longrightarrow \text{Bagian Keuangan (Penerbitan SP2D \& Kuitansi)}$$
+Berdasarkan hasil evaluasi antarmuka (*User Interface*), tampilan halaman pada role **Super Admin** saat ini belum selaras dengan tampilan keempat role lainnya (**Admin**, **Divisi / Unit**, **Perencanaan**, dan **Keuangan**).
 
-Berdasarkan hasil evaluasi dan revisi tata kelola BLUD rumah sakit yang telah disepakati:
-1. **Bagian Keuangan TIDAK LAGI** menjadi verifikator ataupun gerbang persetujuan pencairan SP2D untuk berkas usulan belanja (*requisition*). Keuangan difokuskan sepenuhnya pada **Target Pendapatan BLUD**, **Pencatatan Realisasi Penerimaan Kas Masuk**, dan **Laporan Akuntabilitas Kas/Surplus-Defisit**.
-2. **Alur Resmi Usulan Belanja** disederhanakan menjadi **2 Tahap Penuh**:
-   $$\text{Unit Pengusul (Draft/Diajukan)} \longrightarrow \text{Bagian Perencanaan (Telaah SSH, Kuantitas, \& ACC Final Pagu RBA)}$$
-3. Ketika Bagian Perencanaan menyetujui usulan belanja, status langsung menjadi **`'Disetujui'` (ACC Final)** dan saldo pagu rekening belanja RBA BLUD langsung terpotong secara *real-time*.
-
-### Permasalahan Saat Ini (*Current Problem*)
-Meskipun alur backend utama telah diperbarui ke status `'Disetujui'`, audit mendalam menemukan **residu (sisa-sisa tampilan, filter dropdown, teks label, dan pesan validasi controller)** yang masih menampilkan/menyebutkan *"Keuangan"*, *"Disetujui oleh Keuangan"*, *"Diteruskan ke Keuangan"*, dan filter status usang (`Diproses_Keuangan` / `Disetujui_Selesai`).
-
-Dampaknya:
-1. **Sidebar Perencanaan & Divisi/Unit**: Masih terdapat menu anak (*sub-menu*) *"Diteruskan ke Keuangan"* dan *"Disetujui Selesai"*. Ketika diklik, tabel menampilkan 0 data karena berkas baru berstatus `'Disetujui'`, bukan `'Disetujui_Selesai'` atau `'Diproses_Keuangan'`.
-2. **Halaman Perencanaan RBA (Tab 4)**: Tombol filter dan judul tab masih bertuliskan *"Disetujui Keuangan"*, dan item belanja berstatus `'Disetujui'` tidak muncul akibat filter JavaScript yang hanya memeriksa `'Disetujui_Selesai'`.
-3. **Pesan Validasi Controller**: Pada saat unit mencoba mengedit usulan yang sudah disahkan, controller mengeluarkan pesan error: *"Usulan belanja tidak dapat diubah karena telah diproses atau disetujui oleh Tim Keuangan."*
-4. **Dashboard Super Admin & Modal**: Masih terdapat kartu metrik *"Diproses Bagian Keuangan"* dan placeholder instruksi *"Tuliskan catatan teknis untuk Bagian Keuangan"*.
+Meskipun keempat role lainnya sudah memiliki standar desain Tailwind CSS yang seragam, halaman Super Admin masih menggunakan gaya terpisah yang menyebabkan ketidaksinkronan visual:
+1. **Skema Warna & Tema Berbeda**: Keempat role lain seragam menggunakan tema dasar **Slate + Emerald/Teal** (`bg-teal-600`, `emerald-50/70`, `border-slate-200`), sedangkan Super Admin menggunakan warna **Indigo/Ungu** (`bg-indigo-600`, `border-indigo-200`, `from-indigo-50/90`).
+2. **Ukuran Font Header & Struktur Layout Tidak Sama**:
+   - Pada halaman **Dashboard** role lain (`Admin/Dashboard.jsx`, `Divisi/Dashboard.jsx`, `Keuangan/Dashboard.jsx`), konten utama dibungkus kanvas putih bersih (`bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-xs`) dengan judul `<h1>` berukuran **`text-2xl sm:text-3xl font-bold`**, divider bawah header, serta info *"Update terakhir"*. Sementara `SuperAdmin/Dashboard.jsx` menggunakan `text-xl sm:text-2xl` tanpa kanvas putih dan memiliki badge pill ekstra (*"3-in-1 Master"*) di sebelah judul.
+   - Pada halaman **CRUD / Tabel** role lain (`Admin/Users/Index.jsx`, `Admin/FiscalYears/Index.jsx`, `Divisi/Requisitions/Index.jsx`), `<h1>` menggunakan **`text-xl sm:text-2xl font-black text-slate-900 tracking-tight`** tanpa badge pill di samping judul, dan **tombol aksi `+ Tambah`** diletakkan **di dalam toolbar kartu tabel sebelah kanan**, bukan di pojok kanan header halaman atas.
+3. **Ukuran, Padding, Warna Background, dan Jenis Button Tidak Konsisten**:
+   - **Tombol Utama (Primary CTA)**: Role lain selalu menggunakan `bg-teal-600 hover:bg-teal-700 px-4 py-2 text-xs font-bold text-white rounded-xl`. Di Super Admin tombol utama memakai `bg-indigo-600` dengan tinggi berbeda-beda (`py-2.5`, `px-4.5 py-2`, `px-5 py-2.5`, `px-6 py-2.5`).
+   - **Tombol Sekunder / Reset / Batal / Detail**: Di Super Admin ukurannya bermacam-macam (`px-3 py-2`, `px-3.5 py-2`, `px-4 py-2`), dan tombol `Detail` di Monitoring masih memakai background Indigo (`bg-indigo-50 text-indigo-700 px-2.5 py-1`) alih-alih netral putih (`border-slate-200 bg-white text-slate-700 px-2.5 py-1.5`).
+   - **Tombol Aksi Baris Tabel (`Edit`, `Hapus`, `Set Default`, dll.)**: Di role lain, tombol `Edit` selalu berbackground **Amber** (`border-amber-300 bg-amber-50 text-amber-800 px-3 py-1.5`), tombol `Set Default` berbackground **Teal** (`border-teal-200 bg-teal-50 text-teal-800 px-2.5 py-1.5`), dan tombol `Hapus` berpadding `px-2.5 py-1.5`. Di Super Admin, tombol `Edit` masih putih polos (`bg-white`), `Default` memakai warna Amber, dan tingginya `py-1` sehingga tampak lebih pendek serta tidak seragam.
+   - **Perataan Kolom Aksi**: Role lain merata-tengahkan (`text-center` / `justify-center`) kolom aksi tabel; Super Admin masih rata kanan (`text-right` / `justify-end`).
 
 ---
 
-## 2. Diagram Alur Sistem yang Benar (Target State)
+## 2. Acuan Resmi Design System (Standar Role Lainnya)
 
-```mermaid
-flowchart TD
-    subgraph Unit_Kerja["1. Unit Kerja / Pemohon"]
-        A["Input Usulan Belanja<br/>(Sub Kegiatan, RBA, Barang)"] --> B["Kirim Pengajuan<br/>Status: Pending_Perencanaan"]
-        Rev["Revisi Usulan & Ajukan Ulang<br/>Status: Pending_Perencanaan"] --> B
-    end
+Gunakan daftar *Tailwind class* resmi berikut yang diambil langsung dari implementasi `AdminLayout.jsx`, `Admin/Users/Index.jsx`, `Admin/FiscalYears/Index.jsx`, `Divisi/Dashboard.jsx`, `Divisi/Requisitions/Index.jsx`, dan `Pagination.jsx` sebagai satu-satunya acuan selama pengerjaan:
 
-    subgraph Tim_Perencanaan["2. Bagian Perencanaan (ACC FINAL)"]
-        B --> C{"Telaah Perencanaan<br/>(Kesesuaian SSH & Pagu RBA)"}
-        C -- "Ditolak / Perlu Perbaikan" --> D["Status: Ditolak<br/>Catatan: notes_perencanaan"]
-        D --> Rev
-        C -- "Disetujui & Disahkan" --> E["Status: Disetujui (ACC Final)<br/>verified_by_perencanaan_id<br/>verified_perencanaan_at"]
-        E --> F["Potong Pagu Rekening Belanja RBA<br/>(Real-Time)"]
-    end
+### A. Shell & Layout (`*Layout.jsx`)
+| Elemen UI | Class Acuan Resmi (Standar Role Lain) |
+|---|---|
+| **Page Background** | `min-h-screen bg-gradient-to-br from-slate-100/90 via-slate-50 to-emerald-50/50 bg-fixed font-sans text-slate-800 antialiased` |
+| **Sidebar Container** | `fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r-2 border-slate-300/80 bg-white shadow-lg transition-transform duration-300 lg:translate-x-0` |
+| **Sidebar Logo Header** | `border-b-2 border-emerald-100/90 bg-emerald-50/70 p-4` |
+| **Sidebar Role Badge** | Pill kecil di samping teks `E-BLUD`: `inline-flex items-center rounded-md bg-slate-800 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-2xs` *(warna badge dapat memakai `bg-slate-800` atau `bg-emerald-700` agar tetap membedakan peran secara elegan tanpa mengubah tema layout)* |
+| **Sidebar Group Label** | `px-3 pb-2 text-[11px] font-black uppercase tracking-wider text-slate-400` |
+| **Menu Item Aktif** | `bg-emerald-50 text-emerald-900 font-bold border-l-4 border-emerald-600 pl-3 shadow-2xs` *(text `text-sm`, icon `h-5 w-5 shrink-0 text-emerald-600`, dot kanan `ml-auto h-2 w-2 rounded-full bg-emerald-600`)* |
+| **Menu Item Inaktif** | `text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-semibold pl-4` *(text `text-sm`, icon `h-5 w-5 shrink-0 text-slate-400 group-hover:text-slate-600`)* |
+| **Topbar Subtitle** | `text-xs font-semibold text-slate-500 truncate` |
+| **Topbar Profile Button** | `flex items-center gap-2.5 rounded-2xl border-2 border-slate-200 bg-white p-1.5 pr-3 hover:bg-slate-50 active:scale-95 transition-all duration-200 shadow-2xs cursor-pointer` |
+| **Main Wrapper Padding** | `<main className="flex-1 p-4 sm:p-6 lg:p-8"><div className="animate-fade-in-up transition-all duration-300">{children}</div></main>` |
 
-    subgraph Bagian_Keuangan["3. Bagian Keuangan (Penerimaan Kas Saja)"]
-        G["Target Pendapatan BLUD<br/>(Tahunan / Bulanan / Mingguan)"] --> H["Pencatatan Realisasi Pendapatan"]
-        H --> I["Laporan Surplus / Defisit BLUD<br/>(Pendapatan vs Belanja Disetujui)"]
-        F -. "Data Belanja Disetujui" .-> I
-    end
+### B. Header Halaman & Container
+| Jenis Halaman | Class Acuan Resmi (Standar Role Lain) |
+|---|---|
+| **Dashboard Canvas** | `min-h-screen bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6` |
+| **Dashboard Header Row** | `flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-slate-100` |
+| **Dashboard `<h1>`** | `text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl` |
+| **Dashboard Subtitle `<p>`** | `mt-1 text-xs sm:text-sm text-slate-500` |
+| **CRUD / List Page Wrapper** | `<div className="mb-6">` (Header terpisah dari tabel, tanpa pill badge di samping `<h1>`) |
+| **CRUD / List `<h1>`** | `text-xl sm:text-2xl font-black text-slate-900 tracking-tight` |
+| **CRUD / List Subtitle `<p>`** | `mt-1 text-xs sm:text-sm text-slate-500 font-medium` |
+| **Table Card Container** | `overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs` |
+| **Table Toolbar Row** | `flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 bg-white` |
+| **Table `<thead>`** | `bg-slate-50 font-bold border-b border-slate-200 text-slate-700 uppercase tracking-wider text-xs` |
 
-    classDef unit fill:#e0f2fe,stroke:#0284c7,stroke-width:2px;
-    classDef per fill:#dcfce7,stroke:#16a34a,stroke-width:2px;
-    classDef keu fill:#fef3c7,stroke:#d97706,stroke-width:2px;
-    class A,B,Rev unit;
-    class C,D,E,F per;
-    class G,H,I keu;
-```
-
----
-
-## 3. Daftar File yang Perlu Dimodifikasi
-
-Berikut adalah daftar berkas yang teridentifikasi memuat residu alur keuangan:
-
-| No | File Path | Tipe | Lokasi / Baris | Deskripsi Perbaikan |
-|---|---|---|---|---|
-| 1 | `resources/js/Layouts/PerencanaanLayout.jsx` | UI Sidebar | ~100–125 | Hapus submenu *'Diteruskan ke Keuangan'*; Ubah *'Disetujui Selesai'* menjadi *'Disetujui (ACC Final)'* dengan parameter status `'Disetujui'`. |
-| 2 | `resources/js/Layouts/DivisiLayout.jsx` | UI Sidebar | ~210–237 | Hapus submenu *'Diproses Keuangan'*; Ubah *'Disetujui Selesai'* menjadi *'Disetujui (ACC Final)'* dengan parameter status `'Disetujui'`. |
-| 3 | `resources/js/Layouts/KeuanganLayout.jsx` | UI Layout | ~170–178 | Bersihkan branch `statusVal === 'Diproses_Keuangan'` dan `'Disetujui_Selesai'` dari deteksi URL submenu. |
-| 4 | `app/Http/Controllers/Divisi/RequisitionController.php` | Backend Controller | ~358 | Perbarui pesan validasi saat usulan tidak boleh diedit: ganti *"disetujui oleh Tim Keuangan"* menjadi *"disetujui oleh Tim Perencanaan"*. |
-| 5 | `resources/js/Pages/Perencanaan/RBA/Index.jsx` | Frontend View | ~331, 1822, 1849, 1938, 2049, 2082, 2193 | Ubah Tab 4 & pill filter dari *"Disetujui Keuangan"* menjadi *"Disetujui (ACC Final)"*. Dukung filter status `'Disetujui'` dan `'Disetujui_Selesai'`. |
-| 6 | `resources/js/Pages/Perencanaan/RBA/PrintRincianBelanja.jsx` | Cetak Dokumen | ~28 | Perbarui filter cetak agar mencakup `it.status === 'Disetujui'`. |
-| 7 | `resources/js/Pages/Perencanaan/Requisitions/Partials/QuickVerificationModal.jsx` | Modal Dialog | ~459 | Ubah placeholder textarea catatan verifikasi dari *"Bagian Keuangan atau unit pengusul"* menjadi *"unit kerja pengusul"*. |
-| 8 | `resources/js/Pages/Divisi/Dashboard.jsx` | Frontend View | ~137 | Ubah banner catatan revisi dari *"Perencanaan atau Keuangan"* menjadi *"Tim Perencanaan"*. |
-| 9 | `resources/js/Pages/SuperAdmin/Dashboard.jsx` | Frontend View | ~158, 348–365 | Ganti metrik *"Usulan Selesai SP2D"* menjadi *"Usulan Belanja Disetujui"*; Hapus card *"Diproses Bagian Keuangan"*; Tampilkan metrik akurat 3 status (`pending_perencanaan`, `disetujui`, `ditolak`). |
-| 10 | `tests/Feature/RevenueWorkflowAndCleanupTest.php` | Automated Test | Akhir berkas | Tambahkan unit test untuk memastikan submenu status filter bekerja dan pesan validasi controller akurat. |
+### C. Kamus Standar Button (Ukuran, Padding, Warna Background & Varian)
+| Jenis Button | Kegunaan | Class Acuan Resmi (Standar Role Lain) |
+|---|---|---|
+| **Primary CTA Button** | `+ Tambah Pengguna`, `+ Tambah Tahun Anggaran`, `Simpan Perubahan`, `Terapkan Filter` | `inline-flex items-center justify-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer whitespace-nowrap disabled:opacity-50` |
+| **Secondary / Cancel / Reset** | `Batal`, `Reset`, `Tutup`, Link `TA: 2026` | `inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer whitespace-nowrap` |
+| **Row Action: `Detail`** | Melihat modal rincian di baris tabel | `inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer` |
+| **Row Action: `Edit`** | Mengubah baris data pengguna / tahun anggaran | `inline-flex items-center gap-1 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 hover:text-amber-900 active:scale-95 px-3 py-1.5 text-xs font-bold text-amber-800 shadow-2xs transition cursor-pointer` |
+| **Row Action: `Set Default` / `Troubleshoot` / `JSON`** | Aksi positif/inspeksi sekunder pada baris tabel | `inline-flex items-center gap-1 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 hover:text-teal-900 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-teal-800 shadow-2xs transition cursor-pointer` |
+| **Row Action: `Reset Password`** | Aksi peringatan pada baris tabel (`KeyRound`) | `inline-flex items-center gap-1 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 hover:text-amber-900 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-amber-800 shadow-2xs transition cursor-pointer` |
+| **Row Action: `Hapus` (Trash)** | Menghapus baris data | `inline-flex items-center gap-1 rounded-xl border border-transparent hover:border-rose-300 bg-white hover:bg-rose-50 hover:text-rose-700 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-slate-400 transition cursor-pointer` |
+| **Danger Action** | `Ya, Tutup Buku Sekarang` | `inline-flex items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer` |
+| **Pagination Active Page** | Halaman aktif pagination (`Pagination.jsx`) | `bg-emerald-600 text-white shadow-xs` |
 
 ---
 
-## 4. Panduan Implementasi Langkah demi Langkah (*Step-by-Step Guide*)
+## 3. Daftar File yang Harus Dimodifikasi
 
-### Langkah 1: Perbaikan Sidebar Navigasi Perencanaan (`PerencanaanLayout.jsx`)
-Buka file `resources/js/Layouts/PerencanaanLayout.jsx`. Pada konfigurasi menu `Verifikasi Pengajuan` (sekitar baris 100–125):
-
-**Sebelum:**
-```javascript
-children: [
-    {
-        name: 'Semua Usulan',
-        href: route('perencanaan.requisitions.index'),
-        isActive: (url) => !url.includes('status='),
-    },
-    {
-        name: 'Menunggu Telaah',
-        href: route('perencanaan.requisitions.index', { status: 'Pending_Perencanaan' }),
-        isActive: (url) => url.includes('status=Pending_Perencanaan'),
-    },
-    {
-        name: 'Diteruskan ke Keuangan',
-        href: route('perencanaan.requisitions.index', { status: 'Diproses_Keuangan' }),
-        isActive: (url) => url.includes('status=Diproses_Keuangan'),
-    },
-    {
-        name: 'Disetujui Selesai',
-        href: route('perencanaan.requisitions.index', { status: 'Disetujui_Selesai' }),
-        isActive: (url) => url.includes('status=Disetujui_Selesai'),
-    },
-    {
-        name: 'Ditolak',
-        href: route('perencanaan.requisitions.index', { status: 'Ditolak' }),
-        isActive: (url) => url.includes('status=Ditolak'),
-    },
-]
-```
-
-**Sesudah:**
-```javascript
-children: [
-    {
-        name: 'Semua Usulan',
-        href: route('perencanaan.requisitions.index'),
-        isActive: (url) => !url.includes('status='),
-    },
-    {
-        name: 'Menunggu Telaah',
-        href: route('perencanaan.requisitions.index', { status: 'Pending_Perencanaan' }),
-        isActive: (url) => url.includes('status=Pending_Perencanaan'),
-    },
-    {
-        name: 'Disetujui (ACC Final)',
-        href: route('perencanaan.requisitions.index', { status: 'Disetujui' }),
-        isActive: (url) => url.includes('status=Disetujui'),
-    },
-    {
-        name: 'Ditolak',
-        href: route('perencanaan.requisitions.index', { status: 'Ditolak' }),
-        isActive: (url) => url.includes('status=Ditolak'),
-    },
-]
-```
-
-> **Catatan Pengembang**: Di `Perencanaan/Requisitions/Index.jsx`, pastikan filter status URL mengenali `'Disetujui'`:
-> Jika `statusFilter === 'Disetujui'`, usulan dengan status `'Disetujui'` maupun legacy `'Disetujui_Selesai'` harus dapat ditampilkan.
+| No | File Target | Ringkasan Perubahan Utama |
+|---|---|---|
+| 1 | `resources/js/Layouts/SuperAdminLayout.jsx` | Ganti tema layout Indigo menjadi Slate + Emerald/Teal agar seragam dengan `AdminLayout`, `DivisiLayout`, `PerencanaanLayout`, `KeuanganLayout`. |
+| 2 | `resources/js/Pages/SuperAdmin/Dashboard.jsx` | Bungkus dengan kanvas putih dashboard standar; perbesar `<h1>` ke `text-2xl sm:text-3xl`; tambahkan *"Update terakhir"*; ubah aksen kartu & link ke Teal/Emerald. |
+| 3 | `resources/js/Pages/SuperAdmin/Users/Index.jsx` | Samakan header `font-black` tanpa pill badge; pindahkan tombol `+ Tambah Pengguna` ke dalam toolbar tabel (`bg-teal-600 px-4 py-2`); rapikan filter `<select>` tanpa wrapper ganda; ubah tombol `Edit` (Amber), `Troubleshoot` (Teal), `Reset Password`, & `Hapus` agar tingginya seragam (`py-1.5`); ratakan kolom Aksi ke tengah (`text-center`). |
+| 4 | `resources/js/Pages/SuperAdmin/FiscalYears/Index.jsx` | Samakan header `font-black`; pindahkan tombol `+ Tambah Tahun Anggaran` ke dalam toolbar tabel (`bg-teal-600 px-4 py-2`); tambahkan kolom `No` (`#1`, `#2`); ubah tombol `Edit` ke Amber (`px-3 py-1.5`), `Set Default` ke Teal (`px-2.5 py-1.5`), `Tutup Buku`/`Buka Kunci` ke `px-2.5 py-1.5`, dan `Hapus` ke `px-2.5 py-1.5`; ubah button modal ke `bg-teal-600 px-4 py-2`. |
+| 5 | `resources/js/Pages/SuperAdmin/Settings/Index.jsx` | Samakan header `font-black`; seragamkan kedua tombol *Simpan* (atas & bawah) ke `bg-teal-600 hover:bg-teal-700 px-4 py-2`; ganti aksen fokus input dan dot subbagian dari Indigo ke Teal. |
+| 6 | `resources/js/Pages/SuperAdmin/AuditLogs/Index.jsx` | Samakan header `font-black`; ubah tombol `Terapkan Filter` menjadi `bg-teal-600 hover:bg-teal-700 px-4 py-2` dan `Reset` menjadi `px-4 py-2`; ubah tombol `JSON` menjadi `border-teal-200 bg-teal-50 text-teal-800 px-2.5 py-1.5`; seragamkan `<thead>` dan kolom `Aksi`. |
+| 7 | `resources/js/Pages/SuperAdmin/Monitoring/Rba.jsx` | Samakan header `font-black`; ubah warna active tab dari `border-indigo-600 text-indigo-600` ke `border-teal-600 text-teal-700`; ganti warna badge TA dan banner aksen dari Indigo ke Teal/Slate standar. |
+| 8 | `resources/js/Pages/SuperAdmin/Monitoring/Requisitions.jsx` | Samakan header `font-black`; ubah tombol `Filter` menjadi `bg-teal-600 hover:bg-teal-700 px-4 py-2`; ubah tombol `Detail` baris tabel menjadi standar netral `border-slate-200 bg-white text-slate-700 px-2.5 py-1.5`; ubah pagination aktif ke `bg-emerald-600`. |
+| 9 | `resources/js/Pages/SuperAdmin/Monitoring/Finance.jsx` | Samakan header `font-black`; ubah pagination aktif dari `bg-indigo-600` ke `bg-emerald-600`; seragamkan `<thead>` tabel pendapatan & kartu ikhtisar. |
 
 ---
 
-### Langkah 2: Perbaikan Sidebar Navigasi Divisi / Unit (`DivisiLayout.jsx`)
-Buka file `resources/js/Layouts/DivisiLayout.jsx`. Pada bagian sub-menu dropdown usulan belanja (sekitar baris 210–237):
+## 4. Tahapan Implementasi Terperinci (*Step-by-Step Guide*)
 
-**Sebelum:**
-```jsx
-<Link
-    href={route('requisitions.index', { status: 'Diproses_Keuangan' })}
-    onClick={() => setSidebarOpen(false)}
-    className={`...`}
->
-    <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-    <span className="truncate">Diproses Keuangan</span>
-</Link>
+### Tahap 1: Penyelarasan Shell & Navigasi (`SuperAdminLayout.jsx`)
+Buka `resources/js/Layouts/SuperAdminLayout.jsx` dan bandingkan dengan `resources/js/Layouts/AdminLayout.jsx`:
 
-<Link
-    href={route('requisitions.index', { status: 'Disetujui_Selesai' })}
-    onClick={() => setSidebarOpen(false)}
-    className={`...`}
->
-    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-    <span className="truncate">Disetujui Selesai</span>
-</Link>
-```
-
-**Sesudah:**
-Hapus link *"Diproses Keuangan"*. Ganti link *"Disetujui Selesai"* menjadi *"Disetujui (ACC Final)"* dengan parameter `{ status: 'Disetujui' }`:
-```jsx
-<Link
-    href={route('requisitions.index', { status: 'Disetujui' })}
-    onClick={() => setSidebarOpen(false)}
-    className={`flex items-center gap-2 rounded-lg py-1.5 px-2.5 text-xs transition-colors ${
-        isRequisitionsActive && (currentStatus === 'Disetujui' || currentStatus === 'Disetujui_Selesai')
-            ? 'bg-teal-100/80 text-teal-900 font-bold'
-            : 'text-slate-600 hover:bg-teal-50 hover:text-teal-800 font-medium'
-    }`}
->
-    <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
-    <span className="truncate">Disetujui (ACC Final)</span>
-</Link>
-```
-
----
-
-### Langkah 3: Perbaikan Pesan Validasi Controller (`Divisi/RequisitionController.php`)
-Buka `app/Http/Controllers/Divisi/RequisitionController.php`. Periksa baris 357–360:
-
-**Sebelum:**
-```php
-if (! in_array($requisition->status, ['Pending_Perencanaan', 'Ditolak'])) {
-    return back()->with('error', 'Usulan belanja tidak dapat diubah karena telah diproses atau disetujui oleh Tim Keuangan.');
-}
-```
-
-
-**Sesudah:**
-```php
-if (! in_array($requisition->status, ['Pending_Perencanaan', 'Ditolak'])) {
-    return back()->with('error', 'Usulan belanja tidak dapat diubah karena telah disetujui atau disahkan oleh Tim Perencanaan.');
-}
-```
-
----
-
-### Langkah 4: Perbaikan Tab 4 Rincian Usulan Belanja RBA (`Perencanaan/RBA/Index.jsx`)
-Buka `resources/js/Pages/Perencanaan/RBA/Index.jsx`. Lakukan penyesuaian pada bagian berikut:
-
-1. **Logika Filter Usulan Aktif (Line ~330–335)**:
-   ```javascript
+1. **Background Halaman Utama (Line ~99)**:
+   ```jsx
    // Sebelum:
-   if (statusFilter === 'DISETUJUI') {
-       return it.status === 'Disetujui_Selesai';
-   }
+   <div className="min-h-screen bg-gradient-to-br from-slate-100/90 via-slate-50 to-indigo-50/50 bg-fixed font-sans text-slate-800 antialiased">
 
-   // Sesudah:
-   if (statusFilter === 'DISETUJUI') {
-       return it.status === 'Disetujui' || it.status === 'Disetujui_Selesai';
-   }
+   // Sesudah (Samakan dengan AdminLayout, DivisiLayout, PerencanaanLayout, KeuanganLayout):
+   <div className="min-h-screen bg-gradient-to-br from-slate-100/90 via-slate-50 to-emerald-50/50 bg-fixed font-sans text-slate-800 antialiased">
    ```
-2. **Komentar & Header Tab 4 (Line ~1822)**:
-   Ganti komentar header dari:
-   `{/* TAB 4: RINCIAN USULAN BELANJA UNIT KERJA (DISETUJUI KEUANGAN) */}`
-   menjadi:
-   `{/* TAB 4: RINCIAN USULAN BELANJA UNIT KERJA (DISETUJUI PERENCANAAN / ACC FINAL) */}`
-3. **Tombol Pill Filter (Line ~1849)**:
-   Ganti teks tombol dari:
-   `Disetujui Keuangan`
-   menjadi:
-   `Disetujui (ACC Final)`
-4. **Pesan Kosong & Status Badges (Line ~1938, 2049, 2082, 2193)**:
-   Ganti redaksi *"disetujui Keuangan"* menjadi *"disetujui Perencanaan"*.
-   Pada badge status barang:
-   ```javascript
+2. **Sidebar Border & Header Logo Area (Lines ~124–158)**:
+   - Ubah `<aside>` border dari `border-r-2 border-indigo-200/80 bg-white shadow-xl` menjadi `border-r-2 border-slate-300/80 bg-white shadow-lg`.
+   - Ubah container logo atas dari `border-b-2 border-indigo-100 bg-gradient-to-b from-indigo-50/90 to-slate-50 p-4` menjadi `border-b-2 border-emerald-100/90 bg-emerald-50/70 p-4`.
+   - Ubah tombol tutup mobile (`lg:hidden`) dari `border border-indigo-200` menjadi `rounded-xl border-2 border-emerald-200 bg-white p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300 active:scale-95 transition shadow-2xs`.
+   - Badge `SUPER ADMIN` di bawah logo dapat menggunakan `bg-slate-800` (atau `bg-emerald-700`) dengan ukuran seragam `px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white rounded-md shadow-2xs`.
+3. **Navigasi Sidebar (Lines ~161–211)**:
+   - Judul grup menu: ganti `text-[10px] font-black uppercase tracking-wider text-indigo-400` menjadi `text-[11px] font-black uppercase tracking-wider text-slate-400`.
+   - Link menu aktif: ganti `bg-indigo-50 font-black text-indigo-950 border-l-4 border-indigo-600` menjadi `bg-emerald-50 text-emerald-900 font-bold border-l-4 border-emerald-600 pl-3 shadow-2xs` (link inaktif memakai `pl-4`, font `text-sm`, icon ukuran `h-5 w-5 shrink-0` dengan warna aktif `text-emerald-600` dan dot aktif `bg-emerald-600`).
+   - Footer sidebar: samakan dengan `AdminLayout` (`border-t-2 border-slate-200/90 bg-slate-50 px-4 py-3`), badge `TA {active_year}` memakai `rounded-md bg-emerald-100 text-emerald-800 px-1.5 py-0.5 border border-emerald-300`.
+4. **Topbar & Profile Dropdown (Lines ~217–340)**:
+   - Greeting subtitle (Line ~231): ganti `text-indigo-700` menjadi `text-slate-500`.
+   - Notification bell dot (Line ~255): samakan menjadi `bg-rose-500 ring-2 ring-white animate-pulse` (atau `bg-emerald-500` sesuai status sistem, dengan ukuran `h-2.5 w-2.5` dan button icon `h-5 w-5`).
+   - Profile trigger button (Line ~283): ganti `border-2 border-indigo-200 hover:bg-indigo-50/50` menjadi `border-2 border-slate-200 hover:bg-slate-50`, avatar kotak `bg-emerald-600` (bukan `bg-indigo-700`), dan subtext role `text-slate-500` (bukan `text-indigo-700`).
+   - Dropdown popup (Line ~304): ganti `border-2 border-indigo-100` menjadi `border-2 border-slate-300`, dan item menu *"Pengaturan Profil"* tambahkan ikon & hover `hover:bg-emerald-50 hover:text-emerald-700` seperti `AdminLayout`.
+   - Main container (Line ~340): ubah menjadi `<main className="flex-1 p-4 sm:p-6 lg:p-8"><div className="animate-fade-in-up transition-all duration-300">{children}</div></main>`.
+
+---
+
+### Tahap 2: Penyelarasan Halaman Dashboard (`SuperAdmin/Dashboard.jsx`)
+Buka `resources/js/Pages/SuperAdmin/Dashboard.jsx` dan bandingkan dengan `Admin/Dashboard.jsx` serta `Divisi/Dashboard.jsx`:
+
+1. **Tambahkan Clock / Last Updated State** (mengikuti `Admin/Dashboard.jsx` & `Divisi/Dashboard.jsx`):
+   Tambahkan `useState(new Date())` dan `useEffect` interval 1 detik untuk menampilkan `Update terakhir: {formattedDate} pukul {formattedTime}` pada sisi kanan header dashboard.
+2. **Bungkus Konten dengan Kanvas Putih Standar Dashboard (Line ~81)**:
+   ```jsx
    // Sebelum:
-   item.status === 'Disetujui_Selesai'
-       ? 'Disetujui Keuangan'
-       : item.status === 'Diproses_Keuangan'
-       ? 'Diproses Keuangan'
-       : 'Menunggu Telaah'
+   <div className="space-y-6">
+       {/* 1. Header Title & Status Badges */}
+       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+           <div>
+               <div className="flex items-center gap-2">
+                   <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                       Dashboard Eksekutif Global
+                   </h1>
+                   <span className="... 3-in-1 Master ...">...</span>
+               </div>
+   ...
 
-   // Sesudah:
-   item.status === 'Disetujui' || item.status === 'Disetujui_Selesai'
-       ? 'Disetujui (ACC Final)'
-       : item.status === 'Ditolak'
-       ? 'Ditolak'
-       : 'Menunggu Telaah'
+   // Sesudah (Standar Dashboard Role Lain):
+   <div className="min-h-screen bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
+       {/* 1. Header Row */}
+       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-slate-100">
+           <div>
+               <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                   Dashboard Eksekutif Global
+               </h1>
+               <p className="mt-1 text-xs sm:text-sm text-slate-500">
+                   Pemantauan terpadu lintas modul Perencanaan, Keuangan, Unit Kerja, dan Integritas Sistem E-BLUD RSJ Tampan &bull; TA <span className="font-bold text-slate-700">{active_year}</span>
+               </p>
+           </div>
+
+           <div className="flex flex-col sm:items-end gap-2.5 shrink-0">
+               <div className="text-xs text-slate-500">
+                   Update terakhir:{' '}
+                   <strong className="font-semibold text-slate-800">
+                       {formattedDate} pukul {formattedTime}
+                   </strong>
+               </div>
+               <div className="flex items-center gap-2">
+                   <Link
+                       href={route('superadmin.fiscal-years.index')}
+                       className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer"
+                   >
+                       <Calendar className="h-3.5 w-3.5 text-teal-600" />
+                       TA: <span className="font-mono text-teal-800 font-bold">{active_year}</span>
+                   </Link>
+                   {/* Badge status Terkunci / Terbuka */}
+               </div>
+           </div>
+       </div>
    ```
+3. **Kartu KPI, Pintasan Cepat & Audit Feed**:
+   - Pada KPI Card 3 (`Penerimaan Pendapatan`, Line ~163): ubah aksen ikon dari `bg-indigo-50 text-indigo-600 border-indigo-200` ke `bg-teal-50 text-teal-600 border-teal-200`, angka utama dari `text-indigo-900` ke `text-teal-800` atau `text-slate-900`.
+   - Pada Quick Shortcuts Card 1 (`Manajemen Akun`, Line ~206): ubah hover & ikon dari `indigo` menjadi `teal` (`hover:border-teal-300 hover:bg-teal-50/30`, ikon `bg-teal-50 text-teal-600 group-hover:bg-teal-600 group-hover:text-white border-teal-100`).
+   - Pada header Live Audit Feed (`Lihat Semua`, Lines ~265, ~272) & header `Status Usulan Belanja` (Line ~338): ubah ikon dan link `text-indigo-600` menjadi `text-teal-600 hover:text-teal-800`.
 
 ---
 
-### Langkah 5: Perbaikan Dokumen Cetak RBA (`PrintRincianBelanja.jsx`)
-Buka `resources/js/Pages/Perencanaan/RBA/PrintRincianBelanja.jsx`.
-Pada baris ~28:
-```javascript
-// Sebelum:
-const activeItems = rawItems.filter((it) => it && (it.status === 'Disetujui_Selesai' || !it.status));
+### Tahap 3: Penyelarasan Halaman Manajemen Akun (`SuperAdmin/Users/Index.jsx`)
+Buka `resources/js/Pages/SuperAdmin/Users/Index.jsx` dan samakan persis dengan pola `resources/js/Pages/Admin/Users/Index.jsx`:
 
-// Sesudah:
-const activeItems = rawItems.filter((it) => it && (it.status === 'Disetujui' || it.status === 'Disetujui_Selesai' || !it.status));
-```
+1. **Header Halaman (Lines ~246–270)**:
+   - Hapus tombol `+ Tambah Pengguna Baru` dari header atas dan hapus badge pill `Root Authority` di samping judul.
+   - Gunakan struktur header minimalis standar `Admin/Users/Index.jsx`:
+     ```jsx
+     <div className="mb-6">
+         <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+             Manajemen Akun Pengguna
+         </h1>
+         <p className="mt-1 text-xs sm:text-sm text-slate-500 font-medium">
+             Otoritas penuh mengelola akun seluruh pegawai, role sistem, reset password darurat, dan impersonasi troubleshooting.
+         </p>
+     </div>
+     ```
+2. **Inline Success/Error Alert Banners**:
+   Tambahkan blok render alert `{success && (...)}` dan `{error && (...)}` tepat di bawah header sebelum kartu tabel (persis `Admin/Users/Index.jsx` lines 202–221) agar konsisten.
+3. **Toolbar Kartu Tabel Putih & Penempatan Button `+ Tambah Pengguna` (Lines ~273–365)**:
+   - Ubah container tabel menjadi `overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs`.
+   - Ubah background toolbar dari `border-b border-slate-200/80 p-4 sm:p-5 bg-slate-50/50` menjadi `flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 bg-white`.
+   - Hilangkan `div` pembungkus tambahan pada 3 `<select>` filter (`roleFilter`, `divisionFilter`, `statusFilter`); gunakan `<select>` langsung dengan class standar `rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition cursor-pointer`.
+   - Ubah `focus:border-indigo-500 focus:ring-indigo-500` pada input pencarian menjadi `focus:border-teal-500 focus:ring-teal-500`.
+   - Letakkan tombol **`+ Tambah Pengguna`** di sisi kanan toolbar menggunakan class standar Primary CTA (**`bg-teal-600 hover:bg-teal-700 px-4 py-2`**).
+4. **Header Tabel (`<thead>`) & Nomor Baris**:
+   - Ubah `<thead>` menjadi `bg-slate-50 font-bold border-b border-slate-200 text-slate-700 uppercase tracking-wider text-xs`.
+   - Ubah header kolom terakhir menjadi `<th className="px-4 py-3.5 text-center">Aksi</th>` (rata tengah).
+   - Ubah format nomor baris menjadi `#{(currentPage - 1) * itemsPerPage + idx + 1}` (`text-center text-xs font-semibold text-slate-400`).
+5. **Penyeragaman Ukuran & Warna Button Aksi Baris Tabel (Lines ~471–523)**:
+   Ubah kontainer button menjadi `flex items-center justify-center gap-1.5` dan perbarui setiap tombolnya:
+   - **Tombol `Troubleshoot`**:
+     ```jsx
+     className="inline-flex items-center gap-1 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 hover:text-teal-900 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-teal-800 shadow-2xs transition cursor-pointer"
+     ```
+   - **Tombol `Edit`** (wajib **Amber** persis `Admin/Users/Index.jsx`):
+     ```jsx
+     className="inline-flex items-center gap-1 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 hover:text-amber-900 active:scale-95 px-3 py-1.5 text-xs font-bold text-amber-800 shadow-2xs transition cursor-pointer"
+     ```
+   - **Tombol `Reset Password`**:
+     ```jsx
+     className="inline-flex items-center gap-1 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 hover:text-amber-900 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-amber-800 shadow-2xs transition cursor-pointer"
+     ```
+   - **Tombol `Hapus` (Trash)**:
+     ```jsx
+     className="inline-flex items-center gap-1 rounded-xl border border-transparent hover:border-rose-300 bg-white hover:bg-rose-50 hover:text-rose-700 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-slate-400 transition cursor-pointer"
+     ```
+6. **Button & Input Modal (Lines ~543–803)**:
+   - Ubah ikon header modal dari `bg-indigo-50 text-indigo-700 border-indigo-200` ke `bg-teal-50 text-teal-700 border-teal-200`.
+   - Ubah semua focus ring input/select dari `focus:border-indigo-500 focus:ring-indigo-500` ke `focus:border-teal-500 focus:ring-teal-500`.
+   - Samakan tombol `Batal` (`px-4 py-2`) dan tombol submit `Buat Pengguna`/`Simpan Perubahan` menjadi `bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white rounded-xl`.
 
 ---
 
-### Langkah 6: Pembersihan Salinan Teks (Copywriting) pada Modal & Dashboard
-1. **Modal Telaah Cepat (`QuickVerificationModal.jsx` Line ~459)**:
-   Ganti placeholder:
-   `placeholder="Tuliskan catatan telaah atau arahan teknis untuk unit kerja pengusul..."`
-2. **Dashboard Divisi (`Divisi/Dashboard.jsx` Line ~137)**:
-   Ganti teks alert revisi:
-   `"Silakan periksa catatan telaah dari Tim Perencanaan."`
-3. **Dashboard Super Admin (`SuperAdmin/Dashboard.jsx` Lines ~158, 348–365)**:
-   - Ganti teks: `{kpi_keuangan.disetujui ?? 0} Usulan Belanja Disetujui` (hapus teks SP2D).
-   - Hapus baris *Diproses Bagian Keuangan*.
-   - Sesuaikan blok status menjadi 3 baris:
-     * Menunggu Telaah Perencanaan (`kpi_perencanaan.pending_perencanaan`)
-     * Disetujui (ACC Final) (`kpi_keuangan.disetujui`)
-     * Ditolak / Perlu Revisi (`kpi_keuangan.ditolak`)
+### Tahap 4: Penyelarasan Halaman Tahun Anggaran & Tutup Buku (`SuperAdmin/FiscalYears/Index.jsx`)
+Buka `resources/js/Pages/SuperAdmin/FiscalYears/Index.jsx` dan samakan dengan `resources/js/Pages/Admin/FiscalYears/Index.jsx`:
+
+1. **Header Halaman (Lines ~161–185)**:
+   - Hapus pill `Master Root` di samping `<h1>`, gunakan `<div className="mb-6">` dengan `<h1>` `text-xl sm:text-2xl font-black text-slate-900 tracking-tight`.
+   - Pindahkan tombol `+ Tambah Tahun Anggaran` ke dalam toolbar tabel sebelah kanan.
+2. **Kartu Metrik Ringkasan (Lines ~188–269)**:
+   - Ubah border/radius kartu agar bersih (`rounded-2xl border border-slate-200 bg-white p-5 shadow-xs`), serta ubah ikon card ke-4 (`Total Periode Terdata`) dari Indigo ke `bg-teal-50 text-teal-600 border-teal-200`.
+3. **Toolbar Kartu Tabel (Lines ~272–317)**:
+   - Ubah ke latar putih standar `flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 bg-white`.
+   - Rapikan `<select>` `statusFilter` agar langsung memakai class standar tanpa wrapper `div` ganda; ubah tombol `Reset` ke `px-4 py-2`; letakkan tombol **`+ Tambah Tahun Anggaran`** di kanan toolbar memakai `bg-teal-600 hover:bg-teal-700 px-4 py-2`.
+4. **Tabel & Penyeragaman Button Aksi (Lines ~320–504)**:
+   - Ubah `<thead>` menjadi `bg-slate-50 font-bold border-b border-slate-200 text-slate-700 uppercase tracking-wider text-xs` dan tambahkan kolom `No` (`#1`, `#2`, dst.) seperti `Admin/FiscalYears/Index.jsx`, serta ratakan kolom `Aksi` ke tengah (`text-center`).
+   - Ubah kotak angka tahun (Line ~352) dari `bg-indigo-50 border-indigo-200 text-indigo-700` ke gaya badge `Admin/FiscalYears` atau `bg-teal-50 border-teal-200 text-teal-800`.
+   - Ubah tombol aksi pada setiap baris (`justify-center gap-1.5`) dengan tinggi seragam `py-1.5`:
+     * **`Set Default`**: `inline-flex items-center gap-1 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 hover:text-teal-900 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-teal-800 shadow-2xs transition cursor-pointer` (label **`Set Default`** persis `Admin/FiscalYears/Index.jsx`, bukan `Default` warna Amber).
+     * **`Edit`**: `inline-flex items-center gap-1 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 hover:text-amber-900 active:scale-95 px-3 py-1.5 text-xs font-bold text-amber-800 shadow-2xs transition cursor-pointer` (**Amber**, bukan putih!).
+     * **`Hapus`**: `inline-flex items-center gap-1 rounded-xl border border-transparent hover:border-rose-300 bg-white hover:bg-rose-50 hover:text-rose-700 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-slate-400 transition cursor-pointer`.
+     * **`Tutup Buku` / `Buka Kunci`**: Samakan padding `px-2.5 py-1.5 text-xs` (sebelumnya `px-2.5 py-1 text-[11px]`).
+5. **Modal Tambah/Edit & Modal Tutup Buku (Lines ~508–685)**:
+   - Ganti aksen header modal, checkbox, dan focus input dari `indigo` ke `teal`.
+   - Samakan seluruh button modal (`Batal`, `Simpan Tahun Anggaran`, `Ya, Buka Kunci`, `Ya, Tutup Buku Sekarang`) menggunakan `px-4 py-2 text-xs font-bold rounded-xl` dengan primary button `bg-teal-600 hover:bg-teal-700`.
+   - *(Opsional pembersihan teks)*: Pada Line ~659 hapus frase *"memproses SP2D"* karena alur SP2D Keuangan sudah dihapus (ganti dengan *"mencatat transaksi atau mengubah data RBA"*).
+
+---
+
+### Tahap 5: Penyelarasan Pengaturan Dokumen Cetak (`SuperAdmin/Settings/Index.jsx`)
+Buka `resources/js/Pages/SuperAdmin/Settings/Index.jsx`:
+1. **Header (Lines ~42–67)**:
+   - Ubah `<h1>` menjadi `text-xl sm:text-2xl font-black text-slate-900 tracking-tight` dan hapus badge pill `Dynamic Master`.
+   - Ubah tombol **`Simpan Semua Pengaturan`** dari `bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5` menjadi standar `inline-flex items-center justify-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer`.
+2. **Form & Tombol Submit Bawah (Lines ~79–330)**:
+   - Ubah ikon section 1 (`Building2`), label subjudul bagian A (`text-indigo-900` & dot `bg-indigo-600`), dan `focus:border-indigo-500` seluruh input/textarea ke `teal`/`slate-900`.
+   - Ubah tombol **`Simpan Perubahan Pengaturan`** di bagian bawah form (Line ~324) dari `bg-indigo-600 hover:bg-indigo-700 px-6 py-2.5` menjadi `bg-teal-600 hover:bg-teal-700 px-4 py-2` agar ukurannya identik dengan tombol atas dan seluruh role lain.
+   - *(Opsional pembersihan teks)*: Pada Line ~183 perbarui teks *"RBA, LRA, Surplus-Defisit, dan SP2D"* menjadi *"RBA, LRA, Surplus-Defisit, dan Usulan Belanja"*.
+
+---
+
+### Tahap 6: Penyelarasan Halaman Audit Logs (`SuperAdmin/AuditLogs/Index.jsx`)
+Buka `resources/js/Pages/SuperAdmin/AuditLogs/Index.jsx`:
+1. **Header (Lines ~112–125)**:
+   - Ubah `<h1>` menjadi `text-xl sm:text-2xl font-black text-slate-900 tracking-tight` dan hapus badge pill `Forensic Trail`.
+   - *(Opsional pembersihan teks)*: Pada Line ~123 hapus penyebutan *"otorisasi SP2D"*.
+2. **Toolbar Filter & Button (Lines ~130–238)**:
+   - Ubah container kartu utama menjadi `overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs`, dan toolbar menjadi latar putih/bersih `border-b border-slate-100 p-4 bg-white`.
+   - Ubah focus input/select ke `focus:border-teal-500 focus:ring-teal-500`.
+   - Ubah tombol `Reset` ke `px-4 py-2` (`border-slate-300 bg-white hover:bg-slate-50`) dan tombol **`Terapkan Filter`** dari `bg-indigo-600 hover:bg-indigo-700` menjadi **`bg-teal-600 hover:bg-teal-700 px-4 py-2`**.
+3. **Tabel, Tombol `JSON`, & Modal (Lines ~241–423)**:
+   - Ubah `<thead>` menjadi `bg-slate-50 font-bold border-b border-slate-200 text-slate-700 uppercase tracking-wider text-xs`.
+   - Ubah format nomor baris menjadi `#{(logs.current_page - 1) * logs.per_page + idx + 1}`.
+   - Ubah tombol **`JSON`** (Line ~325) dari Indigo `px-2.5 py-1` menjadi `inline-flex items-center gap-1 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 hover:text-teal-900 text-teal-800 px-2.5 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer active:scale-95`.
+   - Di Modal Inspect Payload (Lines ~360–423): ubah ikon modal dari `indigo` ke `teal` dan seragamkan tombol `Tutup` menjadi `px-4 py-2`.
+
+---
+
+### Tahap 7: Penyelarasan 3 Halaman Monitoring (`Monitoring/Rba.jsx`, `Requisitions.jsx`, `Finance.jsx`)
+Lakukan penyesuaian seragam pada ketiga halaman di folder `resources/js/Pages/SuperAdmin/Monitoring/`:
+
+1. **Header Seragam di Ketiga File (`Rba.jsx`, `Requisitions.jsx`, `Finance.jsx`)**:
+   - Ubah `<h1>` menjadi `text-xl sm:text-2xl font-black text-slate-900 tracking-tight` dan hapus pill badge tambahan (`Oversight`, `Pipeline Oversight`, `Financial Oversight`) di sebelah `<h1>`.
+   - Ubah badge tahun `TA: {active_year}` di kanan header dari `text-indigo-600` / `text-indigo-900` ke `text-teal-700` / `border-teal-200 bg-teal-50` atau ikon `text-teal-600`.
+2. **Monitoring RBA (`Monitoring/Rba.jsx`)**:
+   - Ubah Segregation of Duties banner dari `bg-indigo-50/70 border-indigo-200/80 text-indigo-950` menjadi `bg-teal-50/70 border-teal-200/80 text-teal-950` (atau `bg-slate-50 border-slate-200` agar netral rapi).
+   - Ubah kartu metrik net pergeseran (Line ~124) dan total periode (Line ~149): ubah aksen ikon Indigo menjadi Teal.
+   - Ubah tab aktif (`Rekening RBA` / `Riwayat Pergeseran`, Lines ~173–190) dari `border-indigo-600 text-indigo-600` ke **`border-teal-600 text-teal-700`**.
+   - Ubah focus ring search & select filter ke `focus:border-teal-500 focus:ring-teal-500`, serta seragamkan `<thead>` menjadi `bg-slate-50 font-bold border-b border-slate-200 text-slate-700 uppercase tracking-wider text-xs`.
+3. **Monitoring Pengajuan Belanja (`Monitoring/Requisitions.jsx`)**:
+   - Ubah toolbar filter menjadi latar putih bersih `border-b border-slate-100 p-4 bg-white`.
+   - Ubah tombol **`Filter`** (Line ~175) dari `bg-indigo-600 hover:bg-indigo-700` menjadi **`bg-teal-600 hover:bg-teal-700 px-4 py-2`**, dan tombol `Reset` menjadi `px-4 py-2`.
+   - Ubah tombol **`Detail`** di dalam baris tabel (Line ~270) dari Indigo `px-2.5 py-1` menjadi tombol `Detail` standar role lain:
+     `inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer`
+   - Ratakan kolom `Aksi` ke tengah (`text-center`).
+   - Ubah pagination aktif (Line ~300) dari `bg-indigo-600 text-white` menjadi **`bg-emerald-600 text-white`** (seragam dengan `Pagination.jsx`).
+   - Di modal Inspect (Lines ~315–401): ubah aksen Indigo menjadi Teal (`bg-teal-50 text-teal-700`), tombol `Tutup` `px-4 py-2`.
+   - *(Opsional pembersihan teks)*: Pada Line ~109 ubah *"status otorisasi 3-tahap"* menjadi *"status verifikasi Perencanaan"*, dan pada Line ~386 ubah *"pejabat perencana dan bendahara pengeluaran"* menjadi *"Bagian Perencanaan"*.
+4. **Monitoring Kas & Realisasi (`Monitoring/Finance.jsx`)**:
+   - Ubah Segregation of Duties banner dan kartu metrik Surplus/Defisit dari Indigo ke Teal.
+   - Seragamkan `<thead>` tabel penerimaan menjadi `bg-slate-50 font-bold border-b border-slate-200 text-slate-700 uppercase tracking-wider text-xs`.
+   - Ubah pagination aktif (Line ~226) dari `bg-indigo-600 text-white` menjadi **`bg-emerald-600 text-white`**.
 
 ---
 
 ## 5. Rencana Pengujian & Verifikasi (*Quality Assurance*)
 
-Setelah perubahan kode selesai, pengembang atau model AI wajib menjalankan verifikasi bertingkat berikut:
+Setelah seluruh perubahan UI selesai diimplementasikan, pengembang atau model AI wajib melakukan pengecekan berikut:
 
-### 1. Uji Kompilasi Aset Frontend
-Pastikan tidak ada error kompilasi JSX/Tailwind:
-
+### 1. Build Aset Frontend (Vite)
 ```sh
 npm run build
 ```
-*Hasil yang diharapkan: Built in < 3s, zero warnings/errors.*
+*Pastikan tidak ada error sintaks JSX atau referensi komponen yang hilang (`✓ built in ...s`).*
 
-### 2. Uji Otomatis Backend (PHPUnit)
-Jalankan seluruh test suite aplikasi:
+### 2. Pengujian Otomatis Backend (PHPUnit)
 ```sh
 php artisan test
 ```
+*Pastikan seluruh test suite (termasuk `SuperAdminSuiteTest` dan `RevenueWorkflowAndCleanupTest`) lulus 100% tanpa kegagalan.*
 
-*Hasil yang diharapkan: Seluruh 205+ tes lulus 100% tanpa ada assertion failure.*
-
-### 3. Skenario Uji Verifikasi Peran (Manual / End-to-End)
-
-| Peran (Role) | Halaman / Fitur | Tindakan Uji | Hasil yang Diharapkan |
-|---|---|---|---|
-| **Staf Unit (Divisi)** | Sidebar Menu Navigasi | Klik menu *"Pengajuan Belanja"* | Submenu hanya ada 4: *Semua Pengajuan*, *Menunggu Telaah*, *Disetujui (ACC Final)*, *Perlu Perbaikan / Ditolak*. Tidak ada *"Diproses Keuangan"*. |
-| **Staf Unit (Divisi)** | Filter *"Disetujui (ACC Final)"* | Klik link submenu *"Disetujui (ACC Final)"* | Menampilkan seluruh berkas usulan berstatus `'Disetujui'`. |
-| **Staf Unit (Divisi)** | Validasi Edit Usulan Disetujui | Akses route update pada usulan yang telah disetujui | Pesan error backend menyatakan: *"Usulan belanja tidak dapat diubah karena telah disetujui atau disahkan oleh Tim Perencanaan."* |
-| **Perencanaan** | Sidebar Menu Navigasi | Buka menu *"Verifikasi Pengajuan"* | Submenu hanya ada 4: *Semua Usulan*, *Menunggu Telaah*, *Disetujui (ACC Final)*, *Ditolak*. Tidak ada *"Diteruskan ke Keuangan"*. |
-| **Perencanaan** | Modul RBA (Tab 4) | Klik Tab 4 *"Rincian Usulan Belanja"* | Header & tombol bertuliskan *"Disetujui (ACC Final)"*. Seluruh item usulan yang disahkan muncul dengan benar. |
-| **Super Admin** | Dashboard (`/super-admin/dashboard`) | Periksa kartu status usulan | Tidak ada lagi status *"Diproses Bagian Keuangan"*. Angka *"Disetujui"* sesuai dengan data riil. |
+### 3. Audit Visual & Konsistensi Lintas Role
+Buka browser sebagai `super_admin` dan bandingkan berdampingan dengan akun `admin`, lakukan pemeriksaan:
+- [ ] **Layout & Sidebar**: Background gradasi, header logo sidebar, menu aktif, dan topbar `SuperAdminLayout` terlihat serasi (tidak ada lagi warna ungu/indigo mencolok) dengan `AdminLayout` / `DivisiLayout`.
+- [ ] **Dashboard**: Halaman `SuperAdmin/Dashboard` berada di kanvas putih penuh dengan header `text-2xl sm:text-3xl`, divider bawah, dan teks *"Update terakhir"*.
+- [ ] **Manajemen Akun & Tahun Anggaran**: Tombol `+ Tambah` berada di sebelah kanan toolbar tabel berwarna Teal (`bg-teal-600`), berukuran seragam (`px-4 py-2`), kolom aksi rata tengah, tombol `Edit` berbackground Amber (`px-3 py-1.5`), tombol `Set Default` & `Troubleshoot` berwarna Teal (`px-2.5 py-1.5`), dan tombol `Hapus` sejajar tingginya (`px-2.5 py-1.5`).
+- [ ] **Pengaturan, Audit Logs & Monitoring**: Semua header memakai `font-black` tanpa badge ekstra; semua primary button (`Simpan`, `Terapkan Filter`, `Filter`) berwarna Teal (`bg-teal-600 px-4 py-2`); tombol `Detail` memakai gaya netral putih `border-slate-200`; tab dan pagination aktif memakai warna Teal/Emerald seragam dengan role lain.
+- [ ] **Responsif Mobile**: Periksa lebar layar `375px` dan `1280px` memastikan tidak ada button terpotong, meluap keluar kontainer, atau bertabrakan.
 
 ---
 
 ## 6. Definisi Selesai (*Definition of Done*)
 
-Pekerjaan dinyatakan selesai jika dan hanya jika:
-- [ ] Sub-menu sidebar pada `PerencanaanLayout.jsx` dan `DivisiLayout.jsx` bersih dari kata *Keuangan* dan filter `Diproses_Keuangan`.
-- [ ] Filter `status=Disetujui` pada halaman riwayat pengajuan Divisi dan Perencanaan berfungsi mulus menampilkan usulan yang telah di-ACC Final.
-- [ ] Tab 4 pada modul RBA Perencanaan menampilkan tombol *"Disetujui (ACC Final)"* dan menampilkan daftar barang dengan status `'Disetujui'`.
-- [ ] Pesan validasi penolakan edit di `Divisi/RequisitionController.php` tidak lagi menyebut Keuangan.
-- [ ] Dashboard Super Admin bersih dari metrik SP2D dan antrean Keuangan.
-- [ ] `npm run build` berhasil tanpa error.
-- [ ] `php artisan test` menghasilkan 205+ passed tests (100% pass rate).
-- [ ] Perubahan di-commit ke branch `perbaikan_alur` dengan pesan commit deskriptif yang mengikuti konvensi Conventional Commits.
+- [ ] Seluruh 9 berkas UI Super Admin (`SuperAdminLayout.jsx` + 8 halaman `Pages/SuperAdmin/**`) telah disesuaikan ke standar Design System role lain.
+- [ ] Tidak ada lagi kelas `bg-indigo-600` atau button primary/secondary/aksi tabel dengan ukuran/warna menyimpang pada halaman Super Admin.
+- [ ] `npm run build` berjalan sukses tanpa error.
+- [ ] `php artisan test` lulus 100%.
+- [ ] Perubahan di-commit ke branch kerja baru dan siap direview.
