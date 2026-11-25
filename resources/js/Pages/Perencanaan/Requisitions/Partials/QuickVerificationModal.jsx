@@ -1,4 +1,5 @@
 import Modal from '@/Components/Modal';
+import ValidationSegmentedToggle from '@/Components/ValidationSegmentedToggle';
 import { router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2';
@@ -461,30 +462,12 @@ export default function QuickVerificationModal({
                                                         </p>
                                                     )}
                                                     {isNewItem && (
-                                                        <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
-                                                            <span className="text-[10px] font-semibold text-slate-500">Validasi Barang Baru:</span>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => updateItemValidation(idx, 'SAH', detail.quantity_requested)}
-                                                                className={`rounded-md px-2 py-0.5 text-[10px] font-bold border transition cursor-pointer ${
-                                                                    itemState?.item_validation_status !== 'TIDAK_SAH'
-                                                                        ? 'bg-emerald-600 text-white border-emerald-600'
-                                                                        : 'bg-white text-slate-600 border-slate-300 hover:bg-emerald-50'
-                                                                }`}
-                                                            >
-                                                                &#10003; Sah
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => updateItemValidation(idx, 'TIDAK_SAH', detail.quantity_requested)}
-                                                                className={`rounded-md px-2 py-0.5 text-[10px] font-bold border transition cursor-pointer ${
-                                                                    itemState?.item_validation_status === 'TIDAK_SAH'
-                                                                        ? 'bg-rose-600 text-white border-rose-600'
-                                                                        : 'bg-white text-slate-600 border-slate-300 hover:bg-rose-50'
-                                                                }`}
-                                                            >
-                                                                &times; Tidak Sah
-                                                            </button>
+                                                        <div className="flex items-center gap-2 pt-0.5 flex-wrap">
+                                                            <span className="text-[10px] font-semibold text-slate-500">Validasi Barang:</span>
+                                                            <ValidationSegmentedToggle
+                                                                value={itemState?.item_validation_status}
+                                                                onChange={(next) => updateItemValidation(idx, next, detail.quantity_requested)}
+                                                            />
                                                         </div>
                                                     )}
                                                 </td>
@@ -500,29 +483,12 @@ export default function QuickVerificationModal({
                                                             <div className="text-[10px] text-slate-500">
                                                                 Awal: <span className="line-through font-mono">{formatRupiah(basePrice)}</span> &rarr; Usulan: <span className="font-mono font-bold text-sky-700">{formatRupiah(detail.unit_price)}</span>
                                                             </div>
-                                                            <div className="flex items-center justify-end gap-1">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => updatePriceValidation(idx, 'SAH')}
-                                                                    className={`rounded px-1.5 py-0.5 text-[10px] font-bold border transition cursor-pointer ${
-                                                                        itemState?.price_validation_status !== 'TIDAK_SAH'
-                                                                            ? 'bg-teal-600 text-white border-teal-600'
-                                                                            : 'bg-white text-slate-600 border-slate-300 hover:bg-teal-50'
-                                                                    }`}
-                                                                >
-                                                                    Sah Harga
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => updatePriceValidation(idx, 'TIDAK_SAH')}
-                                                                    className={`rounded px-1.5 py-0.5 text-[10px] font-bold border transition cursor-pointer ${
-                                                                        itemState?.price_validation_status === 'TIDAK_SAH'
-                                                                            ? 'bg-rose-600 text-white border-rose-600'
-                                                                            : 'bg-white text-slate-600 border-slate-300 hover:bg-rose-50'
-                                                                    }`}
-                                                                >
-                                                                    Tidak Sah
-                                                                </button>
+                                                            <div className="flex items-center justify-end">
+                                                                <ValidationSegmentedToggle
+                                                                    value={itemState?.price_validation_status}
+                                                                    onChange={(next) => updatePriceValidation(idx, next)}
+                                                                    sahLabel="Sah Harga"
+                                                                />
                                                             </div>
                                                         </div>
                                                     ) : (

@@ -567,4 +567,52 @@ class PerencanaanRbaPlanningTest extends TestCase
             })
         );
     }
+
+    public function test_perencanaan_requisitions_index_places_newly_submitted_today_above_future_seeded_dates(): void
+    {
+        $rbaAcc = RbaAccount::first();
+
+        // Simulasi data demo/seeder bertanggal masa depan (TA 2027) yang masuk lebih dulu
+        $seededFutureReq = Requisition::create([
+            'requisition_number' => 'REQ-20270314-0003',
+            'division_id' => $this->perencanaanDivision->id,
+            'user_id' => $this->perencanaanUser->id,
+            'rba_account_id' => $rbaAcc?->id,
+            'jenis_belanja' => 'Operasi',
+            'sumber_dana' => 'BLUD',
+            'fiscal_year' => 2027,
+            'budget_year' => 2027,
+            'status' => 'Disetujui',
+            'submission_date' => '2027-03-14',
+            'created_at' => '2027-03-14 09:30:00',
+            'total_estimated' => 2050000,
+        ]);
+
+        // Simulasi pengajuan baru oleh unit pada tanggal sistem hari ini (2026-11-25) untuk TA 2027
+        $brandNewTodayReq = Requisition::create([
+            'requisition_number' => 'REQ-20261125-0013',
+            'division_id' => $this->perencanaanDivision->id,
+            'user_id' => $this->perencanaanUser->id,
+            'rba_account_id' => $rbaAcc?->id,
+            'jenis_belanja' => 'Operasi',
+            'sumber_dana' => 'BLUD',
+            'fiscal_year' => 2026,
+            'budget_year' => 2027,
+            'status' => 'Pending_Perencanaan',
+            'submission_date' => '2026-11-25',
+            'created_at' => '2026-11-25 15:00:00',
+            'total_estimated' => 500000,
+        ]);
+
+        $response = $this->actingAs($this->perencanaanUser)
+            ->get(route('perencanaan.requisitions.index', ['budget_year' => 2027]));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Perencanaan/Requisitions/Index')
+            ->has('requisitions', 2)
+            ->where('requisitions.0.id', $brandNewTodayReq->id)
+            ->where('requisitions.1.id', $seededFutureReq->id)
+        );
+    }
 }

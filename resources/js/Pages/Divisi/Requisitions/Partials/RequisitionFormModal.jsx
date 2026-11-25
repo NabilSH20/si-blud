@@ -1016,170 +1016,146 @@ export default function RequisitionFormModal({
                                     </div>
 
                                     {!isManualMode ? (
-                                        <div className="flex items-center gap-2">
-                                            <div className="relative flex-1" ref={dropdownRef}>
-                                                {selectedCatalogItem ? (
-                                                    <div className="relative">
-                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-teal-600">
-                                                            <Lock size={14} />
-                                                        </div>
-                                                        <input
-                                                            type="text"
-                                                            readOnly
-                                                            value={selectedCatalogItem.name}
-                                                            title="Uraian barang katalog terkunci. Klik tombol silang (X) untuk mencari barang lain."
-                                                            className="w-full rounded-xl border-2 border-teal-400 bg-teal-50/70 pl-8 pr-9 py-2 text-xs font-bold text-slate-900 cursor-default select-none focus:outline-none shadow-2xs"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={handleClearCatalogSelection}
-                                                            title="Batalkan pilihan barang & cari barang lain"
-                                                            className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-500 hover:text-rose-600 transition cursor-pointer"
-                                                        >
-                                                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 shadow-2xs">
-                                                                <X size={12} />
-                                                            </span>
-                                                        </button>
+                                        <div className="relative" ref={dropdownRef}>
+                                            {selectedCatalogItem ? (
+                                                <div className="relative">
+                                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-teal-600">
+                                                        <Lock size={14} />
                                                     </div>
-                                                ) : (
-                                                    <div className="relative">
-                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                                                            <Search size={14} />
-                                                        </div>
-                                                        <input
-                                                            ref={nameInputRef}
-                                                            type="text"
-                                                            value={inputName}
-                                                            onChange={(e) => {
-                                                                setInputName(e.target.value);
-                                                                setIsCatalogDropdownOpen(true);
-                                                            }}
-                                                            onFocus={() => setIsCatalogDropdownOpen(true)}
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter') {
-                                                                    e.preventDefault();
-                                                                    if (filteredCatalogItems.length === 1) {
-                                                                        handleSelectCatalogItem(filteredCatalogItems[0]);
-                                                                    }
-                                                                }
-                                                            }}
-                                                            placeholder="Cari & pilih barang dari katalog rekening ini..."
-                                                            className="w-full rounded-xl border border-slate-300 bg-white pl-8 pr-8 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-2xs"
-                                                        />
-                                                        {inputName && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setInputName('');
-                                                                    setIsCatalogDropdownOpen(true);
-                                                                    nameInputRef.current?.focus();
-                                                                }}
-                                                                title="Bersihkan kata pencarian"
-                                                                className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
-                                                            >
-                                                                <X size={14} />
-                                                            </button>
-                                                        )}
-
-                                                        {/* Floating Autocomplete Dropdown dari Master Katalog */}
-                                                        {isCatalogDropdownOpen && (
-                                                            <div className="absolute left-0 right-0 top-full mt-2 z-30 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl py-1 text-xs">
-                                                                <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                                                                    <span>Katalog Barang Rekening Ini ({filteredCatalogItems.length})</span>
-                                                                    {activeCatalogItems.length === 0 && (
-                                                                        <span className="text-amber-600 normal-case font-semibold">Katalog kosong</span>
-                                                                    )}
-                                                                </div>
-                                                                {filteredCatalogItems.length > 0 ? (
-                                                                    filteredCatalogItems.map((catItem) => (
-                                                                        <button
-                                                                            key={catItem.id}
-                                                                            type="button"
-                                                                            onClick={() => handleSelectCatalogItem(catItem)}
-                                                                            className="w-full text-left px-3 py-2.5 hover:bg-teal-50 flex items-center justify-between gap-2 border-b border-slate-50 last:border-0 transition cursor-pointer"
-                                                                        >
-                                                                            <div className="min-w-0">
-                                                                                <div className="flex items-center gap-1.5 flex-wrap">
-                                                                                    <p className="font-bold text-slate-900">{catItem.name}</p>
-                                                                                    {catItem.source === 'USULAN_UNIT' && (
-                                                                                        <span className="inline-flex items-center rounded bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[9px] font-black text-amber-800 uppercase">
-                                                                                            Usulan Unit
-                                                                                        </span>
-                                                                                    )}
-                                                                                </div>
-                                                                                <p className="text-[10px] text-slate-500 truncate">{catItem.specification || 'Standar RS'}</p>
-                                                                            </div>
-                                                                            <div className="text-right shrink-0">
-                                                                                <span className="font-mono font-bold text-teal-700 block">{formatRupiah(catItem.standard_price)}</span>
-                                                                                <span className="text-[10px] text-slate-400 uppercase">/{catItem.unit_type || 'Unit'}</span>
-                                                                            </div>
-                                                                        </button>
-                                                                    ))
-                                                                ) : (
-                                                                    <div className="p-3 text-center space-y-2">
-                                                                        <p className="text-xs text-slate-500">
-                                                                            {inputName.trim()
-                                                                                ? `Barang "${inputName}" tidak ditemukan di katalog rekening ini.`
-                                                                                : 'Belum ada item katalog pada rekening ini.'}
-                                                                        </p>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleSwitchToManualMode(inputName)}
-                                                                            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 border border-amber-300 hover:bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-900 transition cursor-pointer"
-                                                                        >
-                                                                            <Plus size={13} />
-                                                                            <span>Input Manual sebagai Barang Baru</span>
-                                                                        </button>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Dedicated Button untuk Input Manual Barang Baru */}
-                                            <button
-                                                type="button"
-                                                onClick={() => handleSwitchToManualMode(selectedCatalogItem ? '' : inputName)}
-                                                title="Barang tidak ada di katalog? Klik untuk input barang baru secara manual"
-                                                className="inline-flex items-center gap-1 shrink-0 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 active:scale-95 px-3 py-2 text-xs font-bold text-amber-900 shadow-2xs transition cursor-pointer whitespace-nowrap"
-                                            >
-                                                <Plus size={14} />
-                                                <span>Barang Baru</span>
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-2">
-                                                <div className="relative flex-1">
-                                                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[9px] font-black text-amber-900 uppercase">
-                                                        BARU
-                                                    </span>
                                                     <input
-                                                        ref={manualInputRef}
+                                                        type="text"
+                                                        readOnly
+                                                        value={selectedCatalogItem.name}
+                                                        title="Uraian barang katalog terkunci. Klik tombol silang (X) untuk mencari barang lain."
+                                                        className="w-full rounded-xl border-2 border-teal-400 bg-teal-50/70 pl-8 pr-9 py-2 text-xs font-bold text-slate-900 cursor-default select-none focus:outline-none shadow-2xs"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleClearCatalogSelection}
+                                                        title="Batalkan pilihan barang & cari barang lain"
+                                                        className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-500 hover:text-rose-600 transition cursor-pointer"
+                                                    >
+                                                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 shadow-2xs">
+                                                            <X size={12} />
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="relative">
+                                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                                        <Search size={14} />
+                                                    </div>
+                                                    <input
+                                                        ref={nameInputRef}
                                                         type="text"
                                                         value={inputName}
-                                                        onChange={(e) => setInputName(e.target.value)}
+                                                        onChange={(e) => {
+                                                            setInputName(e.target.value);
+                                                            setIsCatalogDropdownOpen(true);
+                                                        }}
+                                                        onFocus={() => setIsCatalogDropdownOpen(true)}
                                                         onKeyDown={(e) => {
                                                             if (e.key === 'Enter') {
                                                                 e.preventDefault();
-                                                                qtyInputRef.current?.focus();
+                                                                if (filteredCatalogItems.length === 1) {
+                                                                    handleSelectCatalogItem(filteredCatalogItems[0]);
+                                                                }
                                                             }
                                                         }}
-                                                        placeholder="Ketik nama barang baru yang diusulkan..."
-                                                        className="w-full rounded-xl border-2 border-amber-300 bg-white pl-14 pr-3.5 py-2 text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition shadow-2xs"
+                                                        placeholder="Cari & pilih barang dari katalog rekening ini..."
+                                                        className="w-full rounded-xl border border-slate-300 bg-white pl-8 pr-8 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-2xs"
                                                     />
+                                                    {inputName && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setInputName('');
+                                                                setIsCatalogDropdownOpen(true);
+                                                                nameInputRef.current?.focus();
+                                                            }}
+                                                            title="Bersihkan kata pencarian"
+                                                            className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    )}
+
+                                                    {/* Floating Autocomplete Dropdown dari Master Katalog */}
+                                                    {isCatalogDropdownOpen && (
+                                                        <div className="absolute left-0 right-0 top-full mt-2 z-30 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl py-1 text-xs">
+                                                            <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                                                                <span>Katalog Barang Rekening Ini ({filteredCatalogItems.length})</span>
+                                                                {activeCatalogItems.length === 0 && (
+                                                                    <span className="text-amber-600 normal-case font-semibold">Katalog kosong</span>
+                                                                )}
+                                                            </div>
+                                                            {filteredCatalogItems.length > 0 ? (
+                                                                filteredCatalogItems.map((catItem) => (
+                                                                    <button
+                                                                        key={catItem.id}
+                                                                        type="button"
+                                                                        onClick={() => handleSelectCatalogItem(catItem)}
+                                                                        className="w-full text-left px-3 py-2.5 hover:bg-teal-50 flex items-center justify-between gap-2 border-b border-slate-50 last:border-0 transition cursor-pointer"
+                                                                    >
+                                                                        <div className="min-w-0">
+                                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                                <p className="font-bold text-slate-900">{catItem.name}</p>
+                                                                                {catItem.source === 'USULAN_UNIT' && (
+                                                                                    <span className="inline-flex items-center rounded bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[9px] font-black text-amber-800 uppercase">
+                                                                                        Usulan Unit
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                            <p className="text-[10px] text-slate-500 truncate">{catItem.specification || 'Standar RS'}</p>
+                                                                        </div>
+                                                                        <div className="text-right shrink-0">
+                                                                            <span className="font-mono font-bold text-teal-700 block">{formatRupiah(catItem.standard_price)}</span>
+                                                                            <span className="text-[10px] text-slate-400 uppercase">/{catItem.unit_type || 'Unit'}</span>
+                                                                        </div>
+                                                                    </button>
+                                                                ))
+                                                            ) : (
+                                                                <div className="p-3 text-center space-y-2">
+                                                                    <p className="text-xs text-slate-500">
+                                                                        {inputName.trim()
+                                                                            ? `Barang "${inputName}" tidak ditemukan di katalog rekening ini.`
+                                                                            : 'Belum ada item katalog pada rekening ini.'}
+                                                                    </p>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleSwitchToManualMode(inputName)}
+                                                                        className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 border border-amber-300 hover:bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-900 transition cursor-pointer"
+                                                                    >
+                                                                        <Plus size={13} />
+                                                                        <span>Input Manual sebagai Barang Baru</span>
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => resetItemInputRow(false)}
-                                                    title="Batalkan input manual & kembali ke pilih katalog"
-                                                    className="inline-flex items-center gap-1 shrink-0 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 transition cursor-pointer whitespace-nowrap"
-                                                >
-                                                    <X size={13} />
-                                                    <span>Pilih Katalog</span>
-                                                </button>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <div className="relative">
+                                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[9px] font-black text-amber-900 uppercase">
+                                                    BARU
+                                                </span>
+                                                <input
+                                                    ref={manualInputRef}
+                                                    type="text"
+                                                    value={inputName}
+                                                    onChange={(e) => setInputName(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault();
+                                                            qtyInputRef.current?.focus();
+                                                        }
+                                                    }}
+                                                    placeholder="Ketik nama barang baru yang diusulkan..."
+                                                    className="w-full rounded-xl border-2 border-amber-300 bg-white pl-14 pr-3.5 py-2 text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition shadow-2xs"
+                                                />
                                             </div>
                                             <input
                                                 type="text"
@@ -1284,18 +1260,43 @@ export default function RequisitionFormModal({
                                     <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${isManualMode ? 'bg-amber-500' : 'bg-teal-500'}`}></span>
                                     <span>
                                         {isManualMode
-                                            ? 'Mode Barang Baru aktif: barang baru akan diteruskan ke Perencanaan untuk divalidasi.'
-                                            : 'Pilih barang dari katalog atau klik "+ Barang Baru", lalu klik Tambah ke Daftar Usulan.'}
+                                            ? 'Mode Barang Baru aktif: isi detail barang baru lalu tambahkan ke daftar.'
+                                            : 'Pilih barang dari katalog atau klik "+ Barang Baru" jika barang tidak tersedia.'}
                                     </span>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={handleAddItem}
-                                    className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer whitespace-nowrap self-end sm:self-auto"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    <span>Tambah ke Daftar Usulan</span>
-                                </button>
+
+                                <div className="flex flex-wrap items-center justify-end gap-2 self-end sm:self-auto">
+                                    {!isManualMode ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSwitchToManualMode(selectedCatalogItem ? '' : inputName)}
+                                            title="Barang tidak ada di katalog? Klik untuk input barang baru secara manual"
+                                            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 active:scale-95 px-4 py-2 text-xs font-bold text-amber-900 shadow-2xs transition cursor-pointer whitespace-nowrap"
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                            <span>Barang Baru</span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => resetItemInputRow(false)}
+                                            title="Batalkan mode barang baru & kembali ke pilih katalog"
+                                            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 active:scale-95 px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer whitespace-nowrap"
+                                        >
+                                            <X className="h-4 w-4" />
+                                            <span>Pilih Katalog</span>
+                                        </button>
+                                    )}
+
+                                    <button
+                                        type="button"
+                                        onClick={handleAddItem}
+                                        className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-teal-600 bg-teal-600 hover:bg-teal-700 active:scale-95 px-4 py-2 text-xs font-bold text-white shadow-2xs transition cursor-pointer whitespace-nowrap"
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                        <span>Tambah ke Daftar Usulan</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

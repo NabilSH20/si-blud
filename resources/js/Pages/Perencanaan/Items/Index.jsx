@@ -70,7 +70,7 @@ export default function Index({
     }, [items]);
 
     const filteredItems = useMemo(() => {
-        return items.filter((item) => {
+        const result = items.filter((item) => {
             const itemSource = item.source || 'STANDAR';
             const matchesSource =
                 selectedSource === 'ALL' ||
@@ -100,6 +100,12 @@ export default function Index({
                 item.price_origin_unit?.name?.toLowerCase().includes(q)
             );
         });
+
+        if (selectedSource === 'USULAN_UNIT') {
+            return [...result].sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+        }
+
+        return result;
     }, [items, search, selectedUnit, selectedRba, selectedSource]);
 
     useEffect(() => {
@@ -335,7 +341,7 @@ export default function Index({
                                 <th className="w-60 px-4 py-3 text-left">Pos Rekening Belanja RBA</th>
                                 <th className="w-24 px-3 py-3 text-center">Satuan</th>
                                 <th className="w-40 px-4 py-3 text-right">Harga Standar (HPS)</th>
-                                <th className="w-52 px-3 py-3 text-center">Aksi</th>
+                                <th className="px-4 py-3 text-center whitespace-nowrap">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
@@ -445,15 +451,15 @@ export default function Index({
                                                 formatRupiah(item.standard_price)
                                             )}
                                         </td>
-                                        <td className="px-3 py-3 text-center">
-                                            <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                                        <td className="px-4 py-3 text-center whitespace-nowrap">
+                                            <div className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
                                                 {item.source === 'USULAN_UNIT' && (
                                                     <>
                                                         <button
                                                             type="button"
                                                             onClick={() => handleVerifyStandard(item)}
                                                             title="Sahkan Menjadi Standar Baku RS"
-                                                            className="inline-flex items-center gap-1 rounded-lg bg-teal-600 hover:bg-teal-700 active:scale-95 text-white px-2 py-1 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                            className="inline-flex items-center justify-center gap-1 rounded-xl border border-teal-600 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white px-2.5 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
                                                         >
                                                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -464,8 +470,11 @@ export default function Index({
                                                             type="button"
                                                             onClick={() => handleRejectStandard(item)}
                                                             title="Tandai Barang Baru Tidak Sah"
-                                                            className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-700 px-2 py-1 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                            className="inline-flex items-center justify-center gap-1 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-700 px-2.5 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
                                                         >
+                                                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                            </svg>
                                                             <span>Tidak Sah</span>
                                                         </button>
                                                     </>
@@ -476,16 +485,22 @@ export default function Index({
                                                             type="button"
                                                             onClick={() => handleVerifyPrice(item)}
                                                             title="Sahkan Perubahan Harga Menjadi Standar Katalog"
-                                                            className="inline-flex items-center gap-1 rounded-lg bg-sky-600 hover:bg-sky-700 active:scale-95 text-white px-2 py-1 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                            className="inline-flex items-center justify-center gap-1 rounded-xl border border-teal-600 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white px-2.5 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
                                                         >
+                                                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                                            </svg>
                                                             <span>Sah Harga</span>
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRejectPrice(item)}
                                                             title="Tolak Perubahan Harga (Pakai Harga Standar Lama)"
-                                                            className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-700 px-2 py-1 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                            className="inline-flex items-center justify-center gap-1 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-700 px-2.5 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
                                                         >
+                                                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                            </svg>
                                                             <span>Tidak Sah</span>
                                                         </button>
                                                     </>
@@ -494,7 +509,7 @@ export default function Index({
                                                     type="button"
                                                     onClick={() => openEditModal(item)}
                                                     title="Ubah Data Barang"
-                                                    className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-2 py-1 text-xs font-semibold shadow-2xs transition cursor-pointer"
+                                                    className="inline-flex items-center justify-center gap-1 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 hover:text-amber-900 active:scale-95 text-amber-800 px-2.5 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
                                                 >
                                                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
@@ -505,9 +520,9 @@ export default function Index({
                                                     type="button"
                                                     onClick={() => setConfirmingDelete(item)}
                                                     title="Hapus Barang"
-                                                    className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 active:scale-95 px-2.5 py-1.5 text-xs font-bold text-slate-400 shadow-2xs transition cursor-pointer"
                                                 >
-                                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                                                     </svg>
                                                 </button>

@@ -30,8 +30,7 @@ class DashboardController extends Controller
         $pendingRequisitions = (clone $baseQuery)
             ->with(['division', 'rbaAccount'])
             ->where('status', 'Pending_Perencanaan')
-            ->latest('submission_date')
-            ->latest('id')
+            ->orderByDesc('id')
             ->take(5)
             ->get();
 

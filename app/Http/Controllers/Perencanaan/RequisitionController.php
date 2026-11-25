@@ -20,7 +20,7 @@ class RequisitionController extends Controller
 {
     /**
      * Display a listing of requisitions for verification.
-     * Prioritizes requests with status 'Pending_Perencanaan'.
+     * Orders by newest submitted requisition on top.
      */
     public function index(Request $request): Response
     {
@@ -53,8 +53,6 @@ class RequisitionController extends Controller
             });
 
         $requisitions = $query
-            ->orderByDesc('submission_date')
-            ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->get();
 

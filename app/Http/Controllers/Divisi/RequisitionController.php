@@ -54,7 +54,7 @@ class RequisitionController extends Controller
         $user->load(['division', 'unit']);
 
         $query = Requisition::with(['division', 'unit', 'user', 'requisitionDetails.item', 'rbaAccount', 'verifiedByPerencanaan'])
-            ->latest();
+            ->orderByDesc('id');
 
         // Isolasi data pengajuan per unit kerja staf yang login
         if ($user->unit_id) {
