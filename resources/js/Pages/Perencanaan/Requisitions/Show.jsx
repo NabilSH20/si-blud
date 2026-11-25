@@ -76,10 +76,18 @@ const getDetailFlags = (d) => {
 const mapDetailToFormItem = (d) => {
     const { isNewItem, isPriceUpdated } = getDetailFlags(d);
     const itemValidation = isNewItem
-        ? (d.item_validation_status === 'TIDAK_SAH' || d.item?.source === 'DITOLAK' ? 'TIDAK_SAH' : 'SAH')
+        ? (d.item_validation_status === 'SAH' || d.item?.source === 'STANDAR'
+            ? 'SAH'
+            : (d.item_validation_status === 'TIDAK_SAH' || d.item?.source === 'DITOLAK'
+                ? 'TIDAK_SAH'
+                : 'PENDING'))
         : null;
     const priceValidation = isPriceUpdated
-        ? (d.price_validation_status === 'TIDAK_SAH' ? 'TIDAK_SAH' : 'SAH')
+        ? (d.price_validation_status === 'SAH'
+            ? 'SAH'
+            : (d.price_validation_status === 'TIDAK_SAH'
+                ? 'TIDAK_SAH'
+                : 'PENDING'))
         : null;
 
     return {
@@ -156,26 +164,31 @@ export default function Show({ requisition, rbaList = [] }) {
         setData('items', newItems);
     };
 
-    const updatePriceValidation = (index, nextStatus) => {
+    const updatePriceValidation = (index, nextStatus, requestedQty) => {
         const newItems = [...data.items];
         if (!newItems[index]) return;
         newItems[index] = {
             ...newItems[index],
             price_validation_status: nextStatus,
+            quantity_approved:
+                nextStatus === 'SAH' && Number(newItems[index].quantity_approved || 0) === 0
+                    ? Number(requestedQty || 1)
+                    : newItems[index].quantity_approved,
         };
         setData('items', newItems);
     };
 
-    // 1-Click: Setujui Semua Sesuai Usulan
+    // 1-Click: Sah Semua Sesuai Usulan
     const handleApproveAll = () => {
         setData(
             'items',
             details.map((d, idx) => {
-                const { isNewItem } = getDetailFlags(d);
+                const { isNewItem, isPriceUpdated } = getDetailFlags(d);
                 return {
                     ...data.items[idx],
                     id: d.id,
-                    item_validation_status: isNewItem ? 'SAH' : data.items[idx]?.item_validation_status ?? null,
+                    item_validation_status: isNewItem ? 'SAH' : null,
+                    price_validation_status: isPriceUpdated ? 'SAH' : null,
                     quantity_approved: Number(d.quantity_requested || 0),
                 };
             })
@@ -186,11 +199,16 @@ export default function Show({ requisition, rbaList = [] }) {
     const handleResetAll = () => {
         setData(
             'items',
-            details.map((d, idx) => ({
-                ...data.items[idx],
-                id: d.id,
-                quantity_approved: 0,
-            }))
+            details.map((d, idx) => {
+                const { isNewItem, isPriceUpdated } = getDetailFlags(d);
+                return {
+                    ...data.items[idx],
+                    id: d.id,
+                    item_validation_status: isNewItem ? 'PENDING' : null,
+                    price_validation_status: isPriceUpdated ? 'PENDING' : null,
+                    quantity_approved: 0,
+                };
+            })
         );
     };
 
@@ -243,15 +261,29 @@ export default function Show({ requisition, rbaList = [] }) {
         });
     }, [details, data.items, isPending]);
 
-    // Handle Approve (Frictionless Submission with Toast)
+    // Handle Verification Submission (Frictionless Submission with Toast)
     const handleApprove = (e) => {
         e.preventDefault();
+
+        const hasUnvalidatedPending = data.items.some((it) => {
+            if (Number(it.quantity_approved || 0) <= 0) return false;
+            return it.item_validation_status === 'PENDING' || it.price_validation_status === 'PENDING';
+        });
+
+        if (hasUnvalidatedPending) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Validasi Belum Lengkap',
+                text: 'Masih ada barang baru atau pembaruan harga yang belum dipilih Sah / Tidak Sah. Pilih per baris atau klik tombol "Sah Semua".',
+            });
+            return;
+        }
 
         if (isAnyItemExceedingSSH && !data.notes_perencanaan.trim()) {
             Swal.fire({
                 icon: 'warning',
-                title: 'Catatan Wajib Diisi',
-                text: 'Terdapat harga pengajuan yang melebihi Standar Satuan Harga (SSH). Mohon isi Catatan / Rekomendasi Tim Perencanaan sebagai justifikasi.',
+                title: 'Catatan Pengesahan Wajib Diisi',
+                text: 'Terdapat harga pengajuan yang melebihi Standar Satuan Harga (SSH). Mohon isi Catatan Pengesahan sebagai justifikasi.',
             });
             return;
         }
@@ -271,7 +303,7 @@ export default function Show({ requisition, rbaList = [] }) {
                         toast: true,
                         position: 'top-end',
                         icon: 'success',
-                        title: 'Usulan belanja berhasil disetujui (ACC Final)',
+                        title: 'Usulan belanja berhasil disahkan (ACC Final)',
                         showConfirmButton: false,
                         timer: 2500,
                         timerProgressBar: true,
@@ -287,7 +319,7 @@ export default function Show({ requisition, rbaList = [] }) {
             route('perencanaan.requisitions.update', requisition.id),
             {
                 status: 'Ditolak',
-                notes_perencanaan: data.notes_perencanaan || 'Pengajuan tidak disetujui pada verifikasi Perencanaan.',
+                notes_perencanaan: data.notes_perencanaan || 'Pengajuan dinyatakan tidak sah pada verifikasi Perencanaan.',
                 items: data.items,
                 rba_account_id: data.rba_account_id || null,
             },
@@ -317,7 +349,7 @@ export default function Show({ requisition, rbaList = [] }) {
         <PerencanaanLayout>
             <Head title={`Telaah Pengajuan ${requisition.requisition_number} - E-BLUD RSJ Tampan`} />
 
-            <div className="mx-auto max-w-5xl space-y-6">
+            <div className="mx-auto max-w-6xl space-y-6">
                 {/* Header Back & Info */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -572,7 +604,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                     Verifikasi Spesifikasi & Kuantitas Barang
                                 </h3>
                                 <p className="text-[11px] text-slate-500 mt-1">
-                                    Total Diminta: <strong className="text-slate-700">{totalRequestedQty} Unit</strong> &bull; Sesuaikan volume yang disetujui
+                                    Total Diminta: <strong className="text-slate-700">{totalRequestedQty} Unit</strong> &bull; Sesuaikan volume yang disahkan
                                 </p>
                             </div>
 
@@ -581,16 +613,16 @@ export default function Show({ requisition, rbaList = [] }) {
                                     <button
                                         type="button"
                                         onClick={handleApproveAll}
-                                        className="rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 px-3.5 py-1.5 text-xs font-bold transition cursor-pointer active:scale-95 shadow-sm"
-                                        title="Setujui seluruh kuantitas sesuai permintaan unit"
+                                        className="inline-flex items-center gap-1 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 px-3.5 py-1.5 text-xs font-bold transition cursor-pointer active:scale-95 shadow-2xs"
+                                        title="Sahkan seluruh kuantitas dan validasi barang/harga sesuai permintaan unit"
                                     >
-                                        <Check size={16} className="inline mr-1" /> Setujui Semua
+                                        <Check size={15} /> <span>Sah Semua</span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={handleResetAll}
-                                        className="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-1.5 text-xs font-semibold transition cursor-pointer active:scale-95 shadow-sm"
-                                        title="Reset seluruh volume disetujui menjadi 0"
+                                        className="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-1.5 text-xs font-bold transition cursor-pointer active:scale-95 shadow-2xs"
+                                        title="Reset seluruh volume disahkan menjadi 0 dan status validasi"
                                     >
                                         Reset (0)
                                     </button>
@@ -602,15 +634,16 @@ export default function Show({ requisition, rbaList = [] }) {
                             <table className="min-w-full divide-y divide-slate-100">
                                 <thead className="bg-slate-50/80 text-slate-600 uppercase tracking-wider text-[11px] font-bold">
                                     <tr>
-                                        <th className="w-12 px-4 py-3 text-center">No</th>
-                                        <th className="px-5 py-3 text-left">Nama Barang / Jasa</th>
-                                        <th className="w-20 px-4 py-3 text-center">Satuan</th>
-                                        <th className="w-32 px-4 py-3 text-right">Harga Satuan</th>
-                                        <th className="w-20 px-4 py-3 text-center">Diminta</th>
-                                        <th className="w-32 px-4 py-3 text-center bg-teal-50/70 text-teal-950 border-x border-teal-200">
-                                            Disetujui *
+                                        <th className="w-10 px-3 py-3 text-center">No</th>
+                                        <th className="px-4 py-3 text-left min-w-[180px]">Nama Barang / Jasa</th>
+                                        <th className="w-20 px-3 py-3 text-center">Satuan</th>
+                                        <th className="w-36 px-3 py-3 text-right">Harga Satuan</th>
+                                        <th className="w-44 px-3 py-3 text-center">Validasi Usulan</th>
+                                        <th className="w-20 px-3 py-3 text-center">Diminta</th>
+                                        <th className="w-36 px-3 py-3 text-center bg-teal-50/70 text-teal-950 border-x border-teal-200">
+                                            Disahkan *
                                         </th>
-                                        <th className="w-36 px-4 py-3 text-right">Subtotal</th>
+                                        <th className="w-36 px-4 py-3 text-right">Subtotal Disahkan</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 bg-white text-xs">
@@ -628,10 +661,10 @@ export default function Show({ requisition, rbaList = [] }) {
 
                                         return (
                                             <tr key={detail.id || idx} className={`transition ${isRejectedItem || (currentApproved === 0 && !isPending) ? 'bg-rose-50/50 opacity-80' : 'hover:bg-slate-50/50'}`}>
-                                                <td className="whitespace-nowrap px-4 py-3 text-center text-slate-400 font-semibold">
+                                                <td className="whitespace-nowrap px-3 py-3 text-center text-slate-400 font-semibold">
                                                     #{idx + 1}
                                                 </td>
-                                                <td className="px-5 py-3 space-y-1.5">
+                                                <td className="px-4 py-3">
                                                     <div className="flex items-center gap-1.5 flex-wrap">
                                                         <span className="font-mono text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                                                             {itemCode}
@@ -649,76 +682,112 @@ export default function Show({ requisition, rbaList = [] }) {
                                                                 Harga Diperbarui
                                                             </span>
                                                         )}
-                                                        {!isPending && detail.item_validation_status === 'SAH' && (
-                                                            <span className="inline-flex items-center rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 text-[10px] font-bold text-emerald-700">
-                                                                Sah
-                                                            </span>
-                                                        )}
-                                                        {!isPending && detail.item_validation_status === 'TIDAK_SAH' && (
-                                                            <span className="inline-flex items-center rounded bg-rose-50 border border-rose-200 px-1.5 py-0.2 text-[10px] font-bold text-rose-700">
-                                                                Tidak Sah
-                                                            </span>
-                                                        )}
                                                     </div>
                                                     {(detail.item?.specification || detail.specification) && (
-                                                        <p className="text-[11px] text-slate-400">
+                                                        <p className="text-[11px] text-slate-400 mt-0.5">
                                                             {detail.item?.specification || detail.specification}
                                                         </p>
                                                     )}
-                                                    {isPending && isNewItem && (
-                                                        <div className="flex items-center gap-2 pt-0.5 flex-wrap">
-                                                            <span className="text-[10px] font-semibold text-slate-500">Validasi Barang:</span>
-                                                            <ValidationSegmentedToggle
-                                                                value={formItem?.item_validation_status}
-                                                                onChange={(next) => updateItemValidation(idx, next, detail.quantity_requested)}
-                                                            />
-                                                        </div>
-                                                    )}
                                                 </td>
-                                                <td className="whitespace-nowrap px-4 py-3 text-center text-slate-600">
+                                                <td className="whitespace-nowrap px-3 py-3 text-center text-slate-600">
                                                     {detail.unit_type || detail.item?.unit_type || 'Unit'}
                                                 </td>
-                                                <td className="whitespace-nowrap px-4 py-3 text-right font-mono space-y-1">
-                                                    <div className={detail.item && effectivePrice > standardRefPrice ? 'text-rose-600 font-bold' : 'text-slate-700'}>
+                                                <td className="whitespace-nowrap px-3 py-3 text-right font-mono">
+                                                    <div className={detail.item && effectivePrice > standardRefPrice ? 'text-rose-600 font-bold' : 'text-slate-700 font-semibold'}>
                                                         {formatRupiah(effectivePrice)}
                                                     </div>
                                                     {isPriceUpdated && basePrice !== null ? (
-                                                        <div className="space-y-1 font-sans">
-                                                            <div className="text-[10px] text-slate-500">
-                                                                Awal: <span className="line-through font-mono">{formatRupiah(basePrice)}</span> &rarr; Usulan: <span className="font-mono font-bold text-sky-700">{formatRupiah(detail.unit_price)}</span>
-                                                            </div>
-                                                            {isPending ? (
-                                                                <div className="flex items-center justify-end">
-                                                                    <ValidationSegmentedToggle
-                                                                        value={formItem?.price_validation_status}
-                                                                        onChange={(next) => updatePriceValidation(idx, next)}
-                                                                        sahLabel="Sah Harga"
-                                                                    />
-                                                                </div>
-                                                            ) : (
-                                                                <span className={`inline-block rounded px-1.5 py-0.2 text-[9px] font-bold border ${
-                                                                    detail.price_validation_status === 'SAH'
-                                                                        ? 'bg-teal-50 text-teal-700 border-teal-200'
-                                                                        : detail.price_validation_status === 'TIDAK_SAH'
-                                                                        ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                                                        : 'bg-slate-50 text-slate-600 border-slate-200'
-                                                                }`}>
-                                                                    {detail.price_validation_status === 'SAH' ? 'Harga Baru Disahkan' : detail.price_validation_status === 'TIDAK_SAH' ? 'Pakai Harga Awal' : 'Menunggu'}
-                                                                </span>
-                                                            )}
+                                                        <div className="text-[10px] text-slate-500 mt-0.5 font-sans">
+                                                            Awal: <span className="line-through font-mono">{formatRupiah(basePrice)}</span> &rarr; Usulan: <span className="font-mono font-bold text-sky-700">{formatRupiah(detail.unit_price)}</span>
                                                         </div>
                                                     ) : (
                                                         detail.item && (
-                                                            <div className="text-[9px] text-slate-400">
+                                                            <div className="text-[10px] text-slate-400 mt-0.5 font-sans">
                                                                 SSH: {formatRupiah(detail.item.standard_price || 0)}
                                                             </div>
                                                         )
                                                     )}
                                                 </td>
-                                                <td className="whitespace-nowrap px-4 py-3 text-center font-bold text-slate-700">
+                                                <td className="whitespace-nowrap px-3 py-3 text-center">
+                                                    {isPending ? (
+                                                        isNewItem ? (
+                                                            <div className="flex flex-col items-center gap-1">
+                                                                <ValidationSegmentedToggle
+                                                                    value={formItem?.item_validation_status}
+                                                                    onChange={(next) => updateItemValidation(idx, next, detail.quantity_requested)}
+                                                                />
+                                                                <span className={`text-[10px] font-semibold ${
+                                                                    formItem?.item_validation_status === 'SAH'
+                                                                        ? 'text-teal-700'
+                                                                        : formItem?.item_validation_status === 'TIDAK_SAH'
+                                                                        ? 'text-rose-600'
+                                                                        : 'text-amber-700'
+                                                                }`}>
+                                                                    {formItem?.item_validation_status === 'SAH'
+                                                                        ? 'Disahkan ke Standar RS'
+                                                                        : formItem?.item_validation_status === 'TIDAK_SAH'
+                                                                        ? 'Ditolak (Tidak Sah)'
+                                                                        : 'Pilih Sah / Tidak Sah'}
+                                                                </span>
+                                                            </div>
+                                                        ) : isPriceUpdated ? (
+                                                            <div className="flex flex-col items-center gap-1">
+                                                                <ValidationSegmentedToggle
+                                                                    value={formItem?.price_validation_status}
+                                                                    onChange={(next) => updatePriceValidation(idx, next, detail.quantity_requested)}
+                                                                    sahLabel="Sah Harga"
+                                                                />
+                                                                <span className={`text-[10px] font-semibold ${
+                                                                    formItem?.price_validation_status === 'SAH'
+                                                                        ? 'text-teal-700'
+                                                                        : formItem?.price_validation_status === 'TIDAK_SAH'
+                                                                        ? 'text-rose-600'
+                                                                        : 'text-sky-700'
+                                                                }`}>
+                                                                    {formItem?.price_validation_status === 'SAH'
+                                                                        ? 'Harga Baru Disahkan'
+                                                                        : formItem?.price_validation_status === 'TIDAK_SAH'
+                                                                        ? 'Pakai Harga Awal'
+                                                                        : 'Pilih Sah / Tidak Sah'}
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1 rounded-lg bg-teal-50 px-2 py-1 text-[10px] font-bold text-teal-800 border border-teal-200">
+                                                                &#10003; Standar RS
+                                                            </span>
+                                                        )
+                                                    ) : (
+                                                        <div className="flex flex-col items-center gap-1">
+                                                            {detail.item_validation_status === 'SAH' && (
+                                                                <span className="inline-flex rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                                                                    Barang Baru Sah
+                                                                </span>
+                                                            )}
+                                                            {detail.item_validation_status === 'TIDAK_SAH' && (
+                                                                <span className="inline-flex rounded bg-rose-50 border border-rose-200 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+                                                                    Barang Tidak Sah
+                                                                </span>
+                                                            )}
+                                                            {detail.price_validation_status === 'SAH' && (
+                                                                <span className="inline-flex rounded bg-teal-50 border border-teal-200 px-2 py-0.5 text-[10px] font-bold text-teal-700">
+                                                                    Harga Baru Sah
+                                                                </span>
+                                                            )}
+                                                            {detail.price_validation_status === 'TIDAK_SAH' && (
+                                                                <span className="inline-flex rounded bg-rose-50 border border-rose-200 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+                                                                    Pakai Harga Awal
+                                                                </span>
+                                                            )}
+                                                            {!detail.item_validation_status && (!detail.price_validation_status || detail.price_validation_status === 'NONE') && (
+                                                                <span className="text-[10px] text-slate-500 font-medium">Standar RS</span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="whitespace-nowrap px-3 py-3 text-center font-bold text-slate-700">
                                                     {detail.quantity_requested}
                                                 </td>
-                                                <td className="whitespace-nowrap px-4 py-2 text-center bg-teal-50/40 border-x border-teal-200">
+                                                <td className="whitespace-nowrap px-3 py-2 text-center bg-teal-50/40 border-x border-teal-200">
                                                     {isPending ? (
                                                         <div className="inline-flex items-center rounded-xl bg-white p-1 shadow-sm border border-teal-200/60 focus-within:ring-4 focus-within:ring-teal-500/10 focus-within:border-teal-500 transition-all">
                                                             <button
@@ -761,8 +830,8 @@ export default function Show({ requisition, rbaList = [] }) {
                                 </tbody>
                                 <tfoot className="border-t border-slate-200 bg-slate-50/70 font-bold text-xs">
                                     <tr>
-                                        <td colSpan="4" className="px-5 py-3.5 text-right uppercase tracking-wider text-slate-600">
-                                            Total Disetujui:
+                                        <td colSpan="5" className="px-5 py-3.5 text-right uppercase tracking-wider text-slate-600">
+                                            Total Nilai Disahkan:
                                         </td>
                                         <td className="px-4 py-3.5 text-center text-slate-800">
                                             {totalRequestedQty}
@@ -796,7 +865,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                             </svg>
                                         </div>
                                         <div className="text-xs text-amber-900">
-                                            <strong>Perhatian:</strong> Terdapat harga pengajuan yang melebihi Standar Satuan Harga (SSH). Anda diwajibkan untuk mengisi Catatan Persetujuan sebagai justifikasi.
+                                            <strong>Perhatian:</strong> Terdapat harga pengajuan yang melebihi Standar Satuan Harga (SSH). Anda diwajibkan untuk mengisi Catatan Pengesahan sebagai justifikasi.
                                         </div>
                                     </div>
                                 )}
@@ -812,7 +881,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                         rows={3}
                                         value={data.notes_perencanaan}
                                         onChange={(e) => setData('notes_perencanaan', e.target.value)}
-                                        placeholder="Tuliskan catatan arahan teknis atau justifikasi persetujuan..."
+                                        placeholder="Tuliskan catatan arahan teknis atau justifikasi pengesahan..."
                                         className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-teal-500 focus:ring-teal-500 focus:outline-none transition shadow-sm"
                                     />
                                 ) : (
@@ -893,7 +962,7 @@ export default function Show({ requisition, rbaList = [] }) {
                                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                                                 </svg>
-                                                <span>Setujui & Sahkan Pengajuan (ACC Final)</span>
+                                                <span>Sahkan Pengajuan (ACC Final)</span>
                                             </>
                                         )}
                                     </button>

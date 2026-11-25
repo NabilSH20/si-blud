@@ -7,17 +7,18 @@ export default function ValidationSegmentedToggle({
     sahLabel = 'Sah',
     tidakSahLabel = 'Tidak Sah',
 }) {
-    const isSahSelected = value !== 'TIDAK_SAH';
+    const isSahSelected = value === 'SAH';
+    const isTidakSahSelected = value === 'TIDAK_SAH';
 
     return (
-        <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-100/80 p-0.5 gap-0.5">
+        <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-100/90 p-0.5 gap-0.5 shadow-2xs">
             <button
                 type="button"
                 onClick={() => onChange('SAH')}
                 className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
                     isSahSelected
                         ? 'bg-teal-600 text-white shadow-2xs'
-                        : 'text-slate-600 hover:bg-white/80 hover:text-slate-900'
+                        : 'text-slate-600 hover:bg-white hover:text-teal-700'
                 }`}
             >
                 <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
@@ -29,9 +30,9 @@ export default function ValidationSegmentedToggle({
                 type="button"
                 onClick={() => onChange('TIDAK_SAH')}
                 className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
-                    !isSahSelected
+                    isTidakSahSelected
                         ? 'bg-rose-600 text-white shadow-2xs'
-                        : 'text-slate-600 hover:bg-white/80 hover:text-slate-900'
+                        : 'text-slate-600 hover:bg-white hover:text-rose-700'
                 }`}
             >
                 <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
