@@ -14,6 +14,7 @@ class Item extends Model
     {
         return [
             'standard_price' => 'decimal:2',
+            'pending_price' => 'decimal:2',
         ];
     }
 
@@ -25,6 +26,11 @@ class Item extends Model
     public function originUnit(): BelongsTo
     {
         return $this->belongsTo(Unit::class, 'origin_unit_id');
+    }
+
+    public function priceOriginUnit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class, 'price_origin_unit_id');
     }
 
     public function requisitionDetails(): HasMany
@@ -40,6 +46,16 @@ class Item extends Model
     public function isFromUnit(): bool
     {
         return $this->source === 'USULAN_UNIT';
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->source === 'DITOLAK';
+    }
+
+    public function hasPendingPriceUpdate(): bool
+    {
+        return $this->price_status === 'PENDING';
     }
 
     public function scopeStandard($query)

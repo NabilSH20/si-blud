@@ -309,13 +309,33 @@ export default function RequisitionDetailModal({
                                                 #{idx + 1}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 flex-wrap">
                                                     <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-700 font-mono">
                                                         {detail.item?.item_code || (detail.item_id ? `ITM-${String(detail.item_id).padStart(4, '0')}` : 'ITM-BARU')}
                                                     </span>
                                                     <span className="font-bold text-slate-900">
                                                         {detail.item?.name || detail.item_name || detail.manual_item_name}
                                                     </span>
+                                                    {(detail.is_new_item || detail.item?.source === 'USULAN_UNIT') && (
+                                                        <span className="inline-flex items-center rounded bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[10px] font-black text-amber-800 uppercase">
+                                                            BARU
+                                                        </span>
+                                                    )}
+                                                    {detail.is_price_updated && (
+                                                        <span className="inline-flex items-center rounded bg-sky-50 border border-sky-200 px-1.5 py-0.2 text-[10px] font-black text-sky-800 uppercase">
+                                                            Harga Diperbarui
+                                                        </span>
+                                                    )}
+                                                    {detail.item_validation_status === 'SAH' && (
+                                                        <span className="inline-flex items-center rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 text-[10px] font-bold text-emerald-700">
+                                                            Sah
+                                                        </span>
+                                                    )}
+                                                    {detail.item_validation_status === 'TIDAK_SAH' && (
+                                                        <span className="inline-flex items-center rounded bg-rose-50 border border-rose-200 px-1.5 py-0.2 text-[10px] font-bold text-rose-700">
+                                                            Tidak Sah
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 {(detail.item?.specification || detail.specification || detail.manual_specification) && (
                                                     <p className="mt-0.5 text-[11px] text-slate-500">
@@ -342,7 +362,22 @@ export default function RequisitionDetailModal({
                                                 )}
                                             </td>
                                             <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-slate-700">
-                                                {formatRupiah(detail.unit_price)}
+                                                <span>{formatRupiah(detail.unit_price)}</span>
+                                                {detail.is_price_updated && detail.original_unit_price !== null && (
+                                                    <span className="block text-[10px] text-slate-400 line-through">
+                                                        {formatRupiah(detail.original_unit_price)}
+                                                    </span>
+                                                )}
+                                                {detail.price_validation_status === 'SAH' && (
+                                                    <span className="inline-block mt-0.5 rounded bg-teal-50 border border-teal-200 px-1.5 py-0.2 text-[9px] font-bold text-teal-700">
+                                                        Harga Baru Sah
+                                                    </span>
+                                                )}
+                                                {detail.price_validation_status === 'TIDAK_SAH' && (
+                                                    <span className="inline-block mt-0.5 rounded bg-rose-50 border border-rose-200 px-1.5 py-0.2 text-[9px] font-bold text-rose-700">
+                                                        Pakai Harga Awal
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-emerald-800">
                                                 {formatRupiah(detail.subtotal)}

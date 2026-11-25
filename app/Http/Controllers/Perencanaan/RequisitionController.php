@@ -7,6 +7,7 @@ use App\Models\FiscalYear;
 use App\Models\RbaAccount;
 use App\Models\Requisition;
 use App\Models\RequisitionDetail;
+use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -52,13 +53,18 @@ class RequisitionController extends Controller
             });
 
         $requisitions = $query
-            ->orderByRaw("CASE WHEN status = 'Pending_Perencanaan' THEN 0 ELSE 1 END")
-            ->latest('submission_date')
-            ->latest('id')
+            ->orderByDesc('submission_date')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->get();
+
+        $units = Unit::with('division:id,name')
+            ->orderBy('name')
+            ->get(['id', 'name', 'unit_code', 'division_id']);
 
         return Inertia::render('Perencanaan/Requisitions/Index', [
             'requisitions' => $requisitions,
+            'units' => $units,
             'selectedYear' => $selectedYear,
             'active_year' => $activeYear,
             'success' => session('success'),
@@ -120,6 +126,8 @@ class RequisitionController extends Controller
             'notes_perencanaan' => ['nullable', 'string', 'max:500'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.id' => ['required', 'exists:requisition_details,id'],
+            'items.*.item_validation_status' => ['nullable', 'string', 'in:SAH,TIDAK_SAH'],
+            'items.*.price_validation_status' => ['nullable', 'string', 'in:SAH,TIDAK_SAH'],
             'items.*.quantity_approved' => ['required', 'integer', 'min:0', function ($attribute, $value, $fail) use ($requisition) {
                 $index = explode('.', $attribute)[1];
                 $detailId = request()->input("items.{$index}.id");
@@ -144,23 +152,17 @@ class RequisitionController extends Controller
         $resolvedAccount = RbaAccount::resolveForYear($chosenAccountId, $reqYear);
         $targetAccountId = $resolvedAccount?->id;
 
+        $resolvedItems = $this->resolveDetailVerificationOutcomes($requisition, $validated['items'], $validated['status']);
+
         if ($validated['status'] === 'Disetujui') {
             $exceedsSSH = false;
             $calculatedTotalApproved = 0;
 
-            foreach ($validated['items'] as $itemData) {
-                $detail = clone $requisition->requisitionDetails->firstWhere('id', $itemData['id']);
-                if ($detail && ! $detail->relationLoaded('item')) {
-                    $detail->load('item');
-                }
-
-                if ($detail && $detail->item && $detail->unit_price > $detail->item->standard_price) {
+            foreach ($resolvedItems as $resolved) {
+                if ($resolved['exceeds_ssh'] && $resolved['quantity_approved'] > 0) {
                     $exceedsSSH = true;
                 }
-
-                if ($detail) {
-                    $calculatedTotalApproved += (int) $itemData['quantity_approved'] * (float) $detail->unit_price;
-                }
+                $calculatedTotalApproved += $resolved['subtotal'];
             }
 
             if ($exceedsSSH && empty($validated['notes_perencanaan'])) {
@@ -183,32 +185,61 @@ class RequisitionController extends Controller
             }
         }
 
-        DB::transaction(function () use ($requisition, $validated, $targetAccountId, $resolvedAccount) {
+        DB::transaction(function () use ($requisition, $validated, $resolvedItems, $targetAccountId, $resolvedAccount) {
             $totalApproved = 0;
 
-            // Update quantity_approved untuk tiap rincian usulan
-            foreach ($validated['items'] as $itemData) {
-                $detail = RequisitionDetail::where('id', $itemData['id'])
-                    ->where('requisition_id', $requisition->id)
-                    ->first();
+            foreach ($resolvedItems as $resolved) {
+                /** @var RequisitionDetail $detail */
+                $detail = $resolved['detail'];
 
-                if ($detail) {
-                    $qtyApproved = (int) $itemData['quantity_approved'];
-                    $subtotal = $qtyApproved * (float) $detail->unit_price;
+                $detailUpdate = [
+                    'quantity_approved' => $resolved['quantity_approved'],
+                    'unit_price' => $resolved['effective_unit_price'],
+                    'subtotal' => $resolved['subtotal'],
+                    'exceeds_ssh' => $resolved['exceeds_ssh'],
+                ];
 
-                    if (! $detail->relationLoaded('item')) {
-                        $detail->load('item');
-                    }
-                    $isExceeding = $detail->item && $detail->unit_price > $detail->item->standard_price;
-
-                    $detail->update([
-                        'quantity_approved' => $qtyApproved,
-                        'subtotal' => $subtotal,
-                        'exceeds_ssh' => $isExceeding,
-                    ]);
-
-                    $totalApproved += $subtotal;
+                if ($resolved['new_item_validation_status'] !== null) {
+                    $detailUpdate['item_validation_status'] = $resolved['new_item_validation_status'];
                 }
+                if ($resolved['new_price_validation_status'] !== null) {
+                    $detailUpdate['price_validation_status'] = $resolved['new_price_validation_status'];
+                }
+
+                $detail->update($detailUpdate);
+
+                // Sinkronkan validasi item baru & pembaruan harga ke master katalog items bila disahkan
+                if ($validated['status'] === 'Disetujui' && $detail->item) {
+                    $item = $detail->item;
+                    $masterUpdates = [];
+
+                    if ($resolved['is_new_item'] && $item->source === 'USULAN_UNIT') {
+                        if ($resolved['new_item_validation_status'] === 'TIDAK_SAH') {
+                            $masterUpdates['source'] = 'DITOLAK';
+                        } elseif ($resolved['new_item_validation_status'] === 'SAH' || $resolved['quantity_approved'] > 0) {
+                            $masterUpdates['source'] = 'STANDAR';
+                        }
+                    }
+
+                    if ($resolved['is_price_updated']) {
+                        if ($resolved['new_price_validation_status'] === 'SAH') {
+                            $masterUpdates['standard_price'] = $resolved['effective_unit_price'];
+                            $masterUpdates['pending_price'] = null;
+                            $masterUpdates['price_status'] = 'NONE';
+                            $masterUpdates['price_origin_unit_id'] = null;
+                        } elseif ($resolved['new_price_validation_status'] === 'TIDAK_SAH') {
+                            $masterUpdates['pending_price'] = null;
+                            $masterUpdates['price_status'] = 'NONE';
+                            $masterUpdates['price_origin_unit_id'] = null;
+                        }
+                    }
+
+                    if (! empty($masterUpdates)) {
+                        $item->update($masterUpdates);
+                    }
+                }
+
+                $totalApproved += $resolved['subtotal'];
             }
 
             // Update status usulan menjadi Disetujui (ACC Final) atau Ditolak
@@ -243,6 +274,79 @@ class RequisitionController extends Controller
 
         return redirect()->route('perencanaan.requisitions.index')
             ->with('success', $message);
+    }
+
+    /**
+     * Resolve effective quantities, unit prices, SSH compliance, and item/price validation outcomes per detail row.
+     */
+    private function resolveDetailVerificationOutcomes(Requisition $requisition, array $submittedItems, string $overallStatus): array
+    {
+        $resolved = [];
+
+        foreach ($submittedItems as $itemData) {
+            /** @var RequisitionDetail|null $detail */
+            $detail = $requisition->requisitionDetails->firstWhere('id', $itemData['id']);
+            if (! $detail) {
+                continue;
+            }
+            $detail->loadMissing('item');
+
+            $isNewItem = (bool) ($detail->is_new_item || $detail->item?->source === 'USULAN_UNIT');
+            $itemValidationInput = $itemData['item_validation_status'] ?? null;
+
+            $qtyApproved = (int) $itemData['quantity_approved'];
+            if ($isNewItem && $itemValidationInput === 'TIDAK_SAH') {
+                $qtyApproved = 0;
+            }
+
+            $basePrice = $detail->original_unit_price !== null
+                ? (float) $detail->original_unit_price
+                : (float) ($detail->item?->standard_price ?? $detail->unit_price);
+
+            $isPriceUpdated = (bool) (
+                $detail->is_price_updated
+                || (! $isNewItem && $detail->item && abs((float) $detail->unit_price - $basePrice) > 0.001)
+            );
+            $priceValidationInput = $itemData['price_validation_status'] ?? null;
+
+            $effectiveUnitPrice = (float) $detail->unit_price;
+            if ($isPriceUpdated && $priceValidationInput === 'TIDAK_SAH') {
+                $effectiveUnitPrice = $basePrice;
+            }
+
+            $exceedsSsh = false;
+            if (! ($isPriceUpdated && $priceValidationInput === 'TIDAK_SAH')) {
+                $exceedsSsh = $detail->item && $effectiveUnitPrice > $basePrice;
+            }
+
+            $newItemValidationStatus = null;
+            if ($isNewItem) {
+                if ($itemValidationInput !== null) {
+                    $newItemValidationStatus = $itemValidationInput;
+                } elseif ($overallStatus === 'Disetujui') {
+                    $newItemValidationStatus = $qtyApproved > 0 ? 'SAH' : 'TIDAK_SAH';
+                }
+            }
+
+            $newPriceValidationStatus = null;
+            if ($isPriceUpdated && $priceValidationInput !== null) {
+                $newPriceValidationStatus = $priceValidationInput;
+            }
+
+            $resolved[] = [
+                'detail' => $detail,
+                'is_new_item' => $isNewItem,
+                'is_price_updated' => $isPriceUpdated,
+                'quantity_approved' => $qtyApproved,
+                'effective_unit_price' => $effectiveUnitPrice,
+                'subtotal' => $qtyApproved * $effectiveUnitPrice,
+                'exceeds_ssh' => $exceedsSsh,
+                'new_item_validation_status' => $newItemValidationStatus,
+                'new_price_validation_status' => $newPriceValidationStatus,
+            ];
+        }
+
+        return $resolved;
     }
 
     /**

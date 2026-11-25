@@ -13,7 +13,11 @@ class RequisitionDetail extends Model
     {
         return [
             'unit_price' => 'decimal:2',
+            'original_unit_price' => 'decimal:2',
             'subtotal' => 'decimal:2',
+            'is_new_item' => 'boolean',
+            'is_price_updated' => 'boolean',
+            'exceeds_ssh' => 'boolean',
         ];
     }
 

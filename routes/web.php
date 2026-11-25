@@ -41,6 +41,12 @@ Route::prefix('perencanaan')->middleware(['auth', 'role:perencanaan', 'fiscal_ye
     Route::resource('items', ItemController::class)->except(['show', 'create', 'edit']);
     Route::patch('/items/{item}/verify-standard', [ItemController::class, 'verifyStandard'])
         ->name('items.verify-standard');
+    Route::patch('/items/{item}/reject-standard', [ItemController::class, 'rejectStandard'])
+        ->name('items.reject-standard');
+    Route::patch('/items/{item}/verify-price', [ItemController::class, 'verifyPrice'])
+        ->name('items.verify-price');
+    Route::patch('/items/{item}/reject-price', [ItemController::class, 'rejectPrice'])
+        ->name('items.reject-price');
     Route::resource('requisitions', PerencanaanRequisitionController::class)
         ->only(['index', 'show', 'update'])
         ->names('perencanaan.requisitions');

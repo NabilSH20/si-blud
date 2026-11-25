@@ -292,49 +292,80 @@ export default function Show({ requisition }) {
                                     <th className="w-40 px-4 py-3 text-right">Subtotal</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 bg-white text-xs">
-                                {details.map((detail, idx) => (
-                                    <tr key={detail.id || idx} className="hover:bg-slate-50/50 transition">
-                                        <td className="whitespace-nowrap px-4 py-3 text-center text-slate-400 font-semibold">
-                                            #{idx + 1}
-                                        </td>
-                                        <td className="px-5 py-3">
-                                            <p className="font-semibold text-slate-900">
-                                                {detail.item?.name || detail.manual_item_name}
-                                            </p>
-                                            {(detail.item?.specification || detail.manual_specification) && (
-                                                <p className="text-[11px] text-slate-400 mt-0.5">
-                                                    {detail.item?.specification || detail.manual_specification}
-                                                </p>
-                                            )}
-                                        </td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-center text-slate-700 font-semibold">
-                                            {detail.quantity_requested}{' '}
-                                            <span className="text-slate-400 font-normal text-[11px]">
-                                                {detail.item?.unit_type || 'Unit'}
-                                            </span>
-                                        </td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-center font-bold">
-                                            {detail.quantity_approved !== null && detail.quantity_approved !== undefined ? (
-                                                <span className="text-teal-700">
-                                                    {detail.quantity_approved}{' '}
+                                <tbody className="divide-y divide-slate-100 bg-white text-xs">
+                                    {details.map((detail, idx) => {
+                                        const isNewItem = Boolean(detail.is_new_item || detail.item?.source === 'USULAN_UNIT');
+                                        const isPriceUpdated = Boolean(detail.is_price_updated);
+                                        return (
+                                            <tr key={detail.id || idx} className="hover:bg-slate-50/50 transition">
+                                                <td className="whitespace-nowrap px-4 py-3 text-center text-slate-400 font-semibold">
+                                                    #{idx + 1}
+                                                </td>
+                                                <td className="px-5 py-3">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <p className="font-semibold text-slate-900">
+                                                            {detail.item?.name || detail.item_name || detail.manual_item_name}
+                                                        </p>
+                                                        {isNewItem && (
+                                                            <span className="inline-flex items-center rounded bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[10px] font-black text-amber-800 uppercase">
+                                                                BARU
+                                                            </span>
+                                                        )}
+                                                        {isPriceUpdated && (
+                                                            <span className="inline-flex items-center rounded bg-sky-50 border border-sky-200 px-1.5 py-0.2 text-[10px] font-black text-sky-800 uppercase">
+                                                                Harga Diperbarui
+                                                            </span>
+                                                        )}
+                                                        {detail.item_validation_status === 'SAH' && (
+                                                            <span className="inline-flex items-center rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 text-[10px] font-bold text-emerald-700">
+                                                                Sah
+                                                            </span>
+                                                        )}
+                                                        {detail.item_validation_status === 'TIDAK_SAH' && (
+                                                            <span className="inline-flex items-center rounded bg-rose-50 border border-rose-200 px-1.5 py-0.2 text-[10px] font-bold text-rose-700">
+                                                                Tidak Sah
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {(detail.item?.specification || detail.specification || detail.manual_specification) && (
+                                                        <p className="text-[11px] text-slate-400 mt-0.5">
+                                                            {detail.item?.specification || detail.specification || detail.manual_specification}
+                                                        </p>
+                                                    )}
+                                                </td>
+                                                <td className="whitespace-nowrap px-4 py-3 text-center text-slate-700 font-semibold">
+                                                    {detail.quantity_requested}{' '}
                                                     <span className="text-slate-400 font-normal text-[11px]">
-                                                        {detail.item?.unit_type || 'Unit'}
+                                                        {detail.unit_type || detail.item?.unit_type || 'Unit'}
                                                     </span>
-                                                </span>
-                                            ) : (
-                                                <span className="text-slate-400 italic text-[11px]">-</span>
-                                            )}
-                                        </td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-right text-slate-700">
-                                            {formatRupiah(detail.unit_price)}
-                                        </td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-teal-800">
-                                            {formatRupiah(detail.subtotal)}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
+                                                </td>
+                                                <td className="whitespace-nowrap px-4 py-3 text-center font-bold">
+                                                    {detail.quantity_approved !== null && detail.quantity_approved !== undefined ? (
+                                                        <span className="text-teal-700">
+                                                            {detail.quantity_approved}{' '}
+                                                            <span className="text-slate-400 font-normal text-[11px]">
+                                                                {detail.unit_type || detail.item?.unit_type || 'Unit'}
+                                                            </span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-slate-400 italic text-[11px]">-</span>
+                                                    )}
+                                                </td>
+                                                <td className="whitespace-nowrap px-4 py-3 text-right text-slate-700">
+                                                    {formatRupiah(detail.unit_price)}
+                                                    {isPriceUpdated && detail.original_unit_price !== null && (
+                                                        <span className="block text-[10px] text-slate-400 line-through">
+                                                            {formatRupiah(detail.original_unit_price)}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-teal-800">
+                                                    {formatRupiah(detail.subtotal)}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
                             <tfoot className="border-t border-slate-200 bg-slate-50/70 font-bold text-xs">
                                 <tr>
                                     <td colSpan="2" className="px-5 py-3.5 text-right uppercase tracking-wider text-slate-600">

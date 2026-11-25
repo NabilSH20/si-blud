@@ -13,6 +13,19 @@ const formatRupiah = (value) =>
         maximumFractionDigits: 0,
     }).format(Number(value || 0));
 
+const getDetailFlags = (d) => {
+    const isNewItem = Boolean(d.is_new_item || d.item?.source === 'USULAN_UNIT');
+    const basePrice =
+        d.original_unit_price !== null && d.original_unit_price !== undefined
+            ? Number(d.original_unit_price)
+            : (d.item ? Number(d.item.standard_price || 0) : null);
+    const isPriceUpdated = Boolean(
+        d.is_price_updated ||
+            (!isNewItem && basePrice !== null && Math.abs(Number(d.unit_price || 0) - basePrice) > 0.001)
+    );
+    return { isNewItem, basePrice, isPriceUpdated };
+};
+
 export default function QuickVerificationModal({
     show = false,
     onClose = () => {},
@@ -33,13 +46,27 @@ export default function QuickVerificationModal({
             return;
         }
 
-        const initialItems = details.map((d) => ({
-            id: d.id,
-            quantity_approved:
-                d.quantity_approved !== null && d.quantity_approved !== undefined
-                    ? Number(d.quantity_approved)
-                    : Number(d.quantity_requested || 0),
-        }));
+        const initialItems = details.map((d) => {
+            const { isNewItem, isPriceUpdated } = getDetailFlags(d);
+            const itemValidation = isNewItem
+                ? (d.item_validation_status === 'TIDAK_SAH' || d.item?.source === 'DITOLAK' ? 'TIDAK_SAH' : 'SAH')
+                : null;
+            const priceValidation = isPriceUpdated
+                ? (d.price_validation_status === 'TIDAK_SAH' ? 'TIDAK_SAH' : 'SAH')
+                : null;
+
+            return {
+                id: d.id,
+                quantity_approved:
+                    itemValidation === 'TIDAK_SAH'
+                        ? 0
+                        : d.quantity_approved !== null && d.quantity_approved !== undefined
+                        ? Number(d.quantity_approved)
+                        : Number(d.quantity_requested || 0),
+                item_validation_status: itemValidation,
+                price_validation_status: priceValidation,
+            };
+        });
 
         setItemsState(initialItems);
         setNotesPerencanaan(requisition.notes_perencanaan || '');
@@ -50,29 +77,69 @@ export default function QuickVerificationModal({
         const parsed = val === '' ? 0 : Math.max(0, parseInt(val, 10) || 0);
         setItemsState((prev) => {
             const next = [...prev];
+            if (!next[idx]) return next;
             next[idx] = { ...next[idx], quantity_approved: parsed };
+            return next;
+        });
+    };
+
+    const updateItemValidation = (idx, nextValidation, requestedQty) => {
+        setItemsState((prev) => {
+            const next = [...prev];
+            if (!next[idx]) return next;
+            next[idx] = {
+                ...next[idx],
+                item_validation_status: nextValidation,
+                quantity_approved:
+                    nextValidation === 'TIDAK_SAH'
+                        ? 0
+                        : (next[idx].quantity_approved > 0 ? next[idx].quantity_approved : Number(requestedQty || 1)),
+            };
+            return next;
+        });
+    };
+
+    const updatePriceValidation = (idx, nextValidation) => {
+        setItemsState((prev) => {
+            const next = [...prev];
+            if (!next[idx]) return next;
+            next[idx] = { ...next[idx], price_validation_status: nextValidation };
             return next;
         });
     };
 
     // 1-Click: Setujui Semua Sesuai Usulan (100%)
     const handleApproveAll = () => {
-        setItemsState(
-            details.map((d) => ({
-                id: d.id,
-                quantity_approved: Number(d.quantity_requested || 0),
-            }))
+        setItemsState((prev) =>
+            details.map((d, idx) => {
+                const { isNewItem } = getDetailFlags(d);
+                return {
+                    ...prev[idx],
+                    id: d.id,
+                    item_validation_status: isNewItem ? 'SAH' : prev[idx]?.item_validation_status ?? null,
+                    quantity_approved: Number(d.quantity_requested || 0),
+                };
+            })
         );
     };
 
     // 1-Click: Reset ke 0
     const handleResetAll = () => {
-        setItemsState(
-            details.map((d) => ({
+        setItemsState((prev) =>
+            details.map((d, idx) => ({
+                ...prev[idx],
                 id: d.id,
                 quantity_approved: 0,
             }))
         );
+    };
+
+    const resolveEffectiveUnitPrice = (d, itemState) => {
+        const { basePrice, isPriceUpdated } = getDetailFlags(d);
+        if (isPriceUpdated && itemState?.price_validation_status === 'TIDAK_SAH' && basePrice !== null) {
+            return basePrice;
+        }
+        return Number(d.unit_price || 0);
     };
 
     // Calculate live totals
@@ -82,9 +149,10 @@ export default function QuickVerificationModal({
         let totalVal = 0;
 
         details.forEach((d, idx) => {
+            const state = itemsState[idx];
             const requested = Number(d.quantity_requested || 0);
-            const approved = Number(itemsState[idx]?.quantity_approved || 0);
-            const unitPrice = Number(d.unit_price || 0);
+            const approved = state?.item_validation_status === 'TIDAK_SAH' ? 0 : Number(state?.quantity_approved || 0);
+            const unitPrice = resolveEffectiveUnitPrice(d, state);
 
             reqQty += requested;
             appQty += approved;
@@ -99,12 +167,19 @@ export default function QuickVerificationModal({
     }, [details, itemsState]);
 
     const isAnyItemExceedingSSH = useMemo(() => {
-        return details.some(d => {
-            const unitPrice = Number(d.unit_price || 0);
-            const standardPrice = Number(d.item?.standard_price || 0);
-            return d.item && unitPrice > standardPrice;
+        return details.some((d, idx) => {
+            const state = itemsState[idx];
+            const approved = state?.item_validation_status === 'TIDAK_SAH' ? 0 : Number(state?.quantity_approved || 0);
+            if (approved <= 0) return false;
+            const { basePrice, isPriceUpdated } = getDetailFlags(d);
+            if (isPriceUpdated && state?.price_validation_status === 'TIDAK_SAH') {
+                return false;
+            }
+            const effectivePrice = resolveEffectiveUnitPrice(d, state);
+            const standardRef = basePrice !== null ? basePrice : Number(d.item?.standard_price || 0);
+            return d.item && effectivePrice > standardRef;
         });
-    }, [details]);
+    }, [details, itemsState]);
 
     // Handle Approve Submission (Frictionless / Direct with Toast)
     const handleSubmitApprove = (e) => {
@@ -346,38 +421,116 @@ export default function QuickVerificationModal({
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 bg-white">
                                     {details.map((detail, idx) => {
+                                        const itemState = itemsState[idx];
+                                        const { isNewItem, basePrice, isPriceUpdated } = getDetailFlags(detail);
                                         const itemCode = detail.item?.item_code || (detail.item_id ? `ITM-${String(detail.item_id).padStart(4, '0')}` : 'ITM-BARU');
                                         const itemName = detail.item?.name || detail.item_name || '-';
                                         const itemSpec = detail.item?.specification || detail.specification;
                                         const itemUnit = detail.unit_type || detail.item?.unit_type || 'Unit';
-                                        const unitPrice = Number(detail.unit_price || 0);
-                                        const currentApproved = itemsState[idx]?.quantity_approved ?? detail.quantity_requested;
-                                        const subtotalApproved = unitPrice * Number(currentApproved || 0);
+                                        const effectivePrice = resolveEffectiveUnitPrice(detail, itemState);
+                                        const isRejectedItem = itemState?.item_validation_status === 'TIDAK_SAH';
+                                        const currentApproved = isRejectedItem ? 0 : (itemState?.quantity_approved ?? detail.quantity_requested);
+                                        const subtotalApproved = effectivePrice * Number(currentApproved || 0);
+                                        const standardRefPrice = basePrice !== null ? basePrice : Number(detail.item?.standard_price || 0);
 
                                         return (
-                                            <tr key={detail.id || idx} className="hover:bg-slate-50/60 transition">
+                                            <tr key={detail.id || idx} className={`transition ${isRejectedItem ? 'bg-rose-50/40' : 'hover:bg-slate-50/60'}`}>
                                                 <td className="px-4 py-3.5 text-center text-slate-400 font-semibold">
                                                     {idx + 1}
                                                 </td>
-                                                <td className="px-5 py-3.5">
-                                                    <p className="font-bold text-slate-900">{itemName}</p>
+                                                <td className="px-5 py-3.5 space-y-1.5">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <span className="font-mono text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                                                            {itemCode}
+                                                        </span>
+                                                        <p className="font-bold text-slate-900">{itemName}</p>
+                                                        {isNewItem && (
+                                                            <span className="inline-flex items-center rounded bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[10px] font-black text-amber-800 uppercase">
+                                                                BARU
+                                                            </span>
+                                                        )}
+                                                        {isPriceUpdated && (
+                                                            <span className="inline-flex items-center rounded bg-sky-50 border border-sky-200 px-1.5 py-0.2 text-[10px] font-black text-sky-800 uppercase">
+                                                                Harga Diperbarui
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     {itemSpec && (
-                                                        <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                                                        <p className="text-[11px] text-slate-500 line-clamp-1">
                                                             {itemSpec}
                                                         </p>
+                                                    )}
+                                                    {isNewItem && (
+                                                        <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
+                                                            <span className="text-[10px] font-semibold text-slate-500">Validasi Barang Baru:</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => updateItemValidation(idx, 'SAH', detail.quantity_requested)}
+                                                                className={`rounded-md px-2 py-0.5 text-[10px] font-bold border transition cursor-pointer ${
+                                                                    itemState?.item_validation_status !== 'TIDAK_SAH'
+                                                                        ? 'bg-emerald-600 text-white border-emerald-600'
+                                                                        : 'bg-white text-slate-600 border-slate-300 hover:bg-emerald-50'
+                                                                }`}
+                                                            >
+                                                                &#10003; Sah
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => updateItemValidation(idx, 'TIDAK_SAH', detail.quantity_requested)}
+                                                                className={`rounded-md px-2 py-0.5 text-[10px] font-bold border transition cursor-pointer ${
+                                                                    itemState?.item_validation_status === 'TIDAK_SAH'
+                                                                        ? 'bg-rose-600 text-white border-rose-600'
+                                                                        : 'bg-white text-slate-600 border-slate-300 hover:bg-rose-50'
+                                                                }`}
+                                                            >
+                                                                &times; Tidak Sah
+                                                            </button>
+                                                        </div>
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3.5 text-center text-slate-600 font-medium">
                                                     {itemUnit}
                                                 </td>
-                                                <td className="px-4 py-3.5 text-right">
-                                                    <div className={detail.item && unitPrice > Number(detail.item.standard_price || 0) ? "text-rose-600 font-bold font-mono" : "text-slate-700 font-medium font-mono"}>
-                                                        {formatRupiah(unitPrice)}
+                                                <td className="px-4 py-3.5 text-right space-y-1">
+                                                    <div className={detail.item && effectivePrice > standardRefPrice ? 'text-rose-600 font-bold font-mono' : 'text-slate-700 font-medium font-mono'}>
+                                                        {formatRupiah(effectivePrice)}
                                                     </div>
-                                                    {detail.item && (
-                                                        <div className="text-[9px] text-slate-400 mt-0.5">
-                                                            SSH: {formatRupiah(detail.item.standard_price || 0)}
+                                                    {isPriceUpdated && basePrice !== null ? (
+                                                        <div className="space-y-1">
+                                                            <div className="text-[10px] text-slate-500">
+                                                                Awal: <span className="line-through font-mono">{formatRupiah(basePrice)}</span> &rarr; Usulan: <span className="font-mono font-bold text-sky-700">{formatRupiah(detail.unit_price)}</span>
+                                                            </div>
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => updatePriceValidation(idx, 'SAH')}
+                                                                    className={`rounded px-1.5 py-0.5 text-[10px] font-bold border transition cursor-pointer ${
+                                                                        itemState?.price_validation_status !== 'TIDAK_SAH'
+                                                                            ? 'bg-teal-600 text-white border-teal-600'
+                                                                            : 'bg-white text-slate-600 border-slate-300 hover:bg-teal-50'
+                                                                    }`}
+                                                                >
+                                                                    Sah Harga
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => updatePriceValidation(idx, 'TIDAK_SAH')}
+                                                                    className={`rounded px-1.5 py-0.5 text-[10px] font-bold border transition cursor-pointer ${
+                                                                        itemState?.price_validation_status === 'TIDAK_SAH'
+                                                                            ? 'bg-rose-600 text-white border-rose-600'
+                                                                            : 'bg-white text-slate-600 border-slate-300 hover:bg-rose-50'
+                                                                    }`}
+                                                                >
+                                                                    Tidak Sah
+                                                                </button>
+                                                            </div>
                                                         </div>
+                                                    ) : (
+                                                        detail.item && (
+                                                            <div className="text-[9px] text-slate-400">
+                                                                SSH: {formatRupiah(detail.item.standard_price || 0)}
+                                                            </div>
+                                                        )
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3.5 text-center font-bold text-slate-700">
@@ -387,22 +540,25 @@ export default function QuickVerificationModal({
                                                     <div className="flex items-center justify-center gap-1.5">
                                                         <button
                                                             type="button"
+                                                            disabled={isRejectedItem}
                                                             onClick={() => updateQuantityApproved(idx, Math.max(0, currentApproved - 1))}
-                                                            className="flex h-7 w-7 items-center justify-center rounded border border-slate-300 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-800 active:scale-95 transition cursor-pointer"
+                                                            className="flex h-7 w-7 items-center justify-center rounded border border-slate-300 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition cursor-pointer"
                                                         >
                                                             &minus;
                                                         </button>
                                                         <input
                                                             type="number"
                                                             min="0"
-                                                            value={currentApproved === 0 && itemsState[idx]?.quantity_approved === 0 ? '0' : currentApproved || ''}
+                                                            disabled={isRejectedItem}
+                                                            value={currentApproved === 0 && itemState?.quantity_approved === 0 ? '0' : currentApproved || ''}
                                                             onChange={(e) => updateQuantityApproved(idx, e.target.value)}
-                                                            className="w-14 text-center font-bold text-xs rounded border border-slate-300 bg-white px-1 py-1.5 text-slate-900 focus:border-teal-500 focus:ring-teal-500 focus:bg-white shadow-inner transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            className="w-14 text-center font-bold text-xs rounded border border-slate-300 bg-white px-1 py-1.5 text-slate-900 focus:border-teal-500 focus:ring-teal-500 focus:bg-white disabled:bg-slate-100 disabled:text-slate-400 shadow-inner transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                         />
                                                         <button
                                                             type="button"
+                                                            disabled={isRejectedItem}
                                                             onClick={() => updateQuantityApproved(idx, currentApproved + 1)}
-                                                            className="flex h-7 w-7 items-center justify-center rounded border border-slate-300 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-800 active:scale-95 transition cursor-pointer"
+                                                            className="flex h-7 w-7 items-center justify-center rounded border border-slate-300 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition cursor-pointer"
                                                         >
                                                             +
                                                         </button>

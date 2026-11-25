@@ -310,4 +310,172 @@ class PerencanaanItemManagementTest extends TestCase
         $this->assertEquals('STANDAR', $item->source);
         $this->assertTrue($item->isStandard());
     }
+
+    public function test_perencanaan_can_reject_proposed_unit_item_as_tidak_sah(): void
+    {
+        $unit = Unit::create([
+            'division_id' => $this->perencanaanDivision->id,
+            'name' => 'Instalasi Gawat Darurat',
+            'unit_code' => 'IGD',
+        ]);
+
+        $item = Item::create([
+            'rba_account_id' => $this->rbaAccount->id,
+            'item_code' => 'ITM-0088',
+            'name' => 'Alat Khusus Tidak Layak',
+            'unit_type' => 'Unit',
+            'standard_price' => 250000,
+            'source' => 'USULAN_UNIT',
+            'origin_unit_id' => $unit->id,
+        ]);
+
+        $requisition = Requisition::create([
+            'requisition_number' => 'REQ-REJECT-ITEM-01',
+            'division_id' => $this->perencanaanDivision->id,
+            'unit_id' => $unit->id,
+            'user_id' => $this->perencanaanUser->id,
+            'rba_account_id' => $this->rbaAccount->id,
+            'jenis_belanja' => 'Operasi',
+            'sumber_dana' => 'BLUD',
+            'sub_kegiatan' => 'Pelayanan IGD',
+            'fiscal_year' => 2026,
+            'budget_year' => 2026,
+            'status' => 'Pending_Perencanaan',
+            'submission_date' => today(),
+            'total_operasional' => 500000,
+            'total_estimated' => 500000,
+        ]);
+
+        $detail = RequisitionDetail::create([
+            'requisition_id' => $requisition->id,
+            'item_id' => $item->id,
+            'item_name' => $item->name,
+            'unit_type' => $item->unit_type,
+            'is_new_item' => true,
+            'item_validation_status' => 'PENDING',
+            'quantity_requested' => 2,
+            'unit_price' => 250000,
+            'subtotal' => 500000,
+        ]);
+
+        $response = $this->actingAs($this->perencanaanUser)
+            ->patch(route('items.reject-standard', $item->id));
+
+        $response->assertRedirect(route('items.index', ['source' => 'USULAN_UNIT']));
+        $response->assertSessionHas('success');
+
+        $this->assertTrue($item->fresh()->isRejected());
+        $this->assertEquals('DITOLAK', $item->fresh()->source);
+
+        $detail->refresh();
+        $this->assertEquals('TIDAK_SAH', $detail->item_validation_status);
+        $this->assertEquals(0, $detail->quantity_approved);
+        $this->assertEquals(0, (float) $detail->subtotal);
+        $this->assertEquals(0, (float) $requisition->fresh()->total_estimated);
+    }
+
+    public function test_perencanaan_can_verify_and_reject_pending_price_update(): void
+    {
+        $unit = Unit::create([
+            'division_id' => $this->perencanaanDivision->id,
+            'name' => 'Instalasi Farmasi',
+            'unit_code' => 'FAR',
+        ]);
+
+        $itemApproved = Item::create([
+            'rba_account_id' => $this->rbaAccount->id,
+            'item_code' => 'ITM-0101',
+            'name' => 'Alkohol 70% 100ml',
+            'unit_type' => 'Botol',
+            'standard_price' => 15000,
+            'pending_price' => 18000,
+            'price_status' => 'PENDING',
+            'price_origin_unit_id' => $unit->id,
+            'source' => 'STANDAR',
+        ]);
+
+        $itemRejected = Item::create([
+            'rba_account_id' => $this->rbaAccount->id,
+            'item_code' => 'ITM-0102',
+            'name' => 'Plester Gulung',
+            'unit_type' => 'Roll',
+            'standard_price' => 20000,
+            'pending_price' => 35000,
+            'price_status' => 'PENDING',
+            'price_origin_unit_id' => $unit->id,
+            'source' => 'STANDAR',
+        ]);
+
+        $requisition = Requisition::create([
+            'requisition_number' => 'REQ-PRICE-CHECK-01',
+            'division_id' => $this->perencanaanDivision->id,
+            'unit_id' => $unit->id,
+            'user_id' => $this->perencanaanUser->id,
+            'rba_account_id' => $this->rbaAccount->id,
+            'jenis_belanja' => 'Operasi',
+            'sumber_dana' => 'BLUD',
+            'sub_kegiatan' => 'Pelayanan Farmasi',
+            'fiscal_year' => 2026,
+            'budget_year' => 2026,
+            'status' => 'Pending_Perencanaan',
+            'submission_date' => today(),
+            'total_operasional' => 180000 + 350000,
+            'total_estimated' => 530000,
+        ]);
+
+        $detailApproved = RequisitionDetail::create([
+            'requisition_id' => $requisition->id,
+            'item_id' => $itemApproved->id,
+            'item_name' => $itemApproved->name,
+            'unit_type' => 'Botol',
+            'quantity_requested' => 10,
+            'unit_price' => 18000,
+            'original_unit_price' => 15000,
+            'is_price_updated' => true,
+            'price_validation_status' => 'PENDING',
+            'subtotal' => 180000,
+        ]);
+
+        $detailRejected = RequisitionDetail::create([
+            'requisition_id' => $requisition->id,
+            'item_id' => $itemRejected->id,
+            'item_name' => $itemRejected->name,
+            'unit_type' => 'Roll',
+            'quantity_requested' => 10,
+            'unit_price' => 35000,
+            'original_unit_price' => 20000,
+            'is_price_updated' => true,
+            'price_validation_status' => 'PENDING',
+            'subtotal' => 350000,
+        ]);
+
+        // 1. Verify price update on first item
+        $this->actingAs($this->perencanaanUser)
+            ->patch(route('items.verify-price', $itemApproved->id))
+            ->assertRedirect(route('items.index', ['source' => 'USULAN_UNIT']));
+
+        $itemApproved->refresh();
+        $this->assertEquals(18000, (float) $itemApproved->standard_price);
+        $this->assertNull($itemApproved->pending_price);
+        $this->assertEquals('NONE', $itemApproved->price_status);
+        $this->assertEquals('SAH', $detailApproved->fresh()->price_validation_status);
+
+        // 2. Reject price update on second item
+        $this->actingAs($this->perencanaanUser)
+            ->patch(route('items.reject-price', $itemRejected->id))
+            ->assertRedirect(route('items.index', ['source' => 'USULAN_UNIT']));
+
+        $itemRejected->refresh();
+        $this->assertEquals(20000, (float) $itemRejected->standard_price);
+        $this->assertNull($itemRejected->pending_price);
+        $this->assertEquals('NONE', $itemRejected->price_status);
+
+        $detailRejected->refresh();
+        $this->assertEquals('TIDAK_SAH', $detailRejected->price_validation_status);
+        $this->assertEquals(20000, (float) $detailRejected->unit_price);
+        $this->assertEquals(200000, (float) $detailRejected->subtotal);
+
+        // Total estimated recalculated: 180,000 + 200,000 = 380,000
+        $this->assertEquals(380000, (float) $requisition->fresh()->total_estimated);
+    }
 }

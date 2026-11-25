@@ -2,7 +2,7 @@ import Modal from '@/Components/Modal';
 import { useForm, usePage } from '@inertiajs/react';
 import { useState, useEffect, useMemo, useRef } from 'react';
 
-import { ClipboardList, AlertTriangle, X, Search, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { ClipboardList, AlertTriangle, X, Search, Plus, Trash2, ShoppingBag, Lock } from 'lucide-react';
 
 const formatRupiah = (value) =>
     new Intl.NumberFormat('id-ID', {
@@ -189,13 +189,28 @@ export default function RequisitionFormModal({
     const [inputPrice, setInputPrice] = useState('');
     const [inputSpec, setInputSpec] = useState('');
     const [selectedCatalogItem, setSelectedCatalogItem] = useState(null);
+    const [isManualMode, setIsManualMode] = useState(false);
     const [isCatalogDropdownOpen, setIsCatalogDropdownOpen] = useState(false);
 
     const [quickAddError, setQuickAddError] = useState(null);
     const [submitError, setSubmitError] = useState(null);
 
+    const nameInputRef = useRef(null);
+    const manualInputRef = useRef(null);
     const qtyInputRef = useRef(null);
     const dropdownRef = useRef(null);
+
+    const resetItemInputRow = (keepManual = false) => {
+        setInputName('');
+        setSelectedCatalogItem(null);
+        setInputQty(1);
+        setInputUnit('Pcs');
+        setInputPrice('');
+        setInputSpec('');
+        setIsCatalogDropdownOpen(false);
+        setQuickAddError(null);
+        setIsManualMode(keepManual);
+    };
 
     // Catalog items matching the currently selected active account
     const activeCatalogItems = useMemo(() => {
@@ -230,16 +245,59 @@ export default function RequisitionFormModal({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // Reset catalog selection when user switches RBA account in catalog mode
+    useEffect(() => {
+        if (!isManualMode && selectedCatalogItem && String(selectedCatalogItem.rba_account_id) !== String(selectedRincianObjekId)) {
+            resetItemInputRow(false);
+        }
+    }, [selectedRincianObjekId, isManualMode, selectedCatalogItem]);
+
+    // Reset input row cleanly when modal opens/closes
+    useEffect(() => {
+        if (!show) {
+            resetItemInputRow(false);
+            setSubmitError(null);
+        }
+    }, [show]);
+
     const handleSelectCatalogItem = (catItem) => {
+        setIsManualMode(false);
         setInputName(catItem.name);
         setInputUnit(catItem.unit_type || 'Pcs');
         setInputPrice(catItem.standard_price || 0);
         setInputSpec(catItem.specification || '');
         setSelectedCatalogItem(catItem);
         setIsCatalogDropdownOpen(false);
+        setQuickAddError(null);
         if (qtyInputRef.current) {
             qtyInputRef.current.focus();
         }
+    };
+
+    const handleClearCatalogSelection = () => {
+        resetItemInputRow(false);
+        setTimeout(() => {
+            setIsCatalogDropdownOpen(true);
+            nameInputRef.current?.focus();
+        }, 0);
+    };
+
+    const handleSwitchToManualMode = (prefillName = '') => {
+        setSelectedCatalogItem(null);
+        setIsCatalogDropdownOpen(false);
+        setQuickAddError(null);
+        setIsManualMode(true);
+        if (typeof prefillName === 'string' && prefillName.trim()) {
+            setInputName(prefillName);
+        } else if (selectedCatalogItem) {
+            setInputName('');
+            setInputPrice('');
+            setInputUnit('Pcs');
+            setInputSpec('');
+        }
+        setTimeout(() => {
+            manualInputRef.current?.focus();
+        }, 0);
     };
 
     // Add item to table
@@ -251,7 +309,12 @@ export default function RequisitionFormModal({
             return;
         }
 
-        const trimmedName = inputName.trim();
+        if (!isManualMode && !selectedCatalogItem) {
+            setQuickAddError('Pilih barang dari daftar katalog terlebih dahulu, atau klik tombol "+ Barang Baru" untuk input manual.');
+            return;
+        }
+
+        const trimmedName = (isManualMode ? inputName : selectedCatalogItem?.name || '').trim();
         if (!trimmedName) {
             setQuickAddError('Nama barang / uraian tidak boleh kosong.');
             return;
@@ -264,8 +327,8 @@ export default function RequisitionFormModal({
         }
 
         const priceNum = Number(inputPrice);
-        if (isNaN(priceNum) || priceNum < 0) {
-            setQuickAddError('Harga satuan barang tidak boleh negatif.');
+        if (inputPrice === '' || isNaN(priceNum) || priceNum < 0) {
+            setQuickAddError('Harga satuan barang wajib diisi dan tidak boleh negatif.');
             return;
         }
 
@@ -274,31 +337,43 @@ export default function RequisitionFormModal({
             activeAccount.account_code?.startsWith('1.2') ||
             activeAccount.kategori_belanja === 'Modal';
 
+        const catalogStandardPrice = selectedCatalogItem ? Number(selectedCatalogItem.standard_price || 0) : null;
+        const isPriceChanged = !isManualMode && catalogStandardPrice !== null && Math.abs(priceNum - catalogStandardPrice) > 0.001;
+
         const newItem = {
             id: Date.now() + Math.random(),
-            item_id: selectedCatalogItem?.id || null,
+            item_id: isManualMode ? null : selectedCatalogItem?.id || null,
             rba_account_id: activeAccount.id,
             account_code: activeAccount.account_code,
             account_name: activeAccount.account_name,
             jenis_belanja: isModalAccount ? 'Modal' : 'Operasi',
             name: trimmedName,
-            specification: inputSpec.trim() || selectedCatalogItem?.specification || null,
+            specification: inputSpec.trim() || (!isManualMode ? selectedCatalogItem?.specification : null) || null,
             unit_type: inputUnit || 'Pcs',
             quantity: qtyNum,
             unit_price: priceNum,
+            original_unit_price: catalogStandardPrice,
+            is_price_updated: isPriceChanged,
             subtotal: qtyNum * priceNum,
-            is_new: !selectedCatalogItem,
+            is_new: Boolean(isManualMode),
         };
 
         setData('items', [...data.items, newItem]);
+        resetItemInputRow(false);
+    };
 
-        // Reset input fields
-        setInputName('');
-        setSelectedCatalogItem(null);
-        setInputQty(1);
-        setInputPrice('');
-        setInputSpec('');
-        setIsCatalogDropdownOpen(false);
+    // Update quantity (+/- stepper or direct input) for an item in Section 5 table
+    const handleUpdateItemQuantity = (indexToUpdate, rawQuantity) => {
+        const parsedQty = Math.max(1, parseInt(rawQuantity, 10) || 1);
+        const updatedItems = data.items.map((item, idx) => {
+            if (idx !== indexToUpdate) return item;
+            return {
+                ...item,
+                quantity: parsedQty,
+                subtotal: parsedQty * Number(item.unit_price || 0),
+            };
+        });
+        setData('items', updatedItems);
     };
 
     // Remove item from table
@@ -334,6 +409,14 @@ export default function RequisitionFormModal({
                     requisition.jenis_belanja === 'Modal';
                 const acc = d.rba_account || d.rbaAccount || requisition.rba_account || {};
 
+                const isItemNew = Boolean(d.is_new_item || d.item?.source === 'USULAN_UNIT' || !d.item_id);
+                const basePrice = d.original_unit_price !== null && d.original_unit_price !== undefined
+                    ? Number(d.original_unit_price)
+                    : (d.item ? Number(d.item.standard_price || 0) : null);
+                const isPriceUpdated = Boolean(
+                    d.is_price_updated || (!isItemNew && basePrice !== null && Math.abs(Number(d.unit_price || 0) - basePrice) > 0.001)
+                );
+
                 return {
                     id: d.id || `exist-${index}`,
                     item_id: d.item_id || null,
@@ -344,10 +427,12 @@ export default function RequisitionFormModal({
                     unit_type: d.unit_type || d.item?.unit_type || 'Pcs',
                     quantity: Number(d.quantity_requested || 1),
                     unit_price: Number(d.unit_price || 0),
+                    original_unit_price: basePrice,
+                    is_price_updated: isPriceUpdated,
                     subtotal: Number(d.subtotal || (Number(d.quantity_requested || 1) * Number(d.unit_price || 0))),
                     jenis_belanja: isItemModal ? 'Modal' : 'Operasi',
                     specification: d.specification || d.item?.specification || '',
-                    is_new: !d.item_id,
+                    is_new: isItemNew,
                 };
             });
 
@@ -429,18 +514,22 @@ export default function RequisitionFormModal({
             total_operasional: totalOperasional,
             total_modal: totalModal,
             total_estimated: grandTotal,
-            items: data.items.map((it) => ({
-                item_id: it.item_id || null,
-                rba_account_id: it.rba_account_id,
-                jenis_belanja: it.jenis_belanja,
-                name: it.name,
-                specification: it.specification,
-                unit_type: it.unit_type,
-                quantity: it.quantity,
-                unit_price: it.unit_price,
-                subtotal: it.subtotal,
-                is_new: it.is_new,
-            })),
+            items: data.items.map((it) => {
+                const normalizedQty = Math.max(1, parseInt(it.quantity, 10) || 1);
+                const unitPrice = Number(it.unit_price || 0);
+                return {
+                    item_id: it.item_id || null,
+                    rba_account_id: it.rba_account_id,
+                    jenis_belanja: it.jenis_belanja,
+                    name: it.name,
+                    specification: it.specification,
+                    unit_type: it.unit_type,
+                    quantity: normalizedQty,
+                    unit_price: unitPrice,
+                    subtotal: normalizedQty * unitPrice,
+                    is_new: it.is_new,
+                };
+            }),
         };
 
         if (isEdit && requisition) {
@@ -888,130 +977,297 @@ export default function RequisitionFormModal({
                     {/* SECTION 4: Input Rincian Barang */}
                     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
                         <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-2 gap-2">
-                            <h3 className="text-sm font-bold text-slate-900 border-b-2 border-emerald-500 pb-0.5 inline-block">
-                                4. Input Rincian Barang
-                            </h3>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-sm font-bold text-slate-900 border-b-2 border-emerald-500 pb-0.5 inline-block">
+                                    4. Input Rincian Barang
+                                </h3>
+                                {isManualMode && (
+                                    <span className="inline-flex items-center rounded-md bg-amber-100 border border-amber-300 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-800">
+                                        BARU &bull; Input Manual
+                                    </span>
+                                )}
+                            </div>
                             <span className="text-[11px] text-slate-400">
-                                Pilih dari katalog atau ketik manual, lalu klik <strong>Tambah ke Daftar Usulan</strong>
+                                {isManualMode
+                                    ? 'Isi nama barang baru, volume, satuan & harga, lalu klik Tambah ke Daftar Usulan'
+                                    : 'Pilih barang dari katalog (atau klik + Barang Baru bila tidak tersedia)'}
                             </span>
                         </div>
 
                         <div className="bg-slate-50/60 p-4 rounded-2xl border border-slate-200/70 space-y-3.5">
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                                {/* Nama Barang / Uraian */}
-                                <div className="sm:col-span-4 relative">
-                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                        Nama Barang / Uraian <span className="text-rose-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={inputName}
-                                        onChange={(e) => {
-                                            setInputName(e.target.value);
-                                            setIsCatalogDropdownOpen(true);
-                                        }}
-                                        onFocus={() => setIsCatalogDropdownOpen(true)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                qtyInputRef.current?.focus();
-                                            }
-                                        }}
-                                        placeholder="Ketik nama barang / pilih katalog..."
-                                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-2xs"
-                                    />
+                            <div className="flex flex-col lg:flex-row lg:items-start gap-3">
+                                {/* Nama Barang / Uraian: Mode Select Katalog (Locked saat terpilih + tombol X) ATAU Mode Input Manual (BARU) */}
+                                <div className="lg:flex-1 min-w-0 relative">
+                                    <div className="flex items-center justify-between mb-1.5 gap-2">
+                                        <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                                            <span>{isManualMode ? 'Nama Barang Baru' : 'Pilih Barang Katalog / Uraian'}</span>
+                                            <span className="text-rose-500">*</span>
+                                            {isManualMode && (
+                                                <span className="inline-flex items-center rounded-md bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[10px] font-black uppercase tracking-wider text-amber-800">
+                                                    BARU
+                                                </span>
+                                            )}
+                                        </label>
+                                        {selectedCatalogItem && !isManualMode && (
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                                                <Lock size={10} /> Terpilih ({selectedCatalogItem.item_code || 'Katalog'})
+                                            </span>
+                                        )}
+                                    </div>
 
-                                    {/* Floating Autocomplete Dropdown dari Master Katalog */}
-                                    {isCatalogDropdownOpen && filteredCatalogItems.length > 0 && (
-                                        <div
-                                            ref={dropdownRef}
-                                            className="absolute left-0 right-0 top-full mt-2 z-30 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl py-1 text-xs"
-                                        >
-                                            <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">
-                                                Katalog Barang Rekening Ini ({filteredCatalogItems.length}):
+                                    {!isManualMode ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="relative flex-1" ref={dropdownRef}>
+                                                {selectedCatalogItem ? (
+                                                    <div className="relative">
+                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-teal-600">
+                                                            <Lock size={14} />
+                                                        </div>
+                                                        <input
+                                                            type="text"
+                                                            readOnly
+                                                            value={selectedCatalogItem.name}
+                                                            title="Uraian barang katalog terkunci. Klik tombol silang (X) untuk mencari barang lain."
+                                                            className="w-full rounded-xl border-2 border-teal-400 bg-teal-50/70 pl-8 pr-9 py-2 text-xs font-bold text-slate-900 cursor-default select-none focus:outline-none shadow-2xs"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleClearCatalogSelection}
+                                                            title="Batalkan pilihan barang & cari barang lain"
+                                                            className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-500 hover:text-rose-600 transition cursor-pointer"
+                                                        >
+                                                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 shadow-2xs">
+                                                                <X size={12} />
+                                                            </span>
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="relative">
+                                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                                            <Search size={14} />
+                                                        </div>
+                                                        <input
+                                                            ref={nameInputRef}
+                                                            type="text"
+                                                            value={inputName}
+                                                            onChange={(e) => {
+                                                                setInputName(e.target.value);
+                                                                setIsCatalogDropdownOpen(true);
+                                                            }}
+                                                            onFocus={() => setIsCatalogDropdownOpen(true)}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.preventDefault();
+                                                                    if (filteredCatalogItems.length === 1) {
+                                                                        handleSelectCatalogItem(filteredCatalogItems[0]);
+                                                                    }
+                                                                }
+                                                            }}
+                                                            placeholder="Cari & pilih barang dari katalog rekening ini..."
+                                                            className="w-full rounded-xl border border-slate-300 bg-white pl-8 pr-8 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-2xs"
+                                                        />
+                                                        {inputName && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setInputName('');
+                                                                    setIsCatalogDropdownOpen(true);
+                                                                    nameInputRef.current?.focus();
+                                                                }}
+                                                                title="Bersihkan kata pencarian"
+                                                                className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        )}
+
+                                                        {/* Floating Autocomplete Dropdown dari Master Katalog */}
+                                                        {isCatalogDropdownOpen && (
+                                                            <div className="absolute left-0 right-0 top-full mt-2 z-30 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl py-1 text-xs">
+                                                                <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                                                                    <span>Katalog Barang Rekening Ini ({filteredCatalogItems.length})</span>
+                                                                    {activeCatalogItems.length === 0 && (
+                                                                        <span className="text-amber-600 normal-case font-semibold">Katalog kosong</span>
+                                                                    )}
+                                                                </div>
+                                                                {filteredCatalogItems.length > 0 ? (
+                                                                    filteredCatalogItems.map((catItem) => (
+                                                                        <button
+                                                                            key={catItem.id}
+                                                                            type="button"
+                                                                            onClick={() => handleSelectCatalogItem(catItem)}
+                                                                            className="w-full text-left px-3 py-2.5 hover:bg-teal-50 flex items-center justify-between gap-2 border-b border-slate-50 last:border-0 transition cursor-pointer"
+                                                                        >
+                                                                            <div className="min-w-0">
+                                                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                                                    <p className="font-bold text-slate-900">{catItem.name}</p>
+                                                                                    {catItem.source === 'USULAN_UNIT' && (
+                                                                                        <span className="inline-flex items-center rounded bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[9px] font-black text-amber-800 uppercase">
+                                                                                            Usulan Unit
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                                <p className="text-[10px] text-slate-500 truncate">{catItem.specification || 'Standar RS'}</p>
+                                                                            </div>
+                                                                            <div className="text-right shrink-0">
+                                                                                <span className="font-mono font-bold text-teal-700 block">{formatRupiah(catItem.standard_price)}</span>
+                                                                                <span className="text-[10px] text-slate-400 uppercase">/{catItem.unit_type || 'Unit'}</span>
+                                                                            </div>
+                                                                        </button>
+                                                                    ))
+                                                                ) : (
+                                                                    <div className="p-3 text-center space-y-2">
+                                                                        <p className="text-xs text-slate-500">
+                                                                            {inputName.trim()
+                                                                                ? `Barang "${inputName}" tidak ditemukan di katalog rekening ini.`
+                                                                                : 'Belum ada item katalog pada rekening ini.'}
+                                                                        </p>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleSwitchToManualMode(inputName)}
+                                                                            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 border border-amber-300 hover:bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-900 transition cursor-pointer"
+                                                                        >
+                                                                            <Plus size={13} />
+                                                                            <span>Input Manual sebagai Barang Baru</span>
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
-                                            {filteredCatalogItems.map((catItem) => (
+
+                                            {/* Dedicated Button untuk Input Manual Barang Baru */}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSwitchToManualMode(selectedCatalogItem ? '' : inputName)}
+                                                title="Barang tidak ada di katalog? Klik untuk input barang baru secara manual"
+                                                className="inline-flex items-center gap-1 shrink-0 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 active:scale-95 px-3 py-2 text-xs font-bold text-amber-900 shadow-2xs transition cursor-pointer whitespace-nowrap"
+                                            >
+                                                <Plus size={14} />
+                                                <span>Barang Baru</span>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="relative flex-1">
+                                                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[9px] font-black text-amber-900 uppercase">
+                                                        BARU
+                                                    </span>
+                                                    <input
+                                                        ref={manualInputRef}
+                                                        type="text"
+                                                        value={inputName}
+                                                        onChange={(e) => setInputName(e.target.value)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                e.preventDefault();
+                                                                qtyInputRef.current?.focus();
+                                                            }
+                                                        }}
+                                                        placeholder="Ketik nama barang baru yang diusulkan..."
+                                                        className="w-full rounded-xl border-2 border-amber-300 bg-white pl-14 pr-3.5 py-2 text-xs font-semibold text-slate-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition shadow-2xs"
+                                                    />
+                                                </div>
                                                 <button
-                                                    key={catItem.id}
                                                     type="button"
-                                                    onClick={() => handleSelectCatalogItem(catItem)}
-                                                    className="w-full text-left px-3 py-2.5 hover:bg-teal-50 flex items-center justify-between border-b border-slate-50 last:border-0 transition cursor-pointer"
+                                                    onClick={() => resetItemInputRow(false)}
+                                                    title="Batalkan input manual & kembali ke pilih katalog"
+                                                    className="inline-flex items-center gap-1 shrink-0 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 transition cursor-pointer whitespace-nowrap"
                                                 >
-                                                    <div>
-                                                        <p className="font-bold text-slate-900">{catItem.name}</p>
-                                                        <p className="text-[10px] text-slate-500">{catItem.specification || 'Standar RS'}</p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <span className="font-mono font-bold text-teal-700 block">{formatRupiah(catItem.standard_price)}</span>
-                                                        <span className="text-[10px] text-slate-400 uppercase">/{catItem.unit_type || 'Unit'}</span>
-                                                    </div>
+                                                    <X size={13} />
+                                                    <span>Pilih Katalog</span>
                                                 </button>
-                                            ))}
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={inputSpec}
+                                                onChange={(e) => setInputSpec(e.target.value)}
+                                                placeholder="Spesifikasi / merk / ukuran barang baru (opsional)..."
+                                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-700 placeholder-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition shadow-2xs"
+                                            />
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Volume */}
-                                <div className="col-span-6 sm:col-span-2">
-                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                        Volume <span className="text-rose-500">*</span>
-                                    </label>
-                                    <input
-                                        ref={qtyInputRef}
-                                        type="number"
-                                        min="1"
-                                        value={inputQty}
-                                        onChange={(e) => setInputQty(Math.max(1, parseInt(e.target.value) || 1))}
-                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-center font-bold shadow-2xs"
-                                    />
-                                </div>
+                                {/* Volume, Satuan, Harga Satuan, Total Biaya */}
+                                <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:items-start gap-2.5 shrink-0">
+                                    {/* Volume */}
+                                    <div className="lg:w-20">
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                            Volume <span className="text-rose-500">*</span>
+                                        </label>
+                                        <input
+                                            ref={qtyInputRef}
+                                            type="number"
+                                            min="1"
+                                            value={inputQty}
+                                            onChange={(e) => setInputQty(e.target.value === '' ? '' : Math.max(1, parseInt(e.target.value, 10) || 1))}
+                                            onBlur={(e) => setInputQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                                            className="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-center font-bold shadow-2xs"
+                                        />
+                                    </div>
 
-                                {/* Satuan */}
-                                <div className="col-span-6 sm:col-span-2">
-                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                        Satuan <span className="text-rose-500">*</span>
-                                    </label>
-                                    <select
-                                        value={inputUnit}
-                                        onChange={(e) => setInputUnit(e.target.value)}
-                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer text-center font-medium shadow-2xs"
-                                    >
-                                        {COMMON_UNITS.map((u) => (
-                                            <option key={u} value={u}>
-                                                {u}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                    {/* Satuan */}
+                                    <div className="lg:w-28">
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                            Satuan <span className="text-rose-500">*</span>
+                                        </label>
+                                        <select
+                                            value={inputUnit}
+                                            onChange={(e) => setInputUnit(e.target.value)}
+                                            className="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs text-slate-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer text-center font-medium shadow-2xs"
+                                        >
+                                            {COMMON_UNITS.map((u) => (
+                                                <option key={u} value={u}>
+                                                    {u}
+                                                </option>
+                                            ))}
+                                            {inputUnit && !COMMON_UNITS.includes(inputUnit) && (
+                                                <option value={inputUnit}>{inputUnit}</option>
+                                            )}
+                                        </select>
+                                    </div>
 
-                                {/* Harga Satuan (Rp) */}
-                                <div className="col-span-6 sm:col-span-2">
-                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                        Harga Satuan (Rp) <span className="text-rose-500">*</span>
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={inputPrice}
-                                        onChange={(e) => setInputPrice(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                handleAddItem();
-                                            }
-                                        }}
-                                        placeholder="0"
-                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 font-mono text-right font-medium focus:border-teal-500 focus:ring-1 focus:ring-teal-500 shadow-2xs"
-                                    />
-                                </div>
+                                    {/* Harga Satuan (Rp) */}
+                                    <div className="lg:w-36">
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                            Harga Satuan (Rp) <span className="text-rose-500">*</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={inputPrice}
+                                            onChange={(e) => setInputPrice(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleAddItem();
+                                                }
+                                            }}
+                                            placeholder="0"
+                                            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 font-mono text-right font-medium focus:border-teal-500 focus:ring-1 focus:ring-teal-500 shadow-2xs"
+                                        />
+                                        {!isManualMode &&
+                                            selectedCatalogItem &&
+                                            inputPrice !== '' &&
+                                            Math.abs(Number(inputPrice || 0) - Number(selectedCatalogItem.standard_price || 0)) > 0.001 && (
+                                                <p className="mt-1 text-[10px] font-semibold text-sky-700 leading-tight">
+                                                    Awal: {formatRupiah(selectedCatalogItem.standard_price)} (Harga Diperbarui)
+                                                </p>
+                                            )}
+                                    </div>
 
-                                {/* Total Biaya (Rp) */}
-                                <div className="col-span-6 sm:col-span-2">
-                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                        Total Biaya (Rp)
-                                    </label>
-                                    <div className="rounded-xl border border-teal-200 bg-teal-50/90 px-3 py-2 text-xs font-bold text-teal-900 font-mono text-right flex items-center justify-end h-[36px] shadow-2xs">
-                                        <span>{formatRupiah(Number(inputQty || 0) * Number(inputPrice || 0))}</span>
+                                    {/* Total Biaya (Rp) */}
+                                    <div className="lg:w-36">
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                            Total Biaya (Rp)
+                                        </label>
+                                        <div className="rounded-xl border border-teal-200 bg-teal-50/90 px-3 py-2 text-xs font-bold text-teal-900 font-mono text-right flex items-center justify-end h-[34px] shadow-2xs">
+                                            <span>{formatRupiah(Number(inputQty || 0) * Number(inputPrice || 0))}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1022,11 +1278,15 @@ export default function RequisitionFormModal({
                                 </p>
                             )}
 
-                            {/* Action Bar Terpadu: Tombol Tambah Barang Sesuai Gaya Aplikasi */}
+                            {/* Action Bar Terpadu */}
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-2.5 border-t border-slate-200/70 gap-2.5">
                                 <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
-                                    <span className="inline-block w-2 h-2 rounded-full bg-teal-500 shrink-0"></span>
-                                    <span>Pilih dari katalog atau ketik manual, lalu klik tombol untuk memasukkan ke daftar.</span>
+                                    <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${isManualMode ? 'bg-amber-500' : 'bg-teal-500'}`}></span>
+                                    <span>
+                                        {isManualMode
+                                            ? 'Mode Barang Baru aktif: barang baru akan diteruskan ke Perencanaan untuk divalidasi.'
+                                            : 'Pilih barang dari katalog atau klik "+ Barang Baru", lalu klik Tambah ke Daftar Usulan.'}
+                                    </span>
                                 </div>
                                 <button
                                     type="button"
@@ -1057,11 +1317,11 @@ export default function RequisitionFormModal({
                                     <tr>
                                         <th className="px-4 py-3 text-left w-36">KODE REKENING</th>
                                         <th className="px-4 py-3 text-left">URAIAN BARANG</th>
-                                        <th className="px-3 py-3 text-center w-16">VOL</th>
+                                        <th className="px-3 py-3 text-center w-36">VOL</th>
                                         <th className="px-3 py-3 text-center w-20">SATUAN</th>
-                                        <th className="px-4 py-3 text-right w-32">HARGA SATUAN</th>
+                                        <th className="px-4 py-3 text-right w-36">HARGA SATUAN</th>
                                         <th className="px-4 py-3 text-right w-36">TOTAL BIAYA</th>
-                                        <th className="px-3 py-3 text-center w-20">AKSI</th>
+                                        <th className="px-3 py-3 text-center w-16">AKSI</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -1080,42 +1340,106 @@ export default function RequisitionFormModal({
                                             </td>
                                         </tr>
                                     ) : (
-                                        data.items.map((it, idx) => (
-                                            <tr key={it.id || idx} className="hover:bg-slate-50/60 transition">
-                                                <td className="px-4 py-3 font-mono font-semibold text-slate-700 whitespace-nowrap">
-                                                    {it.account_code || '-'}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <p className="font-bold text-slate-900">{it.name}</p>
-                                                    {it.specification && (
-                                                        <p className="text-[11px] text-slate-500 mt-0.5">{it.specification}</p>
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3 text-center font-semibold text-slate-800">
-                                                    {it.quantity}
-                                                </td>
-                                                <td className="px-3 py-3 text-center text-slate-600">
-                                                    {it.unit_type}
-                                                </td>
-                                                <td className="px-4 py-3 text-right font-mono text-slate-700">
-                                                    {formatRupiah(it.unit_price)}
-                                                </td>
-                                                <td className="px-4 py-3 text-right font-mono font-bold text-slate-900">
-                                                    {formatRupiah(it.subtotal)}
-                                                </td>
-                                                <td className="px-3 py-3 text-center">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleRemoveItem(idx)}
-                                                        title="Hapus barang ini"
-                                                        className="inline-flex items-center justify-center p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                        <span className="sr-only">Hapus</span>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))
+                                        data.items.map((it, idx) => {
+                                            const isPriceEdited =
+                                                !it.is_new &&
+                                                it.original_unit_price !== null &&
+                                                it.original_unit_price !== undefined &&
+                                                Math.abs(Number(it.unit_price || 0) - Number(it.original_unit_price || 0)) > 0.001;
+
+                                            return (
+                                                <tr key={it.id || idx} className="hover:bg-slate-50/60 transition">
+                                                    <td className="px-4 py-3 font-mono font-semibold text-slate-700 whitespace-nowrap">
+                                                        {it.account_code || '-'}
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            <p className="font-bold text-slate-900">{it.name}</p>
+                                                            {it.is_new && (
+                                                                <span className="inline-flex items-center rounded bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[10px] font-black text-amber-800 uppercase">
+                                                                    BARU
+                                                                </span>
+                                                            )}
+                                                            {isPriceEdited && (
+                                                                <span className="inline-flex items-center rounded bg-sky-50 border border-sky-200 px-1.5 py-0.2 text-[10px] font-black text-sky-800 uppercase">
+                                                                    Harga Diperbarui
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {it.specification && (
+                                                            <p className="text-[11px] text-slate-500 mt-0.5">{it.specification}</p>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-3 text-center">
+                                                        <div className="inline-flex items-center rounded-xl border border-slate-300 bg-white p-0.5 shadow-2xs">
+                                                            <button
+                                                                type="button"
+                                                                disabled={(parseInt(it.quantity, 10) || 1) <= 1}
+                                                                onClick={() => handleUpdateItemQuantity(idx, (parseInt(it.quantity, 10) || 1) - 1)}
+                                                                title="Kurangi volume"
+                                                                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 hover:bg-teal-50 hover:text-teal-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition cursor-pointer font-bold"
+                                                            >
+                                                                &minus;
+                                                            </button>
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                value={it.quantity}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    if (val === '') {
+                                                                        const tempItems = data.items.map((row, rowIdx) =>
+                                                                            rowIdx === idx ? { ...row, quantity: '', subtotal: 0 } : row
+                                                                        );
+                                                                        setData('items', tempItems);
+                                                                        return;
+                                                                    }
+                                                                    handleUpdateItemQuantity(idx, val);
+                                                                }}
+                                                                onBlur={(e) => handleUpdateItemQuantity(idx, e.target.value || 1)}
+                                                                aria-label={`Volume ${it.name}`}
+                                                                className="w-14 border-none bg-transparent px-1 py-1 text-center text-xs font-bold text-slate-900 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleUpdateItemQuantity(idx, (parseInt(it.quantity, 10) || 0) + 1)}
+                                                                title="Tambah volume"
+                                                                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 hover:bg-teal-50 hover:text-teal-700 active:scale-95 transition cursor-pointer font-bold"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-3 py-3 text-center text-slate-600">
+                                                        {it.unit_type}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right font-mono text-slate-700 whitespace-nowrap">
+                                                        <span className={isPriceEdited ? 'font-bold text-sky-800 block' : 'block'}>
+                                                            {formatRupiah(it.unit_price)}
+                                                        </span>
+                                                        {isPriceEdited && (
+                                                            <span className="text-[10px] text-slate-400 line-through block">
+                                                                {formatRupiah(it.original_unit_price)}
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
+                                                        {formatRupiah(Number(it.quantity || 0) * Number(it.unit_price || 0))}
+                                                    </td>
+                                                    <td className="px-3 py-3 text-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveItem(idx)}
+                                                            title="Hapus barang ini"
+                                                            className="inline-flex items-center justify-center p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                            <span className="sr-only">Hapus</span>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
                                     )}
                                 </tbody>
                             </table>

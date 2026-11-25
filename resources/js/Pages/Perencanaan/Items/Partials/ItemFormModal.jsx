@@ -186,10 +186,27 @@ export default function ItemFormModal({
                             <span className="text-base shrink-0"><ClipboardList size={18} className="inline mr-1 text-slate-500" /></span>
                             <div className="space-y-0.5">
                                 <p className="font-bold text-blue-950">
-                                    Barang ini berasal dari Usulan Unit Kerja
+                                    Barang ini berasal dari Usulan Unit Kerja (BARU)
                                 </p>
                                 <p className="text-blue-800 text-[11px] leading-relaxed">
-                                    Diusulkan pertama kali oleh: <strong className="font-bold text-slate-900">{item.origin_unit?.name || 'Unit Kerja'}</strong>. Anda dapat mengesahkannya menjadi Standar Baku RS melalui tombol "Sahkan" di tabel katalog.
+                                    Diusulkan pertama kali oleh: <strong className="font-bold text-slate-900">{item.origin_unit?.name || 'Unit Kerja'}</strong>. Anda dapat mengesahkannya (Sah) atau menolaknya (Tidak Sah) di tabel Usulan Unit Baru maupun saat telaah pengajuan.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Banner Usulan Pembaruan Harga oleh Unit */}
+                    {isEdit && item?.price_status === 'PENDING' && item?.pending_price !== null && (
+                        <div className="rounded-xl border border-sky-200 bg-sky-50/80 p-3.5 text-xs text-sky-950 flex items-start gap-2.5">
+                            <span className="text-base shrink-0"><ClipboardList size={18} className="inline mr-1 text-sky-600" /></span>
+                            <div className="space-y-0.5">
+                                <p className="font-bold text-sky-950">
+                                    Usulan Pembaruan Harga oleh Unit Kerja
+                                </p>
+                                <p className="text-sky-800 text-[11px] leading-relaxed">
+                                    Unit <strong>{item.price_origin_unit?.name || 'Unit Kerja'}</strong> mengusulkan pembaruan harga dari{' '}
+                                    <span className="line-through font-mono">{formatRupiah(item.standard_price)}</span> menjadi{' '}
+                                    <strong className="font-mono text-sky-900">{formatRupiah(item.pending_price)}</strong>.
                                 </p>
                             </div>
                         </div>

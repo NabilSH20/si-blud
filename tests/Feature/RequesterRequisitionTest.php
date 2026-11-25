@@ -518,16 +518,23 @@ class RequesterRequisitionTest extends TestCase
 
         $response->assertRedirect(route('requisitions.index'));
 
-        // Verify requisition detail saved adjusted price and correct subtotal
+        // Verify requisition detail saved adjusted price, original price snapshot, and pending price validation status
         $this->assertDatabaseHas('requisition_details', [
             'item_id' => $this->itemObat->id,
             'quantity_requested' => 10,
             'unit_price' => 85000,
+            'original_unit_price' => 75000,
+            'is_price_updated' => true,
+            'price_validation_status' => 'PENDING',
             'subtotal' => 850000,
         ]);
 
-        // Verify master item's standard_price was updated in items table
-        $this->assertEquals(85000, (float) $this->itemObat->fresh()->standard_price);
+        // Master standard_price MUST NOT be overwritten prematurely before Perencanaan validation
+        $freshItem = $this->itemObat->fresh();
+        $this->assertEquals(75000, (float) $freshItem->standard_price);
+        $this->assertEquals(85000, (float) $freshItem->pending_price);
+        $this->assertEquals('PENDING', $freshItem->price_status);
+        $this->assertEquals($this->farmasiUnit->id, $freshItem->price_origin_unit_id);
     }
 
     public function test_unit_can_submit_requisition_with_brand_new_manual_item(): void
@@ -571,11 +578,13 @@ class RequesterRequisitionTest extends TestCase
         $this->assertStringStartsWith('ITM-', $newItem->item_code);
         $this->assertTrue($newItem->isFromUnit());
 
-        // Verify requisition detail is linked to the newly created item
+        // Verify requisition detail is linked to the newly created item with BARU validation tracking
         $this->assertDatabaseHas('requisition_details', [
             'item_id' => $newItem->id,
             'item_name' => 'Kassa Steril 16x16 Onemed',
             'unit_type' => 'Box',
+            'is_new_item' => true,
+            'item_validation_status' => 'PENDING',
             'quantity_requested' => 50,
             'unit_price' => 45000,
             'subtotal' => 2250000,
@@ -637,13 +646,27 @@ class RequesterRequisitionTest extends TestCase
 
         // Total: (10 * 90,000) + (20 * 25,000) = 900,000 + 500,000 = 1,400,000
         $this->assertEquals(1400000, (float) $requisition->fresh()->total_estimated);
-        $this->assertEquals(90000, (float) $this->itemObat->fresh()->standard_price);
+
+        // Catalog standard_price stays 75,000 until Perencanaan approves pending_price 90,000
+        $freshObat = $this->itemObat->fresh();
+        $this->assertEquals(75000, (float) $freshObat->standard_price);
+        $this->assertEquals(90000, (float) $freshObat->pending_price);
+        $this->assertEquals('PENDING', $freshObat->price_status);
 
         $this->assertDatabaseHas('items', [
             'name' => 'Alkohol Swab Onemed Extra',
             'standard_price' => 25000,
             'source' => 'USULAN_UNIT',
             'origin_unit_id' => $this->farmasiUnit->id,
+        ]);
+
+        $this->assertDatabaseHas('requisition_details', [
+            'requisition_id' => $requisition->id,
+            'item_id' => $this->itemObat->id,
+            'unit_price' => 90000,
+            'original_unit_price' => 75000,
+            'is_price_updated' => true,
+            'price_validation_status' => 'PENDING',
         ]);
     }
 

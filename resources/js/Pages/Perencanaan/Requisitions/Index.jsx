@@ -58,7 +58,12 @@ const getStatusBadge = (status) => {
     }
 };
 
-export default function Index({ requisitions = [], success, error, selectedYear = '2026' }) {
+const normalizeDateStr = (raw) => {
+    if (!raw) return '';
+    return String(raw).slice(0, 10);
+};
+
+export default function Index({ requisitions = [], units = [], success, error, selectedYear = '2026' }) {
     const page = usePage();
     const pageProps = page.props;
     const currentActiveYear = pageProps.active_year || selectedYear || '2026';
@@ -66,6 +71,9 @@ export default function Index({ requisitions = [], success, error, selectedYear 
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [jenisFilter, setJenisFilter] = useState('ALL');
+    const [unitFilter, setUnitFilter] = useState('ALL');
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [quickVerifyReq, setQuickVerifyReq] = useState(null);
@@ -80,6 +88,19 @@ export default function Index({ requisitions = [], success, error, selectedYear 
         }
     }, [page.url]);
 
+    const unitOptions = useMemo(() => {
+        if (units && units.length > 0) {
+            return units;
+        }
+        const map = new Map();
+        requisitions.forEach((req) => {
+            if (req.unit?.id && !map.has(req.unit.id)) {
+                map.set(req.unit.id, req.unit);
+            }
+        });
+        return Array.from(map.values()).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    }, [units, requisitions]);
+
     const filteredRequisitions = useMemo(() => {
         return requisitions.filter((req) => {
             const matchesStatus =
@@ -89,11 +110,21 @@ export default function Index({ requisitions = [], success, error, selectedYear 
                     : req.status === statusFilter);
             const matchesJenis =
                 jenisFilter === 'ALL' || req.jenis_belanja === jenisFilter;
+            const matchesUnit =
+                unitFilter === 'ALL' || String(req.unit_id) === String(unitFilter);
 
-            if (!search.trim()) return matchesStatus && matchesJenis;
+            const reqDate = normalizeDateStr(req.submission_date || req.created_at);
+            const matchesDateFrom = !dateFrom || (reqDate && reqDate >= dateFrom);
+            const matchesDateTo = !dateTo || (reqDate && reqDate <= dateTo);
+
+            if (!matchesStatus || !matchesJenis || !matchesUnit || !matchesDateFrom || !matchesDateTo) {
+                return false;
+            }
+
+            if (!search.trim()) return true;
 
             const q = search.toLowerCase();
-            const matchesSearch =
+            return (
                 req.requisition_number?.toLowerCase().includes(q) ||
                 req.nomor_surat_unit?.toLowerCase().includes(q) ||
                 req.sub_kegiatan?.toLowerCase().includes(q) ||
@@ -101,15 +132,26 @@ export default function Index({ requisitions = [], success, error, selectedYear 
                 req.rba_account?.account_code?.toLowerCase().includes(q) ||
                 req.division?.name?.toLowerCase().includes(q) ||
                 req.unit?.name?.toLowerCase().includes(q) ||
-                req.user?.name?.toLowerCase().includes(q);
-
-            return matchesStatus && matchesJenis && matchesSearch;
+                req.user?.name?.toLowerCase().includes(q)
+            );
         });
-    }, [requisitions, search, statusFilter, jenisFilter]);
+    }, [requisitions, search, statusFilter, jenisFilter, unitFilter, dateFrom, dateTo]);
+
+    const hasActiveFilters = Boolean(
+        search.trim() || jenisFilter !== 'ALL' || unitFilter !== 'ALL' || dateFrom || dateTo
+    );
+
+    const handleResetFilters = () => {
+        setSearch('');
+        setJenisFilter('ALL');
+        setUnitFilter('ALL');
+        setDateFrom('');
+        setDateTo('');
+    };
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [search, statusFilter, jenisFilter]);
+    }, [search, statusFilter, jenisFilter, unitFilter, dateFrom, dateTo]);
 
     const totalPages = Math.ceil(filteredRequisitions.length / itemsPerPage) || 1;
     const paginatedRequisitions = useMemo(() => {
@@ -210,13 +252,60 @@ export default function Index({ requisitions = [], success, error, selectedYear 
                         <select
                             value={jenisFilter}
                             onChange={(e) => setJenisFilter(e.target.value)}
-                            className="rounded-xl border border-slate-300 bg-white pl-3 pr-8 py-2.5 text-xs font-semibold text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition cursor-pointer"
+                            aria-label="Filter Jenis Belanja"
+                            className="rounded-xl border border-slate-300 bg-white pl-3 pr-8 py-2 text-xs font-semibold text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition cursor-pointer"
                         >
                             <option value="ALL">Semua Jenis Belanja</option>
                             <option value="Operasi">Belanja Operasional</option>
                             <option value="Modal">Belanja Modal</option>
                             <option value="Campuran">Belanja Campuran</option>
                         </select>
+
+                        {/* Filter Unit Pengusul */}
+                        <select
+                            value={unitFilter}
+                            onChange={(e) => setUnitFilter(e.target.value)}
+                            aria-label="Filter Unit Pengusul"
+                            className="rounded-xl border border-slate-300 bg-white pl-3 pr-8 py-2 text-xs font-semibold text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition cursor-pointer max-w-[200px]"
+                        >
+                            <option value="ALL">Semua Unit Pengusul</option>
+                            {unitOptions.map((unit) => (
+                                <option key={unit.id} value={unit.id}>
+                                    {unit.name}
+                                </option>
+                            ))}
+                        </select>
+
+                        {/* Filter Rentang Tanggal Pengajuan */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <input
+                                type="date"
+                                value={dateFrom}
+                                onChange={(e) => setDateFrom(e.target.value)}
+                                aria-label="Dari tanggal pengajuan"
+                                title="Dari tanggal pengajuan"
+                                className="rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition"
+                            />
+                            <span className="text-[11px] font-semibold text-slate-400">s/d</span>
+                            <input
+                                type="date"
+                                value={dateTo}
+                                onChange={(e) => setDateTo(e.target.value)}
+                                aria-label="Sampai tanggal pengajuan"
+                                title="Sampai tanggal pengajuan"
+                                className="rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition"
+                            />
+                        </div>
+
+                        {hasActiveFilters && (
+                            <button
+                                type="button"
+                                onClick={handleResetFilters}
+                                className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:scale-95 px-3 py-2 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer"
+                            >
+                                Reset
+                            </button>
+                        )}
 
                         {/* Data Counter */}
                         <div className="text-xs text-slate-500 font-medium whitespace-nowrap">
@@ -253,8 +342,8 @@ export default function Index({ requisitions = [], success, error, selectedYear 
                                             Tidak Ada Berkas Usulan Belanja Ditemukan
                                         </p>
                                         <p className="text-[11px] text-slate-400 mt-0.5">
-                                            {search || statusFilter !== 'ALL' || jenisFilter !== 'ALL'
-                                                ? 'Coba sesuaikan kata kunci pencarian atau filter yang dipilih.'
+                                            {hasActiveFilters || statusFilter !== 'ALL'
+                                                ? 'Coba sesuaikan kata kunci pencarian, tanggal, unit, atau filter yang dipilih.'
                                                 : 'Belum ada usulan belanja dari unit pengusul pada tahun anggaran ini.'}
                                         </p>
                                     </td>
@@ -264,6 +353,8 @@ export default function Index({ requisitions = [], success, error, selectedYear 
                                     const badge = getStatusBadge(req.status);
                                     const detailsList = req.requisition_details || req.requisitionDetails || [];
                                     const itemCount = detailsList.length;
+                                    const hasNewItems = detailsList.some((d) => Boolean(d.is_new_item || d.item?.source === 'USULAN_UNIT'));
+                                    const hasPriceUpdates = detailsList.some((d) => Boolean(d.is_price_updated));
 
                                     return (
                                         <tr key={req.id} className="hover:bg-slate-50/60 transition">
@@ -287,9 +378,21 @@ export default function Index({ requisitions = [], success, error, selectedYear 
                                             {/* Nomor Usulan & Rekening RBA */}
                                             <td className="px-5 py-3.5">
                                                 <div className="flex flex-col gap-0.5">
-                                                    <span className="inline-block font-mono text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 w-fit">
-                                                        {req.requisition_number}
-                                                    </span>
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <span className="inline-block font-mono text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 w-fit">
+                                                            {req.requisition_number}
+                                                        </span>
+                                                        {hasNewItems && (
+                                                            <span className="inline-flex items-center rounded bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[10px] font-black text-amber-800 uppercase">
+                                                                Barang Baru
+                                                            </span>
+                                                        )}
+                                                        {hasPriceUpdates && (
+                                                            <span className="inline-flex items-center rounded bg-sky-50 border border-sky-200 px-1.5 py-0.2 text-[10px] font-black text-sky-800 uppercase">
+                                                                Harga Diperbarui
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <p className="text-xs font-bold text-slate-900 mt-1 line-clamp-1">
                                                         {req.sub_kegiatan || 'Pelayanan BLUD'}
                                                     </p>

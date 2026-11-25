@@ -60,7 +60,7 @@ export default function Index({
 
     const sourceCounts = useMemo(() => {
         const standar = items.filter((i) => (i.source || 'STANDAR') === 'STANDAR').length;
-        const usulan = items.filter((i) => i.source === 'USULAN_UNIT').length;
+        const usulan = items.filter((i) => i.source === 'USULAN_UNIT' || i.price_status === 'PENDING').length;
         return { all: items.length, standar, usulan };
     }, [items]);
 
@@ -73,7 +73,10 @@ export default function Index({
         return items.filter((item) => {
             const itemSource = item.source || 'STANDAR';
             const matchesSource =
-                selectedSource === 'ALL' || itemSource === selectedSource;
+                selectedSource === 'ALL' ||
+                (selectedSource === 'USULAN_UNIT'
+                    ? itemSource === 'USULAN_UNIT' || item.price_status === 'PENDING'
+                    : itemSource === selectedSource);
 
             const matchesUnit =
                 selectedUnit === 'ALL' || item.unit_type === selectedUnit;
@@ -93,7 +96,8 @@ export default function Index({
                 item.rba_account?.account_code?.toLowerCase().includes(q) ||
                 item.rba_account?.account_name?.toLowerCase().includes(q) ||
                 item.origin_unit?.name?.toLowerCase().includes(q) ||
-                item.origin_unit?.unit_code?.toLowerCase().includes(q)
+                item.origin_unit?.unit_code?.toLowerCase().includes(q) ||
+                item.price_origin_unit?.name?.toLowerCase().includes(q)
             );
         });
     }, [items, search, selectedUnit, selectedRba, selectedSource]);
@@ -139,26 +143,26 @@ export default function Index({
         });
     };
 
-    const handleVerifyStandard = (item) => {
+    const confirmAndRunItemAction = ({ title, text, confirmButtonColor = '#0d9488', confirmButtonText, routeName, itemId, toastIcon = 'success', toastTitle }) => {
         Swal.fire({
-            title: 'Sahkan Jadi Standar Baku?',
-            text: `Barang "${item.name}" (${item.item_code}) akan disahkan menjadi standar pengadaan resmi RS Jiwa Tampan.`,
+            title,
+            text,
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#0d9488',
+            confirmButtonColor,
             cancelButtonColor: '#64748b',
-            confirmButtonText: 'Ya, Sahkan',
+            confirmButtonText,
             cancelButtonText: 'Batal',
         }).then((result) => {
             if (result.isConfirmed) {
-                router.patch(route('items.verify-standard', item.id), {}, {
+                router.patch(route(routeName, itemId), {}, {
                     preserveScroll: true,
                     onSuccess: () => {
                         Swal.fire({
                             toast: true,
                             position: 'top-end',
-                            icon: 'success',
-                            title: `Barang "${item.name}" disahkan jadi Standar Baku RS`,
+                            icon: toastIcon,
+                            title: toastTitle,
                             showConfirmButton: false,
                             timer: 2500,
                             timerProgressBar: true,
@@ -168,6 +172,52 @@ export default function Index({
             }
         });
     };
+
+    const handleVerifyStandard = (item) =>
+        confirmAndRunItemAction({
+            title: 'Sahkan Jadi Standar Baku?',
+            text: `Barang baru "${item.name}" (${item.item_code}) akan disahkan menjadi standar pengadaan resmi RS Jiwa Tampan.`,
+            confirmButtonColor: '#0d9488',
+            confirmButtonText: 'Ya, Sah',
+            routeName: 'items.verify-standard',
+            itemId: item.id,
+            toastTitle: `Barang "${item.name}" disahkan jadi Standar Baku RS`,
+        });
+
+    const handleRejectStandard = (item) =>
+        confirmAndRunItemAction({
+            title: 'Tandai Barang Tidak Sah?',
+            text: `Barang usulan baru "${item.name}" (${item.item_code}) akan ditandai Tidak Sah dan ditolak dari pengajuan menunggu telaah terkait.`,
+            confirmButtonColor: '#e11d48',
+            confirmButtonText: 'Ya, Tidak Sah',
+            routeName: 'items.reject-standard',
+            itemId: item.id,
+            toastIcon: 'info',
+            toastTitle: `Barang "${item.name}" ditandai Tidak Sah`,
+        });
+
+    const handleVerifyPrice = (item) =>
+        confirmAndRunItemAction({
+            title: 'Sahkan Pembaruan Harga?',
+            text: `Harga standar "${item.name}" akan diperbarui dari ${formatRupiah(item.standard_price)} menjadi ${formatRupiah(item.pending_price)}.`,
+            confirmButtonColor: '#0d9488',
+            confirmButtonText: 'Ya, Sahkan Harga',
+            routeName: 'items.verify-price',
+            itemId: item.id,
+            toastTitle: `Harga baru "${item.name}" disahkan`,
+        });
+
+    const handleRejectPrice = (item) =>
+        confirmAndRunItemAction({
+            title: 'Tolak Pembaruan Harga?',
+            text: `Usulan harga ${formatRupiah(item.pending_price)} untuk "${item.name}" akan ditolak (Tidak Sah). Katalog tetap memakai harga awal ${formatRupiah(item.standard_price)}.`,
+            confirmButtonColor: '#e11d48',
+            confirmButtonText: 'Ya, Tidak Sah',
+            routeName: 'items.reject-price',
+            itemId: item.id,
+            toastIcon: 'info',
+            toastTitle: `Pembaruan harga "${item.name}" ditolak`,
+        });
 
     return (
         <PerencanaanLayout>
@@ -284,8 +334,8 @@ export default function Index({
                                 <th className="px-4 py-3 text-left min-w-[200px]">Nama Barang & Spesifikasi</th>
                                 <th className="w-60 px-4 py-3 text-left">Pos Rekening Belanja RBA</th>
                                 <th className="w-24 px-3 py-3 text-center">Satuan</th>
-                                <th className="w-36 px-4 py-3 text-right">Harga Standar (HPS)</th>
-                                <th className="w-32 px-3 py-3 text-center">Aksi</th>
+                                <th className="w-40 px-4 py-3 text-right">Harga Standar (HPS)</th>
+                                <th className="w-52 px-3 py-3 text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
@@ -333,10 +383,24 @@ export default function Index({
                                                         <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
                                                         Standar RS
                                                     </span>
+                                                ) : item.source === 'DITOLAK' ? (
+                                                    <span className="inline-flex items-center gap-1 rounded bg-rose-50 px-1.5 py-0.2 text-[10px] font-bold text-rose-700 border border-rose-200">
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                                                        Tidak Sah
+                                                    </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1 rounded bg-amber-100/80 px-1.5 py-0.2 text-[10px] font-bold text-amber-800 border border-amber-300">
-                                                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                                        Usulan: {item.origin_unit?.name || 'Unit Kerja'}
+                                                    <>
+                                                        <span className="inline-flex items-center rounded bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[10px] font-black text-amber-800 uppercase">
+                                                            BARU
+                                                        </span>
+                                                        <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.2 text-[10px] font-bold text-amber-800 border border-amber-200">
+                                                            Usulan: {item.origin_unit?.name || 'Unit Kerja'}
+                                                        </span>
+                                                    </>
+                                                )}
+                                                {item.price_status === 'PENDING' && (
+                                                    <span className="inline-flex items-center gap-1 rounded bg-sky-50 border border-sky-200 px-1.5 py-0.2 text-[10px] font-black text-sky-800 uppercase">
+                                                        Harga Diperbarui {item.price_origin_unit?.name ? `(${item.price_origin_unit.name})` : ''}
                                                     </span>
                                                 )}
                                             </div>
@@ -368,22 +432,63 @@ export default function Index({
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 text-right font-mono font-bold text-slate-900">
-                                            {formatRupiah(item.standard_price)}
+                                            {item.price_status === 'PENDING' && item.pending_price !== null ? (
+                                                <div className="space-y-0.5">
+                                                    <span className="text-[10px] text-slate-400 line-through block font-normal">
+                                                        {formatRupiah(item.standard_price)}
+                                                    </span>
+                                                    <span className="text-sky-700 font-black block">
+                                                        {formatRupiah(item.pending_price)}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                formatRupiah(item.standard_price)
+                                            )}
                                         </td>
                                         <td className="px-3 py-3 text-center">
-                                            <div className="flex items-center justify-center gap-1.5">
+                                            <div className="flex items-center justify-center gap-1.5 flex-wrap">
                                                 {item.source === 'USULAN_UNIT' && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleVerifyStandard(item)}
-                                                        title="Sahkan Menjadi Standar Baku RS"
-                                                        className="inline-flex items-center gap-1 rounded-lg bg-teal-600 hover:bg-teal-700 active:scale-95 text-white px-2 py-1 text-xs font-bold transition shadow-2xs cursor-pointer"
-                                                    >
-                                                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                                        </svg>
-                                                        <span>Sahkan</span>
-                                                    </button>
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleVerifyStandard(item)}
+                                                            title="Sahkan Menjadi Standar Baku RS"
+                                                            className="inline-flex items-center gap-1 rounded-lg bg-teal-600 hover:bg-teal-700 active:scale-95 text-white px-2 py-1 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                        >
+                                                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                                            </svg>
+                                                            <span>Sah</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRejectStandard(item)}
+                                                            title="Tandai Barang Baru Tidak Sah"
+                                                            className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-700 px-2 py-1 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                        >
+                                                            <span>Tidak Sah</span>
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {item.price_status === 'PENDING' && (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleVerifyPrice(item)}
+                                                            title="Sahkan Perubahan Harga Menjadi Standar Katalog"
+                                                            className="inline-flex items-center gap-1 rounded-lg bg-sky-600 hover:bg-sky-700 active:scale-95 text-white px-2 py-1 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                        >
+                                                            <span>Sah Harga</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRejectPrice(item)}
+                                                            title="Tolak Perubahan Harga (Pakai Harga Standar Lama)"
+                                                            className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-700 px-2 py-1 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                        >
+                                                            <span>Tidak Sah</span>
+                                                        </button>
+                                                    </>
                                                 )}
                                                 <button
                                                     type="button"
