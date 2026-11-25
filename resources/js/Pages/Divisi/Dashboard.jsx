@@ -134,7 +134,7 @@ export default function Dashboard({
                                     Ada {rejected_requests} berkas usulan yang memerlukan perbaikan
                                 </p>
                                 <p className="text-[11px] text-rose-700">
-                                    Silakan periksa catatan telaah dari Perencanaan atau Keuangan.
+                                    Silakan periksa catatan telaah dari Tim Perencanaan.
                                 </p>
                             </div>
                         </div>

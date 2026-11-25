@@ -145,7 +145,7 @@ export default function Dashboard({
                     {/* Card 2: Realisasi Belanja */}
                     <div className="rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-xs">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-500">Realisasi SP2D Cair</span>
+                            <span className="text-xs font-bold text-slate-500">Realisasi Belanja Disetujui</span>
                             <div className="rounded-xl bg-emerald-50 p-2 text-emerald-600 border border-emerald-200">
                                 <Wallet className="h-4 w-4" />
                             </div>
@@ -155,7 +155,7 @@ export default function Dashboard({
                                 {formatRp(kpi_keuangan.total_realisasi_belanja)}
                             </div>
                             <p className="mt-1 text-[11px] font-medium text-slate-400">
-                                {kpi_keuangan.disetujui_selesai ?? 0} Usulan Selesai SP2D
+                                {kpi_keuangan.disetujui ?? 0} Usulan Belanja Disetujui
                             </p>
                         </div>
                     </div>
@@ -345,16 +345,10 @@ export default function Dashboard({
                                         {kpi_perencanaan.pending_perencanaan ?? 0}
                                     </span>
                                 </div>
-                                <div className="flex items-center justify-between p-2.5 rounded-xl bg-indigo-50/70 border border-indigo-200/80 text-xs">
-                                    <span className="font-bold text-indigo-900">Diproses Bagian Keuangan</span>
-                                    <span className="font-mono font-bold text-indigo-800">
-                                        {kpi_keuangan.diproses_keuangan ?? 0}
-                                    </span>
-                                </div>
                                 <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-xs">
-                                    <span className="font-bold text-emerald-900">Disetujui Selesai (SP2D)</span>
+                                    <span className="font-bold text-emerald-900">Disetujui (ACC Final)</span>
                                     <span className="font-mono font-bold text-emerald-800">
-                                        {kpi_keuangan.disetujui_selesai ?? 0}
+                                        {kpi_keuangan.disetujui ?? 0}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between p-2.5 rounded-xl bg-rose-50/70 border border-rose-200/80 text-xs">

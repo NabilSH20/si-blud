@@ -107,14 +107,9 @@ const menuGroups = [
                         isActive: (url) => url.includes('status=Pending_Perencanaan'),
                     },
                     {
-                        name: 'Diteruskan ke Keuangan',
-                        href: route('perencanaan.requisitions.index', { status: 'Diproses_Keuangan' }),
-                        isActive: (url) => url.includes('status=Diproses_Keuangan'),
-                    },
-                    {
-                        name: 'Disetujui Selesai',
-                        href: route('perencanaan.requisitions.index', { status: 'Disetujui_Selesai' }),
-                        isActive: (url) => url.includes('status=Disetujui_Selesai'),
+                        name: 'Disetujui (ACC Final)',
+                        href: route('perencanaan.requisitions.index', { status: 'Disetujui' }),
+                        isActive: (url) => url.includes('status=Disetujui'),
                     },
                     {
                         name: 'Ditolak',

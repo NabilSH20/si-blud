@@ -311,4 +311,67 @@ class RevenueWorkflowAndCleanupTest extends TestCase
         $response2->assertRedirect();
         $this->assertDatabaseMissing('users', ['id' => $targetUser2->id]);
     }
+
+    public function test_divisi_cannot_update_approved_requisition_and_gets_perencanaan_message(): void
+    {
+        $division = Division::create(['division_code' => 'DIV-03', 'name' => 'Bidang Penunjang']);
+        $unitUser = User::factory()->create(['role' => 'divisi', 'division_id' => $division->id]);
+
+        $requisition = Requisition::create([
+            'requisition_number' => 'REQ-20270201-0003',
+            'user_id' => $unitUser->id,
+            'division_id' => $division->id,
+            'submission_date' => '2027-02-01',
+            'status' => 'Disetujui',
+            'budget_year' => 2027,
+            'total_estimated' => 500000,
+            'total_approved' => 500000,
+        ]);
+
+        $response = $this->actingAs($unitUser)->put(route('requisitions.update', $requisition->id), [
+            'sub_kegiatan' => 'Ubah Sub Kegiatan',
+            'items' => [
+                ['name' => 'Test', 'unit_type' => 'Pcs', 'quantity' => 1, 'unit_price' => 1000],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Usulan belanja tidak dapat diubah karena telah disetujui atau disahkan oleh Tim Perencanaan.');
+    }
+
+    public function test_divisi_and_perencanaan_status_disetujui_filter_routes_load(): void
+    {
+        $division = Division::create(['division_code' => 'DIV-04', 'name' => 'Bidang Medik']);
+        $unitUser = User::factory()->create(['role' => 'divisi', 'division_id' => $division->id]);
+        $perencanaan = User::factory()->create(['role' => 'perencanaan', 'division_id' => $division->id]);
+
+        Requisition::create([
+            'requisition_number' => 'REQ-20270210-0004',
+            'user_id' => $unitUser->id,
+            'division_id' => $division->id,
+            'submission_date' => '2027-02-10',
+            'status' => 'Disetujui',
+            'budget_year' => 2027,
+            'total_estimated' => 750000,
+            'total_approved' => 750000,
+        ]);
+
+        session(['active_year' => 2027]);
+
+        $divisiResp = $this->actingAs($unitUser)->get(route('requisitions.index', ['status' => 'Disetujui']));
+        $divisiResp->assertOk();
+        $divisiResp->assertInertia(fn (Assert $page) => $page
+            ->component('Divisi/Requisitions/Index')
+            ->has('requisitions', 1)
+            ->where('requisitions.0.status', 'Disetujui')
+        );
+
+        $perencanaanResp = $this->actingAs($perencanaan)->get(route('perencanaan.requisitions.index', ['status' => 'Disetujui']));
+        $perencanaanResp->assertOk();
+        $perencanaanResp->assertInertia(fn (Assert $page) => $page
+            ->component('Perencanaan/Requisitions/Index')
+            ->has('requisitions', 1)
+            ->where('requisitions.0.status', 'Disetujui')
+        );
+    }
 }

@@ -210,29 +210,16 @@ export default function DivisiLayout({ children }) {
                                         </Link>
 
                                         <Link
-                                            href={route('requisitions.index', { status: 'Diproses_Keuangan' })}
+                                            href={route('requisitions.index', { status: 'Disetujui' })}
                                             onClick={() => setSidebarOpen(false)}
                                             className={`flex items-center gap-2 rounded-lg py-1.5 px-2.5 text-xs transition-colors ${
-                                                isRequisitionsActive && currentStatus === 'Diproses_Keuangan'
-                                                    ? 'bg-blue-100/80 text-blue-900 font-bold'
-                                                    : 'text-slate-600 hover:bg-blue-50 hover:text-blue-800 font-medium'
-                                            }`}
-                                        >
-                                            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                                            <span className="truncate">Diproses Keuangan</span>
-                                        </Link>
-
-                                        <Link
-                                            href={route('requisitions.index', { status: 'Disetujui_Selesai' })}
-                                            onClick={() => setSidebarOpen(false)}
-                                            className={`flex items-center gap-2 rounded-lg py-1.5 px-2.5 text-xs transition-colors ${
-                                                isRequisitionsActive && currentStatus === 'Disetujui_Selesai'
+                                                isRequisitionsActive && (currentStatus === 'Disetujui' || currentStatus === 'Disetujui_Selesai')
                                                     ? 'bg-emerald-100/80 text-emerald-900 font-bold'
                                                     : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-800 font-medium'
                                             }`}
                                         >
                                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                            <span className="truncate">Disetujui Selesai</span>
+                                            <span className="truncate">Disetujui (ACC Final)</span>
                                         </Link>
 
                                         <Link

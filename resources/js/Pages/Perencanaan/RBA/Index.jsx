@@ -329,7 +329,7 @@ export default function Index({
             const rawItems = acc.proposed_items || [];
             const activeItems = rawItems.filter((it) => {
                 if (statusFilter === 'DISETUJUI') {
-                    return it.status === 'Disetujui_Selesai';
+                    return it.status === 'Disetujui' || it.status === 'Disetujui_Selesai';
                 }
                 return true;
             });
@@ -1819,7 +1819,7 @@ export default function Index({
                 </div>
             )}
 
-            {/* TAB 4: RINCIAN USULAN BELANJA UNIT KERJA (DISETUJUI KEUANGAN) */}
+            {/* TAB 4: RINCIAN USULAN BELANJA UNIT KERJA (DISETUJUI PERENCANAAN / ACC FINAL) */}
             {activeTab === 'RINCIAN_BARANG' && (
                 <div className="space-y-6">
                     {/* Minimalist Single-Row Toolbar (Persis Admin/Unit) */}
@@ -1846,7 +1846,7 @@ export default function Index({
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
-                                    Disetujui Keuangan
+                                    Disetujui (ACC Final)
                                 </button>
                                 <button
                                     type="button"
@@ -1935,7 +1935,7 @@ export default function Index({
                                         <tr>
                                             <td colSpan={7} className="p-6 text-center text-slate-400 italic">
                                                 {showOnlyWithItems
-                                                    ? `Belum ada usulan Belanja Operasi ${statusFilter === 'DISETUJUI' ? 'yang disetujui Keuangan' : 'yang diajukan'} pada T.A. ${selected_year}`
+                                                    ? `Belum ada usulan Belanja Operasi ${statusFilter === 'DISETUJUI' ? 'yang disetujui Perencanaan (ACC Final)' : 'yang diajukan'} pada T.A. ${selected_year}`
                                                     : 'Tidak ada rekening Belanja Operasi yang cocok dengan pencarian'}
                                             </td>
                                         </tr>
@@ -2032,23 +2032,23 @@ export default function Index({
                                                                         {item.requisition?.requisition_number}
                                                                     </span>
                                                                     <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-black mt-1 w-fit ${
-                                                                        item.status === 'Disetujui_Selesai'
+                                                                        item.status === 'Disetujui' || item.status === 'Disetujui_Selesai'
                                                                             ? 'bg-teal-50 text-teal-700 border border-teal-200/80 shadow-sm'
-                                                                            : item.status === 'Diproses_Keuangan'
-                                                                            ? 'bg-blue-50 text-blue-700 border border-blue-200/80 shadow-sm'
+                                                                            : item.status === 'Ditolak'
+                                                                            ? 'bg-rose-50 text-rose-700 border border-rose-200/80 shadow-sm'
                                                                             : 'bg-amber-50 text-amber-700 border border-amber-200/80 shadow-sm'
                                                                     }`}>
                                                                         <span className={`h-1.5 w-1.5 rounded-full ${
-                                                                            item.status === 'Disetujui_Selesai'
+                                                                            item.status === 'Disetujui' || item.status === 'Disetujui_Selesai'
                                                                                 ? 'bg-teal-500'
-                                                                                : item.status === 'Diproses_Keuangan'
-                                                                                ? 'bg-blue-500'
+                                                                                : item.status === 'Ditolak'
+                                                                                ? 'bg-rose-500'
                                                                                 : 'bg-amber-500'
                                                                         }`} />
-                                                                        {item.status === 'Disetujui_Selesai'
-                                                                            ? 'Disetujui Keuangan'
-                                                                            : item.status === 'Diproses_Keuangan'
-                                                                            ? 'Diproses Keuangan'
+                                                                        {item.status === 'Disetujui' || item.status === 'Disetujui_Selesai'
+                                                                            ? 'Disetujui (ACC Final)'
+                                                                            : item.status === 'Ditolak'
+                                                                            ? 'Ditolak'
                                                                             : 'Menunggu Telaah'}
                                                                     </span>
                                                                 </div>
@@ -2079,7 +2079,7 @@ export default function Index({
                                         <tr>
                                             <td colSpan={7} className="p-6 text-center text-slate-400 italic">
                                                 {showOnlyWithItems
-                                                    ? `Belum ada usulan Belanja Modal ${statusFilter === 'DISETUJUI' ? 'yang disetujui Keuangan' : 'yang diajukan'} pada T.A. ${selected_year}`
+                                                    ? `Belum ada usulan Belanja Modal ${statusFilter === 'DISETUJUI' ? 'yang disetujui Perencanaan (ACC Final)' : 'yang diajukan'} pada T.A. ${selected_year}`
                                                     : 'Tidak ada rekening Belanja Modal yang cocok dengan pencarian'}
                                             </td>
                                         </tr>
@@ -2176,23 +2176,23 @@ export default function Index({
                                                                         {item.requisition?.requisition_number}
                                                                     </span>
                                                                     <span className={`inline-flex items-center gap-1 text-[10px] font-black mt-0.5 ${
-                                                                        item.status === 'Disetujui_Selesai'
+                                                                        item.status === 'Disetujui' || item.status === 'Disetujui_Selesai'
                                                                             ? 'text-teal-700'
-                                                                            : item.status === 'Diproses_Keuangan'
-                                                                            ? 'text-blue-700'
+                                                                            : item.status === 'Ditolak'
+                                                                            ? 'text-rose-700'
                                                                             : 'text-amber-700'
                                                                     }`}>
                                                                         <span className={`h-1.5 w-1.5 rounded-full ${
-                                                                            item.status === 'Disetujui_Selesai'
+                                                                            item.status === 'Disetujui' || item.status === 'Disetujui_Selesai'
                                                                                 ? 'bg-teal-500'
-                                                                                : item.status === 'Diproses_Keuangan'
-                                                                                ? 'bg-blue-500'
+                                                                                : item.status === 'Ditolak'
+                                                                                ? 'bg-rose-500'
                                                                                 : 'bg-amber-500'
                                                                         }`} />
-                                                                        {item.status === 'Disetujui_Selesai'
-                                                                            ? 'Disetujui Keuangan'
-                                                                            : item.status === 'Diproses_Keuangan'
-                                                                            ? 'Diproses Keuangan'
+                                                                        {item.status === 'Disetujui' || item.status === 'Disetujui_Selesai'
+                                                                            ? 'Disetujui (ACC Final)'
+                                                                            : item.status === 'Ditolak'
+                                                                            ? 'Ditolak'
                                                                             : 'Menunggu Telaah'}
                                                                     </span>
                                                                 </div>

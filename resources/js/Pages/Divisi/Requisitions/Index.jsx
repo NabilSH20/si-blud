@@ -3,7 +3,7 @@ import Pagination from '@/Components/Pagination';
 import RequisitionFormModal from './Partials/RequisitionFormModal';
 import RequisitionDetailModal from '@/Pages/Shared/RequisitionDetailModal';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { ClipboardList } from 'lucide-react';
@@ -69,20 +69,19 @@ export default function Index({
     success,
     error,
 }) {
+    const page = usePage();
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [jenisFilter, setJenisFilter] = useState(selectedJenis);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    // Baca parameter status, edit, dan create dari URL jika ada
+    // Baca parameter status, edit, dan create dari URL jika ada atau berubah via Sidebar
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             const s = params.get('status');
-            if (s) {
-                setStatusFilter(s);
-            }
+            setStatusFilter(s || 'ALL');
             const createParam = params.get('create');
             if (createParam) {
                 const jenisParam = params.get('jenis') || 'Operasi';
@@ -96,7 +95,7 @@ export default function Index({
                 }
             }
         }
-    }, [requisitions]);
+    }, [requisitions, page.url]);
 
     // Pop-Up Modal States (Create & Edit)
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -152,7 +151,10 @@ export default function Index({
     const filteredRequisitions = useMemo(() => {
         return requisitions.filter((req) => {
             const matchesStatus =
-                statusFilter === 'ALL' || req.status === statusFilter;
+                statusFilter === 'ALL' ||
+                (statusFilter === 'Disetujui'
+                    ? req.status === 'Disetujui' || req.status === 'Disetujui_Selesai'
+                    : req.status === statusFilter);
             const matchesJenis =
                 jenisFilter === 'ALL' || req.jenis_belanja === jenisFilter;
 

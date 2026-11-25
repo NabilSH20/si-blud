@@ -168,13 +168,8 @@ export default function KeuanganLayout({ children }) {
                                     let currentActiveSub = '';
                                     if (url.includes('?category=')) {
                                         currentActiveSub = decodeURIComponent(url.split('?category=')[1].split('&')[0]);
-                                    } else if (url.includes('?status=')) {
-                                        const statusVal = decodeURIComponent(url.split('?status=')[1].split('&')[0]);
-                                        if (statusVal === 'Diproses_Keuangan') currentActiveSub = 'Siap Validasi';
-                                        else if (statusVal === 'Disetujui_Selesai') currentActiveSub = 'Disetujui & Selesai';
-                                        else if (statusVal === 'Ditolak') currentActiveSub = 'Ditolak';
                                     } else {
-                                        currentActiveSub = item.name === 'Pendapatan BLUD' ? 'Semua' : 'Semua Status';
+                                        currentActiveSub = item.name === 'Pendapatan BLUD' ? 'Semua' : '';
                                     }
                                     
                                     if (item.subItems) {

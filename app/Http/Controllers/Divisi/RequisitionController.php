@@ -355,7 +355,7 @@ class RequisitionController extends Controller
 
         // Only allow update if status is Pending_Perencanaan or Ditolak (Revisi & Ajukan Ulang)
         if (! in_array($requisition->status, ['Pending_Perencanaan', 'Ditolak'])) {
-            return back()->with('error', 'Usulan belanja tidak dapat diubah karena telah diproses atau disetujui oleh Tim Keuangan.');
+            return back()->with('error', 'Usulan belanja tidak dapat diubah karena telah disetujui atau disahkan oleh Tim Perencanaan.');
         }
 
         $wasRejected = ($requisition->status === 'Ditolak');

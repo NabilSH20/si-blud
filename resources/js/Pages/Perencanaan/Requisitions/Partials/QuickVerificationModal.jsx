@@ -456,7 +456,7 @@ export default function QuickVerificationModal({
                             rows={2}
                             value={notesPerencanaan}
                             onChange={(e) => setNotesPerencanaan(e.target.value)}
-                            placeholder="Tuliskan catatan arahan teknis untuk Bagian Keuangan atau unit kerja pengusul..."
+                            placeholder="Tuliskan catatan telaah atau arahan teknis untuk unit kerja pengusul..."
                             className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition shadow-2xs"
                         />
                     </div>

@@ -59,7 +59,8 @@ const getStatusBadge = (status) => {
 };
 
 export default function Index({ requisitions = [], success, error, selectedYear = '2026' }) {
-    const pageProps = usePage().props;
+    const page = usePage();
+    const pageProps = page.props;
     const currentActiveYear = pageProps.active_year || selectedYear || '2026';
 
     const [search, setSearch] = useState('');
@@ -70,21 +71,22 @@ export default function Index({ requisitions = [], success, error, selectedYear 
     const [quickVerifyReq, setQuickVerifyReq] = useState(null);
     const [detailReq, setDetailReq] = useState(null);
 
-    // Baca parameter status dari URL jika ada
+    // Baca parameter status dari URL jika ada atau berubah via navigasi Sidebar
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             const s = params.get('status');
-            if (s) {
-                setStatusFilter(s);
-            }
+            setStatusFilter(s || 'ALL');
         }
-    }, []);
+    }, [page.url]);
 
     const filteredRequisitions = useMemo(() => {
         return requisitions.filter((req) => {
             const matchesStatus =
-                statusFilter === 'ALL' || req.status === statusFilter;
+                statusFilter === 'ALL' ||
+                (statusFilter === 'Disetujui'
+                    ? req.status === 'Disetujui' || req.status === 'Disetujui_Selesai'
+                    : req.status === statusFilter);
             const matchesJenis =
                 jenisFilter === 'ALL' || req.jenis_belanja === jenisFilter;
 
